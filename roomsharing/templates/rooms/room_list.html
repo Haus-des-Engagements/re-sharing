@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Rooms" %}
+{% endblock title %}
+{% block content %}
+  <h2>{% trans "Rooms" %}</h2>
+  {% for room in rooms %}
+    <li>
+      <a href="{% url 'rooms:detail' slug=room.slug %}">{{ room.name }}</a>
+    </li>
+  {% endfor %}
+{% endblock content %}

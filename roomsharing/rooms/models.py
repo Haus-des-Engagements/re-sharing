@@ -13,7 +13,7 @@ class Room(Model):
     square_meters = PositiveIntegerField(_("Square Meters"), null=True, blank=True)
     max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
-    pricing = TextField(_("Description"), max_length=512, blank=True)
+    pricing = TextField(_("Pricing conditions"), max_length=512, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
     bookable_equipment = TextField(_("Bookable Equipment"), max_length=512, blank=True)
 

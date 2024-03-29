@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Room" %}: {{ room.name }}
+{% endblock title %}
+{% block content %}
+  <h2>{{ room.name }}</h2>
+  <p>
+    <strong>{% trans "Title" %}:</strong> {{ room.name }}
+  </p>
+  <p>
+    <strong>{% trans "Description" %}:</strong> {{ room.description }}
+  </p>
+  <p>
+    <strong>{% trans "Square Meters" %}:</strong> {{ room.square_meters }}
+  </p>
+  <p>
+    <strong>{% trans "Maximum Number of Persons" %}:</strong> {{ room.max_persons }}
+  </p>
+  <p>
+    <strong>{% trans "General Bookable Times" %}:</strong> {{ room.bookable_times }}
+  </p>
+  <p>
+    <strong>{% trans "Pricing" %}:</strong> {{ room.pricing }}
+  </p>
+  <p>
+    <strong>{% trans "Included Equipment" %}:</strong> {{ room.included_equipment }}
+  </p>
+  <p>
+    <strong>{% trans "Bookable Equipment" %}:</strong> {{ room.bookable_equipment }}
+  </p>
+  <p>
+    <img fwidth="200"
+         height="150"
+         alt="example"
+         src="https://haus-des-engagements.de/wp-content/uploads/2023/11/HdE-Veranstaltungsraum-U-Bestuhlung_klein-1.jpg" />
+    <img fwidth="200"
+         height="150"
+         alt="example"
+         src="https://haus-des-engagements.de/wp-content/uploads/2023/11/Hde-Raum-Tuerkis-2048x1536.jpg" />
+  </p>
+  <p>
+    <strong>{% trans "Available Times" %}:</strong>
+    <table>
+      <tr>
+        <td>Mo</td>
+        <td>Di</td>
+        <td>Mi</td>
+        <td>Do</td>
+        <td>Fr</td>
+        <td>Sa</td>
+        <td>So</td>
+      </tr>
+    </table>
+  </p>
+  <a href="{% url 'rooms:list' %}">{% trans "Back to Room List" %}</a>
+{% endblock content %}
