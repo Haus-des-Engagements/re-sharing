@@ -1,0 +1,107 @@
+[
+    {
+        "model": "rooms.room",
+        "pk": 1,
+        "fields": {
+            "name": "Co-Working-Space",
+            "slug": "co-working-space",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 30,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 2,
+        "fields": {
+            "name": "Grüner Raum (großer Meetingraum)",
+            "slug": "gruner-raum-groer-meetingraum",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 10,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 3,
+        "fields": {
+            "name": "Gelber Raum (hinten links)",
+            "slug": "gelber-raum-hinten-links",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 8,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 4,
+        "fields": {
+            "name": "Oranger Raum (ganz kleiner Meetingraum)",
+            "slug": "oranger-raum-ganz-kleiner-meetingraum",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 4,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 5,
+        "fields": {
+            "name": "Weißer Raum (EG)",
+            "slug": "weier-raum-eg",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 15,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 6,
+        "fields": {
+            "name": "Türkiser Raum (EG)",
+            "slug": "turkiser-raum-eg",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 8,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    },
+    {
+        "model": "rooms.room",
+        "pk": 7,
+        "fields": {
+            "name": "Veranstaltungsraum (EG)",
+            "slug": "veranstaltungsraum-eg",
+            "description": "desc",
+            "square_meters": null,
+            "max_persons": 60,
+            "bookable_times": "",
+            "pricing": "",
+            "included_equipment": "",
+            "bookable_equipment": ""
+        }
+    }
+]
