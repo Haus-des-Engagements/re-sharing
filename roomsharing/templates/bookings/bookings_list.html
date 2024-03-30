@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <h1>{% trans "All bookings" %}</h1>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <td>ID</td>
+        <td>Booking Group</td>
+        <td>From</td>
+        <td>To</td>
+        <td>Room</td>
+        <td>Organization</td>
+        <td>User</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for booking in bookings_list %}
+        <tr>
+          <td>{{ booking.id }}</td>
+          <td>{{ booking.booking_group }}</td>
+          <td>{{ booking.timespan.lower }}</td>
+          <td>{{ booking.timespan.upper }}</td>
+          <td>{{ booking.room }}</td>
+          <td>{{ booking.booking_group.organization }}</td>
+          <td>{{ booking.booking_group.user }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

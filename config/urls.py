@@ -21,7 +21,7 @@ urlpatterns = [
     path("rooms/", include("roomsharing.rooms.urls", namespace="rooms")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    # ...
+    path("bookings/", include("roomsharing.bookings.urls", namespace="bookings")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
