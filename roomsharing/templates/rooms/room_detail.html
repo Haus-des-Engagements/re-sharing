@@ -14,7 +14,7 @@
     <strong>{% trans "Description" %}:</strong> {{ room.description }}
   </p>
   <p>
-    <strong>{% trans "Square Meters" %}:</strong> {{ room.square_meters }}
+    <strong>{% trans "Square Meters" %}:</strong> {{ room.square_meters|default_if_none:"" }}
   </p>
   <p>
     <strong>{% trans "Maximum Number of Persons" %}:</strong> {{ room.max_persons }}
