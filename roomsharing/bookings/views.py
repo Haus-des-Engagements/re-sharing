@@ -14,6 +14,3 @@ class BookingsListView(LoginRequiredMixin, ListView):
 
     ordering = ["id"]
     template_name = "bookings/bookings_list.html"
-
-
-bookings_list_view = BookingsListView.as_view()
