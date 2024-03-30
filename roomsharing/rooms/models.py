@@ -2,6 +2,7 @@ from django.db.models import CharField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
 from django.db.models import TextField
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
@@ -24,3 +25,6 @@ class Room(Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("rooms:detail", kwargs={"slug": self.slug})
