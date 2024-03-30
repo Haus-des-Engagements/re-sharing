@@ -1,5 +1,7 @@
 import pytest
 
+from roomsharing.rooms.models import Room
+from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.models import User
 from roomsharing.users.tests.factories import UserFactory
 
@@ -12,3 +14,8 @@ def _media_storage(settings, tmpdir) -> None:
 @pytest.fixture()
 def user(db) -> User:
     return UserFactory()
+
+
+@pytest.fixture()
+def room(db) -> Room:
+    return RoomFactory()
