@@ -329,3 +329,4 @@ dump.rdb
 roomsharing/media/
 
 .pytest_cache/
+.vscode/launch.json
