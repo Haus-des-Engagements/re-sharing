@@ -1,12 +1,11 @@
-import os
 import json
+import os
 import time
 
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-
 
 
 ## you can run this with python manage.py fetch_teamup
@@ -57,20 +56,31 @@ class Command(BaseCommand):
 
                     series_id = event["series_id"]
                     sorted_events.setdefault(series_id, []).append(event)
-                
+
                 file_name = time.strftime("%Y%m%d-%H%M%S") + ".json"
 
                 try:
-                    sorted_events_json = json.dumps(sorted_events, ensure_ascii=False, indent=4)
-                    
+                    sorted_events_json = json.dumps(
+                        sorted_events,
+                        ensure_ascii=False,
+                        indent=4,
+                    )
+
                     # Speichere den JSON-String in einer Datei.
                     # Da default_storage.save einen Namen und ein ContentFile (oder ähnliches) erwartet,
                     # verwenden wir ContentFile, um den JSON-String zu speichern.
-                    cachfile = default_storage.save(f"teamup/{file_name}", ContentFile(sorted_events_json.encode('utf-8')))
-                    
-                    self.stdout.write(self.style.SUCCESS(f"Successfully wrote to {file_name}"))
+                    cachfile = default_storage.save(
+                        f"teamup/{file_name}",
+                        ContentFile(sorted_events_json.encode("utf-8")),
+                    )
+
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Successfully wrote to {file_name}"),
+                    )
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"Error writing to {file_name}: {e}"))
+                    self.stdout.write(
+                        self.style.ERROR(f"Error writing to {file_name}: {e}"),
+                    )
         else:
             self.stdout.write("no Teamup Api Key")
 
