@@ -7,7 +7,7 @@ from .models import Booking
 
 
 @method_decorator(permission_required("is_staff"), name="dispatch")
-class BookingsListView(LoginRequiredMixin, ListView):
+class BookingListView(LoginRequiredMixin, ListView):
     context_object_name = "bookings_list"
 
     model = Booking

@@ -73,6 +73,10 @@ class Booking(Model):
         constraints = [
             ExclusionConstraint(
                 name="exclude_overlapping_reservations",
+                violation_error_message=_(
+                    "The requested timespan overlaps with an existing booking for this "
+                    "room. Please chose another timespan.",
+                ),
                 expressions=[
                     ("timespan", RangeOperators.OVERLAPS),
                     ("room", RangeOperators.EQUAL),
