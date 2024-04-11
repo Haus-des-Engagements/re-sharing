@@ -1,1 +1,18 @@
 {% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+  {% trans "Roomsharing | Home" %}
+{% endblock title %}
+{% block content_title %}
+{% endblock content_title %}
+{% block content %}
+  <div class="col-md-10 mt-5">
+    <h1 class="display-4">Hi!!</h1>
+    <p class="lead">{% trans "This is Roomsharing" %}.</p>
+    <hr class="my-4" />
+    <p>{% trans "We currently work on making the room booking a lot easier." %}</p>
+  </div>
+{% endblock content %}
