@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
@@ -30,7 +29,7 @@ class BookingGroupFactory(DjangoModelFactory):
 
 
 class BookingFactory(DjangoModelFactory):
-    uuid = uuid.uuid4()
+    uuid = Faker("uuid4")
     room = SubFactory(RoomFactory)
     booking_group = SubFactory(BookingGroupFactory)
 
