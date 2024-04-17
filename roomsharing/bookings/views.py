@@ -1,8 +1,10 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
-from django.views.generic import CreateView
 from django.views.generic import ListView
 
 from .forms import BookingForm
@@ -35,16 +37,26 @@ class MyBookingsListView(LoginRequiredMixin, ListView):
     template_name = "bookings/bookings_list.html"
 
 
-class BookingCreateView(LoginRequiredMixin, CreateView):
-    template_name = "bookings/booking_form.html"
-    form_class = BookingForm
-    success_url = reverse_lazy("bookings:bookings_list")
+@login_required
+def create_booking(request):
+    if request.method == "GET":
+        # Extract startdate and starttime from query parameters
+        startdate = request.GET.get("startdate")
+        starttime = request.GET.get("starttime")
+        user = request.user
+        # Set initial data for the form
+        initial_data = {}
+        if startdate:
+            initial_data["startdate"] = startdate
+        if starttime:
+            initial_data["starttime"] = starttime
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
+        form = BookingForm(user=user, initial=initial_data)
+        return render(request, "bookings/booking_form.html", {"form": form})
+    if request.method == "POST":
+        form = BookingForm(data=request.POST, user=request.user)
+        if form.is_valid():
+            form.save(user=request.user)
+            return redirect(reverse_lazy("bookings:bookings_list"))
 
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        return super().form_valid(form)
+    return render(request, "bookings/booking_form.html", {"form": form})
