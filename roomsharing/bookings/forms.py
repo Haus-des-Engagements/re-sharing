@@ -14,7 +14,7 @@ class BookingForm(forms.ModelForm):
         widget=forms.DateInput(attrs={"type": "date"}),
     )
     starttime = forms.ChoiceField(label=_("Start Time"))
-    duration = forms.ChoiceField(label=_("Duration (minutes)"))
+    duration = forms.ChoiceField(label=_("Duration"))
     organization = forms.ModelChoiceField(
         queryset=None,
         label=_("Organization"),

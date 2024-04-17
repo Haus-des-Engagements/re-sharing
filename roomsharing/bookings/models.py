@@ -11,8 +11,8 @@ from django.db.models import UUIDField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
+from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
-from roomsharing.users.models import Organization
 from roomsharing.users.models import User
 
 

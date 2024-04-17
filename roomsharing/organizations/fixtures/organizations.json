@@ -1,0 +1,39 @@
+[
+    {
+        "model": "organizations.organization",
+        "pk": 1,
+        "fields": {
+            "name": "Haus des Engagements e.V.",
+            "slug": "haus-des-engagements-e-v",
+            "street": "Rehlingstraße",
+            "house_number": "9",
+            "zip_code": "79100",
+            "city": "Freiburg im Breisgau"
+        }
+    },
+  {
+        "model": "organizations.organization",
+        "pk": 2,
+        "fields": {
+            "name": "RSTGH",
+            "slug": "rstgh",
+            "street": "Rehlingstraße",
+            "house_number": "9",
+            "zip_code": "79100",
+            "city": "Freiburg im Breisgau"
+        }
+    },
+  {
+        "model": "organizations.organization",
+        "pk": 3,
+        "fields": {
+            "name": "kaliz",
+            "slug": "kaliz",
+            "street": "Rehlingstraße",
+            "house_number": "9",
+            "zip_code": "79100",
+            "city": "Freiburg im Breisgau"
+        }
+    }
+
+]
