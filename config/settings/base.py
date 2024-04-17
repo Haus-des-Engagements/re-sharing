@@ -89,6 +89,7 @@ LOCAL_APPS = [
     "roomsharing.users",
     "roomsharing.rooms",
     "roomsharing.bookings",
+    "roomsharing.organizations",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
