@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Organizations" %}
+{% endblock title %}
+{% block content %}
+  <h2>Organization List</h2>
+  <ul>
+    {% for organization in organizations %}
+      <li>
+        <a href="{% url 'organizations:organization_detail' organization.slug %}">{{ organization.name }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock content %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {{ organization.name }}
+{% endblock title %}
+{% block content %}
+  <h1>{{ organization.name }}</h1>
+{% endblock content %}
