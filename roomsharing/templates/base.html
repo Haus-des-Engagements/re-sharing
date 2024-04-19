@@ -67,6 +67,10 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'bookings:my_bookings_list' %}">{% trans "My Bookings" %}</a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link"
+                     href="{% url 'organizations:my_organization_list' %}">{% trans "My Organizations" %}</a>
+                </li>
                 {% if request.user.is_authenticated %}
                   <li class="nav-item">
                     <a class="nav-link" href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
