@@ -55,5 +55,20 @@
       </tr>
     </table>
   </p>
-  <a href="{% url 'rooms:list' %}">{% trans "Back to Room List" %}</a>
+  <br />
+  <h2>Bookings</h2>
+  <ul>
+    {% for booking in bookings %}<li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}</li>{% endfor %}
+  </ul>
+  <form autocomplete="off">
+    <div class="form-group">
+      <input type="button"
+             class="form-control form-control-lg mb-4 search-form"
+             hx-post="{% url 'rooms:get-weekly-bookings' room.slug %}"
+             hx-target='#results'
+             hx-trigger="click" />
+      Next
+    </div>
+  </form>
+  <div id="results"></div>
 {% endblock content %}
