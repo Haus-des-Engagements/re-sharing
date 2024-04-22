@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from roomsharing.rooms.tests.factories import RoomFactory
-from roomsharing.rooms.views import RoomDetailView
 from roomsharing.rooms.views import RoomListView
+from roomsharing.rooms.views import room_detail_view
 
 
 class RoomDetailViewTest(TestCase):
@@ -18,7 +18,7 @@ class RoomDetailViewTest(TestCase):
         request = self.factory.get(
             reverse("rooms:detail", kwargs={"slug": self.room.slug}),
         )
-        response = RoomDetailView.as_view()(request, slug=self.room.slug)
+        response = room_detail_view(request, slug=self.room.slug)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(response, self.room.name)
 
