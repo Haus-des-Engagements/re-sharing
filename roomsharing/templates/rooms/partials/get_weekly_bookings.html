@@ -1,0 +1,22 @@
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th>Time</th>
+      {% for day in weekdays %}
+        <th>{{ day|date:"l d.m" }}</th>
+        {# Format the day variable to get the weekday name #}
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for slot in time_slots %}
+      <tr>
+        <td>{{ slot.time|date:"H:i" }}</td>
+        {# Format the time variable to get the time in "Hour:Minute" format #}
+        {% for booked in slot.booked %}
+          <td class=" {% if booked %}table-primary  {# your CSS class to highlight the cell #}{% endif %} "></td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
