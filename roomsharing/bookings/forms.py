@@ -100,3 +100,36 @@ class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
         fields = ["room", "startdate", "starttime", "duration", "organization"]
+
+
+FREQUENCIES = [
+    ("MONTHLY", "Monthly"),
+    ("WEEKLY", "Weekly"),
+    ("DAILY", "Daily"),
+]
+
+WEEKDAYS = [
+    ("MO", "Monday"),
+    ("TU", "Tuesday"),
+    ("WE", "Wednesday"),
+    ("TH", "Thursday"),
+    ("FR", "Friday"),
+    ("SA", "Saturday"),
+    ("SU", "Sunday"),
+]
+
+
+class RecurrenceForm(forms.Form):
+    start_date = forms.DateField(
+        label=_("Start Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    end_date = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    frequency = forms.ChoiceField(choices=FREQUENCIES)
+    interval = forms.IntegerField(required=False)
+    bysetpos = forms.IntegerField(required=False)
+    byweekday = forms.MultipleChoiceField(choices=WEEKDAYS, required=False)
+    bymonthday = forms.IntegerField(required=False)
