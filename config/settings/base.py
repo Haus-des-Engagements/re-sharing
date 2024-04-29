@@ -83,6 +83,7 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
+    "recurrence",
 ]
 
 LOCAL_APPS = [

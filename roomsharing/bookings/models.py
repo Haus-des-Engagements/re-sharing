@@ -3,13 +3,17 @@ import uuid
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
+from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import CharField
+from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import Model
+from django.db.models import PositiveIntegerField
 from django.db.models import UUIDField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from recurrence.fields import RecurrenceField
 
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
@@ -43,6 +47,34 @@ class BookingGroup(Model):
         return self.title
 
 
+class RecurrencePattern(Model):
+    recurrence = RecurrenceField(_("Recurrence"))
+    start_datetime = DateTimeField(_("Start datetime"))
+    duration = PositiveIntegerField(_("Duration in minutes"))
+    recurrence_end = DateTimeField(_("End datetime"))
+    room = ForeignKey(
+        Room,
+        verbose_name=_("Room"),
+        on_delete=PROTECT,
+        related_name="recurrencepatterns_of_room",
+        related_query_name="recurrencepattern_of_room",
+    )
+    booking_group = ForeignKey(
+        BookingGroup,
+        verbose_name=_("Booking Group"),
+        on_delete=PROTECT,
+        related_name="recurrencepatterns_of_bookinggroup",
+        related_query_name="recurrencepattern_of_bookinggroup",
+    )
+
+    class Meta:
+        verbose_name = _("Recurrence Pattern")
+        verbose_name_plural = _("Recurrence Patterns")
+
+    def __str__(self):
+        return str(self.id)
+
+
 class Booking(Model):
     uuid = UUIDField(
         db_index=True,
@@ -64,6 +96,15 @@ class Booking(Model):
         on_delete=PROTECT,
         related_name="bookings_of_bookinggroup",
         related_query_name="booking_of_bookinggroup",
+    )
+    recurrence_pattern = ForeignKey(
+        RecurrencePattern,
+        verbose_name=_("Recurrence Pattern"),
+        on_delete=CASCADE,
+        related_name="bookings_of_recurrencepattern",
+        related_query_name="booking_of_recurrencepattern",
+        null=True,
+        blank=True,
     )
 
     class Meta:

@@ -3,6 +3,7 @@ from django.contrib import admin
 
 from .models import Booking
 from .models import BookingGroup
+from .models import RecurrencePattern
 
 
 @admin.register(Booking)
@@ -25,3 +26,6 @@ class BookingGroupAdmin(admin.ModelAdmin):
     search_fields = ["id", "title", "organization", "user"]
     ordering = ["id"]
     inlines = [BookingInline]
+
+
+admin.site.register(RecurrencePattern)

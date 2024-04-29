@@ -5,8 +5,10 @@
 {% load tz %}
 
 {% block content %}
+  <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
   <form method="post">
     {% csrf_token %}
+    {{ form.media }}
     {{ form.as_p }}
     <button type="submit">{% trans "Submit" %}</button>
   </form>
