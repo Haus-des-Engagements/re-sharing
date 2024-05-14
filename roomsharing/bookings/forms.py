@@ -5,7 +5,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import Booking
-from .models import BookingGroup
 
 
 class BookingForm(forms.ModelForm):
@@ -18,7 +17,7 @@ class BookingForm(forms.ModelForm):
     organization = forms.ModelChoiceField(
         queryset=None,
         label=_("Organization"),
-    )  # Define the organization field
+    )
     title = forms.CharField(label=_("Title"))
 
     def __init__(self, user, *args, **kwargs):
@@ -86,17 +85,44 @@ class BookingForm(forms.ModelForm):
 
     def save(self, user):
         booking = super().save(commit=False)
-        booking_group = BookingGroup.objects.create(
-            title=self.cleaned_data["title"],
-            user=user,
-            organization=self.cleaned_data["organization"],
-        )
-        booking_group.save()
-        booking.booking_group = booking_group
+        booking.user = user
         booking.timespan = self.cleaned_data["timespan"]
         booking.save()
         return booking
 
     class Meta:
         model = Booking
-        fields = ["room", "startdate", "starttime", "duration", "organization"]
+        fields = ["room", "startdate", "starttime", "duration", "organization", "title"]
+
+
+FREQUENCIES = [
+    ("MONTHLY", "Monthly"),
+    ("WEEKLY", "Weekly"),
+    ("DAILY", "Daily"),
+]
+
+WEEKDAYS = [
+    ("MO", "Monday"),
+    ("TU", "Tuesday"),
+    ("WE", "Wednesday"),
+    ("TH", "Thursday"),
+    ("FR", "Friday"),
+    ("SA", "Saturday"),
+    ("SU", "Sunday"),
+]
+
+
+class RecurrenceForm(forms.Form):
+    start_date = forms.DateField(
+        label=_("Start Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    end_date = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    frequency = forms.ChoiceField(choices=FREQUENCIES)
+    interval = forms.IntegerField(required=False)
+    bysetpos = forms.IntegerField(required=False)
+    byweekday = forms.MultipleChoiceField(choices=WEEKDAYS, required=False)
+    bymonthday = forms.IntegerField(required=False)

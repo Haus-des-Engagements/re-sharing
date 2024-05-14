@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Recurrence Form</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit" />
+  </form>
+  {% if occurrences %}
+    <h2>Occurrences:</h2>
+    <ul>
+      {% for date in occurrences %}<li>{{ date }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+{% endblock content %}
