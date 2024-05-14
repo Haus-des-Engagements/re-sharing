@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import CharField
+from django.db.models import DateField
 from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import Model
@@ -51,7 +52,7 @@ class RecurrencePattern(Model):
     recurrence = RecurrenceField(_("Recurrence"))
     start_datetime = DateTimeField(_("Start datetime"))
     duration = PositiveIntegerField(_("Duration in minutes"))
-    recurrence_end = DateTimeField(_("End datetime"))
+    recurrence_end = DateField(_("End date"), null=True)
     room = ForeignKey(
         Room,
         verbose_name=_("Room"),
@@ -59,12 +60,20 @@ class RecurrencePattern(Model):
         related_name="recurrencepatterns_of_room",
         related_query_name="recurrencepattern_of_room",
     )
-    booking_group = ForeignKey(
-        BookingGroup,
-        verbose_name=_("Booking Group"),
+    title = CharField(_("Title"), max_length=160)
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Booking Organization"),
         on_delete=PROTECT,
-        related_name="recurrencepatterns_of_bookinggroup",
-        related_query_name="recurrencepattern_of_bookinggroup",
+        related_name="recurrencepatterns_of_organization",
+        related_query_name="recurrencepattern_of_organization",
+    )
+    user = ForeignKey(
+        User,
+        verbose_name=_("Initial Booking User"),
+        on_delete=PROTECT,
+        related_name="recurrencepatterns_of_user",
+        related_query_name="recurrencepattern_of_user",
     )
 
     class Meta:
@@ -90,12 +99,20 @@ class Booking(Model):
         related_name="bookings_of_room",
         related_query_name="booking_of_room",
     )
-    booking_group = ForeignKey(
-        BookingGroup,
-        verbose_name=_("Booking Group"),
+    title = CharField(_("Title"), max_length=160)
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Booking Organization"),
         on_delete=PROTECT,
-        related_name="bookings_of_bookinggroup",
-        related_query_name="booking_of_bookinggroup",
+        related_name="bookings_of_organization",
+        related_query_name="booking_of_organization",
+    )
+    user = ForeignKey(
+        User,
+        verbose_name=_("Initial Booking User"),
+        on_delete=PROTECT,
+        related_name="bookings_of_user",
+        related_query_name="booking_of_user",
     )
     recurrence_pattern = ForeignKey(
         RecurrencePattern,

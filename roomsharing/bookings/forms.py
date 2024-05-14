@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 from recurrence.forms import RecurrenceField
 
 from .models import Booking
-from .models import BookingGroup
 from .models import RecurrencePattern
 
 
@@ -20,8 +19,7 @@ class BookingForm(forms.ModelForm):
     organization = forms.ModelChoiceField(
         queryset=None,
         label=_("Organization"),
-    )  # Define the organization field
-    title = forms.CharField(label=_("Title"))
+    )
     recurrence = RecurrenceField(required=False)
 
     def __init__(self, user, *args, **kwargs):
@@ -97,9 +95,10 @@ class BookingForm(forms.ModelForm):
                             float(cleaned_data.get("duration")) * 60,
                         ),  # Converting hours to minutes
                         recurrence=recurrence,
-                        recurrence_end=start_datetime
-                        + datetime.timedelta(days=365 * 3),  # For 3 years ahead
+                        recurrence_end=None,
                         room=cleaned_data.get("room"),
+                        organization=cleaned_data.get("organization"),
+                        title=cleaned_data.get("title"),
                     )
                     cleaned_data["recurrence_pattern"] = recurrence_pattern
 
@@ -107,24 +106,49 @@ class BookingForm(forms.ModelForm):
 
     def save(self, user):
         booking = super().save(commit=False)
-        booking_group = BookingGroup.objects.create(
-            title=self.cleaned_data["title"],
-            user=user,
-            organization=self.cleaned_data["organization"],
-        )
-        booking_group.save()
-        booking.booking_group = booking_group
+        booking.user = user
         booking.timespan = self.cleaned_data["timespan"]
-        if self.cleaned_data.get("recurrence_pattern") is not None:
-            r_pattern = self.cleaned_data.get("recurrence_pattern")
-            r_pattern.booking_group = booking.booking_group
-            r_pattern.save()
-            booking.recurrence_pattern = r_pattern
-        else:
+        if self.cleaned_data.get("recurrence_pattern") is None:
             booking.recurrence_pattern = None
-        booking.save()
-        return booking
+            booking.save()
+
+        else:
+            # save the recurrence pattern
+            r_pattern = self.cleaned_data.get("recurrence_pattern")
+            r_pattern.user = user
+            if (
+                r_pattern.recurrence.rrules[0].until is not None
+                or r_pattern.recurrence.rrules[0].count is not None
+            ):
+                occurrence = r_pattern.recurrence.occurrences(
+                    dtstart=timezone.make_naive(booking.timespan[0]),
+                )
+                r_pattern.recurrence_end = timezone.make_aware(occurrence[-1])
+                end_date = r_pattern.recurrence_end
+
+            else:
+                end_date = booking.timespan[1] + datetime.timedelta(weeks=52)
+            r_pattern.save()
+
+            for dt in r_pattern.recurrence.between(
+                timezone.make_naive(booking.timespan[0]),
+                timezone.make_naive(end_date),
+                inc=True,
+            ):
+                start = booking.timespan[0].time()
+                start_datetime = dt.replace(hour=start.hour, minute=start.minute)
+                end = booking.timespan[1].time()
+                end_datetime = dt.replace(hour=end.hour, minute=end.minute)
+
+                Booking.objects.create(
+                    timespan=(start_datetime, end_datetime),
+                    room=booking.room,
+                    title=booking.title,
+                    organization=booking.organization,
+                    user=user,
+                    recurrence_pattern=r_pattern,
+                )
 
     class Meta:
         model = Booking
-        fields = ["room", "startdate", "starttime", "duration", "organization"]
+        fields = ["room", "startdate", "starttime", "duration", "organization", "title"]

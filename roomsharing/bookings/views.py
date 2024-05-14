@@ -19,7 +19,7 @@ class BookingListView(LoginRequiredMixin, ListView):
 
     queryset = Booking.objects.all()
 
-    ordering = ["id"]
+    ordering = ["timespan"]
     template_name = "bookings/bookings_list.html"
 
 
@@ -30,10 +30,10 @@ class MyBookingsListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user_organizations = self.request.user.organizations.all()
         return Booking.objects.filter(
-            booking_group__organization__in=user_organizations,
+            organization__in=user_organizations,
         )
 
-    ordering = ["id"]
+    ordering = ["timespan"]
     template_name = "bookings/bookings_list.html"
 
 
