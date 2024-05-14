@@ -13,7 +13,12 @@ class BookingForm(forms.ModelForm):
         widget=forms.DateInput(attrs={"type": "date"}),
     )
     starttime = forms.ChoiceField(label=_("Start Time"))
-    duration = forms.ChoiceField(label=_("Duration"))
+    enddate = forms.DateField(
+        label=_("Start Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    endtime = forms.ChoiceField(label=_("Start Time"))
+
     organization = forms.ModelChoiceField(
         queryset=None,
         label=_("Organization"),
@@ -22,7 +27,12 @@ class BookingForm(forms.ModelForm):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["organization"].queryset = user.organizations.all()
+        organizations = user.organizations.all()
+        self.fields["organization"].queryset = organizations
+
+        if organizations.exists():
+            self.fields["organization"].initial = organizations.first()
+
         self.fields["starttime"].choices = [
             (time.strftime("%H:%M"), time.strftime("%H:%M"))
             for time in (
@@ -34,20 +44,17 @@ class BookingForm(forms.ModelForm):
                 for minute in (0, 30)
             )
         ]
-
-        # Generate choices for duration dropdown
-        self.fields["duration"].choices = [
-            (str(mins / 60), f"{mins / 60:.1f} hour(s)") for mins in range(30, 481, 30)
-        ]
+        self.fields["endtime"].choices = self.fields["starttime"].choices
 
     def clean(self):
         cleaned_data = super().clean()
         room = cleaned_data.get("room")
         startdate = cleaned_data.get("startdate")
         starttime = cleaned_data.get("starttime")
-        duration = cleaned_data.get("duration")
+        enddate = cleaned_data.get("enddate")
+        endtime = cleaned_data.get("endtime")
 
-        if room and startdate and starttime:
+        if room and startdate and starttime and enddate and endtime:
             starttime_as_datetime = datetime.datetime.strptime(
                 starttime,
                 "%H:%M",
@@ -64,12 +71,21 @@ class BookingForm(forms.ModelForm):
                 ),
             )
 
-            duration_float = float(duration)
-            if duration_float % 0.5 != 0:
-                msg = _("Duration must be selected in 30-minute intervals.")
-                self.add_error("duration", msg)
+            endtime_as_datetime = datetime.datetime.strptime(
+                endtime,
+                "%H:%M",
+            ).astimezone(datetime.UTC)
 
-            end_datetime = start_datetime + datetime.timedelta(hours=duration_float)
+            if endtime_as_datetime.minute not in [0, 30]:
+                msg = _("Start time must be selected in 30-minute intervals.")
+                self.add_error("starttime", msg)
+
+            end_datetime = timezone.make_aware(
+                datetime.datetime.combine(
+                    enddate,
+                    endtime_as_datetime.time(),
+                ),
+            )
 
             booking_overlap = Booking.objects.filter(
                 status=Booking.Status.CONFIRMED,
@@ -94,7 +110,7 @@ class BookingForm(forms.ModelForm):
 
     class Meta:
         model = Booking
-        fields = ["room", "startdate", "starttime", "duration", "organization", "title"]
+        fields = ["room", "organization", "title"]
 
 
 FREQUENCIES = [

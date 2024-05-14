@@ -53,6 +53,8 @@ def create_booking(request):
         # Extract startdate and starttime from query parameters
         startdate = request.GET.get("startdate")
         starttime = request.GET.get("starttime")
+        enddate = request.GET.get("enddate")
+        endtime = request.GET.get("endtime")
         user = request.user
         # Set initial data for the form
         initial_data = {}
@@ -60,6 +62,10 @@ def create_booking(request):
             initial_data["startdate"] = startdate
         if starttime:
             initial_data["starttime"] = starttime
+        if enddate:
+            initial_data["enddate"] = enddate
+        if endtime:
+            initial_data["endtime"] = endtime
 
         form = BookingForm(user=user, initial=initial_data)
         return render(request, "bookings/booking_form.html", {"form": form})
