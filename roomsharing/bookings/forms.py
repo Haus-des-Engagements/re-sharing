@@ -72,6 +72,7 @@ class BookingForm(forms.ModelForm):
             end_datetime = start_datetime + datetime.timedelta(hours=duration_float)
 
             booking_overlap = Booking.objects.filter(
+                status=Booking.Status.CONFIRMED,
                 room=room,
                 timespan__overlap=(start_datetime, end_datetime),
             )
@@ -87,6 +88,7 @@ class BookingForm(forms.ModelForm):
         booking = super().save(commit=False)
         booking.user = user
         booking.timespan = self.cleaned_data["timespan"]
+        booking.status = Booking.Status.PENDING
         booking.save()
         return booking
 
