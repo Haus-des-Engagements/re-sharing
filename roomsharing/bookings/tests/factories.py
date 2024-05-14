@@ -11,27 +11,17 @@ from factory.fuzzy import FuzzyDateTime
 from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
-from roomsharing.bookings.models import BookingGroup
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 
 
-class BookingGroupFactory(DjangoModelFactory):
+class BookingFactory(DjangoModelFactory):
     title = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.title))
     organization = SubFactory(OrganizationFactory)
     user = SubFactory(UserFactory)
-
-    class Meta:
-        model = BookingGroup
-        django_get_or_create = ["slug"]
-
-
-class BookingFactory(DjangoModelFactory):
-    uuid = Faker("uuid4")
     room = SubFactory(RoomFactory)
-    booking_group = SubFactory(BookingGroupFactory)
 
     @LazyAttribute
     def timespan(self):
@@ -46,4 +36,4 @@ class BookingFactory(DjangoModelFactory):
 
     class Meta:
         model = Booking
-        django_get_or_create = ["uuid"]
+        django_get_or_create = ["slug"]

@@ -6,11 +6,12 @@
 
 {% block content %}
   <h1>{% trans "All bookings" %}</h1>
+  <a href="{% url 'bookings:booking_create' %}">New Booking</a>
   <table class="table table-bordered">
     <thead>
       <tr>
         <td>ID</td>
-        <td>Booking Group</td>
+        <td>Title</td>
         <td>From</td>
         <td>To</td>
         <td>Room</td>
@@ -22,12 +23,12 @@
       {% for booking in bookings_list %}
         <tr>
           <td>{{ booking.id }}</td>
-          <td>{{ booking.booking_group }}</td>
+          <td>{{ booking.title }}</td>
           <td>{{ booking.timespan.lower }}</td>
           <td>{{ booking.timespan.upper }}</td>
           <td>{{ booking.room }}</td>
-          <td>{{ booking.booking_group.organization }}</td>
-          <td>{{ booking.booking_group.user }}</td>
+          <td>{{ booking.organization }}</td>
+          <td>{{ booking.user }}</td>
         </tr>
       {% endfor %}
     </tbody>

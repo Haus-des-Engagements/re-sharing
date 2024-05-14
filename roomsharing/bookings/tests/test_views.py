@@ -9,7 +9,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from roomsharing.bookings.tests.factories import BookingFactory
-from roomsharing.bookings.tests.factories import BookingGroupFactory
 from roomsharing.bookings.views import MyBookingsListView
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
@@ -42,11 +41,9 @@ class TestMyBookingListView(TestCase):
 
         o1 = OrganizationFactory()
         self.user.organizations.set([o1])
-        bg = BookingGroupFactory(user=self.user, organization=o1)
-        BookingFactory(booking_group=bg)
-        BookingFactory(booking_group=bg)
         total_bookings_for_o1 = 2
-        BookingFactory()
+        BookingFactory(organization=o1)
+        BookingFactory(organization=o1)
 
         client.login(username=self.user.email, password=self.user.password)
         response = client.get(reverse("bookings:my_bookings_list"))

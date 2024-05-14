@@ -1,72 +1,26 @@
 [
-    {
-        "model": "bookings.bookinggroup",
-        "pk": 1,
-        "fields": {
-            "title": "Bookinggroup for 1 date",
-            "slug": "bookinggroup-for-1-date",
-            "organization": 1,
-            "user": 1
-        }
-    },
   {
         "model": "bookings.booking",
         "pk": 1,
         "fields": {
-            "uuid": "bfac4c8e-3e99-4610-92ed-3668db695826",
+            "title": "Booking for 1 date",
+            "slug": "booking-for-1-date",
             "timespan": ["2024-01-09 09:00:00","2024-01-09 10:00:00"],
-            "booking_group": 1,
+            "user": 1,
+            "organization": 1,
             "room": 1
-        }
-    },
-  {
-        "model": "bookings.bookinggroup",
-        "pk": 2,
-        "fields": {
-            "title": "Bookinggroup for 2 dates",
-            "slug": "bookinggroup-for-2-dates",
-            "organization": 2,
-            "user": 1
         }
     },
   {
         "model": "bookings.booking",
         "pk": 2,
         "fields": {
-            "uuid": "0c53f7a3-02f7-45ab-8e53-5059de695afb",
+            "title": "Booking for 1 date",
+            "slug": "booking-for-2nd-date",
             "timespan": ["2024-01-10 10:00:00","2024-01-10 11:00:00"],
-            "booking_group": 2,
-            "room": 1
-        }
-    },
-  {
-        "model": "bookings.booking",
-        "pk": 3,
-        "fields": {
-            "uuid": "cbdc4f36-8f74-4d91-a754-5d45f44235d5",
-            "timespan": ["2024-01-10 12:00:00","2024-01-10 15:00:00"],
-            "booking_group": 2,
-            "room": 1
-        }
-    },
-  {
-        "model": "bookings.bookinggroup",
-        "pk": 3,
-        "fields": {
-            "title": "Bookinggroup for 1 date",
-            "slug": "bookinggroup-for-1-date",
-            "organization": 3,
-            "user": 2
-        }
-    },
-  {
-        "model": "bookings.booking",
-        "pk": 4,
-        "fields": {
-            "uuid": "0d9911f6-09e1-4264-99e3-3141ee22a1f8",
-            "timespan": ["2024-01-11 16:00:00","2024-01-11 21:00:00"],
-            "booking_group": 3,
-            "room": 1
+            "organization": 2,
+            "room": 1,
+            "user": 1
         }
     }
 ]
