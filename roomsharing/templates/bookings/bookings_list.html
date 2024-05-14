@@ -14,6 +14,7 @@
         <td>Title</td>
         <td>From</td>
         <td>To</td>
+        <td>Status</td>
         <td>Room</td>
         <td>Organization</td>
         <td>User</td>
@@ -26,6 +27,7 @@
           <td>{{ booking.title }}</td>
           <td>{{ booking.timespan.lower }}</td>
           <td>{{ booking.timespan.upper }}</td>
+          <td>{{ booking.get_status_display }}</td>
           <td>{{ booking.room }}</td>
           <td>{{ booking.organization }}</td>
           <td>{{ booking.user }}</td>

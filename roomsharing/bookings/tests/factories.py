@@ -22,6 +22,7 @@ class BookingFactory(DjangoModelFactory):
     organization = SubFactory(OrganizationFactory)
     user = SubFactory(UserFactory)
     room = SubFactory(RoomFactory)
+    status = Booking.Status.CONFIRMED
 
     @LazyAttribute
     def timespan(self):

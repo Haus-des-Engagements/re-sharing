@@ -4,7 +4,10 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db.models import PROTECT
 from django.db.models import CharField
 from django.db.models import ForeignKey
+from django.db.models import IntegerChoices
+from django.db.models import IntegerField
 from django.db.models import Model
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
@@ -14,6 +17,11 @@ from roomsharing.users.models import User
 
 
 class Booking(Model):
+    class Status(IntegerChoices):
+        PENDING = 1, _("Pending")
+        CONFIRMED = 2, _("Confirmed")
+        CANCELLED = 3, _("Cancelled")
+
     title = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="title")
     organization = ForeignKey(
@@ -38,6 +46,7 @@ class Booking(Model):
         related_name="bookings_of_room",
         related_query_name="booking_of_room",
     )
+    status = IntegerField(choices=Status.choices)
 
     class Meta:
         verbose_name = _("Booking")
@@ -54,8 +63,9 @@ class Booking(Model):
                     ("timespan", RangeOperators.OVERLAPS),
                     ("room", RangeOperators.EQUAL),
                 ],
+                condition=Q(status=2),  # 2 = CONFIRMED
             ),
         ]
 
     def __str__(self):
-        return str(self.uuid)
+        return str(self.title)
