@@ -131,16 +131,27 @@ WEEKDAYS = [
 
 
 class RecurrenceForm(forms.Form):
+    RECURRENCE_CHOICES = [
+        ("count", _("after x times")),
+        ("end_date", _("at date")),
+        ("none", _("Never")),
+    ]
+    recurrence_choice = forms.ChoiceField(
+        choices=RECURRENCE_CHOICES,
+        initial="none",
+        label=_("Ends"),
+    )
     start_date = forms.DateField(
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
+    interval = forms.IntegerField(required=False, label="Wiederholen alle")
+    frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
+    bysetpos = forms.IntegerField(required=False)
+    byweekday = forms.MultipleChoiceField(choices=WEEKDAYS, required=False)
+    bymonthday = forms.IntegerField(required=False)
     end_date = forms.DateField(
         label=_("End Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
-    frequency = forms.ChoiceField(choices=FREQUENCIES)
-    interval = forms.IntegerField(required=False)
-    bysetpos = forms.IntegerField(required=False)
-    byweekday = forms.MultipleChoiceField(choices=WEEKDAYS, required=False)
-    bymonthday = forms.IntegerField(required=False)
+    count = forms.IntegerField(required=False)
