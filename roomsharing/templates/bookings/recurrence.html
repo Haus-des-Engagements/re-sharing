@@ -4,13 +4,60 @@
   <h2>Recurrence Form</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Submit" />
-  </form>
-  {% if occurrences %}
-    <h2>Occurrences:</h2>
-    <ul>
-      {% for date in occurrences %}<li>{{ date }}</li>{% endfor %}
-    </ul>
-  {% endif %}
+    <div>
+      {{ form.recurrence_choice.label_tag }}
+      {{ form.recurrence_choice }}
+    </div>
+    {# djlint:off #}
+            <div id="count_div" style="display: none;">
+    {# djlint:on #}
+    {{ form.count.label_tag }}
+    {{ form.count }}
+  </div>
+  {# djlint:off #}
+        <div id="end_date_div" style="display: none;">
+  {# djlint:on #}
+  {{ form.end_date.label_tag }}
+  {{ form.end_date }}
+</div>
+<div id="start_date_div">
+  {{ form.start_date.label_tag }}
+  {{ form.start_date }}
+</div>
+<div id="interval_div">
+  {{ form.interval.label_tag }}
+  {{ form.interval }} {{ form.frequency }}
+</div>
+<button type="submit">Submit</button>
+</form>
+{% if occurrences %}
+  <h2>Occurrences:</h2>
+  <ul>
+    {% for date in occurrences %}<li>{{ date }}</li>{% endfor %}
+  </ul>
+{% endif %}
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function() {
+    const recurrenceSelect = document.querySelector('select[name="recurrence_choice"]');
+    const countDiv = document.getElementById('count_div');
+    const endDateDiv = document.getElementById('end_date_div');
+
+    recurrenceSelect.addEventListener('change', function() {
+      switch (this.value) {
+        case 'count':
+          countDiv.style.display = 'block';
+          endDateDiv.style.display = 'none';
+          break;
+        case 'end_date':
+          countDiv.style.display = 'none';
+          endDateDiv.style.display = 'block';
+          break;
+        case 'none':
+          countDiv.style.display = 'none';
+          endDateDiv.style.display = 'none';
+          break;
+      }
+    });
+  });
+</script>
 {% endblock content %}

@@ -8,11 +8,9 @@
   <h1>Raum buchen</h1>
   <form method="post">
     {% csrf_token %}
-    <div>von {{ form.startdate }} - {{ form.starttime }}</div>
-    <div>bis {{ form.enddate }} - {{ form.endtime }}</div>
     <div>
-      <label for="{{ form.duration.id_for_label }}">{{ form.duration.label }}</label>
-      {{ form.duration }}
+      <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+      {{ form.title }}
     </div>
     <div>
       <label for="{{ form.room.id_for_label }}">{{ form.room.label }}</label>
@@ -22,9 +20,11 @@
       <label for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
       {{ form.organization }}
     </div>
+    <div>von {{ form.startdate }} - {{ form.starttime }}</div>
+    <div>bis {{ form.enddate }} - {{ form.endtime }}</div>
     <div>
-      <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
-      {{ form.title }}
+      <label for="{{ form.duration.id_for_label }}">{{ form.duration.label }}</label>
+      {{ form.duration }}
     </div>
     <button type="submit">{% trans "Submit" %}</button>
   </form>

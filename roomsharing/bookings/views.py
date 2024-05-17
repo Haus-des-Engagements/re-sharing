@@ -89,6 +89,16 @@ def recurrence_view(request):
             bysetpos = form.cleaned_data.get("bysetpos")
             byweekday = form.cleaned_data.get("byweekday") or None
             bymonthday = form.cleaned_data.get("bymonthday")
+            recurrence_choice = form.cleaned_data.get("recurrence_choice")
+
+            count = (
+                form.cleaned_data.get("count") if recurrence_choice == "count" else None
+            )
+            end_date = (
+                form.cleaned_data.get("end_date")
+                if recurrence_choice == "end_date"
+                else None
+            )
 
             freq_dict = {
                 "MONTHLY": MONTHLY,
@@ -118,6 +128,7 @@ def recurrence_view(request):
                     bymonthday=bymonthday,
                     dtstart=start_date,
                     until=end_date,
+                    count=count,
                 ),
             )
             return render(
