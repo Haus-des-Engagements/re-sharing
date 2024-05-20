@@ -83,12 +83,16 @@ def recurrence_view(request):
         form = RecurrenceForm(request.POST)
         if form.is_valid():
             start_date = form.cleaned_data.get("start_date")
-            end_date = form.cleaned_data.get("end_date")
             frequency = form.cleaned_data.get("frequency")
             interval = form.cleaned_data.get("interval") or 1
-            bysetpos = form.cleaned_data.get("bysetpos")
+            bysetpos = (
+                int(form.cleaned_data.get("bysetpos"))
+                if form.cleaned_data.get("bysetpos")
+                else None
+            )
             byweekday = form.cleaned_data.get("byweekday") or None
             bymonthday = form.cleaned_data.get("bymonthday")
+            bymonthday = int(bymonthday) if bymonthday else None
             recurrence_choice = form.cleaned_data.get("recurrence_choice")
 
             count = (
@@ -119,14 +123,22 @@ def recurrence_view(request):
             if byweekday:
                 byweekday = [weekdays_dict.get(day) for day in byweekday]
 
+            if freq_dict[frequency] == DAILY:
+                bysetpos = None
+                bymonthday = None
+                byweekday = None
+            elif freq_dict[frequency] == WEEKLY:
+                bysetpos = None
+                bymonthday = None
+
             occurrences = list(
                 rrule(
                     freq_dict[frequency],
                     interval=interval,
-                    bysetpos=bysetpos,
                     byweekday=byweekday,
                     bymonthday=bymonthday,
                     dtstart=start_date,
+                    bysetpos=bysetpos,
                     until=end_date,
                     count=count,
                 ),

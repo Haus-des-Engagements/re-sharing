@@ -4,18 +4,19 @@
   <h2>Recurrence Form</h2>
   <form method="post">
     {% csrf_token %}
+    {{ form.frequency }}
     <div>
       {{ form.recurrence_choice.label_tag }}
       {{ form.recurrence_choice }}
     </div>
     {# djlint:off #}
-            <div id="count_div" style="display: none;">
+    <div id="count_div" style="display: none;">
     {# djlint:on #}
     {{ form.count.label_tag }}
     {{ form.count }}
   </div>
   {# djlint:off #}
-        <div id="end_date_div" style="display: none;">
+    <div id="end_date_div" style="display: none;">
   {# djlint:on #}
   {{ form.end_date.label_tag }}
   {{ form.end_date }}
@@ -26,14 +27,26 @@
 </div>
 <div id="interval_div">
   {{ form.interval.label_tag }}
-  {{ form.interval }} {{ form.frequency }}
+  {{ form.interval }}
+</div>
+<div id="bysetpos_div">
+  {{ form.bysetpos.label_tag }}
+  {{ form.bysetpos }}
+</div>
+<div id="byweekday_div">
+  {{ form.byweekday.label_tag }}
+  {{ form.byweekday }}
+</div>
+<div id="bymonthday_div">
+  {{ form.bymonthday.label_tag }}
+  {{ form.bymonthday }}
 </div>
 <button type="submit">Submit</button>
 </form>
 {% if occurrences %}
   <h2>Occurrences:</h2>
   <ul>
-    {% for date in occurrences %}<li>{{ date }}</li>{% endfor %}
+    {% for date in occurrences %}<li>{{ date|date:"D d.m.Y" }}</li>{% endfor %}
   </ul>
 {% endif %}
 <script type="text/javascript">
@@ -41,6 +54,11 @@
     const recurrenceSelect = document.querySelector('select[name="recurrence_choice"]');
     const countDiv = document.getElementById('count_div');
     const endDateDiv = document.getElementById('end_date_div');
+
+    const frequencySelect = document.querySelector('select[name="frequency"]');
+    const byweekdayDiv = document.getElementById('byweekday_div');
+    const bymonthdayDiv = document.getElementById('bymonthday_div');
+    const bysetposDiv = document.getElementById('bysetpos_div');
 
     recurrenceSelect.addEventListener('change', function() {
       switch (this.value) {
@@ -58,6 +76,25 @@
           break;
       }
     });
+
+    function handleFrequencyChange() {
+      if (frequencySelect.value === 'WEEKLY') {
+        byweekdayDiv.style.display = 'block';
+        bymonthdayDiv.style.display = 'none';
+        bysetposDiv.style.display = 'none';
+      } else if (frequencySelect.value === 'MONTHLY') {
+        byweekdayDiv.style.display = 'block';
+        bymonthdayDiv.style.display = 'block';
+        bysetposDiv.style.display = 'block';
+      } else {
+        byweekdayDiv.style.display = 'none';
+        bymonthdayDiv.style.display = 'none';
+        bysetposDiv.style.display = 'none';
+      }
+    }
+
+    handleFrequencyChange(); // call function immediately to handle form prepopulation
+    frequencySelect.addEventListener('change', handleFrequencyChange);
   });
 </script>
 {% endblock content %}

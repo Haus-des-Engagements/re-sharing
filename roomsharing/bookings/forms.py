@@ -145,13 +145,32 @@ class RecurrenceForm(forms.Form):
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
-    interval = forms.IntegerField(required=False, label="Wiederholen alle")
     frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
-    bysetpos = forms.IntegerField(required=False)
-    byweekday = forms.MultipleChoiceField(choices=WEEKDAYS, required=False)
-    bymonthday = forms.IntegerField(required=False)
+    interval = forms.IntegerField(required=False, label="Wiederholen alle")
+
+    BYSETPOS_CHOICES = [
+        (1, "first"),
+        (2, "second"),
+        (3, "third"),
+        (4, "fourth"),
+        (-1, "last"),
+    ]
+
+    bysetpos = forms.ChoiceField(
+        choices=BYSETPOS_CHOICES,
+        required=False,
+        label="By Set Pos",
+    )
+    byweekday = forms.MultipleChoiceField(
+        choices=WEEKDAYS,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    BYMONTHDAY_CHOICES = [(None, "----")] + [(i, i) for i in range(1, 32)]
+    bymonthday = forms.ChoiceField(choices=BYMONTHDAY_CHOICES, required=False)
     end_date = forms.DateField(
         label=_("End Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
+        required=False,
     )
     count = forms.IntegerField(required=False)
