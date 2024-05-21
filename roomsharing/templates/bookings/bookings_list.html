@@ -7,32 +7,29 @@
 {% block content %}
   <h1>{% trans "All bookings" %}</h1>
   <a href="{% url 'bookings:booking_create' %}">New Booking</a>
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <td>ID</td>
-        <td>Title</td>
-        <td>From</td>
-        <td>To</td>
-        <td>Status</td>
-        <td>Room</td>
-        <td>Organization</td>
-        <td>User</td>
-      </tr>
-    </thead>
-    <tbody>
-      {% for booking in bookings_list %}
-        <tr>
-          <td>{{ booking.id }}</td>
-          <td>{{ booking.title }}</td>
-          <td>{{ booking.timespan.lower }}</td>
-          <td>{{ booking.timespan.upper }}</td>
-          <td>{{ booking.get_status_display }}</td>
-          <td>{{ booking.room }}</td>
-          <td>{{ booking.organization }}</td>
-          <td>{{ booking.user }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% for booking in bookings_list %}
+    <div class="card mb-3">
+      <div class="row g-0">
+        <div class="col col-md-2 card-body text-center">
+          <p class="h6">{{ booking.timespan.lower|date:"l" }}</p>
+          <p class="h4">{{ booking.timespan.lower|date:"d" }}. {{ booking.timespan.lower|date:"F" }}</p>
+          <p class="h6">{{ booking.timespan.lower|date:"H:m" }} - {{ booking.timespan.upper|date:"H:m" }}</p>
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">{{ booking.room }}</h5>
+            <p class="card-text">{{ booking.timespan.lower|date:"d.m.Y - H:m" }} - {{ booking.timespan.upper }}</p>
+            <p class="card-text">
+              {{ booking.title }} |  Status: {{ booking.get_status_display }} | {% trans "Booked by:" %} {{ booking.user }}
+            </p>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card-body">
+            <a href="#" class="btn btn-primary">{% trans "Details" %}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
 {% endblock content %}
