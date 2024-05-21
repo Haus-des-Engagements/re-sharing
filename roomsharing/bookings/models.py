@@ -6,7 +6,6 @@ from django.db.models import CharField
 from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
-from django.db.models import Model
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -14,14 +13,16 @@ from django_extensions.db.fields import AutoSlugField
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
+from roomsharing.utils.models import TimeStampedModel
 
 
-class Booking(Model):
-    class Status(IntegerChoices):
-        PENDING = 1, _("Pending")
-        CONFIRMED = 2, _("Confirmed")
-        CANCELLED = 3, _("Cancelled")
+class Status(IntegerChoices):
+    PENDING = 1, _("Pending")
+    CONFIRMED = 2, _("Confirmed")
+    CANCELLED = 3, _("Cancelled")
 
+
+class Booking(TimeStampedModel):
     title = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="title")
     organization = ForeignKey(
@@ -69,3 +70,21 @@ class Booking(Model):
 
     def __str__(self):
         return str(self.title)
+
+
+class BookingMessage(TimeStampedModel):
+    booking = ForeignKey(
+        Booking,
+        verbose_name=_("Booking"),
+        on_delete=PROTECT,
+        related_name="bookingmessages_of_booking",
+        related_query_name="bookingmessage_of_booking",
+    )
+    text = CharField(_("Message text"), max_length=800)
+    user = ForeignKey(
+        User,
+        verbose_name=_("User"),
+        on_delete=PROTECT,
+        related_name="bookingmessages_of_user",
+        related_query_name="bookingmessage_of_user",
+    )
