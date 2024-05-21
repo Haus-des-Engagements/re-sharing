@@ -20,13 +20,21 @@
             <h5 class="card-title">{{ booking.room }}</h5>
             <p class="card-text">{{ booking.timespan.lower|date:"d.m.Y - H:m" }} - {{ booking.timespan.upper }}</p>
             <p class="card-text">
-              {{ booking.title }} |  Status: {{ booking.get_status_display }} | {% trans "Booked by:" %} {{ booking.user }}
+              {{ booking.title }} | Status: {{ booking.get_status_display }}
+              | {% trans "Booked by:" %} {{ booking.user }}
             </p>
           </div>
         </div>
         <div class="col-md-2">
           <div class="card-body">
-            <a href="#" class="btn btn-primary">{% trans "Details" %}</a>
+            <ul>
+              <li>
+                <a href="{% url 'bookings:detail' slug=booking.slug %}">{% trans "View Details" %}</a>
+              </li>
+              <li>
+                <a href="#">{% trans "Cancel Booking" %}</a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>

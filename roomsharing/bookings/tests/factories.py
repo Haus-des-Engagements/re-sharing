@@ -11,6 +11,7 @@ from factory.fuzzy import FuzzyDateTime
 from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
+from roomsharing.bookings.models import Status
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
@@ -22,7 +23,7 @@ class BookingFactory(DjangoModelFactory):
     organization = SubFactory(OrganizationFactory)
     user = SubFactory(UserFactory)
     room = SubFactory(RoomFactory)
-    status = Booking.Status.CONFIRMED
+    status = Status.CONFIRMED
 
     @LazyAttribute
     def timespan(self):

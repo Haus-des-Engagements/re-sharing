@@ -12,6 +12,7 @@ from dateutil.rrule import rrule
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -45,6 +46,16 @@ class MyBookingsListView(LoginRequiredMixin, ListView):
 
     ordering = ["id"]
     template_name = "bookings/bookings_list.html"
+
+
+def booking_detail_view(request, slug):
+    booking = get_object_or_404(Booking, slug=slug)
+
+    return render(
+        request,
+        "bookings/booking_details.html",
+        {"booking": booking},
+    )
 
 
 @login_required

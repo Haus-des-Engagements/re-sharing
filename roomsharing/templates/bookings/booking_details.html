@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <h1>{{ booking.title }}</h1>
+  <div class="card mb-3">
+    <div class="row g-0">
+      <div class="col col-md-2 card-body text-center">
+        <p class="h6">{{ booking.timespan.lower|date:"l" }}</p>
+        <p class="h4">{{ booking.timespan.lower|date:"d" }}. {{ booking.timespan.lower|date:"F" }}</p>
+        <p class="h6">{{ booking.timespan.lower|date:"H:m" }} - {{ booking.timespan.upper|date:"H:m" }}</p>
+      </div>
+      <div class="col-md-10">
+        <div class="card-body">
+          <h5 class="card-title">{{ booking.room }}</h5>
+          <p class="card-text">{{ booking.timespan.lower|date:"d.m.Y - H:m" }} - {{ booking.timespan.upper }}</p>
+          <p class="card-text">
+            {{ booking.title }} |  Status: {{ booking.get_status_display }} | {% trans "Booked by:" %} {{ booking.user }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" class="btn btn-outline-primary">Send new message</button>
+    <button type="button" class="btn btn-outline-danger">Cancel Booking</button>
+  </div>
+  <div class="container py-4">
+    <h2 class="font-weight-light py-3">{% trans "Messages & Timeline" %}</h2>
+    <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
+    <!-- timeline item 1 -->
+    <div class="row">
+      <!-- timeline item 1 left dot -->
+      <div class="col-auto text-center flex-column d-none d-sm-flex">
+        <div class="row h-50">
+          <div class="col">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+        <h5 class="m-2">
+          <span class="badge rounded-pill bg-light border">&nbsp;</span>
+        </h5>
+        <div class="row h-50">
+          <div class="col border-end order">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+      </div>
+      <!-- timeline item 1 event content -->
+      <div class="col py-2">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
+            <h5 class="card-title">{% trans "Booking created" %}</h5>
+            <p class="card-text">{% trans "by" %} {{ booking.user }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--/row-->
+    <!-- timeline item 4 -->
+    <div class="row">
+      <div class="col-auto text-center flex-column d-none d-sm-flex">
+        <div class="row h-50">
+          <div class="col border-end">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+        <h5 class="m-2">
+          <span class="badge rounded-pill bg-light border">&nbsp;</span>
+        </h5>
+        <div class="row h-50">
+          <div class="col">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+      </div>
+      <div class="col py-2">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
+            <h4 class="card-title">Booking Message</h4>
+            <p>from {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}):</p>
+            <p class="fst-italic">Join us for lunch in Bootsy's cafe across from the Campus Center.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--/row-->
+  </div>
+  <!--container-->
+{% endblock content %}
