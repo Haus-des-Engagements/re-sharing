@@ -6,57 +6,61 @@
   {% trans "Room" %}: {{ room.name }}
 {% endblock title %}
 {% block content %}
-  <h2>{{ room.name }}</h2>
-  <p>
-    <strong>{% trans "Title" %}:</strong> {{ room.name }}
-  </p>
-  <p>
-    <strong>{% trans "Description" %}:</strong> {{ room.description }}
-  </p>
-  <p>
-    <strong>{% trans "Square Meters" %}:</strong> {{ room.square_meters|default_if_none:"" }}
-  </p>
-  <p>
-    <strong>{% trans "Maximum Number of Persons" %}:</strong> {{ room.max_persons }}
-  </p>
-  <p>
-    <strong>{% trans "General Bookable Times" %}:</strong> {{ room.bookable_times }}
-  </p>
-  <p>
-    <strong>{% trans "Pricing" %}:</strong> {{ room.pricing }}
-  </p>
-  <p>
-    <strong>{% trans "Included Equipment" %}:</strong> {{ room.included_equipment }}
-  </p>
-  <p>
-    <strong>{% trans "Bookable Equipment" %}:</strong> {{ room.bookable_equipment }}
-  </p>
-  <p>
-    <img fwidth="200"
-         height="150"
-         alt="example"
-         src="https://haus-des-engagements.de/wp-content/uploads/2023/11/HdE-Veranstaltungsraum-U-Bestuhlung_klein-1.jpg" />
-    <img fwidth="200"
-         height="150"
-         alt="example"
-         src="https://haus-des-engagements.de/wp-content/uploads/2023/11/Hde-Raum-Tuerkis-2048x1536.jpg" />
-  </p>
-  <p>
-    <strong>{% trans "Available Times" %}:</strong>
-    <table>
-      <tr>
-        <td>Mo</td>
-        <td>Di</td>
-        <td>Mi</td>
-        <td>Do</td>
-        <td>Fr</td>
-        <td>Sa</td>
-        <td>So</td>
-      </tr>
-    </table>
-  </p>
-  <br />
-  <h2>Bookings</h2>
+  <h1 class="mt-4">{{ room.name }}</h1>
+  <div class="card mb-3 mt-4">
+    <div class="row g-0">
+      <div class="col-md-2">
+        {% with room.roomimages_of_room.all.0.image.url as img_url %}
+          {% if img_url %}
+            <img src="{{ img_url }}"
+                 class="img-fluid rounded-start"
+                 alt="{{ room.name }}" />
+          {% else %}
+            <img src="..." class="img-fluid rounded-start" alt="..." />
+          {% endif %}
+        {% endwith %}
+      </div>
+      <div class="col-md-5">
+        <div class="card-body">
+          <h5 class="card-title">&nbsp</h5>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-people" />
+              </svg>
+              Max. {{ room.max_persons }} {% trans "Persons" %} ({{ room.square_meters|default_if_none:"" }}m²)
+            </li>
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-calendar2-check" />
+              </svg>
+              {{ room.bookable_times }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card-body">
+          <h5 class="card-title">&nbsp</h5>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-piggy-bank" />
+              </svg>
+              {% trans "Pricing" %}: {{ room.pricing }}
+            </li>
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-easel2" />
+              </svg>
+              {{ room.included_equipment }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h2 class="mt-4">Bookings</h2>
   <ul>
     {% for booking in bookings %}<li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}</li>{% endfor %}
   </ul>

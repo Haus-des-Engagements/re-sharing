@@ -5,7 +5,6 @@ from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.generic import ListView
 
 from roomsharing.bookings.models import Booking
 from roomsharing.rooms.models import Room
@@ -22,10 +21,14 @@ def room_detail_view(request, slug):
     )
 
 
-class RoomListView(ListView):
-    model = Room
-    template_name = "rooms/room_list.html"
-    context_object_name = "rooms"
+def room_list_view(request):
+    rooms = Room.objects.all().prefetch_related("roomimages_of_room")
+
+    return render(
+        request,
+        "rooms/room_list.html",
+        {"rooms": rooms},
+    )
 
 
 def get_weekly_bookings(request, slug):
