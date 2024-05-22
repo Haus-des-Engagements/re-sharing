@@ -5,10 +5,10 @@
 {% load tz %}
 
 {% block content %}
-  <h1>{% trans "All bookings" %}</h1>
+  <h1 class="mt-4">{% trans "All bookings" %}</h1>
   <a href="{% url 'bookings:booking_create' %}">New Booking</a>
   {% for booking in bookings_list %}
-    <div class="card mb-3">
+    <div class="card mb-3 mt-4">
       <div class="row g-0">
         <div class="col col-md-2 card-body text-center">
           <p class="h6">{{ booking.timespan.lower|date:"l" }}</p>
