@@ -2,6 +2,7 @@
 from django.contrib import admin
 
 from .models import Booking
+from .models import BookingMessage
 
 
 @admin.register(Booking)
@@ -11,3 +12,6 @@ class BookingAdmin(admin.ModelAdmin):
     search_fields = ["id", "room", "organization", "title", "user"]
     list_filter = ["status", "organization", "room"]
     ordering = ["id"]
+
+
+admin.site.register(BookingMessage)
