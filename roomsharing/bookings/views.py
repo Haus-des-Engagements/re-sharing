@@ -22,6 +22,7 @@ from django.views.generic import ListView
 from .forms import BookingForm
 from .forms import RecurrenceForm
 from .models import Booking
+from .models import BookingMessage
 
 
 @method_decorator(permission_required("is_staff"), name="dispatch")
@@ -49,12 +50,24 @@ class MyBookingsListView(LoginRequiredMixin, ListView):
 
 
 def booking_detail_view(request, slug):
+    activity_stream = []
     booking = get_object_or_404(Booking, slug=slug)
+
+    booking_logs = booking.history.all()
+    activity_stream = list(booking_logs).copy()
+
+    messages = BookingMessage.objects.filter(booking=booking)
+    for message in messages:
+        message_history_first = message.history.first()
+        if message_history_first is not None:
+            activity_stream.append(message_history_first)
+
+    activity_stream.sort(key=lambda item: item.timestamp, reverse=False)
 
     return render(
         request,
         "bookings/booking_details.html",
-        {"booking": booking},
+        {"booking": booking, "activity_stream": activity_stream},
     )
 
 
