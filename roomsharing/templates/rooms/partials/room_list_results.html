@@ -1,12 +1,6 @@
-{% extends "base.html" %}
+{% load i18n %}
 
-{% load static i18n %}
-
-{% block title %}
-  {% trans "Room" %}: {{ room.name }}
-{% endblock title %}
-{% block content %}
-  <h1 class="mt-4">{{ room.name }}</h1>
+{% for room in rooms %}
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col-md-2">
@@ -22,7 +16,9 @@
       </div>
       <div class="col-md-5">
         <div class="card-body">
-          <h5 class="card-title">&nbsp</h5>
+          <h5 class="card-title">
+            <a href="{% url 'rooms:detail' slug=room.slug %}">{{ room.name }}</a>
+          </h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
@@ -35,6 +31,12 @@
                 <use href="#bi-calendar2-check" />
               </svg>
               {{ room.bookable_times }}
+            </li>
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-geo-alt" />
+              </svg>
+              Haus des Engagements, Rehlingstraße 9, Freiburg
             </li>
           </ul>
         </div>
@@ -60,16 +62,4 @@
       </div>
     </div>
   </div>
-  <h2 class="mt-4">Bookings</h2>
-  <div class="btn-group" role="group" aria-label="Basic outlined example">
-    <button type="button"
-            class="btn btn-outline-primary"
-            hx-post="{% url 'rooms:get-weekly-bookings' room.slug %}"
-            hx-target="#results"
-            hx-trigger="click, load">{% trans "Current Week" %}</button>
-  </div>
-  <div id="results">{% include "rooms/partials/get_weekly_bookings.html" %}</div>
-  <ul>
-    {% for booking in bookings %}<li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}</li>{% endfor %}
-  </ul>
-{% endblock content %}
+{% endfor %}

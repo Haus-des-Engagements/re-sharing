@@ -22,7 +22,9 @@ def room_detail_view(request, slug):
 
 
 def room_list_view(request):
-    rooms = Room.objects.all().prefetch_related("roomimages_of_room")
+    rooms = Room.objects.all()
+
+    rooms = rooms.prefetch_related("roomimages_of_room")
 
     return render(
         request,
@@ -31,8 +33,31 @@ def room_list_view(request):
     )
 
 
+def get_room_list(request):
+    max_persons = request.GET.get("max_persons")
+    square_meters = request.GET.get("square_meters")
+
+    rooms = Room.objects.all()
+
+    if max_persons:
+        rooms = rooms.filter(max_persons__gte=max_persons)
+
+    if square_meters:
+        rooms = rooms.filter(square_meters__gte=square_meters)
+
+    rooms = rooms.prefetch_related("roomimages_of_room")
+
+    return render(
+        request,
+        "rooms/partials/room_list_results.html",
+        {"rooms": rooms},
+    )
+
+
 def get_weekly_bookings(request, slug):
-    bookings = Booking.objects.filter(room__slug=slug)
+    bookings = Booking.objects.filter(room__slug=slug).filter(
+        status=Booking.Status.CONFIRMED,
+    )
 
     # Calculate the start and end dates for the week
     today = timezone.now().date()
@@ -60,12 +85,18 @@ def get_weekly_bookings(request, slug):
     bookings = bookings.filter(timespan__overlap=(start_of_week, end_of_week))
 
     # Check if a time slot is booked
+    current_tz = timezone.get_current_timezone()
     for booking in bookings:
-        booking_start = max(booking.timespan.lower, start_of_week)
-        booking_end = min(booking.timespan.upper, end_of_week)
+        booking_start = max(
+            booking.timespan.lower.astimezone(current_tz),
+            start_of_week,
+        )
+        booking_end = min(booking.timespan.upper.astimezone(current_tz), end_of_week)
         while booking_start < booking_end:
+            # Restart the time with start of each day
+            start_of_day = booking_start.replace(hour=8, minute=0, second=0)
             if start_of_week <= booking_start < end_of_week:
-                day_index = (booking_start - start_of_day).days
+                day_index = (booking_start - start_of_week).days
                 slot_index = (booking_start - start_of_day).seconds // (30 * 60)
                 if 0 <= slot_index < number_of_slots:
                     time_slots[slot_index]["booked"][day_index] = True

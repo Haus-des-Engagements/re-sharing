@@ -7,61 +7,16 @@
 {% endblock title %}
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
-  {% for room in rooms %}
-    <div class="card mb-3 mt-4">
-      <div class="row g-0">
-        <div class="col-md-2">
-          {% with room.roomimages_of_room.all.0.image.url as img_url %}
-            {% if img_url %}
-              <img src="{{ img_url }}"
-                   class="img-fluid rounded-start"
-                   alt="{{ room.name }}" />
-            {% else %}
-              <img src="..." class="img-fluid rounded-start" alt="..." />
-            {% endif %}
-          {% endwith %}
-        </div>
-        <div class="col-md-5">
-          <div class="card-body">
-            <h5 class="card-title">
-              <a href="{% url 'rooms:detail' slug=room.slug %}">{{ room.name }}</a>
-            </h5>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-people" />
-                </svg>
-                Max. {{ room.max_persons }} {% trans "Persons" %} ({{ room.square_meters|default_if_none:"" }}m²)
-              </li>
-              <li class="list-group-item">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-calendar2-check" />
-                </svg>
-                {{ room.bookable_times }}
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="col-md-5">
-          <div class="card-body">
-            <h5 class="card-title">&nbsp</h5>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-piggy-bank" />
-                </svg>
-                {% trans "Pricing" %}: {{ room.pricing }}
-              </li>
-              <li class="list-group-item">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-easel2" />
-                </svg>
-                {{ room.included_equipment }}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  {% endfor %}
+  <div class="row">
+    <form>
+      <label for="id_max_persons">Persons:</label>
+      <input type="number"
+             id="id_max_persons"
+             name="max_persons"
+             hx-get="{% url 'rooms:get-room-list' %}"
+             hx-target="#room-list"
+             hx-trigger="keyup changed" />
+    </form>
+  </div>
+  <div id="room-list">{% include "rooms/partials/room_list_results.html" %}</div>
 {% endblock content %}

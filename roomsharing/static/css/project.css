@@ -11,3 +11,7 @@
   background-color: #f2dede;
   border-color: #eed3d7;
 }
+
+.table-sm-little-padding > :not(caption) > * > * {
+  padding: .0rem .25rem;
+}
