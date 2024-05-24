@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from roomsharing.rooms.tests.factories import RoomFactory
-from roomsharing.rooms.views import RoomListView
 from roomsharing.rooms.views import room_detail_view
+from roomsharing.rooms.views import room_list_view
 
 
 class RoomDetailViewTest(TestCase):
@@ -31,5 +31,5 @@ class RoomListViewTest(TestCase):
 
     def test_room_list_view(self):
         request = self.factory.get(reverse("rooms:list"))
-        response = RoomListView.as_view()(request)
+        response = room_list_view(request)
         assert response.status_code == HTTPStatus.OK
