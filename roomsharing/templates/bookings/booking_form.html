@@ -26,6 +26,10 @@
       <label for="{{ form.duration.id_for_label }}">{{ form.duration.label }}</label>
       {{ form.duration }}
     </div>
+    <div>
+      <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      {{ form.message }}
+    </div>
     <button type="submit">{% trans "Submit" %}</button>
   </form>
 {% endblock content %}

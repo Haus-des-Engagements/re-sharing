@@ -9,14 +9,15 @@ from dateutil.rrule import TU
 from dateutil.rrule import WE
 from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView
 
 from .forms import BookingForm
@@ -96,8 +97,9 @@ def create_booking(request):
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
         if form.is_valid():
-            form.save(user=request.user)
-            return redirect(reverse_lazy("bookings:bookings_list"))
+            booking = form.save(user=request.user)
+            messages.success(request, _("Booking created successfully!"))
+            return redirect("bookings:detail", booking.slug)
 
     return render(request, "bookings/booking_form.html", {"form": form})
 

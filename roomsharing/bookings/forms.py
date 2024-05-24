@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import Booking
+from .models import BookingMessage
 
 
 class BookingForm(forms.ModelForm):
@@ -24,6 +25,10 @@ class BookingForm(forms.ModelForm):
         label=_("Organization"),
     )
     title = forms.CharField(label=_("Title"))
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": "5"}),
+        required=False,
+    )
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -106,6 +111,13 @@ class BookingForm(forms.ModelForm):
         booking.timespan = self.cleaned_data["timespan"]
         booking.status = Booking.Status.PENDING
         booking.save()
+        if self.cleaned_data.get("message"):
+            booking_message = BookingMessage(
+                booking=booking,
+                text=self.cleaned_data.get("message"),
+                user=user,
+            )
+            booking_message.save()
         return booking
 
     class Meta:
