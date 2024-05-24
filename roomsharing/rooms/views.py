@@ -2,11 +2,13 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils import timezone
 
 from roomsharing.bookings.models import Booking
+from roomsharing.rooms.forms import RoomsListFilter
 from roomsharing.rooms.models import Room
 
 
@@ -22,6 +24,7 @@ def room_detail_view(request, slug):
 
 
 def room_list_view(request):
+    form = RoomsListFilter(request.POST or None)
     rooms = Room.objects.all()
 
     rooms = rooms.prefetch_related("roomimages_of_room")
@@ -29,28 +32,44 @@ def room_list_view(request):
     return render(
         request,
         "rooms/room_list.html",
-        {"rooms": rooms},
+        {"rooms": rooms, "form": form},
     )
 
 
 def get_room_list(request):
-    max_persons = request.GET.get("max_persons")
-    square_meters = request.GET.get("square_meters")
-
+    form = RoomsListFilter(request.POST or None)
     rooms = Room.objects.all()
 
-    if max_persons:
-        rooms = rooms.filter(max_persons__gte=max_persons)
+    if form.is_valid():
+        max_persons = form.cleaned_data.get("max_persons")
+        if max_persons:
+            rooms = rooms.filter(max_persons__gte=max_persons)
 
-    if square_meters:
-        rooms = rooms.filter(square_meters__gte=square_meters)
+        name = form.cleaned_data.get("name")
+        if name:
+            rooms = rooms.filter(name__icontains=name)
 
-    rooms = rooms.prefetch_related("roomimages_of_room")
+        start_datetime = form.cleaned_data.get("start_datetime")
+        duration = form.cleaned_data.get("duration")
+        if start_datetime and duration:
+            end_datetime = start_datetime + timedelta(minutes=duration)
+            overlapping_bookings = Booking.objects.filter(
+                timespan__overlap=(start_datetime, end_datetime),
+            )
+            booked_room_ids = overlapping_bookings.values_list("room_id", flat=True)
 
-    return render(
-        request,
-        "rooms/partials/room_list_results.html",
-        {"rooms": rooms},
+            rooms = rooms.exclude(id__in=booked_room_ids)
+
+        rooms = rooms.prefetch_related("roomimages_of_room")
+        return render(
+            request,
+            "rooms/partials/room_list_results.html",
+            {"rooms": rooms, "form": form},
+        )
+
+    return HttpResponse(
+        f'<p class="error">Your form submission was unsuccessful. '
+        f"Please would you correct the errors? The current errors: {form.errors}</p>",
     )
 
 

@@ -8,14 +8,13 @@
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
   <div class="row">
-    <form>
-      <label for="id_max_persons">Persons:</label>
-      <input type="number"
-             id="id_max_persons"
-             name="max_persons"
-             hx-get="{% url 'rooms:get-room-list' %}"
-             hx-target="#room-list"
-             hx-trigger="keyup changed" />
+    <form hx-post="{% url 'rooms:get-room-list' %}" hx-target="#room-list">
+      {% csrf_token %}
+      <input type="text" name="max_persons" placeholder="Persons" />
+      <input type="text" name="name" placeholder="Room Name" />
+      {{ form.start_datetime }}
+      <input type="number" name="duration" placeholder="Duration" />
+      <input type="submit" value="Submit" />
     </form>
   </div>
   <div id="room-list">{% include "rooms/partials/room_list_results.html" %}</div>
