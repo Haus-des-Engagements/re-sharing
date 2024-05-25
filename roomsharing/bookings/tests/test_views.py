@@ -1,3 +1,4 @@
+import datetime
 from http import HTTPStatus
 
 from django.conf import settings
@@ -7,14 +8,16 @@ from django.test import Client
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
-from roomsharing.bookings.views import MyBookingsListView
+from roomsharing.bookings.views import booking_list_view
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 
 
-class TestMyBookingListView(TestCase):
+class TestBookingList(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = UserFactory()
@@ -22,13 +25,13 @@ class TestMyBookingListView(TestCase):
     def test_authenticated(self):
         client = Client()
         client.force_login(self.user)
-        response = client.get(reverse("bookings:my_bookings_list"))
+        response = client.get(reverse("bookings:list"))
         assert response.status_code == HTTPStatus.OK
 
     def test_not_authenticated(self):
         request = self.factory.get("/bookings/")
         request.user = AnonymousUser()
-        response = MyBookingsListView.as_view()(request)
+        response = booking_list_view(request)
         login_url = reverse(settings.LOGIN_URL)
 
         assert isinstance(response, HttpResponseRedirect)
@@ -42,11 +45,17 @@ class TestMyBookingListView(TestCase):
         o1 = OrganizationFactory()
         self.user.organizations.set([o1])
         total_bookings_for_o1 = 2
-        BookingFactory(organization=o1)
-        BookingFactory(organization=o1)
+
+        tomorrow = timezone.now() + datetime.timedelta(days=1)
+        start_time = make_aware(
+            datetime.datetime.combine(tomorrow, datetime.time(15, 0)),
+        )
+        end_time = make_aware(datetime.datetime.combine(tomorrow, datetime.time(16, 0)))
+        BookingFactory(organization=o1, timespan=(start_time, end_time))
+        BookingFactory(organization=o1, timespan=(start_time, end_time))
 
         client.login(username=self.user.email, password=self.user.password)
-        response = client.get(reverse("bookings:my_bookings_list"))
+        response = client.get(reverse("bookings:list"))
 
         assert response.status_code == HTTPStatus.OK
-        assert len(list(response.context["bookings_list"])) == total_bookings_for_o1
+        assert len(list(response.context["bookings"])) == total_bookings_for_o1
