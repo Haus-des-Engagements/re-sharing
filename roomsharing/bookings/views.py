@@ -11,43 +11,65 @@ from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView
 
 from .forms import BookingForm
+from .forms import BookingListForm
 from .forms import RecurrenceForm
 from .models import Booking
 from .models import BookingMessage
 
 
-@method_decorator(permission_required("is_staff"), name="dispatch")
-class BookingListView(LoginRequiredMixin, ListView):
-    context_object_name = "bookings_list"
+@login_required
+def booking_list_view(request):
+    user_organizations = request.user.organizations.all()
+    form = BookingListForm(request.POST or None, organizations=user_organizations)
+    bookings = Booking.objects.filter(organization__in=user_organizations).filter(
+        timespan__endswith__gte=timezone.now(),
+    )
 
-    model = Booking
+    return render(
+        request,
+        "bookings/bookings_list.html",
+        {"bookings": bookings, "form": form},
+    )
 
-    queryset = Booking.objects.all()
 
-    ordering = ["id"]
-    template_name = "bookings/bookings_list.html"
+@login_required
+def get_filtered_booking_list(request):
+    user_organizations = request.user.organizations.all()
+    form = BookingListForm(request.POST or None, organizations=user_organizations)
+    bookings = Booking.objects.filter(organization__in=user_organizations)
 
+    if form.is_valid():
+        show_past_bookings = form.cleaned_data.get("show_past_bookings")
+        status = form.cleaned_data["status"]
+        organization = form.cleaned_data.get("organization")
 
-class MyBookingsListView(LoginRequiredMixin, ListView):
-    context_object_name = "bookings_list"
-    model = Booking
+        if not show_past_bookings:
+            bookings = bookings.filter(timespan__endswith__gte=timezone.now())
 
-    def get_queryset(self):
-        user_organizations = self.request.user.organizations.all()
-        return Booking.objects.filter(organization__in=user_organizations)
+        if organization != "all":
+            bookings = bookings.filter(organization__slug=organization)
 
-    ordering = ["id"]
-    template_name = "bookings/bookings_list.html"
+        if status != "all":
+            bookings = bookings.filter(status=status)
+
+        return render(
+            request,
+            "bookings/partials/bookings_list.html",
+            {"bookings": bookings, "form": form},
+        )
+
+    return HttpResponse(
+        f'<p class="error">Your form submission was unsuccessful. '
+        f"Please would you correct the errors? The current errors: {form.errors}</p>",
+    )
 
 
 def booking_detail_view(request, slug):
