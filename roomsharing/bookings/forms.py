@@ -8,6 +8,29 @@ from .models import Booking
 from .models import BookingMessage
 
 
+class BookingListForm(forms.Form):
+    show_past_bookings = forms.BooleanField(
+        initial=False,
+        required=False,
+        label=_("Show past bookings"),
+    )
+    status = forms.ChoiceField(
+        choices=[("all", _("All")), *Booking.Status.choices],
+        required=False,
+        label=_("Status"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        organizations = kwargs.pop("organizations", None)
+        super().__init__(*args, **kwargs)
+        if organizations:
+            organization_choices = [(org.slug, org.name) for org in organizations]
+            self.fields["organization"] = forms.ChoiceField(
+                choices=[("all", _("All")), *organization_choices],
+                label=_("Organizations"),
+            )
+
+
 class BookingForm(forms.ModelForm):
     startdate = forms.DateField(
         label=_("Start Date"),
