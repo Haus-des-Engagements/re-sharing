@@ -15,3 +15,21 @@
 .table-sm-little-padding > :not(caption) > * > * {
   padding: .0rem .25rem;
 }
+
+/* Pending */
+.text-bg-status-1 {
+    color: #000;
+    background-color: #ffeeba;
+}
+
+/* Confirmed */
+.text-bg-status-2 {
+    color: #fff;
+    background-color: #28a745;
+}
+
+/* Cancelled */
+.text-bg-status-3 {
+    color: #fff;
+    background-color: #dc3545;
+}

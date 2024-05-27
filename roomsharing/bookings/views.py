@@ -18,6 +18,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from roomsharing.users.models import User
+
 from .forms import BookingForm
 from .forms import BookingListForm
 from .forms import RecurrenceForm
@@ -74,18 +76,38 @@ def get_filtered_booking_list(request):
 
 def booking_detail_view(request, slug):
     activity_stream = []
+
     booking = get_object_or_404(Booking, slug=slug)
 
-    booking_logs = booking.history.all()
-    activity_stream = list(booking_logs).copy()
+    booking_logs = booking.history.filter(changes__has_key="status").exclude(
+        changes__status__contains="None"
+    )
+    for log_entry in booking_logs:
+        status_integer_old = int(log_entry.changes["status"][0])
+        status_text_old = dict(Booking.Status.choices).get(status_integer_old)
+
+        status_integer_new = int(log_entry.changes["status"][1])
+        status_text_new = dict(Booking.Status.choices).get(status_integer_new)
+        status_change_dict = {
+            "date": log_entry.timestamp,
+            "type": "status_change",
+            "old_status": [status_integer_old, status_text_old],
+            "new_status": [status_integer_new, status_text_new],
+            "user": get_object_or_404(User, id=log_entry.actor_id),
+        }
+        activity_stream.append(status_change_dict)
 
     messages = BookingMessage.objects.filter(booking=booking)
     for message in messages:
-        message_history_first = message.history.first()
-        if message_history_first is not None:
-            activity_stream.append(message_history_first)
+        message_dict = {
+            "date": message.created,
+            "type": "message",
+            "text": message.text,
+            "user": message.user,
+        }
+        activity_stream.append(message_dict)
 
-    activity_stream.sort(key=lambda item: item.timestamp, reverse=False)
+    activity_stream = sorted(activity_stream, key=lambda x: x["date"], reverse=False)
 
     return render(
         request,

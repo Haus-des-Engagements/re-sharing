@@ -27,7 +27,7 @@
     <button type="button" class="btn btn-outline-danger">Cancel Booking</button>
   </div>
   <div class="container py-4">
-    <h2 class="font-weight-light py-3">{% trans "Messages & Timeline" %}</h2>
+    <h2 class="font-weight-light py-3">{% trans "Timeline" %}</h2>
     <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
     <!-- timeline item 1 -->
     <div class="row">
@@ -58,34 +58,42 @@
     </div>
     <!--/row-->
     <!-- timeline item 4 -->
-    {% for history in activity_stream %}
-      {% for key, value in history.changes_display_dict.items %}
-        <div class="row">
-          <div class="col-auto text-center flex-column d-none d-sm-flex">
-            <div class="row h-50">
-              <div class="col border-end">&nbsp;</div>
-              <div class="col">&nbsp;</div>
-            </div>
-            <h5 class="m-2">
-              <span class="badge rounded-pill bg-light border">&nbsp;</span>
-            </h5>
-            <div class="row h-50">
-              <div class="col border-end">&nbsp;</div>
-              <div class="col">&nbsp;</div>
-            </div>
+    {% for activity in activity_stream %}
+      <div class="row">
+        <div class="col-auto text-center flex-column d-none d-sm-flex">
+          <div class="row h-50">
+            <div class="col border-end">&nbsp;</div>
+            <div class="col">&nbsp;</div>
           </div>
-          <div class="col py-2">
-            <div class="card">
-              <div class="card-body">
-                <div class="text-muted">{{ history.timestamp|date:"l, d.m.Y - H:m" }}</div>
-                <h4 class="card-title">{% trans "New" %} {{ key }}:</h4>
-                <p>from {{ history.actor.first_name }} {{ history.actor.last_name }} ({{ history.actor.email }}):</p>
-                <p class="fst-italic">{{ value.0|default:"None" }} --> {{ value.1|default:"None" }}</p>
-              </div>
+          <h5 class="m-2">
+            <span class="badge rounded-pill bg-light border">&nbsp;</span>
+          </h5>
+          <div class="row h-50">
+            <div class="col border-end">&nbsp;</div>
+            <div class="col">&nbsp;</div>
+          </div>
+        </div>
+        <div class="col py-2">
+          <div class="card">
+            <div class="card-body">
+              <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
+              {% if activity.type == "message" %}
+                <h5 class="card-title">{% trans "New Message" %}</h5>
+                <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                <p class="fst-italic">{{ activity.text }}</p>
+              {% elif activity.type == "status_change" %}
+                <h5 class="card-title">{% trans "Status Change" %}</h5>
+                <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                <span class="fs-6 badge text-bg-status-{{ activity.old_status.0 }}">{{ activity.old_status.1 }}</span>
+                <svg class="fs-4 me-1" width="1em" height="1em">
+                  <use href="#bi-arrow-right" />
+                </svg>
+                <span class="fs-6 badge text-bg-status-{{ activity.new_status.0 }}">{{ activity.new_status.1 }}</span>
+              {% endif %}
             </div>
           </div>
         </div>
-      {% endfor %}
+      </div>
     {% endfor %}
     <!--/row-->
   </div>

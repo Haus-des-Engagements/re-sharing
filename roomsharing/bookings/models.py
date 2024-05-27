@@ -106,5 +106,4 @@ class BookingMessage(TimeStampedModel):
         return reverse("bookings:detail", kwargs={"slug": self.booking.slug})
 
 
-auditlog.register(Booking, include_fields=["status"])
-auditlog.register(BookingMessage, include_fields=["text"])
+auditlog.register(Booking, exclude_fields=["created, updated"])
