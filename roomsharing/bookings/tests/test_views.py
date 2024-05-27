@@ -13,6 +13,7 @@ from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.views import booking_list_view
+from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 
@@ -45,14 +46,16 @@ class TestBookingList(TestCase):
         o1 = OrganizationFactory()
         self.user.organizations.set([o1])
         total_bookings_for_o1 = 2
+        r1 = RoomFactory()
+        r2 = RoomFactory()
 
         tomorrow = timezone.now() + datetime.timedelta(days=1)
         start_time = make_aware(
             datetime.datetime.combine(tomorrow, datetime.time(15, 0)),
         )
         end_time = make_aware(datetime.datetime.combine(tomorrow, datetime.time(16, 0)))
-        BookingFactory(organization=o1, timespan=(start_time, end_time))
-        BookingFactory(organization=o1, timespan=(start_time, end_time))
+        BookingFactory(organization=o1, timespan=(start_time, end_time), room=r1)
+        BookingFactory(organization=o1, timespan=(start_time, end_time), room=r2)
 
         client.login(username=self.user.email, password=self.user.password)
         response = client.get(reverse("bookings:list"))
