@@ -329,3 +329,7 @@ dump.rdb
 roomsharing/media/
 
 .pytest_cache/
+
+
+# Draw.io modelling temp files
+*.drawio.bkp
