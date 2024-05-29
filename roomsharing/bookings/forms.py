@@ -8,6 +8,17 @@ from .models import Booking
 from .models import BookingMessage
 
 
+class MessageForm(forms.ModelForm):
+    text = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": "5"}),
+        required=True,
+    )
+
+    class Meta:
+        model = BookingMessage
+        fields = ["text"]
+
+
 class BookingListForm(forms.Form):
     show_past_bookings = forms.BooleanField(
         initial=False,

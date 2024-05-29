@@ -22,6 +22,7 @@ from roomsharing.users.models import User
 
 from .forms import BookingForm
 from .forms import BookingListForm
+from .forms import MessageForm
 from .forms import RecurrenceForm
 from .models import Booking
 from .models import BookingMessage
@@ -74,10 +75,11 @@ def get_filtered_booking_list(request):
     )
 
 
+@login_required
 def booking_detail_view(request, slug):
     activity_stream = []
-
     booking = get_object_or_404(Booking, slug=slug)
+    form = MessageForm()
 
     booking_logs = booking.history.filter(changes__has_key="status").exclude(
         changes__status__contains="None"
@@ -112,8 +114,25 @@ def booking_detail_view(request, slug):
     return render(
         request,
         "bookings/booking_details.html",
-        {"booking": booking, "activity_stream": activity_stream},
+        {"booking": booking, "activity_stream": activity_stream, "form": form},
     )
+
+
+@login_required
+def write_booking_message(request, slug):
+    booking = get_object_or_404(Booking, slug=slug)
+    form = MessageForm(request.POST or None)
+
+    if form.is_valid():
+        message = form.save(commit=False)
+        message.user = request.user
+        message.booking = booking
+        message.save()
+        return render(
+            request, "bookings/partials/booking-message.html", {"message": message}
+        )
+
+    return render(request, "bookings/booking_details.html", {"form": form})
 
 
 @login_required
@@ -148,6 +167,7 @@ def create_booking(request):
     return render(request, "bookings/booking_form.html", {"form": form})
 
 
+@login_required
 def recurrence_view(request):
     if request.method == "POST":
         form = RecurrenceForm(request.POST)

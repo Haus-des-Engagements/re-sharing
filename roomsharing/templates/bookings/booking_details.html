@@ -78,7 +78,7 @@
             <div class="card-body">
               <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
               {% if activity.type == "message" %}
-                <h5 class="card-title">{% trans "New Message" %}</h5>
+                <h5 class="card-title">{% trans "Message" %}</h5>
                 <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
                 <p class="fst-italic">{{ activity.text }}</p>
               {% elif activity.type == "status_change" %}
@@ -95,6 +95,41 @@
         </div>
       </div>
     {% endfor %}
+    <!--/row-->
+    <!-- timeline booking message form -->
+    <div class="row" id="message-form">
+      <!-- timeline item 1 left dot -->
+      <div class="col-auto text-center flex-column d-none d-sm-flex">
+        <div class="row h-50">
+          <div class="col border-end">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+        <h5 class="m-2">
+          <span class="badge rounded-pill bg-light border">&nbsp;</span>
+        </h5>
+        <div class="row h-50">
+          <div class="col order">&nbsp;</div>
+          <div class="col">&nbsp;</div>
+        </div>
+      </div>
+      <!-- timeline item 1 content -->
+      <div class="col py-2">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Write a new message" %}</h5>
+            <form hx-post="{% url 'bookings:write_booking_message' booking.slug %}"
+                  hx-target="#message-form"
+                  hx-swap="beforebegin">
+              {% csrf_token %}
+              <div class="mb-3">
+                <textarea class="form-control" name="text" rows="3"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary mb-3" value="Submit">{% trans "Send Message" %}</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <!--/row-->
   </div>
   <!--container-->
