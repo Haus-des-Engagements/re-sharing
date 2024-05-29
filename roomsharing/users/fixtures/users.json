@@ -20,17 +20,7 @@
             "first_name": "Stacy",
             "last_name": "Mac",
             "email": "sm@rstgh.de",
-            "organizations": [2]
-        }
-    },
-   {
-        "model": "users.user",
-        "pk": 2,
-        "fields": {
-            "first_name": "Stacy",
-            "last_name": "Mac",
-            "email": "sm@rstgh.de",
-            "organizations": [2]
+            "organizations": [2,1]
         }
     }
 
