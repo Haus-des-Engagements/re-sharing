@@ -148,7 +148,7 @@ def write_booking_message(request, slug):
 
 
 @login_required
-def cancel_booking(request, slug):
+def cancel_booking(request, slug, from_page):
     booking = get_object_or_404(Booking, slug=slug)
 
     if not user_belongs_to_booking_org(request.user, booking):
@@ -158,9 +158,12 @@ def cancel_booking(request, slug):
         booking.status = Booking.Status.CANCELLED
         booking.save()
 
-    return render(
-        request, "bookings/partials/booking_list_item.html", {"booking": booking}
-    )
+    if from_page == "detail":
+        template_name = "bookings/partials/booking_detail_item.html"
+    else:
+        template_name = "bookings/partials/booking_list_item.html"
+
+    return render(request, template_name, {"booking": booking})
 
 
 @login_required

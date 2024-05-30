@@ -23,7 +23,7 @@ urlpatterns = [
         name="write_booking_message",
     ),
     path(
-        "<slug:slug>/cancel-booking",
+        "<slug:slug>/cancel-booking/<from_page>",
         cancel_booking,
         name="cancel_booking",
     ),
