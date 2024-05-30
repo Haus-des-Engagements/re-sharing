@@ -12,6 +12,7 @@ from dateutil.rrule import rrule
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -26,6 +27,10 @@ from .forms import MessageForm
 from .forms import RecurrenceForm
 from .models import Booking
 from .models import BookingMessage
+
+
+def user_belongs_to_booking_org(user, booking):
+    return booking.organization.users_of_organization.filter(pk=user.pk).exists()
 
 
 @login_required
@@ -79,6 +84,10 @@ def get_filtered_booking_list(request):
 def booking_detail_view(request, slug):
     activity_stream = []
     booking = get_object_or_404(Booking, slug=slug)
+
+    if not user_belongs_to_booking_org(request.user, booking):
+        return HttpResponseForbidden("You do not have permission to do this action")
+
     form = MessageForm()
 
     booking_logs = booking.history.filter(changes__has_key="status").exclude(
@@ -122,6 +131,9 @@ def booking_detail_view(request, slug):
 def write_booking_message(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
     form = MessageForm(request.POST or None)
+
+    if not user_belongs_to_booking_org(request.user, booking):
+        return HttpResponseForbidden("You do not have permission to do this action")
 
     if form.is_valid():
         message = form.save(commit=False)
