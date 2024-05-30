@@ -13,17 +13,33 @@
         <p class="h4">{{ booking.timespan.lower|date:"d" }}. {{ booking.timespan.lower|date:"F" }}</p>
         <p class="h6">{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</p>
       </div>
-      <div class="col-md-10">
+      <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ booking.room }}</h5>
+          <h5 class="card-title">
+            {{ booking.room }} <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+          </h5>
           <p class="card-text">{{ booking.timespan.lower|date:"d.m.Y - H:i" }} - {{ booking.timespan.upper }}</p>
-          <p class="card-text">Status: {{ booking.get_status_display }} | {% trans "Booked by:" %} {{ booking.user }}</p>
+          <p class="card-text">
+            {% trans "Booked by:" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
+          </p>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            {% if booking.status != 3 %}
+              <button id="cancel-button"
+                      type="submit"
+                      class="btn btn-outline-danger mb-3"
+                      value="Submit"
+                      hx-post="{% url 'bookings:cancel_booking' booking.slug %}"
+                      hx-target="#cancel-button"
+                      hx-swap="outerHtml">{% trans "Cancel Booking" %}</button>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div>
-    <button type="button" class="btn btn-outline-danger">Cancel Booking</button>
   </div>
   <div class="container py-4">
     <h2 class="font-weight-light py-3">{% trans "Timeline" %}</h2>
@@ -123,7 +139,9 @@
           <div class="card-body">
             <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
             <h5 class="card-title">{% trans "Booking created" %}</h5>
-            <p class="card-text">{% trans "by" %} {{ booking.user }}</p>
+            <p class="card-text">
+              {% trans "by" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }})
+            </p>
           </div>
         </div>
       </div>

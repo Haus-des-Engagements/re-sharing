@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import booking_detail_view
 from .views import booking_list_view
+from .views import cancel_booking
 from .views import create_booking
 from .views import get_filtered_booking_list
 from .views import recurrence_view
@@ -20,6 +21,11 @@ urlpatterns = [
         "<slug:slug>/write-booking-message",
         write_booking_message,
         name="write_booking_message",
+    ),
+    path(
+        "<slug:slug>/cancel-booking",
+        cancel_booking,
+        name="cancel_booking",
     ),
     path("<slug:slug>/", booking_detail_view, name="detail"),
     path("recurrence/", recurrence_view, name="recurrence"),

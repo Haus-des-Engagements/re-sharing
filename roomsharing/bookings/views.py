@@ -70,7 +70,7 @@ def get_filtered_booking_list(request):
 
         return render(
             request,
-            "bookings/partials/bookings_list.html",
+            "bookings/partials/booking_list_item.html",
             {"bookings": bookings, "form": form},
         )
 
@@ -145,6 +145,22 @@ def write_booking_message(request, slug):
         )
 
     return render(request, "bookings/booking_details.html", {"form": form})
+
+
+@login_required
+def cancel_booking(request, slug):
+    booking = get_object_or_404(Booking, slug=slug)
+
+    if not user_belongs_to_booking_org(request.user, booking):
+        return HttpResponseForbidden("You do not have permission to do this action")
+
+    if booking.Status.CONFIRMED or booking.Status.PENDING:
+        booking.status = Booking.Status.CANCELLED
+        booking.save()
+
+    return render(
+        request, "bookings/partials/booking_list_item.html", {"booking": booking}
+    )
 
 
 @login_required

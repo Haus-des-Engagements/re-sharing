@@ -16,5 +16,9 @@
     {{ form.status.label }}{{ form.status }}
     <input type="submit" value="Submit" />
   </form>
-  <div id="booking-list">{% include "bookings/partials/bookings_list.html" %}</div>
+  <div id="booking-list">
+    {% for booking in bookings %}
+      {% include "bookings/partials/booking_list_item.html" %}
+    {% endfor %}
+  </div>
 {% endblock content %}
