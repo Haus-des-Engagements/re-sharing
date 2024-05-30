@@ -118,7 +118,7 @@ def booking_detail_view(request, slug):
         }
         activity_stream.append(message_dict)
 
-    activity_stream = sorted(activity_stream, key=lambda x: x["date"], reverse=False)
+    activity_stream = sorted(activity_stream, key=lambda x: x["date"], reverse=True)
 
     return render(
         request,
