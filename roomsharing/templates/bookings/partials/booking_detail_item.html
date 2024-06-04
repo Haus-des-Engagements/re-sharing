@@ -26,7 +26,7 @@
                     type="submit"
                     class="btn btn-outline-danger mb-3"
                     value="Submit"
-                    hx-post="{% url 'bookings:cancel_booking' slug=booking.slug from_page='detail' %}"
+                    hx-post="{% url 'bookings:cancel-booking' slug=booking.slug from_page='detail' %}"
                     onclick="return confirm('Are you sure you want to cancel this booking?');"
                     hx-target="#booking-detail-item"
                     hx-swap="innerHtml">{% trans "Cancel Booking" %}</button>

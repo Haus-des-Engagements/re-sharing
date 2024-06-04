@@ -1,32 +1,34 @@
 from django.urls import path
 
 from .views import booking_detail_view
-from .views import booking_list_view
 from .views import cancel_booking
 from .views import create_booking
-from .views import get_filtered_booking_list
+from .views import filter_bookings_view
+from .views import list_bookings_view
 from .views import recurrence_view
-from .views import write_booking_message
+from .views import write_bookingmessage
 
 app_name = "bookings"
 urlpatterns = [
-    path("", booking_list_view, name="list"),
+    path("", list_bookings_view, name="list-bookings"),
     path(
-        "filtered-booking-list/",
-        get_filtered_booking_list,
-        name="filtered_booking_list",
+        "filter-bookings/",
+        filter_bookings_view,
+        name="filter-bookings",
     ),
-    path("new/", create_booking, name="booking_create"),
-    path(
-        "<slug:slug>/write-booking-message",
-        write_booking_message,
-        name="write_booking_message",
-    ),
+    path("create-booking/", create_booking, name="create-booking"),
+    path("<slug:slug>/", booking_detail_view, name="detail"),
     path(
         "<slug:slug>/cancel-booking/<from_page>",
         cancel_booking,
-        name="cancel_booking",
+        name="cancel-booking",
     ),
-    path("<slug:slug>/", booking_detail_view, name="detail"),
+    path(
+        "<slug:slug>/write-bookingmessage",
+        write_bookingmessage,
+        name="write_bookingmessage",
+    ),
     path("recurrence/", recurrence_view, name="recurrence"),
 ]
+
+htmx_patterns = []

@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
-from roomsharing.bookings.views import booking_list_view
+from roomsharing.bookings.views import list_bookings_view
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
@@ -26,13 +26,13 @@ class TestBookingList(TestCase):
     def test_authenticated(self):
         client = Client()
         client.force_login(self.user)
-        response = client.get(reverse("bookings:list"))
+        response = client.get(reverse("bookings:list-bookings"))
         assert response.status_code == HTTPStatus.OK
 
     def test_not_authenticated(self):
         request = self.factory.get("/bookings/")
         request.user = AnonymousUser()
-        response = booking_list_view(request)
+        response = list_bookings_view(request)
         login_url = reverse(settings.LOGIN_URL)
 
         assert isinstance(response, HttpResponseRedirect)
@@ -58,7 +58,7 @@ class TestBookingList(TestCase):
         BookingFactory(organization=o1, timespan=(start_time, end_time), room=r2)
 
         client.login(username=self.user.email, password=self.user.password)
-        response = client.get(reverse("bookings:list"))
+        response = client.get(reverse("bookings:list-bookings"))
 
         assert response.status_code == HTTPStatus.OK
         assert len(list(response.context["bookings"])) == total_bookings_for_o1

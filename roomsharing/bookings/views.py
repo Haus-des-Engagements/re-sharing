@@ -34,7 +34,7 @@ def user_belongs_to_booking_org(user, booking):
 
 
 @login_required
-def booking_list_view(request):
+def list_bookings_view(request):
     user_organizations = request.user.organizations.all()
     form = BookingListForm(request.POST or None, organizations=user_organizations)
     bookings = Booking.objects.filter(organization__in=user_organizations).filter(
@@ -43,13 +43,13 @@ def booking_list_view(request):
 
     return render(
         request,
-        "bookings/bookings_list.html",
+        "bookings/list_bookings_page.html",
         {"bookings": bookings, "form": form},
     )
 
 
 @login_required
-def get_filtered_booking_list(request):
+def filter_bookings_view(request):
     user_organizations = request.user.organizations.all()
     form = BookingListForm(request.POST or None, organizations=user_organizations)
     bookings = Booking.objects.filter(organization__in=user_organizations)
@@ -70,7 +70,7 @@ def get_filtered_booking_list(request):
 
         return render(
             request,
-            "bookings/partials/booking_list_item.html",
+            "bookings/partials/list_bookings.html",
             {"bookings": bookings, "form": form},
         )
 
@@ -128,7 +128,7 @@ def booking_detail_view(request, slug):
 
 
 @login_required
-def write_booking_message(request, slug):
+def write_bookingmessage(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
     form = MessageForm(request.POST or None)
 

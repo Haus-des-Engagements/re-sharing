@@ -6,8 +6,8 @@
 
 {% block content %}
   <h1 class="mt-4">{% trans "All bookings" %}</h1>
-  <a href="{% url 'bookings:booking_create' %}">New Booking</a>
-  <form hx-post="{% url 'bookings:filtered_booking_list' %}"
+  <a href="{% url 'bookings:create-booking' %}">New Booking</a>
+  <form hx-post="{% url 'bookings:filter-bookings' %}"
         hx-target="#booking-list">
     {% csrf_token %}
     {{ form.show_past_bookings }} {{ form.show_past_bookings.label }}
@@ -16,9 +16,5 @@
     {{ form.status.label }}{{ form.status }}
     <input type="submit" value="Submit" />
   </form>
-  <div id="booking-list">
-    {% for booking in bookings %}
-      {% include "bookings/partials/booking_list_item.html" %}
-    {% endfor %}
-  </div>
+  <div id="booking-list">{% include "bookings/partials/list_bookings.html" %}</div>
 {% endblock content %}
