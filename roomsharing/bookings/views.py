@@ -81,7 +81,7 @@ def filter_bookings_view(request):
 
 
 @login_required
-def booking_detail_view(request, slug):
+def show_booking_view(request, slug):
     activity_stream = []
     booking = get_object_or_404(Booking, slug=slug)
 
@@ -122,7 +122,7 @@ def booking_detail_view(request, slug):
 
     return render(
         request,
-        "bookings/booking_details.html",
+        "bookings/show-booking.html",
         {"booking": booking, "activity_stream": activity_stream, "form": form},
     )
 
@@ -144,7 +144,7 @@ def write_bookingmessage(request, slug):
             request, "bookings/partials/booking-message.html", {"message": message}
         )
 
-    return render(request, "bookings/booking_details.html", {"form": form})
+    return render(request, "bookings/show-booking.html", {"form": form})
 
 
 @login_required
