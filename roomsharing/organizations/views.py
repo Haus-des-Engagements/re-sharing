@@ -1,5 +1,4 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
@@ -7,30 +6,20 @@ from .models import Organization
 
 
 @login_required
-def my_organization_list(request):
+def list_organizations_view(request):
     user = request.user
     user_organizations = user.organizations.all()
     return render(
         request,
-        "organizations/organization_list.html",
+        "organizations/list_organizations.html",
         {"organizations": user_organizations},
     )
 
 
-@permission_required("is_staff")
-def organization_list(request):
-    organizations = Organization.objects.all()
+def show_organization_view(request, slug):
+    organization = get_object_or_404(Organization, slug=slug)
     return render(
         request,
-        "organizations/organization_list.html",
-        {"organizations": organizations},
-    )
-
-
-def organization_detail(request, organization_slug):
-    organization = get_object_or_404(Organization, slug=organization_slug)
-    return render(
-        request,
-        "organizations/organization_detail.html",
+        "organizations/show_organization.html",
         {"organization": organization},
     )

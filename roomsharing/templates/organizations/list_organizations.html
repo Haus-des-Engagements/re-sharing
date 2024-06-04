@@ -10,7 +10,7 @@
   <ul>
     {% for organization in organizations %}
       <li>
-        <a href="{% url 'organizations:organization_detail' organization.slug %}">{{ organization.name }}</a>
+        <a href="{% url 'organizations:show-organization' organization.slug %}">{{ organization.name }}</a>
       </li>
     {% endfor %}
   </ul>

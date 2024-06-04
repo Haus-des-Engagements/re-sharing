@@ -1,12 +1,10 @@
 from django.urls import path
 
-from .views import my_organization_list
-from .views import organization_detail
-from .views import organization_list
+from .views import list_organizations_view
+from .views import show_organization_view
 
 app_name = "organizations"
 urlpatterns = [
-    path("", my_organization_list, name="my_organization_list"),
-    path("all/", organization_list, name="organization_list"),
-    path("<slug:organization_slug>/", organization_detail, name="organization_detail"),
+    path("", list_organizations_view, name="list-organizations"),
+    path("<slug:slug>/", show_organization_view, name="show-organization"),
 ]
