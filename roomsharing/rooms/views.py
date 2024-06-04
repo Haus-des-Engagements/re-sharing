@@ -63,7 +63,7 @@ def filter_rooms_view(request):
         rooms = rooms.prefetch_related("roomimages_of_room")
         return render(
             request,
-            "rooms/partials/room_list_results.html",
+            "rooms/partials/list_filter_rooms.html",
             {"rooms": rooms, "form": form},
         )
 

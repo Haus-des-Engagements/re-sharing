@@ -43,7 +43,7 @@ def list_bookings_view(request):
 
     return render(
         request,
-        "bookings/list_bookings_page.html",
+        "bookings/list_bookings.html",
         {"bookings": bookings, "form": form},
     )
 
@@ -141,7 +141,7 @@ def write_bookingmessage(request, slug):
         message.booking = booking
         message.save()
         return render(
-            request, "bookings/partials/booking-message.html", {"message": message}
+            request, "bookings/partials/show_bookingmessage.html", {"message": message}
         )
 
     return render(request, "bookings/show-booking.html", {"form": form})
@@ -159,9 +159,9 @@ def cancel_booking(request, slug, from_page):
         booking.save()
 
     if from_page == "detail":
-        template_name = "bookings/partials/booking_detail_item.html"
+        template_name = "bookings/partials/show_booking_item.html"
     else:
-        template_name = "bookings/partials/booking_list_item.html"
+        template_name = "bookings/partials/list_bookings_item.html"
 
     return render(request, template_name, {"booking": booking})
 
