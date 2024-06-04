@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from roomsharing.rooms.tests.factories import RoomFactory
-from roomsharing.rooms.views import room_detail_view
-from roomsharing.rooms.views import room_list_view
+from roomsharing.rooms.views import list_rooms_view
+from roomsharing.rooms.views import show_room_view
 
 
 class RoomDetailViewTest(TestCase):
@@ -16,9 +16,9 @@ class RoomDetailViewTest(TestCase):
 
     def test_room_detail_view(self):
         request = self.factory.get(
-            reverse("rooms:detail", kwargs={"slug": self.room.slug}),
+            reverse("rooms:show-room", kwargs={"slug": self.room.slug}),
         )
-        response = room_detail_view(request, slug=self.room.slug)
+        response = show_room_view(request, slug=self.room.slug)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(response, self.room.name)
 
@@ -30,6 +30,6 @@ class RoomListViewTest(TestCase):
         self.factory = RequestFactory()
 
     def test_room_list_view(self):
-        request = self.factory.get(reverse("rooms:list"))
-        response = room_list_view(request)
+        request = self.factory.get(reverse("rooms:list-rooms"))
+        response = list_rooms_view(request)
         assert response.status_code == HTTPStatus.OK

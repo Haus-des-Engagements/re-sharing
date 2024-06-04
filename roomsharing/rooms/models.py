@@ -36,7 +36,7 @@ class Room(Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("rooms:detail", kwargs={"slug": self.slug})
+        return reverse("rooms:show-room", kwargs={"slug": self.slug})
 
 
 def create_roomimage_path(instance, filename):
@@ -71,7 +71,7 @@ class RoomImage(TimeStampedModel):
         return Path(self.image.name).name
 
     def get_absolute_url(self):
-        return reverse("rooms:detail", kwargs={"slug": self.room.slug})
+        return reverse("rooms:show-room", kwargs={"slug": self.room.slug})
 
     def save(self, *args, **kwargs):
         #  shrink image to max-width/height of 1920px, change quality and optimize

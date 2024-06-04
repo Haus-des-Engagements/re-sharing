@@ -12,18 +12,18 @@ from roomsharing.rooms.forms import RoomsListFilter
 from roomsharing.rooms.models import Room
 
 
-def room_detail_view(request, slug):
+def show_room_view(request, slug):
     room = get_object_or_404(Room, slug=slug)
     bookings = Booking.objects.filter(room=room)
 
     return render(
         request,
-        "rooms/room_detail.html",
+        "rooms/show_room.html",
         {"room": room, "bookings": bookings},
     )
 
 
-def room_list_view(request):
+def list_rooms_view(request):
     form = RoomsListFilter(request.POST or None)
     rooms = Room.objects.all()
 
@@ -31,7 +31,7 @@ def room_list_view(request):
 
     return render(
         request,
-        "rooms/room_list.html",
+        "rooms/list_rooms.html",
         {"rooms": rooms, "form": form},
     )
 
