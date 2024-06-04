@@ -36,7 +36,7 @@ def list_rooms_view(request):
     )
 
 
-def get_room_list(request):
+def filter_rooms_view(request):
     form = RoomsListFilter(request.POST or None)
     rooms = Room.objects.all()
 

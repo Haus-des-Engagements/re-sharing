@@ -8,7 +8,7 @@
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
   <div class="row">
-    <form hx-post="{% url 'rooms:get-room-list' %}" hx-target="#room-list">
+    <form hx-post="{% url 'rooms:filter-rooms' %}" hx-target="#room-list">
       {% csrf_token %}
       <input type="text" name="max_persons" placeholder="Persons" />
       <input type="text" name="name" placeholder="Room Name" />
