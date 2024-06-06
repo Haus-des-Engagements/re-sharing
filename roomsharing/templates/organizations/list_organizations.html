@@ -10,11 +10,15 @@
     <div>
       <h1>
         {% trans "Organizations" %}
-        <a class="btn btn-outline-primary" href="#" role="button">
+        <button type="button"
+                class="btn btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#createOrganizationModal">
           <svg width="1em" height="1em">
             <use href="#bi-plus-lg" />
           </svg>
-        {% trans "Add new organization" %}</a>
+          {% trans "Add new organization" %}
+        </button>
       </h1>
     </div>
   </div>
@@ -35,6 +39,14 @@
             <div class="card-body">
               <h5 class="card-title">{{ organization.name }}</h5>
               <p class="card-text">Description of Organization</p>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-geo-alt" />
+                  </svg>
+                  {{ organization.street }} {{ organization.house_number }}, {{ organization.zip_code }} {{ organization.city }}
+                </li>
+              </ul>
             </div>
           </div>
           <div class="col-md-2">
@@ -48,4 +60,31 @@
         </div>
       </div>
     {% endfor %}
+    <div class="modal fade"
+         id="createOrganizationModal"
+         tabindex="-1"
+         aria-labelledby="createOrganizationModalLabel"
+         aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createOrganizationModalLabel">{% trans "Add new organization" %}</h5>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="post" action="{% url 'organizations:list-organizations' %}">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   {% endblock content %}

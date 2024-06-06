@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.shortcuts import render
 
+from .forms import OrganizationForm
 from .models import Organization
 
 
@@ -9,10 +11,23 @@ from .models import Organization
 def list_organizations_view(request):
     user = request.user
     user_organizations = user.organizations.all()
+
+    if request.method == "POST":
+        form = OrganizationForm(request.POST)
+        if form.is_valid():
+            new_org = form.save(commit=False)
+            # add additional fields like user if necessary
+
+            new_org.save()
+            user.organizations.add(new_org)
+            return redirect("organizations:list-organizations")
+    else:
+        form = OrganizationForm()
+
     return render(
         request,
         "organizations/list_organizations.html",
-        {"organizations": user_organizations},
+        {"organizations": user_organizations, "form": form},
     )
 
 
