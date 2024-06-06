@@ -11,8 +11,8 @@ from roomsharing.users.models import User
 
 class UserDetailView(LoginRequiredMixin, DetailView):
     model = User
-    slug_field = "id"
-    slug_url_kwarg = "id"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
 
 
 user_detail_view = UserDetailView.as_view()
@@ -20,7 +20,7 @@ user_detail_view = UserDetailView.as_view()
 
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
-    fields = ["first_name", "last_name", "organizations"]
+    fields = ["first_name", "last_name", "street", "house_number", "zip_code", "city"]
     success_message = _("Information successfully updated")
 
     def get_success_url(self):
@@ -39,7 +39,7 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self):
-        return reverse("users:detail", kwargs={"pk": self.request.user.pk})
+        return reverse("users:detail", kwargs={"slug": self.request.user.slug})
 
 
 user_redirect_view = UserRedirectView.as_view()

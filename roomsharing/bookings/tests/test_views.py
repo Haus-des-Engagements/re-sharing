@@ -13,8 +13,8 @@ from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.views import list_bookings_view
+from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
-from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 
 

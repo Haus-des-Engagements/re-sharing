@@ -6,6 +6,7 @@ from django.db.models import EmailField
 from django.db.models import ManyToManyField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_extensions.db.fields import AutoSlugField
 
 from roomsharing.organizations.models import Organization
 
@@ -22,6 +23,7 @@ class User(AbstractUser):
     # First and last name do not cover name patterns around the globe
     first_name = CharField(_("First Name"))
     last_name = CharField(_("Last Name"))
+    slug = AutoSlugField(populate_from=["first_name", "last_name"], editable=False)
     email = EmailField(_("email address"), unique=True)
     username = None  # type: ignore[assignment]
     organizations = ManyToManyField(
@@ -31,9 +33,21 @@ class User(AbstractUser):
         related_query_name="user_of_organization",
         blank=True,
     )
+    street = CharField(_("Street"), max_length=56)
+    house_number = CharField(_("House Number"), max_length=8, blank=True)
+    zip_code = CharField(_("Zip Code"), max_length=12)
+    city = CharField(_("City"), max_length=24)
+    phone_number = CharField(_("Phone Number"), max_length=20)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = [
+        "first_name",
+        "last_name",
+        "street",
+        "city",
+        "zip_code",
+        "phone_number",
+    ]
 
     objects: ClassVar[UserManager] = UserManager()
 
@@ -49,4 +63,4 @@ class User(AbstractUser):
             str: URL for user detail.
 
         """
-        return reverse("users:detail", kwargs={"pk": self.id})
+        return reverse("users:detail", kwargs={"slug": self.slug})

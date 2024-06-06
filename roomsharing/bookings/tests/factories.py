@@ -11,8 +11,8 @@ from factory.fuzzy import FuzzyDateTime
 from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
+from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
-from roomsharing.users.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 
 
