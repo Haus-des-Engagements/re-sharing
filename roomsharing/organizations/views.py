@@ -3,8 +3,11 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 
+from roomsharing.users.models import User
+
 from .forms import OrganizationForm
 from .models import Organization
+from .models import OrganizationMembership
 
 
 @login_required
@@ -31,10 +34,15 @@ def list_organizations_view(request):
     )
 
 
+@login_required
 def show_organization_view(request, slug):
     organization = get_object_or_404(Organization, slug=slug)
+    members = User.objects.filter(organizations__in=[organization]).filter(
+        user_of_organizationmembership__status__exact=OrganizationMembership.Status.CONFIRMED
+    )
+
     return render(
         request,
         "organizations/show_organization.html",
-        {"organization": organization},
+        {"organization": organization, "members": members},
     )

@@ -61,6 +61,9 @@ class User(AbstractUser, TimeStampedModel):
         verbose_name_plural = _("Users")
         ordering = ["email"]
 
+    def __str__(self):
+        return self.first_name + " " + self.last_name
+
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.
 
