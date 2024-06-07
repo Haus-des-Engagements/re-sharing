@@ -107,3 +107,4 @@ class BookingMessage(TimeStampedModel):
 
 
 auditlog.register(Booking, exclude_fields=["created, updated"])
+auditlog.register(BookingMessage, exclude_fields=["created, updated"])
