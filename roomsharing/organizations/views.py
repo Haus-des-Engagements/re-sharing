@@ -22,7 +22,13 @@ def list_organizations_view(request):
             # add additional fields like user if necessary
 
             new_org.save()
-            user.organizations.add(new_org)
+            organization_membership = OrganizationMembership(
+                user=user,
+                organization=new_org,
+                status=OrganizationMembership.Status.CONFIRMED,
+            )
+            organization_membership.save()
+
             return redirect("organizations:list-organizations")
     else:
         form = OrganizationForm()
@@ -37,9 +43,7 @@ def list_organizations_view(request):
 @login_required
 def show_organization_view(request, slug):
     organization = get_object_or_404(Organization, slug=slug)
-    members = User.objects.filter(organizations__in=[organization]).filter(
-        user_of_organizationmembership__status__exact=OrganizationMembership.Status.CONFIRMED
-    )
+    members = User.objects.filter(organizations__in=[organization])
 
     return render(
         request,

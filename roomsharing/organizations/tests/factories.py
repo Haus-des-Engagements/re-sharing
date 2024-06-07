@@ -13,7 +13,7 @@ class OrganizationFactory(DjangoModelFactory):
     house_number = Faker("building_number", locale="de_DE")
     zip_code = Faker("postcode", locale="de_DE")
     city = Faker("city", locale="de_DE")
-    type = 1
+    legal_form = 1
 
     class Meta:
         model = Organization

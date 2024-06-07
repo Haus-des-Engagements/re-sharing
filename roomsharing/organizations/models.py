@@ -87,6 +87,12 @@ class OrganizationMembership(TimeStampedModel):
 
     class Meta:
         unique_together = ("user", "organization")
+        verbose_name = _("Organization membership")
+        verbose_name_plural = _("Organization memberships")
+        ordering = ["id"]
+
+    def __str__(self):
+        return self.user.__str__() + " - " + self.organization.name
 
 
 auditlog.register(Organization, exclude_fields=["created, updated"])
