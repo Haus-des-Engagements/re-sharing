@@ -14,7 +14,7 @@ from roomsharing.utils.models import TimeStampedModel
 
 
 class Organization(TimeStampedModel):
-    class Type(IntegerChoices):
+    class LegalForm(IntegerChoices):
         NO_LEGAL_FORM = 1, _("Without legal form")
         REGISTERED_ASSOCIATION = 2, _("Registered association")
         NOT_REGISTERED_ASSOCIATION = 3, _("Not registered association")
@@ -34,7 +34,7 @@ class Organization(TimeStampedModel):
     house_number = CharField(_("House number"), max_length=8, blank=True)
     zip_code = CharField(_("Zip Code"), max_length=12)
     city = CharField(_("City"), max_length=24)
-    type = IntegerField(verbose_name=_("Status"), choices=Type.choices)
+    legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
     certificate_of_tax_exemption = BooleanField(
         _("Certificate of tax exemption"), default=False
     )
