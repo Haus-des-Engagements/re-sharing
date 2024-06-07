@@ -21,7 +21,6 @@ class UserAdmin(auth_admin.UserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (_("Personal info"), {"fields": ("first_name", "last_name")}),
-        (_("Organizations"), {"fields": ["organizations"]}),
         (
             _("Permissions"),
             {

@@ -3,36 +3,60 @@
         "model": "organizations.organization",
         "pk": 1,
         "fields": {
+            "created": "2024-01-02 12:00+00",
+            "updated": "2024-01-02 12:00+00",
             "name": "Haus des Engagements e.V.",
             "slug": "haus-des-engagements-e-v",
+            "type": 2,
             "street": "Rehlingstraße",
             "house_number": "9",
             "zip_code": "79100",
-            "city": "Freiburg im Breisgau"
+            "city": "Freiburg im Breisgau",
+            "certificate_of_tax_exemption": true
         }
     },
   {
         "model": "organizations.organization",
         "pk": 2,
         "fields": {
+            "created": "2024-01-02 12:00+00",
+            "updated": "2024-01-02 12:00+00",
             "name": "RSTGH",
+            "type": 1,
             "slug": "rstgh",
             "street": "Rehlingstraße",
             "house_number": "9",
             "zip_code": "79100",
-            "city": "Freiburg im Breisgau"
+            "city": "Freiburg im Breisgau",
+            "certificate_of_tax_exemption": true
         }
     },
   {
         "model": "organizations.organization",
         "pk": 3,
         "fields": {
+            "created": "2024-01-02 12:00+00",
+            "updated": "2024-01-02 12:00+00",
             "name": "kaliz",
+            "type": 3,
             "slug": "kaliz",
             "street": "Rehlingstraße",
             "house_number": "9",
             "zip_code": "79100",
-            "city": "Freiburg im Breisgau"
+            "city": "Freiburg im Breisgau",
+            "certificate_of_tax_exemption": false
+        }
+    },
+  {
+        "model": "organizations.organizationmembership",
+        "pk": 1,
+        "fields": {
+            "created": "2024-01-02 12:00+00",
+            "updated": "2024-01-02 12:00+00",
+            "organization": 1,
+            "user": 1,
+            "role": 1,
+            "status": 2
         }
     }
 

@@ -1,5 +1,7 @@
 from typing import ClassVar
 
+from auditlog.models import AuditlogHistoryField
+from auditlog.registry import auditlog
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
@@ -9,11 +11,12 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from roomsharing.organizations.models import Organization
+from roomsharing.organizations.models import OrganizationMembership
+from roomsharing.users.managers import UserManager
+from roomsharing.utils.models import TimeStampedModel
 
-from .managers import UserManager
 
-
-class User(AbstractUser):
+class User(AbstractUser, TimeStampedModel):
     """
     Default custom user model for Roomsharing.
     If adding fields that need to be filled at user signup,
@@ -21,6 +24,7 @@ class User(AbstractUser):
     """
 
     # First and last name do not cover name patterns around the globe
+    history = AuditlogHistoryField()
     first_name = CharField(_("First Name"))
     last_name = CharField(_("Last Name"))
     slug = AutoSlugField(populate_from=["first_name", "last_name"], editable=False)
@@ -28,6 +32,7 @@ class User(AbstractUser):
     username = None  # type: ignore[assignment]
     organizations = ManyToManyField(
         Organization,
+        through=OrganizationMembership,
         verbose_name=_("Organizations"),
         related_name="users_of_organization",
         related_query_name="user_of_organization",
@@ -64,3 +69,6 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"slug": self.slug})
+
+
+auditlog.register(Organization, exclude_fields=["created, updated"])

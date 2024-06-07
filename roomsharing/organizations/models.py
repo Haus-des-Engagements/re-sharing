@@ -1,14 +1,19 @@
+from auditlog.models import AuditlogHistoryField
+from auditlog.registry import auditlog
+from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
-from django.db.models import Model
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
+from roomsharing.utils.models import TimeStampedModel
 
-class Organization(Model):
+
+class Organization(TimeStampedModel):
     class Type(IntegerChoices):
         NO_LEGAL_FORM = 1, _("Without legal form")
         REGISTERED_ASSOCIATION = 2, _("Registered association")
@@ -22,6 +27,7 @@ class Organization(Model):
         INDIVIDUAL_ENTREPRENEUR = 10, _("Individual entrepreneur")
         OTHER = 11, _("Other")
 
+    history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
     slug = AutoSlugField(populate_from="name")
     street = CharField(_("Street"), max_length=56)
@@ -43,3 +49,45 @@ class Organization(Model):
 
     def get_absolute_url(self):
         return reverse("organizations:organization_detail", args=[str(self.slug)])
+
+
+class OrganizationMembership(TimeStampedModel):
+    class Role(IntegerChoices):
+        ADMIN = 1, _("Administrator")
+        BOOKER = 2, _("Booker")
+
+    class Status(IntegerChoices):
+        PENDING = 1, _("Pending")
+        CONFIRMED = 2, _("Confirmed")
+        REJECTED = 3, _("Rejected")
+
+    history = AuditlogHistoryField()
+    user = ForeignKey(
+        "users.User",
+        verbose_name=_("User"),
+        related_name="users_of_organizationmembership",
+        related_query_name="user_of_organizationmembership",
+        blank=True,
+        on_delete=CASCADE,
+    )
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Organization"),
+        related_name="organizations_of_organizationmembership",
+        related_query_name="organization_of_organizationmembership",
+        blank=True,
+        on_delete=CASCADE,
+    )
+    role = IntegerField(
+        verbose_name=_("Role"), choices=Role.choices, default=Role.BOOKER
+    )
+    status = IntegerField(
+        verbose_name=_("Status"), choices=Status.choices, default=Status.PENDING
+    )
+
+    class Meta:
+        unique_together = ("user", "organization")
+
+
+auditlog.register(Organization, exclude_fields=["created, updated"])
+auditlog.register(OrganizationMembership, exclude_fields=["created, updated"])
