@@ -5,16 +5,22 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{% trans "All bookings" %}</h1>
-  <a href="{% url 'bookings:create-booking' %}">New Booking</a>
+  <h1 class="mt-4">
+    {% trans "All bookings" %}
+    <a class="btn btn-outline-primary"
+       href="{% url 'bookings:create-booking' %}"
+       role="button">
+      <svg width="1em" height="1em">
+        <use href="#bi-plus-lg" />
+      </svg>
+      {% trans "New Booking" %}
+    </a>
+  </h1>
   <form hx-post="{% url 'bookings:filter-bookings' %}"
-        hx-target="#booking-list">
+        hx-target="#booking-list"
+        hx-trigger="change">
     {% csrf_token %}
-    {{ form.show_past_bookings }} {{ form.show_past_bookings.label }}
-    <br />
-    {{ form.organization.label }}{{ form.organization }}
-    {{ form.status.label }}{{ form.status }}
-    <input type="submit" value="Submit" />
+    {{ form }}
   </form>
   <div id="booking-list">{% include "bookings/partials/list_bookings.html" %}</div>
 {% endblock content %}
