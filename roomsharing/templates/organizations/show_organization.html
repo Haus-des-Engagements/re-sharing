@@ -37,44 +37,65 @@
         <div class="col-md-2">
           <div class="card-body">
             <div class="d-grid gap-2">
-              <a class="btn btn-outline-danger" href="#">{% trans "Delete Organization" %}</a>
+              {% if is_admin %}
+                <a class="btn btn-outline-danger"
+                   href="{% url 'organizations:delete-organization' slug=organization.slug %}">{% trans "Delete Organization" %}</a>
+              {% endif %}
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="row mt-5 mb-4">
+    <div class="row mt-5 mb-2">
       <h2>{% trans "Members" %}</h2>
     </div>
-    {% for member in members %}
-      <div class="card mb-3">
-        <div class="row g-0">
-          <div class="col-md-10">
-            <div class="card-body">
-              <h5 class="card-title">{{ user }}</h5>
-              <p class="card-text">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-envelope-at" />
-                </svg>
-                {{ member.email }}
-              </p>
-              <p class="card-text">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-geo-alt" />
-                </svg>
-                {{ member.street }} {{ member.house_number }}, {{ member.zip_code }} {{ member.city }}
-              </p>
+    {% if not members %}
+      <div>{% trans "Members are only visible for other members." %}</div>
+    {% else %}
+      {% for member in members %}
+        <div class="card mb-3">
+          <div class="row g-0">
+            <div class="col-md-10">
+              <div class="card-body">
+                <h5 class="card-title">{{ member.first_name }} {{ member.last_name }}</h5>
+                <p class="card-text">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-envelope-at" />
+                  </svg>
+                  {{ member.email }}
+                </p>
+                <p class="card-text">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-geo-alt" />
+                  </svg>
+                  {% if is_admin %}
+                    {{ member.street }} {{ member.house_number }}, {{ member.zip_code }} {{ member.city }}
+                  {% else %}
+                    {% trans "Addresses are only visible to admins" %}
+                  {% endif %}
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="col-md-2">
-            <div class="card-body">
-              <div class="d-grid gap-2">
-                <a class="btn btn-outline-primary"
-                   href="{% url 'organizations:show-organization' slug=organization.slug %}">{% trans "View Details" %}</a>
+            <div class="col-md-2">
+              <div class="card-body">
+                <div class="d-grid gap-2">
+                  {% if is_admin and member.membership_status == 1 %}
+                    <button class="btn btn-outline-primary"
+                            hx-post="{% url 'organizations:confirm-membership' slug=organization.slug user=member.slug %}">
+                      {% trans "Confirm Membership" %}
+                    </button>
+                  {% endif %}
+                  {% if is_admin and member.membership_status == 2 %}
+                    <button class="btn btn-outline-danger"
+                            hx-post="{% url 'organizations:cancel-membership' slug=organization.slug user=member.slug %}">
+                      {% trans "Cancel Membership" %}
+                    </button>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+    {% endif %}
   {% endblock content %}

@@ -21,70 +21,46 @@
         </button>
       </h1>
     </div>
+    <div class="row">
+      <p>
+        {% trans "Only organisations can book rooms. If your organization does not exists yet, please add it as new organization. If it exists already, you can request the membership to book rooms in the name of that organization." %}
+      </p>
+    </div>
   </div>
-  {% for organization in organizations %}
-    <div class="card mb-3">
-      <div class="row g-0">
-        <div class="col-md-2">
-          <svg class="bd-placeholder-img img-fluid rounded-start"
-               xmlns="http://www.w3.org/2000/svg"
-               role="img"
-               aria-label="Placeholder: Image"
-               preserveAspectRatio="xMidYMid slice"
-               focusable="false">
-            <title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="25%" y="50%" fill="#dee2e6" dy=".3em">Image missing</text>
-            </svg>
-          </div>
-          <div class="col-md-8">
-            <div class="card-body">
-              <h5 class="card-title">{{ organization.name }}</h5>
-              <p class="card-text">Description of Organization</p>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <svg class="fs-4 me-1" width="1em" height="1em">
-                    <use href="#bi-geo-alt" />
-                  </svg>
-                  {{ organization.street }} {{ organization.house_number }}, {{ organization.zip_code }} {{ organization.city }}
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="col-md-2">
-            <div class="card-body">
-              <div class="d-grid gap-2">
-                <a class="btn btn-outline-primary"
-                   href="{% url 'organizations:show-organization' slug=organization.slug %}">{% trans "View Details" %}</a>
-              </div>
-            </div>
-          </div>
+  <div class="row">
+    <form hx-post="{% url 'organizations:filter-organizations' %}"
+          hx-target="#list-organizations"
+          hx-trigger="keyup">
+      {% csrf_token %}
+      <input type="text" name="name" placeholder="Organization Name" />
+    </form>
+  </div>
+  <div id="list-organizations" class="mt-4">{% include "organizations/partials/list_filter_organizations.html" %}</div>
+  <div class="modal fade"
+       id="createOrganizationModal"
+       tabindex="-1"
+       aria-labelledby="createOrganizationModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createOrganizationModalLabel">{% trans "Add new organization" %}</h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
         </div>
-      </div>
-    {% endfor %}
-    <div class="modal fade"
-         id="createOrganizationModal"
-         tabindex="-1"
-         aria-labelledby="createOrganizationModalLabel"
-         aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="createOrganizationModalLabel">{% trans "Add new organization" %}</h5>
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form method="post" action="{% url 'organizations:list-organizations' %}">
-              {% csrf_token %}
-              {{ form.as_p }}
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
-              </div>
-            </form>
-          </div>
+        <div class="modal-body">
+          <form method="post" action="{% url 'organizations:list-organizations' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-  {% endblock content %}
+  </div>
+{% endblock content %}

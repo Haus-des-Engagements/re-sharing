@@ -15,3 +15,7 @@ class OrganizationForm(forms.ModelForm):
             "legal_form",
             "certificate_of_tax_exemption",
         )
+
+
+class OrganizationsListFilter(forms.Form):
+    name = forms.CharField(required=False)
