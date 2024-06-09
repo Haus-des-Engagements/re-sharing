@@ -1,9 +1,12 @@
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
+from factory import SubFactory
 from factory.django import DjangoModelFactory
 
 from roomsharing.organizations.models import Organization
+from roomsharing.organizations.models import OrganizationMembership
+from roomsharing.users.tests.factories import UserFactory
 
 
 class OrganizationFactory(DjangoModelFactory):
@@ -18,3 +21,13 @@ class OrganizationFactory(DjangoModelFactory):
     class Meta:
         model = Organization
         django_get_or_create = ["slug"]
+
+
+class OrganizationMembershipFactory(DjangoModelFactory):
+    organization = SubFactory(OrganizationFactory)
+    user = SubFactory(UserFactory)
+    role = OrganizationMembership.Role.BOOKER
+    status = OrganizationMembership.Status.CONFIRMED
+
+    class Meta:
+        model = OrganizationMembership
