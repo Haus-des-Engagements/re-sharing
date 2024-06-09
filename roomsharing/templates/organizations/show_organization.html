@@ -39,7 +39,7 @@
             <div class="d-grid gap-2">
               {% if is_admin %}
                 <a class="btn btn-outline-danger"
-                   href="{% url 'organizations:delete-organization' slug=organization.slug %}">{% trans "Delete Organization" %}</a>
+                   href="{% url 'organizations:delete-organization' organization=organization.slug %}">{% trans "Delete Organization" %}</a>
               {% endif %}
             </div>
           </div>
@@ -81,13 +81,13 @@
                 <div class="d-grid gap-2">
                   {% if is_admin and member.membership_status == 1 %}
                     <button class="btn btn-outline-primary"
-                            hx-post="{% url 'organizations:confirm-membership' slug=organization.slug user=member.slug %}">
+                            hx-post="{% url 'organizations:confirm-membership' organization=organization.slug user=member.slug %}">
                       {% trans "Confirm Membership" %}
                     </button>
                   {% endif %}
                   {% if is_admin and member.membership_status == 2 %}
                     <button class="btn btn-outline-danger"
-                            hx-post="{% url 'organizations:cancel-membership' slug=organization.slug user=member.slug %}">
+                            hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=member.slug %}">
                       {% trans "Cancel Membership" %}
                     </button>
                   {% endif %}

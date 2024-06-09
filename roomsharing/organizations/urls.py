@@ -15,24 +15,24 @@ urlpatterns = [
         "filter-organizations/", filter_organizations_view, name="filter-organizations"
     ),
     path(
-        "<slug:slug>/request-membership/",
+        "<slug:organization>/request-membership/",
         request_membership_view,
         name="request-membership",
     ),
     path(
-        "<slug:slug>/confirm-membership/<slug:user>/",
+        "<slug:organization>/confirm-membership/<slug:user>/",
         confirm_membership_view,
         name="confirm-membership",
     ),
     path(
-        "<slug:slug>/cancel-membership/<slug:user>/",
+        "<slug:organization>/cancel-membership/<slug:user>/",
         cancel_membership_view,
         name="cancel-membership",
     ),
     path(
-        "<slug:slug>/delete-organization/",
+        "<slug:organization>/delete-organization/",
         delete_organization_view,
         name="delete-organization",
     ),
-    path("<slug:slug>/", show_organization_view, name="show-organization"),
+    path("<slug:organization>/", show_organization_view, name="show-organization"),
 ]

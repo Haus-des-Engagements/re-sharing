@@ -94,8 +94,8 @@ def user_is_admin_member(user, organization):
 
 
 @login_required
-def show_organization_view(request, slug):
-    organization = get_object_or_404(Organization, slug=slug)
+def show_organization_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
     members = []
     is_admin = False
 
@@ -120,8 +120,8 @@ def show_organization_view(request, slug):
 
 
 @login_required
-def request_membership_view(request, slug):
-    organization = get_object_or_404(Organization, slug=slug)
+def request_membership_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
     orgmmb = OrganizationMembership.objects.filter(organization=organization).filter(
         user=request.user
     )
@@ -145,8 +145,8 @@ def request_membership_view(request, slug):
 
 
 @login_required
-def cancel_membership_view(request, slug, user):
-    organization = get_object_or_404(Organization, slug=slug)
+def cancel_membership_view(request, organization, user):
+    organization = get_object_or_404(Organization, slug=organization)
     orgmmb = OrganizationMembership.objects.filter(organization=organization).filter(
         user__slug=user
     )
@@ -160,8 +160,8 @@ def cancel_membership_view(request, slug, user):
 
 
 @login_required
-def delete_organization_view(request, slug):
-    organization = get_object_or_404(Organization, slug=slug)
+def delete_organization_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
     if user_is_admin_member(request.user, organization):
         organization.delete()
         messages.success(request, "Organization deleted successfully.")
@@ -171,8 +171,8 @@ def delete_organization_view(request, slug):
 
 
 @login_required
-def confirm_membership_view(request, slug, user):
-    organization = get_object_or_404(Organization, slug=slug)
+def confirm_membership_view(request, organization, user):
+    organization = get_object_or_404(Organization, slug=organization)
     orgmmb = (
         OrganizationMembership.objects.filter(organization=organization)
         .filter(user__slug=user)

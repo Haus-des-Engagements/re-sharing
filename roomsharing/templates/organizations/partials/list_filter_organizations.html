@@ -31,21 +31,21 @@
           <div class="card-body">
             <div class="d-grid gap-2">
               <a class="btn btn-outline-primary"
-                 href="{% url 'organizations:show-organization' slug=organization.slug %}">{% trans "View Details" %}
+                 href="{% url 'organizations:show-organization' organization=organization.slug %}">{% trans "View Details" %}
               </a>
               {% if organization.membership_status == 1 %}
                 <button class="btn btn-outline-danger"
-                        hx-post="{% url 'organizations:cancel-membership' slug=organization.slug user=user.slug %}">
+                        hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}">
                   {% trans "Cancel membership request" %}
                 </button>
               {% elif organization.membership_status == 2 %}
                 <button class="btn btn-outline-danger"
-                        hx-post="{% url 'organizations:cancel-membership' slug=organization.slug user=user.slug %}">
+                        hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}">
                   {% trans "Cancel membership" %}
                 </button>
               {% else %}
                 <button class="btn btn-outline-success"
-                        hx-post="{% url 'organizations:request-membership' slug=organization.slug %}">
+                        hx-post="{% url 'organizations:request-membership' organization=organization.slug %}">
                   {% trans "Request membership" %}
                 </button>
               {% endif %}
