@@ -34,20 +34,29 @@
                  href="{% url 'organizations:show-organization' organization=organization.slug %}">{% trans "View Details" %}
               </a>
               {% if organization.membership_status == 1 %}
-                <button class="btn btn-outline-danger"
-                        hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}">
-                  {% trans "Cancel membership request" %}
-                </button>
+                <div id="{{ organization.slug }}-cancel-membership">
+                  <button class="btn btn-outline-danger"
+                          hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}"
+                          hx-target="#{{ organization.slug }}-cancel-membership">
+                    {% trans "Cancel membership request" %}
+                  </button>
+                </div>
               {% elif organization.membership_status == 2 %}
-                <button class="btn btn-outline-danger"
-                        hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}">
-                  {% trans "Cancel membership" %}
-                </button>
+                <div id="{{ organization.slug }}-cancel-membership">
+                  <button class="btn btn-outline-danger"
+                          hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=user.slug %}"
+                          hx-target="#{{ organization.slug }}-cancel-membership">
+                    {% trans "Cancel membership" %}
+                  </button>
+                </div>
               {% else %}
-                <button class="btn btn-outline-success"
-                        hx-post="{% url 'organizations:request-membership' organization=organization.slug %}">
-                  {% trans "Request membership" %}
-                </button>
+                <div id="{{ organization.slug }}-request-membership">
+                  <button class="btn btn-outline-success"
+                          hx-post="{% url 'organizations:request-membership' organization=organization.slug %}"
+                          hx-target="#{{ organization.slug }}-request-membership">
+                    {% trans "Request membership" %}
+                  </button>
+                </div>
               {% endif %}
             </div>
           </div>
