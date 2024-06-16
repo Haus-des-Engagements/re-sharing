@@ -48,7 +48,7 @@ class Organization(TimeStampedModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("organizations:organization_detail", args=[str(self.slug)])
+        return reverse("organizations:show-organization", args=[str(self.slug)])
 
 
 class Membership(TimeStampedModel):
