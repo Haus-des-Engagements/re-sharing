@@ -3,8 +3,10 @@ from django.urls import path
 from .views import cancel_membership_view
 from .views import confirm_membership_view
 from .views import delete_organization_view
+from .views import demote_to_booker_membership_view
 from .views import filter_organizations_view
 from .views import list_organizations_view
+from .views import promote_to_admin_membership_view
 from .views import request_membership_view
 from .views import show_organization_view
 
@@ -28,6 +30,16 @@ urlpatterns = [
         "<slug:organization>/cancel-membership/<slug:user>/",
         cancel_membership_view,
         name="cancel-membership",
+    ),
+    path(
+        "<slug:organization>/promote-to-admin-membership/<slug:user>/",
+        promote_to_admin_membership_view,
+        name="promote-to-admin-membership",
+    ),
+    path(
+        "<slug:organization>/demote-to-booker-membership/<slug:user>/",
+        demote_to_booker_membership_view,
+        name="demote-to-booker-membership",
     ),
     path(
         "<slug:organization>/delete-organization/",

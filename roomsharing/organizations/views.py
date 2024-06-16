@@ -101,9 +101,11 @@ def show_organization_view(request, organization):
 
     if user_is_admin_member(request.user, organization):
         orgmmbs = OrganizationMembership.objects.filter(organization=organization)
-        members = User.objects.filter(
-            user_of_organizationmembership__in=orgmmbs
-        ).annotate(membership_status=F("user_of_organizationmembership__status"))
+        members = (
+            User.objects.filter(user_of_organizationmembership__in=orgmmbs)
+            .annotate(membership_status=F("user_of_organizationmembership__status"))
+            .annotate(membership_role=F("user_of_organizationmembership__role"))
+        )
         is_admin = True
 
     elif user_is_member(request.user, organization):
@@ -185,3 +187,37 @@ def confirm_membership_view(request, organization, user):
         return HttpResponse("Membership has been confirmed.")
 
     return HttpResponseNotAllowed("You are not allowed to confirm this membership.")
+
+
+@login_required
+def promote_to_admin_membership_view(request, organization, user):
+    organization = get_object_or_404(Organization, slug=organization)
+    orgmmb = (
+        OrganizationMembership.objects.filter(organization=organization)
+        .filter(user__slug=user)
+        .first()
+    )
+
+    if orgmmb and user_is_admin_member(request.user, organization):
+        orgmmb.role = OrganizationMembership.Role.ADMIN
+        orgmmb.save()
+        return HttpResponse("Member has been promoted to admin.")
+
+    return HttpResponseNotAllowed("You are not allowed to promote.")
+
+
+@login_required
+def demote_to_booker_membership_view(request, organization, user):
+    organization = get_object_or_404(Organization, slug=organization)
+    orgmmb = (
+        OrganizationMembership.objects.filter(organization=organization)
+        .filter(user__slug=user)
+        .first()
+    )
+
+    if orgmmb and user_is_admin_member(request.user, organization):
+        orgmmb.role = OrganizationMembership.Role.BOOKER
+        orgmmb.save()
+        return HttpResponse("Member has been demoted to booker.")
+
+    return HttpResponse("You are not allowed to demote.")
