@@ -13,15 +13,15 @@ from roomsharing.users.models import User
 
 from .forms import OrganizationForm
 from .forms import OrganizationsListFilter
+from .models import Membership
 from .models import Organization
-from .models import OrganizationMembership
 
 
 @login_required
 def list_organizations_view(request):
     filter_form = OrganizationsListFilter(request.POST or None)
     user = request.user
-    membership = OrganizationMembership.objects.filter(
+    membership = Membership.objects.filter(
         user=user, organization=OuterRef("pk")
     ).values("status")[:1]
     organizations = Organization.objects.annotate(
@@ -34,11 +34,11 @@ def list_organizations_view(request):
             new_org = form.save(commit=False)
 
             new_org.save()
-            organization_membership = OrganizationMembership(
+            organization_membership = Membership(
                 user=user,
                 organization=new_org,
-                status=OrganizationMembership.Status.CONFIRMED,
-                role=OrganizationMembership.Role.ADMIN,
+                status=Membership.Status.CONFIRMED,
+                role=Membership.Role.ADMIN,
             )
             organization_membership.save()
 
@@ -76,19 +76,19 @@ def filter_organizations_view(request):
 
 def user_is_member(user, organization):
     return (
-        OrganizationMembership.objects.filter(user=user)
+        Membership.objects.filter(user=user)
         .filter(organization=organization)
-        .filter(status=OrganizationMembership.Status.CONFIRMED)
+        .filter(status=Membership.Status.CONFIRMED)
         .exists()
     )
 
 
 def user_is_admin_member(user, organization):
     return (
-        OrganizationMembership.objects.filter(user=user)
+        Membership.objects.filter(user=user)
         .filter(organization=organization)
-        .filter(status=OrganizationMembership.Status.CONFIRMED)
-        .filter(role=OrganizationMembership.Role.ADMIN)
+        .filter(status=Membership.Status.CONFIRMED)
+        .filter(role=Membership.Role.ADMIN)
         .exists()
     )
 
@@ -100,19 +100,19 @@ def show_organization_view(request, organization):
     is_admin = False
 
     if user_is_admin_member(request.user, organization):
-        orgmmbs = OrganizationMembership.objects.filter(organization=organization)
+        orgmmbs = Membership.objects.filter(organization=organization)
         members = (
-            User.objects.filter(user_of_organizationmembership__in=orgmmbs)
-            .annotate(membership_status=F("user_of_organizationmembership__status"))
-            .annotate(membership_role=F("user_of_organizationmembership__role"))
+            User.objects.filter(user_of_membership__in=orgmmbs)
+            .annotate(membership_status=F("user_of_membership__status"))
+            .annotate(membership_role=F("user_of_membership__role"))
         )
         is_admin = True
 
     elif user_is_member(request.user, organization):
-        orgmmbs = OrganizationMembership.objects.filter(organization=organization)
-        members = User.objects.filter(
-            user_of_organizationmembership__in=orgmmbs
-        ).values("first_name", "last_name", "email")
+        orgmmbs = Membership.objects.filter(organization=organization)
+        members = User.objects.filter(user_of_membership__in=orgmmbs).values(
+            "first_name", "last_name", "email"
+        )
 
     return render(
         request,
@@ -124,25 +124,25 @@ def show_organization_view(request, organization):
 @login_required
 def request_membership_view(request, organization):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = OrganizationMembership.objects.filter(organization=organization).filter(
+    orgmmb = Membership.objects.filter(organization=organization).filter(
         user=request.user
     )
 
     if orgmmb.exists():
-        if orgmmb.first().status == OrganizationMembership.Status.PENDING:
+        if orgmmb.first().status == Membership.Status.PENDING:
             return HttpResponse(
                 "You are already requested to become a member. Please wait patiently."
             )
-        if orgmmb.first().status == OrganizationMembership.Status.CONFIRMED:
+        if orgmmb.first().status == Membership.Status.CONFIRMED:
             return HttpResponse("You are already member of this organization.")
-        if orgmmb.first().status == OrganizationMembership.Status.REJECTED:
+        if orgmmb.first().status == Membership.Status.REJECTED:
             return HttpResponse("You have already been rejected by this organization.")
 
     orgmmb.create(
         user=request.user,
         organization=organization,
-        status=OrganizationMembership.Status.PENDING,
-        role=OrganizationMembership.Role.BOOKER,
+        status=Membership.Status.PENDING,
+        role=Membership.Role.BOOKER,
     )
     return HttpResponse(
         "Successfully requested. "
@@ -153,7 +153,7 @@ def request_membership_view(request, organization):
 @login_required
 def cancel_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = OrganizationMembership.objects.filter(organization=organization).filter(
+    orgmmb = Membership.objects.filter(organization=organization).filter(
         user__slug=user
     )
 
@@ -180,13 +180,13 @@ def delete_organization_view(request, organization):
 def confirm_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
     orgmmb = (
-        OrganizationMembership.objects.filter(organization=organization)
+        Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
     if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.status = OrganizationMembership.Status.CONFIRMED
+        orgmmb.status = Membership.Status.CONFIRMED
         orgmmb.save()
         return HttpResponse("Membership has been confirmed.")
 
@@ -197,13 +197,13 @@ def confirm_membership_view(request, organization, user):
 def promote_to_admin_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
     orgmmb = (
-        OrganizationMembership.objects.filter(organization=organization)
+        Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
     if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.role = OrganizationMembership.Role.ADMIN
+        orgmmb.role = Membership.Role.ADMIN
         orgmmb.save()
         return HttpResponse("Member has been promoted to admin.")
 
@@ -214,13 +214,13 @@ def promote_to_admin_membership_view(request, organization, user):
 def demote_to_booker_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
     orgmmb = (
-        OrganizationMembership.objects.filter(organization=organization)
+        Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
     if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.role = OrganizationMembership.Role.BOOKER
+        orgmmb.role = Membership.Role.BOOKER
         orgmmb.save()
         return HttpResponse("Member has been demoted to booker.")
 

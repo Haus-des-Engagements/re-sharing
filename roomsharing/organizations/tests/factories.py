@@ -4,8 +4,8 @@ from factory import LazyAttribute
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
+from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
-from roomsharing.organizations.models import OrganizationMembership
 from roomsharing.users.tests.factories import UserFactory
 
 
@@ -23,11 +23,11 @@ class OrganizationFactory(DjangoModelFactory):
         django_get_or_create = ["slug"]
 
 
-class OrganizationMembershipFactory(DjangoModelFactory):
+class MembershipFactory(DjangoModelFactory):
     organization = SubFactory(OrganizationFactory)
     user = SubFactory(UserFactory)
-    role = OrganizationMembership.Role.BOOKER
-    status = OrganizationMembership.Status.CONFIRMED
+    role = Membership.Role.BOOKER
+    status = Membership.Status.CONFIRMED
 
     class Meta:
-        model = OrganizationMembership
+        model = Membership

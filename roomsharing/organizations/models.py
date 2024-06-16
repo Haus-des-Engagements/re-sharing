@@ -51,7 +51,7 @@ class Organization(TimeStampedModel):
         return reverse("organizations:organization_detail", args=[str(self.slug)])
 
 
-class OrganizationMembership(TimeStampedModel):
+class Membership(TimeStampedModel):
     class Role(IntegerChoices):
         ADMIN = 1, _("Administrator")
         BOOKER = 2, _("Booker")
@@ -65,16 +65,16 @@ class OrganizationMembership(TimeStampedModel):
     user = ForeignKey(
         "users.User",
         verbose_name=_("User"),
-        related_name="users_of_organizationmembership",
-        related_query_name="user_of_organizationmembership",
+        related_name="users_of_membership",
+        related_query_name="user_of_membership",
         blank=True,
         on_delete=CASCADE,
     )
     organization = ForeignKey(
         Organization,
         verbose_name=_("Organization"),
-        related_name="organizations_of_organizationmembership",
-        related_query_name="organization_of_organizationmembership",
+        related_name="organizations_of_membership",
+        related_query_name="organization_of_membership",
         blank=True,
         on_delete=CASCADE,
     )
@@ -87,8 +87,8 @@ class OrganizationMembership(TimeStampedModel):
 
     class Meta:
         unique_together = ("user", "organization")
-        verbose_name = _("Organization membership")
-        verbose_name_plural = _("Organization memberships")
+        verbose_name = _("Membership")
+        verbose_name_plural = _("Memberships")
         ordering = ["id"]
 
     def __str__(self):
@@ -96,4 +96,4 @@ class OrganizationMembership(TimeStampedModel):
 
 
 auditlog.register(Organization, exclude_fields=["created, updated"])
-auditlog.register(OrganizationMembership, exclude_fields=["created, updated"])
+auditlog.register(Membership, exclude_fields=["created, updated"])

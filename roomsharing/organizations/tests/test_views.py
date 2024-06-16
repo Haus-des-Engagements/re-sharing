@@ -7,9 +7,9 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
-from roomsharing.organizations.models import OrganizationMembership
+from roomsharing.organizations.models import Membership
+from roomsharing.organizations.tests.factories import MembershipFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
-from roomsharing.organizations.tests.factories import OrganizationMembershipFactory
 from roomsharing.organizations.views import show_organization_view
 from roomsharing.users.tests.factories import UserFactory
 
@@ -26,10 +26,10 @@ class TestShowOrganizationView(TestCase):
     def test_access_user_is_member(self):
         user = UserFactory()
         self.client.force_login(user)
-        OrganizationMembershipFactory(
+        MembershipFactory(
             user=user,
             organization=self.organization,
-            role=OrganizationMembership.Role.BOOKER,
+            role=Membership.Role.BOOKER,
         )
 
         response = self.client.get(self.show_organization_url)
@@ -40,10 +40,10 @@ class TestShowOrganizationView(TestCase):
     def test_access_user_is_admin(self):
         user = UserFactory()
         self.client.force_login(user)
-        OrganizationMembershipFactory(
+        MembershipFactory(
             user=user,
             organization=self.organization,
-            role=OrganizationMembership.Role.ADMIN,
+            role=Membership.Role.ADMIN,
         )
 
         response = self.client.get(self.show_organization_url)
