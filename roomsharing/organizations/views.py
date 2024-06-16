@@ -100,17 +100,17 @@ def show_organization_view(request, organization):
     is_admin = False
 
     if user_is_admin_member(request.user, organization):
-        orgmmbs = Membership.objects.filter(organization=organization)
+        memberships = Membership.objects.filter(organization=organization)
         members = (
-            User.objects.filter(user_of_membership__in=orgmmbs)
+            User.objects.filter(user_of_membership__in=memberships)
             .annotate(membership_status=F("user_of_membership__status"))
             .annotate(membership_role=F("user_of_membership__role"))
         )
         is_admin = True
 
     elif user_is_member(request.user, organization):
-        orgmmbs = Membership.objects.filter(organization=organization)
-        members = User.objects.filter(user_of_membership__in=orgmmbs).values(
+        memberships = Membership.objects.filter(organization=organization)
+        members = User.objects.filter(user_of_membership__in=memberships).values(
             "first_name", "last_name", "email"
         )
 
@@ -124,21 +124,21 @@ def show_organization_view(request, organization):
 @login_required
 def request_membership_view(request, organization):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = Membership.objects.filter(organization=organization).filter(
+    memberships = Membership.objects.filter(organization=organization).filter(
         user=request.user
     )
 
-    if orgmmb.exists():
-        if orgmmb.first().status == Membership.Status.PENDING:
+    if memberships.exists():
+        if memberships.first().status == Membership.Status.PENDING:
             return HttpResponse(
                 "You are already requested to become a member. Please wait patiently."
             )
-        if orgmmb.first().status == Membership.Status.CONFIRMED:
+        if memberships.first().status == Membership.Status.CONFIRMED:
             return HttpResponse("You are already member of this organization.")
-        if orgmmb.first().status == Membership.Status.REJECTED:
+        if memberships.first().status == Membership.Status.REJECTED:
             return HttpResponse("You have already been rejected by this organization.")
 
-    orgmmb.create(
+    memberships.create(
         user=request.user,
         organization=organization,
         status=Membership.Status.PENDING,
@@ -153,13 +153,13 @@ def request_membership_view(request, organization):
 @login_required
 def cancel_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = Membership.objects.filter(organization=organization).filter(
+    memberships = Membership.objects.filter(organization=organization).filter(
         user__slug=user
     )
 
     if request.user.slug == user or user_is_admin_member(request.user, organization):
-        if orgmmb.exists():
-            orgmmb.delete()
+        if memberships.exists():
+            memberships.first().delete()
             return HttpResponse("Membership has been cancelled.")
 
     return HttpResponseNotAllowed("You are not allowed to cancel this membership.")
@@ -179,15 +179,15 @@ def delete_organization_view(request, organization):
 @login_required
 def confirm_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = (
+    membership = (
         Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
-    if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.status = Membership.Status.CONFIRMED
-        orgmmb.save()
+    if membership and user_is_admin_member(request.user, organization):
+        membership.status = Membership.Status.CONFIRMED
+        membership.save()
         return HttpResponse("Membership has been confirmed.")
 
     return HttpResponseNotAllowed("You are not allowed to confirm this membership.")
@@ -196,15 +196,15 @@ def confirm_membership_view(request, organization, user):
 @login_required
 def promote_to_admin_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = (
+    membership = (
         Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
-    if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.role = Membership.Role.ADMIN
-        orgmmb.save()
+    if membership and user_is_admin_member(request.user, organization):
+        membership.role = Membership.Role.ADMIN
+        membership.save()
         return HttpResponse("Member has been promoted to admin.")
 
     return HttpResponseNotAllowed("You are not allowed to promote.")
@@ -213,15 +213,15 @@ def promote_to_admin_membership_view(request, organization, user):
 @login_required
 def demote_to_booker_membership_view(request, organization, user):
     organization = get_object_or_404(Organization, slug=organization)
-    orgmmb = (
+    membership = (
         Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
         .first()
     )
 
-    if orgmmb and user_is_admin_member(request.user, organization):
-        orgmmb.role = Membership.Role.BOOKER
-        orgmmb.save()
+    if membership and user_is_admin_member(request.user, organization):
+        membership.role = Membership.Role.BOOKER
+        membership.save()
         return HttpResponse("Member has been demoted to booker.")
 
     return HttpResponse("You are not allowed to demote.")
