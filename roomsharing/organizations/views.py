@@ -129,9 +129,13 @@ def request_membership_view(request, organization):
     )
 
     if orgmmb.exists():
-        if orgmmb.status == OrganizationMembership.Status.CONFIRMED:
+        if orgmmb.first().status == OrganizationMembership.Status.PENDING:
+            return HttpResponse(
+                "You are already requested to become a member. Please wait patiently."
+            )
+        if orgmmb.first().status == OrganizationMembership.Status.CONFIRMED:
             return HttpResponse("You are already member of this organization.")
-        if orgmmb.status == OrganizationMembership.Status.REJECTED:
+        if orgmmb.first().status == OrganizationMembership.Status.REJECTED:
             return HttpResponse("You have already been rejected by this organization.")
 
     orgmmb.create(
