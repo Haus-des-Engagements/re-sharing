@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from dateutil.rrule import DAILY
 from dateutil.rrule import FR
 from dateutil.rrule import MO
@@ -19,6 +21,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import Organization
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
@@ -30,30 +34,43 @@ from .models import Booking
 from .models import BookingMessage
 
 
-def user_belongs_to_booking_org(user, booking):
-    return booking.organization.users_of_organization.filter(pk=user.pk).exists()
+def is_member_of_booking_organization(user, booking):
+    return (
+        Membership.objects.filter(organization=booking.organization)
+        .filter(user=booking.user)
+        .filter(status=Membership.Status.CONFIRMED)
+        .exists()
+    )
 
 
 @login_required
 def list_bookings_view(request):
-    user_organizations = request.user.organizations.all()
-    form = BookingListForm(request.POST or None, organizations=user_organizations)
-    bookings = Booking.objects.filter(organization__in=user_organizations).filter(
+    organizations = (
+        Organization.objects.filter(organization_of_membership__user=request.user)
+        .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+        .distinct()
+    )
+    form = BookingListForm(request.POST or None, organizations=organizations)
+    bookings = Booking.objects.filter(organization__in=organizations).filter(
         timespan__endswith__gte=timezone.now(),
     )
 
     return render(
         request,
         "bookings/list_bookings.html",
-        {"bookings": bookings, "form": form},
+        {"bookings": bookings, "form": form, "current_time": timezone.now()},
     )
 
 
 @login_required
 def filter_bookings_view(request):
-    user_organizations = request.user.organizations.all()
-    form = BookingListForm(request.POST or None, organizations=user_organizations)
-    bookings = Booking.objects.filter(organization__in=user_organizations)
+    organizations = (
+        Organization.objects.filter(organization_of_membership__user=request.user)
+        .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+        .distinct()
+    )
+    form = BookingListForm(request.POST or None, organizations=organizations)
+    bookings = Booking.objects.filter(organization__in=organizations)
 
     if form.is_valid():
         show_past_bookings = form.cleaned_data.get("show_past_bookings")
@@ -72,7 +89,7 @@ def filter_bookings_view(request):
         return render(
             request,
             "bookings/partials/list_bookings.html",
-            {"bookings": bookings, "form": form},
+            {"bookings": bookings, "form": form, "current_time": timezone.now()},
         )
 
     return HttpResponse(
@@ -86,8 +103,11 @@ def show_booking_view(request, slug):
     activity_stream = []
     booking = get_object_or_404(Booking, slug=slug)
 
-    if not user_belongs_to_booking_org(request.user, booking):
-        return HttpResponseForbidden("You do not have permission to do this action")
+    if not is_member_of_booking_organization(request.user, booking):
+        return HttpResponse(
+            "You do not have permission to do this action",
+            status=HTTPStatus.UNAUTHORIZED,
+        )
 
     form = MessageForm()
 
@@ -133,7 +153,7 @@ def write_bookingmessage(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
     form = MessageForm(request.POST or None)
 
-    if not user_belongs_to_booking_org(request.user, booking):
+    if not is_member_of_booking_organization(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
     if form.is_valid():
@@ -152,10 +172,12 @@ def write_bookingmessage(request, slug):
 def cancel_booking(request, slug, from_page):
     booking = get_object_or_404(Booking, slug=slug)
 
-    if not user_belongs_to_booking_org(request.user, booking):
+    if not is_member_of_booking_organization(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
     if booking.status in (BookingStatus.CONFIRMED, BookingStatus.PENDING):
+        if booking.timespan.lower < timezone.now():
+            return HttpResponse("You cannot cancel a booking that is in the past.")
         booking.status = BookingStatus.CANCELLED
         booking.save()
 

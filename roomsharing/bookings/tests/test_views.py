@@ -13,12 +13,14 @@ from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.views import list_bookings_view
+from roomsharing.organizations.models import Membership
+from roomsharing.organizations.tests.factories import MembershipFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 
 
-class TestBookingList(TestCase):
+class TestListBookingsView(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = UserFactory()
@@ -44,7 +46,9 @@ class TestBookingList(TestCase):
         client.force_login(self.user)
 
         o1 = OrganizationFactory()
-        self.user.organizations.set([o1])
+        MembershipFactory(
+            organization=o1, user=self.user, status=Membership.Status.CONFIRMED
+        )
         total_bookings_for_o1 = 2
         r1 = RoomFactory()
         r2 = RoomFactory()
@@ -62,3 +66,6 @@ class TestBookingList(TestCase):
 
         assert response.status_code == HTTPStatus.OK
         assert len(list(response.context["bookings"])) == total_bookings_for_o1
+
+        form = response.context.get("form")
+        assert form is not None

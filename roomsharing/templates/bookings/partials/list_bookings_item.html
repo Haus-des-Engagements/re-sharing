@@ -24,7 +24,7 @@
         <div class="d-grid gap-2">
           <a class="btn btn-outline-primary"
              href="{% url 'bookings:show-booking' slug=booking.slug %}">{% trans "View Details" %}</a>
-          {% if booking.status != 3 %}
+          {% if booking.status != 3 and booking.timespan.lower > current_time %}
             <button id="cancel-button"
                     type="submit"
                     class="btn btn-outline-danger mb-3"

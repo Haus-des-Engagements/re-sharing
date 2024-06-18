@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from roomsharing.organizations.models import DefaultBookingStatus
+from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import Organization
 from roomsharing.utils.models import BookingStatus
 
 from .models import Booking
@@ -69,7 +71,12 @@ class BookingForm(forms.ModelForm):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        organizations = user.organizations.all()
+        organizations = (
+            Organization.objects.filter(organization_of_membership__user=user)
+            .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+            .distinct()
+        )
+
         self.fields["organization"].queryset = organizations
 
         if organizations.exists():
