@@ -10,6 +10,7 @@ from django.utils import timezone
 from roomsharing.bookings.models import Booking
 from roomsharing.rooms.forms import RoomsListFilter
 from roomsharing.rooms.models import Room
+from roomsharing.utils.models import BookingStatus
 
 
 def show_room_view(request, slug):
@@ -75,7 +76,7 @@ def filter_rooms_view(request):
 
 def get_weekly_bookings(request, slug):
     bookings = Booking.objects.filter(room__slug=slug).filter(
-        status=Booking.Status.CONFIRMED,
+        status=BookingStatus.CONFIRMED,
     )
 
     # Calculate the start and end dates for the week
