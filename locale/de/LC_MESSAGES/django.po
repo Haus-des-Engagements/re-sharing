@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-27 10:25+0200\n"
+"POT-Creation-Date: 2024-06-18 22:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,184 +26,317 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-#: htmlcov/d_c7122a5b2c584068_base_html.html:152 roomsharing/rooms/apps.py:7
-#: roomsharing/rooms/models.py:32 roomsharing/templates/base.html:67
-#: roomsharing/templates/rooms/room_list.html:6
-#: roomsharing/templates/rooms/room_list.html:9
+#: htmlcov/d_1de43ee720f2b15e_room_list_results_html.html:111
+#: htmlcov/d_e12b30945affa64c_room_detail_html.html:115
+#: htmlcov/z_1de43ee720f2b15e_list_filter_rooms_html.html:111
+#: htmlcov/z_e12b30945affa64c_show_room_html.html:115
+#: roomsharing/templates/rooms/partials/list_filter_rooms.html:27
+#: roomsharing/templates/rooms/show_room.html:31
+msgid "Persons"
+msgstr "Personen"
+
+#: htmlcov/d_1de43ee720f2b15e_room_list_results_html.html:136
+#: htmlcov/d_e12b30945affa64c_room_detail_html.html:134
+#: htmlcov/z_1de43ee720f2b15e_list_filter_rooms_html.html:136
+#: htmlcov/z_e12b30945affa64c_show_room_html.html:134
+#: roomsharing/templates/rooms/partials/list_filter_rooms.html:52
+#: roomsharing/templates/rooms/show_room.html:50
+msgid "Pricing"
+msgstr "Preisgestaltung"
+
+#: htmlcov/d_864cde98194f1daa_bookings_list_html.html:92
+#: htmlcov/z_864cde98194f1daa_list_bookings_html.html:93
+#: roomsharing/templates/bookings/list_bookings.html:9
+msgid "All bookings"
+msgstr "Alle Buchungen"
+
+#: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:100
+#: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:100
+#: roomsharing/bookings/forms.py:66 roomsharing/bookings/models.py:24
+#: roomsharing/rooms/models.py:20
+#: roomsharing/templates/bookings/partials/list_bookings_item.html:16
+msgid "Title"
+msgstr "Titel"
+
+#: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:102
+#: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:102
+#: roomsharing/templates/bookings/partials/list_bookings_item.html:18
+#: roomsharing/templates/bookings/partials/show_booking_item.html:17
+msgid "Booked by:"
+msgstr "Gebucht von"
+
+#: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:102
+#: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:102
+#: roomsharing/templates/bookings/partials/list_bookings_item.html:18
+#: roomsharing/templates/bookings/partials/show_booking_item.html:17
+msgid "for"
+msgstr "für"
+
+#: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:110
+#: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:118
+#: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:110
+#: roomsharing/templates/bookings/partials/list_bookings_item.html:26
+#: roomsharing/templates/organizations/partials/list_filter_organizations.html:34
+msgid "View Details"
+msgstr "Details ansehen"
+
+#: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:119
+#: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:119
+#: roomsharing/templates/bookings/partials/list_bookings_item.html:35
+#: roomsharing/templates/bookings/partials/show_booking_item.html:32
+msgid "Cancel Booking"
+msgstr "Buchung stornieren"
+
+#: htmlcov/d_c7122a5b2c584068_base_html.html:148
+#: htmlcov/z_c7122a5b2c584068_base_html.html:148
+#: roomsharing/templates/base.html:64
+msgid "Home"
+msgstr "Startseite"
+
+#: htmlcov/d_c7122a5b2c584068_base_html.html:151
+#: htmlcov/d_e12b30945affa64c_room_list_html.html:90
+#: htmlcov/d_e12b30945affa64c_room_list_html.html:93
+#: htmlcov/z_c7122a5b2c584068_base_html.html:151
+#: htmlcov/z_e12b30945affa64c_list_rooms_html.html:90
+#: htmlcov/z_e12b30945affa64c_list_rooms_html.html:93
+#: roomsharing/rooms/apps.py:7 roomsharing/rooms/models.py:32
+#: roomsharing/templates/base.html:67
+#: roomsharing/templates/rooms/list_rooms.html:6
+#: roomsharing/templates/rooms/list_rooms.html:9
 msgid "Rooms"
 msgstr "Räume"
 
-#: htmlcov/d_c7122a5b2c584068_base_html.html:156
-#: roomsharing/templates/base.html:78
+#: htmlcov/d_c7122a5b2c584068_base_html.html:154
+#: htmlcov/z_c7122a5b2c584068_base_html.html:154
+#: roomsharing/templates/base.html:70
+msgid "My Bookings"
+msgstr "Meine Buchungen"
+
+#: htmlcov/d_c7122a5b2c584068_base_html.html:158
+#: htmlcov/z_c7122a5b2c584068_base_html.html:157
+#: roomsharing/templates/base.html:73
+msgid "My Organizations"
+msgstr "Meine Organisationen"
+
+#: htmlcov/d_c7122a5b2c584068_base_html.html:162
+#: htmlcov/z_c7122a5b2c584068_base_html.html:161
+#: roomsharing/templates/base.html:77
 msgid "My Profile"
 msgstr "Mein Profil"
 
-#: htmlcov/d_c7122a5b2c584068_base_html.html:160
-#: roomsharing/templates/base.html:82
+#: htmlcov/d_c7122a5b2c584068_base_html.html:166
+#: htmlcov/z_c7122a5b2c584068_base_html.html:165
+#: roomsharing/templates/base.html:81
 msgid "Sign Out"
 msgstr "Abmelden"
 
-#: htmlcov/d_c7122a5b2c584068_base_html.html:166
-#: roomsharing/templates/base.html:88
+#: htmlcov/d_c7122a5b2c584068_base_html.html:172
+#: htmlcov/z_c7122a5b2c584068_base_html.html:171
+#: roomsharing/templates/base.html:87
 msgid "Sign Up"
 msgstr "Registrieren"
 
-#: htmlcov/d_c7122a5b2c584068_base_html.html:171
+#: htmlcov/d_c7122a5b2c584068_base_html.html:177
+#: htmlcov/z_c7122a5b2c584068_base_html.html:176
 #: roomsharing/templates/allauth/layouts/entrance.html:13
-#: roomsharing/templates/base.html:93
+#: roomsharing/templates/base.html:92
 msgid "Sign In"
 msgstr "Anmelden"
 
 #: htmlcov/d_e12b30945affa64c_room_detail_html.html:90
-#: roomsharing/bookings/models.py:49 roomsharing/rooms/models.py:31
-#: roomsharing/rooms/models.py:51
-#: roomsharing/templates/rooms/room_detail.html:6
+#: htmlcov/z_e12b30945affa64c_show_room_html.html:90
+#: roomsharing/bookings/models.py:43 roomsharing/organizations/models.py:112
+#: roomsharing/rooms/models.py:31 roomsharing/rooms/models.py:51
+#: roomsharing/templates/rooms/show_room.html:6
 msgid "Room"
 msgstr "Raum"
 
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:95
-#: roomsharing/bookings/forms.py:50 roomsharing/bookings/models.py:30
-#: roomsharing/rooms/models.py:20
-msgid "Title"
-msgstr "Titel"
+#: htmlcov/d_e12b30945affa64c_room_detail_html.html:153
+#: htmlcov/z_e12b30945affa64c_show_room_html.html:153
+#: roomsharing/templates/rooms/show_room.html:69
+msgid "Current Week"
+msgstr "Aktuelle Woche"
 
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:98
-#: roomsharing/rooms/models.py:22 roomsharing/rooms/models.py:61
-msgid "Description"
-msgstr "Beschreibung"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:101
-#: roomsharing/rooms/models.py:23
-msgid "Square Meters"
-msgstr "Quadratmeter"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:104
-#: roomsharing/rooms/models.py:24
-msgid "Maximum Number of Persons"
-msgstr "Maximale Anzahl an Personen"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:107
-#: roomsharing/rooms/models.py:25
-msgid "General Bookable Times"
-msgstr "Buchbare Zeiten"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:110
-#: roomsharing/templates/rooms/partials/room_list_results.html:52
-#: roomsharing/templates/rooms/room_detail.html:50
-msgid "Pricing"
-msgstr "Preisgestaltung"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:113
-#: roomsharing/rooms/models.py:27
-msgid "Included Equipment"
-msgstr "Vorhandene Ausstattung"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:116
-#: roomsharing/rooms/models.py:28
-msgid "Bookable Equipment"
-msgstr "Buchbare Ausstattung"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:129
-msgid "Available Times"
-msgstr "Buchbare Zeiten"
-
-#: htmlcov/d_e12b30945affa64c_room_detail_html.html:142
-msgid "Back to Room List"
-msgstr "Zurück zur Raumliste"
-
-#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:58
-msgid "Bookings"
-msgstr "Buchungen"
-
-#: roomsharing/bookings/forms.py:15
-#, fuzzy
-#| msgid "All bookings"
-msgid "Show past bookings"
-msgstr "Alle Buchungen"
-
-#: roomsharing/bookings/forms.py:18 roomsharing/bookings/forms.py:29
-msgid "All"
-msgstr "Alle"
-
-#: roomsharing/bookings/forms.py:20 roomsharing/bookings/models.py:54
-msgid "Status"
-msgstr "Status"
-
-#: roomsharing/bookings/forms.py:30 roomsharing/organizations/apps.py:7
-#: roomsharing/organizations/models.py:18
-#: roomsharing/templates/organizations/organization_list.html:6
-#: roomsharing/users/admin.py:24 roomsharing/users/models.py:29
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:90
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:96
+#: roomsharing/bookings/forms.py:46 roomsharing/organizations/apps.py:7
+#: roomsharing/organizations/models.py:46
+#: roomsharing/templates/organizations/list_organizations.html:6
+#: roomsharing/templates/organizations/list_organizations.html:12
+#: roomsharing/users/models.py:36
 msgid "Organizations"
 msgstr "Organisationen"
 
-#: roomsharing/bookings/forms.py:36 roomsharing/bookings/forms.py:41
-#: roomsharing/bookings/forms.py:180
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:104
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:131
+#: roomsharing/templates/organizations/list_organizations.html:20
+#: roomsharing/templates/organizations/list_organizations.html:47
+#, fuzzy
+#| msgid "Organization"
+msgid "Add new organization"
+msgstr "Organisation"
+
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:110
+#: roomsharing/templates/organizations/list_organizations.html:26
+msgid ""
+"Only organisations can book rooms. If your organization does not exists yet, "
+"please add it as new organization. If it exists already, you can request the "
+"membership to book rooms in the name of that organization."
+msgstr ""
+"Nur Organisationen können Räume buchen. Wenn deine Organisation noch nicht "
+"existiert, füge sie neu hinzu. Wenn sie bereits existiert, muss du zunächst "
+"eine Anfrage auf Aufnahme stellen. Erst wenn diese akzeptiert ist, kannst du "
+"für sie buchen."
+
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:142
+#: roomsharing/templates/organizations/list_organizations.html:58
+msgid "Add organization"
+msgstr "Organisation hinzufügen"
+
+#: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:143
+#: roomsharing/templates/organizations/list_organizations.html:59
+msgid "Close"
+msgstr "Abbrechen"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:126
+#: roomsharing/templates/organizations/show_organization.html:42
+msgid "Delete Organization"
+msgstr "Organisation löschen"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:134
+#: roomsharing/templates/organizations/show_organization.html:50
+msgid "Members"
+msgstr "Mitglieder"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:137
+#: roomsharing/templates/organizations/show_organization.html:53
+msgid "Members are only visible for other members."
+msgstr "Mitglieder sind nur für andere Mitglieder sichtbar."
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:161
+#: roomsharing/templates/organizations/show_organization.html:77
+msgid "Addresses are only visible to admins"
+msgstr "Adressen können nur von Admins gesehen werden."
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:174
+#: roomsharing/templates/organizations/show_organization.html:90
+msgid "Confirm Membership"
+msgstr "Mitgliedschaft bestätigen"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:183
+#: roomsharing/templates/organizations/show_organization.html:99
+msgid "Cancel Membership"
+msgstr "Mitgliedschaft beenden"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:191
+#: roomsharing/templates/organizations/show_organization.html:107
+msgid "Promote to admin"
+msgstr "Zum Admin machen"
+
+#: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:200
+#: roomsharing/templates/organizations/show_organization.html:116
+msgid "Demote to booker"
+msgstr ""
+
+#: htmlcov/z_864cde98194f1daa_list_bookings_html.html:100
+#: roomsharing/templates/bookings/list_bookings.html:16
+msgid "New Booking"
+msgstr "Neue Buchung"
+
+#: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:125
+#: roomsharing/templates/organizations/partials/list_filter_organizations.html:41
+msgid "Cancel membership request"
+msgstr "Mitgliedsantrag abbrechen"
+
+#: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:133
+#: roomsharing/templates/organizations/partials/list_filter_organizations.html:49
+msgid "Cancel membership"
+msgstr "Mitgliedschaft beenden"
+
+#: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:141
+#: roomsharing/templates/organizations/partials/list_filter_organizations.html:57
+msgid "Request membership"
+msgstr "Mitglieschaft beantragen"
+
+#: htmlcov/z_c0763d407173a4a8_list_bookings_html.html:90
+#: roomsharing/templates/bookings/partials/list_bookings.html:6
+msgid "No results found."
+msgstr "Keine Ergebnisse gefunden."
+
+#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:52
+msgid "Bookings"
+msgstr "Buchungen"
+
+#: roomsharing/bookings/forms.py:31
+msgid "Show past bookings"
+msgstr "Zeige vergangene Buchungen"
+
+#: roomsharing/bookings/forms.py:34 roomsharing/bookings/forms.py:45
+msgid "All"
+msgstr "Alle"
+
+#: roomsharing/bookings/forms.py:36 roomsharing/bookings/models.py:48
+#: roomsharing/organizations/models.py:87
+#: roomsharing/organizations/models.py:118
+msgid "Status"
+msgstr "Status"
+
+#: roomsharing/bookings/forms.py:52 roomsharing/bookings/forms.py:57
+#: roomsharing/bookings/forms.py:208
 msgid "Start Date"
 msgstr "Startdatum"
 
-#: roomsharing/bookings/forms.py:39 roomsharing/bookings/forms.py:44
+#: roomsharing/bookings/forms.py:55 roomsharing/bookings/forms.py:60
 msgid "Start Time"
 msgstr "Startuhrzeit"
 
-#: roomsharing/bookings/forms.py:48 roomsharing/organizations/models.py:17
+#: roomsharing/bookings/forms.py:64 roomsharing/organizations/models.py:45
+#: roomsharing/organizations/models.py:77
+#: roomsharing/organizations/models.py:104
 msgid "Organization"
 msgstr "Organisation"
 
-#: roomsharing/bookings/forms.py:92 roomsharing/bookings/forms.py:108
+#: roomsharing/bookings/forms.py:113 roomsharing/bookings/forms.py:129
 msgid "Start time must be selected in 30-minute intervals."
-msgstr ""
+msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: roomsharing/bookings/forms.py:124
+#: roomsharing/bookings/forms.py:145
 msgid "The room is already booked during your selected timeslot."
-msgstr ""
+msgstr "Der Raum ist zu der Zeit (zumindest teilweise) belegt."
 
-#: roomsharing/bookings/forms.py:170
+#: roomsharing/bookings/forms.py:198
 msgid "after x times"
-msgstr ""
+msgstr "nach x mal"
 
-#: roomsharing/bookings/forms.py:171
-#, fuzzy
-#| msgid "Important dates"
+#: roomsharing/bookings/forms.py:199
 msgid "at date"
-msgstr "Wichtige Daten"
+msgstr "zum Datum"
 
-#: roomsharing/bookings/forms.py:172
+#: roomsharing/bookings/forms.py:200
 msgid "Never"
 msgstr ""
 
-#: roomsharing/bookings/forms.py:177
+#: roomsharing/bookings/forms.py:205
 msgid "Ends"
 msgstr ""
 
-#: roomsharing/bookings/forms.py:207
+#: roomsharing/bookings/forms.py:235
 msgid "End Date"
 msgstr ""
 
-#: roomsharing/bookings/models.py:26
-msgid "Pending"
-msgstr "Ausstehend"
-
-#: roomsharing/bookings/models.py:27
-msgid "Confirmed"
-msgstr "Bestätigt"
-
 #: roomsharing/bookings/models.py:28
-msgid "Cancelled"
-msgstr "Storniert"
-
-#: roomsharing/bookings/models.py:34
 msgid "Booking Organization"
 msgstr "Buchende Organisation"
 
-#: roomsharing/bookings/models.py:41
+#: roomsharing/bookings/models.py:35
 msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
-#: roomsharing/bookings/models.py:57 roomsharing/bookings/models.py:86
+#: roomsharing/bookings/models.py:51 roomsharing/bookings/models.py:80
 msgid "Booking"
 msgstr "Buchung"
 
-#: roomsharing/bookings/models.py:64
+#: roomsharing/bookings/models.py:58
 msgid ""
 "The requested timespan overlaps with an existing booking for this room. "
 "Please chose another timespan."
@@ -211,49 +344,168 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diesen "
 "Raum. Bitte wähle einen anderen Zeitraum."
 
-#: roomsharing/bookings/models.py:91
+#: roomsharing/bookings/models.py:85
+#: roomsharing/templates/bookings/partials/show_bookingmessage.html:21
+#: roomsharing/templates/bookings/show-booking.html:69
 msgid "Message"
 msgstr "Nachricht"
 
-#: roomsharing/bookings/models.py:94 roomsharing/users/models.py:41
+#: roomsharing/bookings/models.py:88 roomsharing/organizations/models.py:69
+#: roomsharing/users/models.py:60
 msgid "User"
 msgstr "Nutzer:in"
 
-#: roomsharing/bookings/models.py:101
+#: roomsharing/bookings/models.py:95
 msgid "Booking Message"
 msgstr "Nachricht zur Buchung"
 
-#: roomsharing/bookings/models.py:102
+#: roomsharing/bookings/models.py:96
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: roomsharing/bookings/views.py:143
+#: roomsharing/bookings/views.py:218
 msgid "Booking created successfully!"
 msgstr "Buchung erstellt"
 
-#: roomsharing/organizations/models.py:9
+#: roomsharing/organizations/models.py:20
+msgid "Without legal form"
+msgstr "Ohne Rechtsform"
+
+#: roomsharing/organizations/models.py:21
+msgid "Registered association"
+msgstr "eingetragener Verein (e.V.)"
+
+#: roomsharing/organizations/models.py:22
+msgid "Not registered association"
+msgstr "nicht eingetragener Verein"
+
+#: roomsharing/organizations/models.py:23
+msgid "Foundation"
+msgstr "Stifung"
+
+#: roomsharing/organizations/models.py:24
+msgid "Civil law company"
+msgstr "Geselslchaft bürgerlichen Rechts (GbR)"
+
+#: roomsharing/organizations/models.py:25
+msgid "Limited company"
+msgstr "Gesellschaft mit beschränkter Haftung (GmbH)"
+
+#: roomsharing/organizations/models.py:26
+msgid "Limited charitable company"
+msgstr "gemeinnützige GmbH"
+
+#: roomsharing/organizations/models.py:27
+msgid "Cooperative"
+msgstr "Genossenschaft"
+
+#: roomsharing/organizations/models.py:28
+msgid "Charitable cooperative"
+msgstr "gemeinnützige Genossenschaft"
+
+#: roomsharing/organizations/models.py:29
+msgid "Individual entrepreneur"
+msgstr "Einzelunternehmer:in"
+
+#: roomsharing/organizations/models.py:30
+msgid "Other"
+msgstr "Andere"
+
+#: roomsharing/organizations/models.py:33
 msgid "Name"
 msgstr "Name"
 
-#: roomsharing/organizations/models.py:11
+#: roomsharing/organizations/models.py:35 roomsharing/users/models.py:41
 msgid "Street"
 msgstr "Straße"
 
-#: roomsharing/organizations/models.py:12
-msgid "House Number"
+#: roomsharing/organizations/models.py:36
+msgid "House number"
 msgstr "Hausnummer"
 
-#: roomsharing/organizations/models.py:13
+#: roomsharing/organizations/models.py:37 roomsharing/users/models.py:43
 msgid "Zip Code"
 msgstr "Postleitzahl"
 
-#: roomsharing/organizations/models.py:14
+#: roomsharing/organizations/models.py:38 roomsharing/users/models.py:44
 msgid "City"
 msgstr "Stadt"
+
+#: roomsharing/organizations/models.py:39
+msgid "Legal form"
+msgstr "Rechtsform"
+
+#: roomsharing/organizations/models.py:41
+msgid "Certificate of tax exemption"
+msgstr "Freistellungsbescheid"
+
+#: roomsharing/organizations/models.py:58
+msgid "Administrator"
+msgstr "Administrator"
+
+#: roomsharing/organizations/models.py:59
+msgid "Booker"
+msgstr "Buchende:r"
+
+#: roomsharing/organizations/models.py:62 roomsharing/utils/models.py:27
+msgid "Pending"
+msgstr "Ausstehend"
+
+#: roomsharing/organizations/models.py:63 roomsharing/utils/models.py:28
+msgid "Confirmed"
+msgstr "Bestätigt"
+
+#: roomsharing/organizations/models.py:64
+msgid "Rejected"
+msgstr "Abgelehnt"
+
+#: roomsharing/organizations/models.py:84
+msgid "Role"
+msgstr "Rolle"
+
+#: roomsharing/organizations/models.py:92
+msgid "Membership"
+msgstr "Mitgliedschaft"
+
+#: roomsharing/organizations/models.py:93
+msgid "Memberships"
+msgstr "Mitgliedschaften"
+
+#: roomsharing/organizations/models.py:122
+msgid "Default booking status"
+msgstr ""
+
+#: roomsharing/organizations/models.py:123
+msgid "Default booking statuses"
+msgstr ""
+
+#: roomsharing/rooms/models.py:22 roomsharing/rooms/models.py:61
+msgid "Description"
+msgstr "Beschreibung"
+
+#: roomsharing/rooms/models.py:23
+msgid "Square Meters"
+msgstr "Quadratmeter"
+
+#: roomsharing/rooms/models.py:24
+msgid "Maximum Number of Persons"
+msgstr "Maximale Anzahl an Personen"
+
+#: roomsharing/rooms/models.py:25
+msgid "General Bookable Times"
+msgstr "Buchbare Zeiten"
 
 #: roomsharing/rooms/models.py:26
 msgid "Pricing conditions"
 msgstr "Finanzielle Bedingungen"
+
+#: roomsharing/rooms/models.py:27
+msgid "Included Equipment"
+msgstr "Vorhandene Ausstattung"
+
+#: roomsharing/rooms/models.py:28
+msgid "Bookable Equipment"
+msgstr "Buchbare Ausstattung"
 
 #: roomsharing/rooms/models.py:67
 msgid "Room Image"
@@ -263,64 +515,33 @@ msgstr "Raumbild"
 msgid "Room Images"
 msgstr "Raumbilder"
 
-#: roomsharing/templates/base.html:64
-msgid "Home"
-msgstr "Startseite"
-
-#: roomsharing/templates/base.html:70
-msgid "My Bookings"
-msgstr "Meine Buchungen"
-
-#: roomsharing/templates/base.html:74
-#, fuzzy
-#| msgid "Organizations"
-msgid "My Organizations"
-msgstr "Organisationen"
-
-#: roomsharing/templates/bookings/booking_details.html:20
-#: roomsharing/templates/bookings/partials/bookings_list.html:17
-msgid "Booked by:"
-msgstr "Gebucht von"
-
-#: roomsharing/templates/bookings/booking_details.html:30
-msgid "Timeline"
-msgstr "Verlauf"
-
-#: roomsharing/templates/bookings/booking_details.html:53
-msgid "Booking created"
-msgstr "Buchung erstellt"
-
-#: roomsharing/templates/bookings/booking_details.html:54
-msgid "by"
-msgstr "von"
-
-#: roomsharing/templates/bookings/booking_details.html:81
-#, fuzzy
-#| msgid "Message"
-msgid "New Message"
-msgstr "Nachricht"
-
-#: roomsharing/templates/bookings/booking_details.html:85
-#, fuzzy
-#| msgid "Status"
-msgid "Status Change"
-msgstr "Status"
-
 #: roomsharing/templates/bookings/booking_form.html:33
 msgid "Submit"
 msgstr "Abschicken"
 
-#: roomsharing/templates/bookings/bookings_list.html:8
-msgid "All bookings"
-msgstr "Alle Buchungen"
+#: roomsharing/templates/bookings/show-booking.html:11
+msgid "Timeline"
+msgstr "Verlauf"
 
-#: roomsharing/templates/bookings/partials/bookings_list.html:25
-msgid "View Details"
-msgstr "Details ansehen"
+#: roomsharing/templates/bookings/show-booking.html:33
+msgid "Write a new message"
+msgstr "Neue Nachricht schreiben"
 
-#: roomsharing/templates/bookings/partials/bookings_list.html:28
-msgid "Cancel Booking"
-msgstr "Buchung stornieren"
+#: roomsharing/templates/bookings/show-booking.html:41
+msgid "Send new message"
+msgstr "Neue Nachricht senden"
+
+#: roomsharing/templates/bookings/show-booking.html:73
+msgid "Status Change"
+msgstr "Statusänderung"
+
+#: roomsharing/templates/bookings/show-booking.html:107
+msgid "Booking created"
+msgstr "Buchung erstellt"
+
+#: roomsharing/templates/bookings/show-booking.html:109
+msgid "by"
+msgstr "von"
 
 #: roomsharing/templates/pages/home.html:7
 msgid "Roomsharing | Home"
@@ -334,15 +555,6 @@ msgstr "Das ist 'Roomsharing'"
 msgid "We currently work on making the room booking a lot easier."
 msgstr "Wir arbeiten daran, die Raumbuchungen stark zu vereinfachen."
 
-#: roomsharing/templates/rooms/partials/room_list_results.html:27
-#: roomsharing/templates/rooms/room_detail.html:31
-msgid "Persons"
-msgstr "Personen"
-
-#: roomsharing/templates/rooms/room_detail.html:69
-msgid "Current Week"
-msgstr "Aktuelle Woche"
-
 #: roomsharing/templates/users/user_detail.html:21
 msgid "My Info"
 msgstr "Meine Daten"
@@ -355,42 +567,54 @@ msgstr "Multi-Faktor-Authentifizierung"
 msgid "Personal info"
 msgstr "Persönliche Informationen"
 
-#: roomsharing/users/admin.py:26
+#: roomsharing/users/admin.py:25
 msgid "Permissions"
 msgstr "Berechtigungen"
 
-#: roomsharing/users/admin.py:37
+#: roomsharing/users/admin.py:36
 msgid "Important dates"
 msgstr "Wichtige Daten"
 
-#: roomsharing/users/apps.py:9 roomsharing/users/models.py:42
+#: roomsharing/users/apps.py:9 roomsharing/users/models.py:61
 msgid "Users"
 msgstr "Nutzer:innen"
 
-#: roomsharing/users/forms.py:27 roomsharing/users/tests/test_forms.py:35
+#: roomsharing/users/forms.py:28 roomsharing/users/tests/test_forms.py:35
 msgid "This email has already been taken."
 msgstr "Diese E-Mail ist bereits vergeben."
 
-#: roomsharing/users/models.py:23
+#: roomsharing/users/models.py:28
 msgid "First Name"
 msgstr "Vorname"
 
-#: roomsharing/users/models.py:24
+#: roomsharing/users/models.py:29
 msgid "Last Name"
 msgstr "Nachname"
 
-#: roomsharing/users/models.py:25
+#: roomsharing/users/models.py:31
 msgid "email address"
 msgstr "E-Mail Adresse"
+
+#: roomsharing/users/models.py:42
+msgid "House Number"
+msgstr "Hausnummer"
+
+#: roomsharing/users/models.py:45
+msgid "Phone Number"
+msgstr "Telefonnummer"
 
 #: roomsharing/users/tests/test_views.py:72 roomsharing/users/views.py:24
 msgid "Information successfully updated"
 msgstr "Informationen erfolgreich aktualisiert"
 
-#: roomsharing/utils/models.py:9
+#: roomsharing/utils/models.py:10
 msgid "Created"
 msgstr "Erstellt"
 
-#: roomsharing/utils/models.py:15
+#: roomsharing/utils/models.py:16
 msgid "Updated"
 msgstr "Aktualisiert"
+
+#: roomsharing/utils/models.py:29
+msgid "Cancelled"
+msgstr "Storniert"
