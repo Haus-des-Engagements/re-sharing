@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponseRedirect
@@ -8,6 +9,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import MembershipFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.organizations.views import show_organization_view
@@ -418,5 +420,48 @@ class DemoteToBookerMembershipView(TestCase):
         self.assertContains(
             response,
             "You are not allowed to demote.",
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
+
+
+class DeleteOrganizationView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.orga_admin = UserFactory()
+        self.organization = OrganizationFactory()
+        self.delete_organization_url = reverse(
+            "organizations:delete-organization",
+            kwargs={"organization": self.organization.slug},
+        )
+
+    def test_delete_ogranization_by_admin(self):
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.delete_organization_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == reverse("organizations:list-organizations")
+        with pytest.raises(Organization.DoesNotExist):
+            self.organization.refresh_from_db()
+
+    def test_delete_organization_by_non_admin(self):
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.delete_organization_url)
+        self.assertContains(
+            response,
+            "You are not allowed to delete this organization.",
             status_code=HTTPStatus.UNAUTHORIZED,
         )

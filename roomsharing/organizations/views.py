@@ -6,7 +6,6 @@ from django.db.models import F
 from django.db.models import OuterRef
 from django.db.models import Subquery
 from django.http import HttpResponse
-from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -178,7 +177,10 @@ def delete_organization_view(request, organization):
         messages.success(request, "Organization deleted successfully.")
         return redirect("organizations:list-organizations")
 
-    return HttpResponseNotAllowed("You are not allowed to delete this organization.")
+    return HttpResponse(
+        "You are not allowed to delete this organization.",
+        status=HTTPStatus.UNAUTHORIZED,
+    )
 
 
 @login_required
