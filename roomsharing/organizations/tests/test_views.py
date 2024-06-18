@@ -133,3 +133,105 @@ class TestRequestMembershipView(TestCase):
             "Successfully requested. "
             "You will be notified when your request is approved or denied.",
         )
+
+
+class CancelMembershipView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.orga_admin = UserFactory()
+        self.organization = OrganizationFactory()
+        self.cancel_membership_url = reverse(
+            "organizations:cancel-membership",
+            kwargs={"organization": self.organization.slug, "user": self.user.slug},
+        )
+
+    def test_cancel_existing_membership_by_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.cancel_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response,
+            "Membership has been cancelled.",
+        )
+        assert (
+            not Membership.objects.filter(organization=self.organization)
+            .filter(user__slug=self.user)
+            .exists()
+        )
+
+    def test_cancel_not_existing_membership_by_admin(self):
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.cancel_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response,
+            "Membership does not exist.",
+        )
+        assert (
+            not Membership.objects.filter(organization=self.organization)
+            .filter(user__slug=self.user)
+            .exists()
+        )
+
+    def test_cancel_membership_by_non_admin(self):
+        orga_booker = UserFactory()
+        MembershipFactory(
+            user=orga_booker,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(orga_booker)
+
+        response = self.client.get(self.cancel_membership_url)
+        self.assertContains(
+            response, "You are not allowed to cancel this membership.", status_code=405
+        )
+
+    def test_cancel_membership_by_user_itself(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(self.cancel_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response,
+            "Membership has been cancelled.",
+        )
+        assert (
+            not Membership.objects.filter(organization=self.organization)
+            .filter(user__slug=self.user)
+            .exists()
+        )

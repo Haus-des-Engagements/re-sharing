@@ -161,8 +161,9 @@ def cancel_membership_view(request, organization, user):
         if memberships.exists():
             memberships.first().delete()
             return HttpResponse("Membership has been cancelled.")
+        return HttpResponse("Membership does not exist.")
 
-    return HttpResponseNotAllowed("You are not allowed to cancel this membership.")
+    return HttpResponse("You are not allowed to cancel this membership.", status=405)
 
 
 @login_required
