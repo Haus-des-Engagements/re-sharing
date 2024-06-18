@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
@@ -163,7 +165,9 @@ def cancel_membership_view(request, organization, user):
             return HttpResponse("Membership has been cancelled.")
         return HttpResponse("Membership does not exist.")
 
-    return HttpResponse("You are not allowed to cancel this membership.", status=405)
+    return HttpResponse(
+        "You are not allowed to cancel this membership.", status=HTTPStatus.UNAUTHORIZED
+    )
 
 
 @login_required
@@ -194,7 +198,10 @@ def confirm_membership_view(request, organization, user):
         membership.save()
         return HttpResponse("Membership has been confirmed.")
 
-    return HttpResponse("You are not allowed to confirm this membership.", status=405)
+    return HttpResponse(
+        "You are not allowed to confirm this membership.",
+        status=HTTPStatus.UNAUTHORIZED,
+    )
 
 
 @login_required
@@ -203,6 +210,7 @@ def promote_to_admin_membership_view(request, organization, user):
     membership = (
         Membership.objects.filter(organization=organization)
         .filter(user__slug=user)
+        .filter(status=Membership.Status.CONFIRMED)
         .first()
     )
 
@@ -211,7 +219,9 @@ def promote_to_admin_membership_view(request, organization, user):
         membership.save()
         return HttpResponse("Member has been promoted to admin.")
 
-    return HttpResponseNotAllowed("You are not allowed to promote.")
+    return HttpResponse(
+        "You are not allowed to promote.", status=HTTPStatus.UNAUTHORIZED
+    )
 
 
 @login_required
@@ -228,4 +238,6 @@ def demote_to_booker_membership_view(request, organization, user):
         membership.save()
         return HttpResponse("Member has been demoted to booker.")
 
-    return HttpResponse("You are not allowed to demote.")
+    return HttpResponse(
+        "You are not allowed to demote.", status=HTTPStatus.UNAUTHORIZED
+    )

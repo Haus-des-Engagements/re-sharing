@@ -200,7 +200,7 @@ class ConfirmMembershipView(TestCase):
 
         response = self.client.get(self.confirm_membership_url)
         self.assertContains(
-            response, "You are not allowed to confirm this membership.", status_code=405
+            response, "You are not allowed to confirm this membership.", status_code=401
         )
 
 
@@ -281,7 +281,7 @@ class CancelMembershipView(TestCase):
 
         response = self.client.get(self.cancel_membership_url)
         self.assertContains(
-            response, "You are not allowed to cancel this membership.", status_code=405
+            response, "You are not allowed to cancel this membership.", status_code=401
         )
 
     def test_cancel_membership_by_user_itself(self):
@@ -303,4 +303,120 @@ class CancelMembershipView(TestCase):
             not Membership.objects.filter(organization=self.organization)
             .filter(user__slug=self.user)
             .exists()
+        )
+
+
+class PromoteToAdminMembershipView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.orga_admin = UserFactory()
+        self.organization = OrganizationFactory()
+        self.promote_to_admin_membership = reverse(
+            "organizations:promote-to-admin-membership",
+            kwargs={"organization": self.organization.slug, "user": self.user.slug},
+        )
+
+    def test_promote_to_admin_membership_by_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.promote_to_admin_membership)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Member has been promoted to admin.")
+        assert (
+            Membership.objects.filter(organization=self.organization, user=self.user)
+            .first()
+            .role
+            == Membership.Role.ADMIN
+        )
+
+    def test_promote_to_admin_membership_by_non_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.promote_to_admin_membership)
+        self.assertContains(
+            response,
+            "You are not allowed to promote.",
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
+
+
+class DemoteToBookerMembershipView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.orga_admin = UserFactory()
+        self.organization = OrganizationFactory()
+        self.demote_to_booker_membership = reverse(
+            "organizations:demote-to-booker-membership",
+            kwargs={"organization": self.organization.slug, "user": self.user.slug},
+        )
+
+    def test_demote_to_booker_membership_by_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.demote_to_booker_membership)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Member has been demoted to booker.")
+        assert (
+            Membership.objects.filter(organization=self.organization, user=self.user)
+            .first()
+            .role
+            == Membership.Role.BOOKER
+        )
+
+    def test_demote_to_admin_membership_by_non_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.demote_to_booker_membership)
+        self.assertContains(
+            response,
+            "You are not allowed to demote.",
+            status_code=HTTPStatus.UNAUTHORIZED,
         )
