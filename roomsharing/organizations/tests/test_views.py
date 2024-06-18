@@ -61,3 +61,75 @@ class TestShowOrganizationView(TestCase):
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"{login_url}?next=/fake-url/"
+
+
+class TestRequestMembershipView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+        self.organization = OrganizationFactory()
+        self.request_membership_url = reverse(
+            "organizations:request-membership",
+            kwargs={"organization": self.organization.slug},
+        )
+
+    def test_request_pending(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.PENDING,
+        )
+
+        response = self.client.get(self.request_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response,
+            "You are already requested to become a member. Please wait patiently.",
+        )
+
+    def test_already_confirmed(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+
+        response = self.client.get(self.request_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "You are already member of this organization.")
+
+    def test_rejected(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.REJECTED,
+        )
+
+        response = self.client.get(self.request_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response, "You have already been rejected by this organization."
+        )
+
+    def test_new_request(self):
+        response = self.client.get(self.request_membership_url)
+        membership = (
+            Membership.objects.filter(organization=self.organization)
+            .filter(user=self.user)
+            .first()
+        )
+        assert membership
+        assert membership.organization == self.organization
+        assert membership.user == self.user
+        assert membership.role == Membership.Role.BOOKER
+        assert membership.status == Membership.Status.PENDING
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(
+            response,
+            "Successfully requested. "
+            "You will be notified when your request is approved or denied.",
+        )
