@@ -16,6 +16,32 @@ from roomsharing.organizations.views import show_organization_view
 from roomsharing.users.tests.factories import UserFactory
 
 
+class TestListOrganizationView(TestCase):
+    def setUp(self):
+        self.rf = RequestFactory()
+        self.organization1 = OrganizationFactory()
+        self.organization2 = OrganizationFactory()
+        self.list_organizations_url = reverse("organizations:list-organizations")
+
+    def test_list_organizations(self):
+        user = UserFactory()
+        self.client.force_login(user)
+        MembershipFactory(
+            user=user,
+            organization=self.organization1,
+            role=Membership.Role.BOOKER,
+        )
+
+        response = self.client.get(self.list_organizations_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(response, "organizations/list_organizations.html")
+        organizations = response.context.get("organizations")
+        form = response.context.get("form")
+
+        assert set(organizations) == {self.organization1, self.organization2}
+        assert form is not None
+
+
 class TestShowOrganizationView(TestCase):
     def setUp(self):
         self.rf = RequestFactory()
