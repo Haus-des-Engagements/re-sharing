@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import IntegerChoices
 from django.utils.translation import gettext_lazy as _
 
 
@@ -20,3 +21,9 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class BookingStatus(IntegerChoices):
+    PENDING = 1, _("Pending")
+    CONFIRMED = 2, _("Confirmed")
+    CANCELLED = 3, _("Cancelled")

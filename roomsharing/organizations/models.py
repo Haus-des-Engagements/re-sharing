@@ -10,6 +10,8 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
+from roomsharing.rooms.models import Room
+from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
 
 
@@ -95,5 +97,42 @@ class Membership(TimeStampedModel):
         return self.user.__str__() + " - " + self.organization.name
 
 
+class DefaultBookingStatus(TimeStampedModel):
+    history = AuditlogHistoryField()
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Organization"),
+        related_name="defaultbookingstatuses_of_organization",
+        related_query_name="defaultbookingstatus_of_organization",
+        blank=True,
+        on_delete=CASCADE,
+    )
+    room = ForeignKey(
+        Room,
+        verbose_name=_("Room"),
+        on_delete=CASCADE,
+        related_name="defaultbookingstatuses_of_room",
+        related_query_name="defaultbookingstatus_of_room",
+    )
+
+    status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
+
+    class Meta:
+        unique_together = ("room", "organization")
+        verbose_name = _("Default booking status")
+        verbose_name_plural = _("Default booking statuses")
+        ordering = ["id"]
+
+    def __str__(self):
+        return (
+            self.organization.name
+            + " - "
+            + self.room.name
+            + ": "
+            + self.get_status_display()
+        )
+
+
+auditlog.register(DefaultBookingStatus, exclude_fields=["created, updated"])
 auditlog.register(Organization, exclude_fields=["created, updated"])
 auditlog.register(Membership, exclude_fields=["created, updated"])

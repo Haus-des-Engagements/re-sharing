@@ -4,6 +4,9 @@ from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from roomsharing.organizations.models import DefaultBookingStatus
+from roomsharing.utils.models import BookingStatus
+
 from .models import Booking
 from .models import BookingMessage
 
@@ -26,7 +29,7 @@ class BookingListForm(forms.Form):
         label=_("Show past bookings"),
     )
     status = forms.ChoiceField(
-        choices=[("all", _("All")), *Booking.Status.choices],
+        choices=[("all", _("All")), *BookingStatus.choices],
         required=False,
         label=_("Status"),
     )
@@ -127,7 +130,7 @@ class BookingForm(forms.ModelForm):
             )
 
             booking_overlap = Booking.objects.filter(
-                status=Booking.Status.CONFIRMED,
+                status=BookingStatus.CONFIRMED,
                 room=room,
                 timespan__overlap=(start_datetime, end_datetime),
             )
@@ -143,7 +146,14 @@ class BookingForm(forms.ModelForm):
         booking = super().save(commit=False)
         booking.user = user
         booking.timespan = self.cleaned_data["timespan"]
-        booking.status = Booking.Status.PENDING
+        default_booking_status = DefaultBookingStatus.objects.filter(
+            organization=booking.organization, room=booking.room
+        )
+        if default_booking_status.exists():
+            booking.status = default_booking_status.first().status
+        else:
+            booking.status = BookingStatus.PENDING
+
         booking.save()
         if self.cleaned_data.get("message"):
             booking_message = BookingMessage(

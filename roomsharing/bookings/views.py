@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from roomsharing.users.models import User
+from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
 from .forms import BookingListForm
@@ -95,10 +96,10 @@ def show_booking_view(request, slug):
     )
     for log_entry in booking_logs:
         status_integer_old = int(log_entry.changes["status"][0])
-        status_text_old = dict(Booking.Status.choices).get(status_integer_old)
+        status_text_old = dict(BookingStatus.choices).get(status_integer_old)
 
         status_integer_new = int(log_entry.changes["status"][1])
-        status_text_new = dict(Booking.Status.choices).get(status_integer_new)
+        status_text_new = dict(BookingStatus.choices).get(status_integer_new)
         status_change_dict = {
             "date": log_entry.timestamp,
             "type": "status_change",
@@ -154,8 +155,8 @@ def cancel_booking(request, slug, from_page):
     if not user_belongs_to_booking_org(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
-    if booking.Status.CONFIRMED or booking.Status.PENDING:
-        booking.status = Booking.Status.CANCELLED
+    if booking.status in (BookingStatus.CONFIRMED, BookingStatus.PENDING):
+        booking.status = BookingStatus.CANCELLED
         booking.save()
 
     if from_page == "detail":
@@ -193,7 +194,7 @@ def create_booking(request):
         if form.is_valid():
             booking = form.save(user=request.user)
             messages.success(request, _("Booking created successfully!"))
-            return redirect("bookings:detail", booking.slug)
+            return redirect("bookings:show-booking", booking.slug)
 
     return render(request, "bookings/booking_form.html", {"form": form})
 

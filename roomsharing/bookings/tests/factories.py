@@ -14,6 +14,7 @@ from roomsharing.bookings.models import Booking
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
+from roomsharing.utils.models import BookingStatus
 
 
 class BookingFactory(DjangoModelFactory):
@@ -22,7 +23,7 @@ class BookingFactory(DjangoModelFactory):
     organization = SubFactory(OrganizationFactory)
     user = SubFactory(UserFactory)
     room = SubFactory(RoomFactory)
-    status = Booking.Status.CONFIRMED
+    status = BookingStatus.CONFIRMED
 
     @LazyAttribute
     def timespan(self):
