@@ -187,11 +187,14 @@ def confirm_membership_view(request, organization, user):
     )
 
     if membership and user_is_admin_member(request.user, organization):
+        if membership.status == Membership.Status.CONFIRMED:
+            return HttpResponse("Membership has already been confirmed.")
+
         membership.status = Membership.Status.CONFIRMED
         membership.save()
         return HttpResponse("Membership has been confirmed.")
 
-    return HttpResponseNotAllowed("You are not allowed to confirm this membership.")
+    return HttpResponse("You are not allowed to confirm this membership.", status=405)
 
 
 @login_required

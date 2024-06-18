@@ -135,6 +135,75 @@ class TestRequestMembershipView(TestCase):
         )
 
 
+class ConfirmMembershipView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.orga_admin = UserFactory()
+        self.organization = OrganizationFactory()
+        self.confirm_membership_url = reverse(
+            "organizations:confirm-membership",
+            kwargs={"organization": self.organization.slug, "user": self.user.slug},
+        )
+
+    def test_confirm_already_confirmed_membership_by_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.confirm_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Membership has already been confirmed.")
+
+    def test_confirm_new_membership_by_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.PENDING,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.ADMIN,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.confirm_membership_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Membership has been confirmed.")
+
+    def test_confirm_new_membership_by_non_admin(self):
+        MembershipFactory(
+            user=self.user,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.PENDING,
+        )
+        MembershipFactory(
+            user=self.orga_admin,
+            organization=self.organization,
+            role=Membership.Role.BOOKER,
+            status=Membership.Status.CONFIRMED,
+        )
+        self.client.force_login(self.orga_admin)
+
+        response = self.client.get(self.confirm_membership_url)
+        self.assertContains(
+            response, "You are not allowed to confirm this membership.", status_code=405
+        )
+
+
 class CancelMembershipView(TestCase):
     def setUp(self):
         self.user = UserFactory()
