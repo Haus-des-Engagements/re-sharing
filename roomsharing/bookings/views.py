@@ -230,7 +230,7 @@ def recurrence_view(request):
             frequency = form.cleaned_data.get("frequency")
             interval = form.cleaned_data.get("interval") or 1
             bysetpos = (
-                int(form.cleaned_data.get("bysetpos"))
+                [int(x) for x in form.cleaned_data.get("bysetpos")]
                 if form.cleaned_data.get("bysetpos")
                 else None
             )
@@ -275,22 +275,23 @@ def recurrence_view(request):
                 bysetpos = None
                 bymonthday = None
 
-            occurrences = list(
-                rrule(
-                    freq_dict[frequency],
-                    interval=interval,
-                    byweekday=byweekday,
-                    bymonthday=bymonthday,
-                    dtstart=start_date,
-                    bysetpos=bysetpos,
-                    until=end_date,
-                    count=count,
-                ),
+            recurrence_pattern = rrule(
+                freq_dict[frequency],
+                interval=interval,
+                byweekday=byweekday,
+                bymonthday=bymonthday,
+                dtstart=start_date,
+                bysetpos=bysetpos,
+                until=end_date,
+                count=count,
             )
+
+            occurrences = list(recurrence_pattern)
+            rrule_string = str(recurrence_pattern)
             return render(
                 request,
                 "bookings/recurrence.html",
-                {"occurrences": occurrences},
+                {"occurrences": occurrences, "rrule_string": rrule_string},
             )
     else:  # HTTP GET
         form = RecurrenceForm()

@@ -11,6 +11,7 @@ from .views import write_bookingmessage
 app_name = "bookings"
 urlpatterns = [
     path("", list_bookings_view, name="list-bookings"),
+    path("recurrence/", recurrence_view, name="recurrence"),
     path(
         "filter-bookings/",
         filter_bookings_view,
@@ -28,7 +29,6 @@ urlpatterns = [
         write_bookingmessage,
         name="write-bookingmessage",
     ),
-    path("recurrence/", recurrence_view, name="recurrence"),
 ]
 
 htmx_patterns = []
