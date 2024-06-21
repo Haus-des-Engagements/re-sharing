@@ -144,7 +144,12 @@ def show_booking_view(request, slug):
     return render(
         request,
         "bookings/show-booking.html",
-        {"booking": booking, "activity_stream": activity_stream, "form": form},
+        {
+            "booking": booking,
+            "activity_stream": activity_stream,
+            "form": form,
+            "current_time": timezone.now(),
+        },
     )
 
 
