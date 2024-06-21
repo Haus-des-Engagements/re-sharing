@@ -69,7 +69,4 @@
             hx-trigger="click, load">{% trans "Current Week" %}</button>
   </div>
   <div id="results">{% include "rooms/partials/get_weekly_bookings.html" %}</div>
-  <ul>
-    {% for booking in bookings %}<li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}</li>{% endfor %}
-  </ul>
 {% endblock content %}

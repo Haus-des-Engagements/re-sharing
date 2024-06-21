@@ -75,10 +75,6 @@ def filter_rooms_view(request):
 
 
 def get_weekly_bookings(request, slug):
-    bookings = Booking.objects.filter(room__slug=slug).filter(
-        status=BookingStatus.CONFIRMED,
-    )
-
     # Calculate the start and end dates for the week
     today = timezone.now().date()
     start_of_week = timezone.make_aware(
@@ -102,11 +98,15 @@ def get_weekly_bookings(request, slug):
     ]  # Weekdays from Monday to Sunday
 
     # Filter bookings for the current week
-    bookings = bookings.filter(timespan__overlap=(start_of_week, end_of_week))
+    weekly_bookings = (
+        Booking.objects.filter(room__slug=slug)
+        .filter(status=BookingStatus.CONFIRMED)
+        .filter(timespan__overlap=(start_of_week, end_of_week))
+    )
 
     # Check if a time slot is booked
     current_tz = timezone.get_current_timezone()
-    for booking in bookings:
+    for booking in weekly_bookings:
         booking_start = max(
             booking.timespan.lower.astimezone(current_tz),
             start_of_week,
@@ -126,7 +126,7 @@ def get_weekly_bookings(request, slug):
         request,
         "rooms/partials/get_weekly_bookings.html",
         {
-            "bookings": bookings,
+            "weekly_bookings": weekly_bookings,
             "weekdays": weekdays,
             "time_slots": time_slots,
         },

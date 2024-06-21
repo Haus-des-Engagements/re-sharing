@@ -20,3 +20,8 @@
     {% endfor %}
   </tbody>
 </table>
+<ul>
+  {% for booking in weekly_bookings %}
+    <li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}: {{ booking.get_status_display }}</li>
+  {% endfor %}
+</ul>
