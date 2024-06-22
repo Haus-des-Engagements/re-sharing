@@ -1,3 +1,4 @@
+from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
 
@@ -22,6 +23,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
@@ -197,7 +199,7 @@ def cancel_booking(request, slug, from_page):
 
 
 @login_required
-def create_booking(request):
+def create_booking_view(request):
     if request.method == "GET":
         # Extract startdate and starttime from query parameters
         startdate = request.GET.get("startdate")
@@ -209,19 +211,49 @@ def create_booking(request):
         initial_data = {}
         if startdate:
             initial_data["startdate"] = startdate
+        else:
+            initial_data["startdate"] = datetime.strftime(
+                timezone.now().date(), "%Y-%m-%d"
+            )
         if starttime:
             initial_data["starttime"] = starttime
         if enddate:
             initial_data["enddate"] = enddate
+        else:
+            initial_data["enddate"] = initial_data["startdate"]
         if endtime:
             initial_data["endtime"] = endtime
 
         form = BookingForm(user=user, initial=initial_data)
         return render(request, "bookings/booking_form.html", {"form": form})
+
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
         if form.is_valid():
-            booking = form.save(user=request.user)
+            booking = Booking()
+            booking.user = request.user
+            booking.title = form.cleaned_data["title"]
+            booking.room = form.cleaned_data["room"]
+            booking.timespan = form.cleaned_data["timespan"]
+            booking.organization = form.cleaned_data["organization"]
+            default_booking_status = DefaultBookingStatus.objects.filter(
+                organization=booking.organization, room=booking.room
+            )
+            if default_booking_status.exists():
+                booking.status = default_booking_status.first().status
+            else:
+                booking.status = BookingStatus.PENDING
+
+            booking.save()
+            message = form.cleaned_data["message"]
+            if message:
+                booking_message = BookingMessage(
+                    booking=booking,
+                    text=message,
+                    user=request.user,
+                )
+                booking_message.save()
+
             messages.success(request, _("Booking created successfully!"))
             return redirect("bookings:show-booking", booking.slug)
 

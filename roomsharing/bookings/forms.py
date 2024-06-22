@@ -4,7 +4,6 @@ from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
@@ -48,7 +47,7 @@ class BookingListForm(forms.Form):
             )
 
 
-class BookingForm(forms.ModelForm):
+class BookingForm(forms.Form):
     startdate = forms.DateField(
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -68,6 +67,10 @@ class BookingForm(forms.ModelForm):
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
         required=False,
+    )
+    room = forms.ModelChoiceField(
+        queryset=Room.objects.all(),
+        label=_("Room"),
     )
 
     def __init__(self, user, *args, **kwargs):
@@ -149,32 +152,6 @@ class BookingForm(forms.ModelForm):
             cleaned_data["timespan"] = (start_datetime, end_datetime)
 
         return cleaned_data
-
-    def save(self, user):
-        booking = super().save(commit=False)
-        booking.user = user
-        booking.timespan = self.cleaned_data["timespan"]
-        default_booking_status = DefaultBookingStatus.objects.filter(
-            organization=booking.organization, room=booking.room
-        )
-        if default_booking_status.exists():
-            booking.status = default_booking_status.first().status
-        else:
-            booking.status = BookingStatus.PENDING
-
-        booking.save()
-        if self.cleaned_data.get("message"):
-            booking_message = BookingMessage(
-                booking=booking,
-                text=self.cleaned_data.get("message"),
-                user=user,
-            )
-            booking_message.save()
-        return booking
-
-    class Meta:
-        model = Booking
-        fields = ["room", "organization", "title"]
 
 
 FREQUENCIES = [
