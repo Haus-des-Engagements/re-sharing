@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 
 from .models import Booking
@@ -208,8 +209,9 @@ class RecurrenceForm(forms.Form):
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
+    starttime = forms.TimeField()
     frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
-    interval = forms.IntegerField(required=False, label="Wiederholen alle")
+    interval = forms.IntegerField(required=False, label="Wiederholen alle", initial=1)
 
     BYSETPOS_CHOICES = [
         (1, "first"),
@@ -238,50 +240,21 @@ class RecurrenceForm(forms.Form):
         required=False,
     )
     count = forms.IntegerField(required=False)
+    room = forms.ModelChoiceField(
+        queryset=Room.objects.all(),
+        label=_("Room"),
+    )
+    duration = forms.IntegerField(required=True, label=_("Duration"), initial=90)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        starttime = cleaned_data.get("starttime")
 
-class NewRecurrenceForm(forms.Form):
-    RECURRENCE_CHOICES = [
-        ("count", _("after x times")),
-        ("end_date", _("at date")),
-        ("none", _("Never")),
-    ]
-    recurrence_choice = forms.ChoiceField(
-        choices=RECURRENCE_CHOICES,
-        initial="none",
-        label=_("Ends"),
-    )
-    start_date = forms.DateField(
-        label=_("Start Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
-    frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
-    interval = forms.IntegerField(required=False, label="Wiederholen alle")
-
-    BYSETPOS_CHOICES = [
-        (1, "first"),
-        (2, "second"),
-        (3, "third"),
-        (4, "fourth"),
-        (5, "fifth"),
-        (-1, "last"),
-    ]
-
-    bysetpos = forms.MultipleChoiceField(
-        choices=BYSETPOS_CHOICES,
-        required=False,
-        label="By Set Pos",
-    )
-    byweekday = forms.MultipleChoiceField(
-        choices=WEEKDAYS,
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-    )
-    BYMONTHDAY_CHOICES = [(None, "----")] + [(i, i) for i in range(1, 32)]
-    bymonthday = forms.ChoiceField(choices=BYMONTHDAY_CHOICES, required=False)
-    end_date = forms.DateField(
-        label=_("End Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-        required=False,
-    )
-    count = forms.IntegerField(required=False)
+        starttime = timezone.make_aware(
+            datetime.datetime.combine(
+                start_date,
+                starttime,
+            ),
+        )
+        return cleaned_data

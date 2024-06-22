@@ -4,6 +4,9 @@
   <h2>Recurrence Form</h2>
   <form method="post">
     {% csrf_token %}
+    <div>{{ form.room }}</div>
+    <div>{{ form.duration }}</div>
+    <div>{{ form.starttime }}</div>
     {{ form.frequency }}
     <div>
       {{ form.recurrence_choice.label_tag }}
@@ -44,10 +47,24 @@
 <button type="submit">Submit</button>
 </form>
 {{ rrule_string }}
-{% if occurrences %}
+{% if room_availability %}
   <h2>Occurrences:</h2>
   <ul>
-    {% for date in occurrences %}<li>{{ date|date:"D d.m.Y" }}</li>{% endfor %}
+    {% for item in room_availability %}
+      <li>
+        {{ item.timespan.0|date:"D d.m.Y H:i" }} - {{ item.timespan.1|date:"D d.m.Y H:i" }}- {{ item.room_booked }}
+        <!--Only display booking form if room is available-->
+        {% if item.room_booked %}
+          <form method="post">
+            {% csrf_token %}
+            <!-- I'm assuming you have a form 'BookingForm' -->
+            {{ booking_form.as_p }}
+            <input type="hidden" name="booking_date" value="{{ item.occurrence }}" />
+            <input type="submit" value="Book Now" />
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
   </ul>
 {% endif %}
 <script type="text/javascript">

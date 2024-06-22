@@ -1,3 +1,4 @@
+from datetime import timedelta
 from http import HTTPStatus
 
 from dateutil.rrule import DAILY
@@ -23,6 +24,7 @@ from django.utils.translation import gettext_lazy as _
 
 from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
@@ -227,6 +229,12 @@ def create_booking(request):
 
 
 @login_required
+def book_occurrences_view(request):
+    if request.method == "POST":
+        pass
+
+
+@login_required
 def recurrence_view(request):
     if request.method == "POST":
         form = RecurrenceForm(request.POST)
@@ -290,15 +298,43 @@ def recurrence_view(request):
                 until=end_date,
                 count=count,
             )
+            room = form.cleaned_data.get("room")
+            duration = form.cleaned_data.get("duration")
+            room = Room.objects.get(name=room)
 
             occurrences = list(recurrence_pattern)
+            room_availability = []
+
+            for occurrence in occurrences:
+                start_datetime = occurrence
+                end_datetime = start_datetime + timedelta(minutes=duration)
+                timespan = (start_datetime, end_datetime)
+                booking_overlap = Booking.objects.filter(
+                    status=BookingStatus.CONFIRMED,
+                    room=room,
+                    timespan__overlap=timespan,
+                ).exists()
+                room_booked = booking_overlap
+                room_availability.append(
+                    {
+                        "room_booked": room_booked,
+                        "occurrence": occurrence,
+                        "timespan": timespan,
+                        "room": room.slug,
+                    }
+                )
+
             rrule_string = str(recurrence_pattern)
             return render(
                 request,
                 "bookings/recurrence.html",
-                {"occurrences": occurrences, "rrule_string": rrule_string},
+                {
+                    "occurrences": occurrences,
+                    "rrule_string": rrule_string,
+                    "room_availability": room_availability,
+                },
             )
-    else:  # HTTP GET
+    if request.method == "GET":
         form = RecurrenceForm()
 
     return render(request, "bookings/recurrence.html", {"form": form})
