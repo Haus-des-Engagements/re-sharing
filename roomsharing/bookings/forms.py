@@ -2,6 +2,7 @@ import datetime
 
 from crispy_bootstrap5.bootstrap5 import FloatingField
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML
 from crispy_forms.layout import Div
 from crispy_forms.layout import Field
 from crispy_forms.layout import Layout
@@ -81,17 +82,13 @@ class BookingForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_id = "id-exampleForm"
-        self.helper.form_class = "form-inline"
-        self.helper.form_method = "post"
-        self.helper.form_action = "submit_survey"
+        self.helper = FormHelper(self)
+        self.helper.form_id = "inner-booking-form"
+        self.helper.add_input(Submit("submit", _("Preview")))
         self.fields["startdate"].label = False
         self.fields["starttime"].label = False
         self.fields["enddate"].label = False
         self.fields["endtime"].label = False
-        from crispy_forms.layout import HTML
-
         self.helper.layout = Layout(
             Div(
                 FloatingField("title", css_class="form-control", wrapper_class="col-8"),
@@ -135,8 +132,6 @@ class BookingForm(forms.Form):
                 css_class="row g-2",
             ),
         )
-
-        self.helper.add_input(Submit("submit", "Submit"))
         organizations = (
             Organization.objects.filter(organization_of_membership__user=user)
             .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
@@ -212,6 +207,8 @@ class BookingForm(forms.Form):
                 self.add_error("room", msg)
 
             cleaned_data["timespan"] = (start_datetime, end_datetime)
+            cleaned_data["start_datetime"] = start_datetime
+            cleaned_data["end_datetime"] = end_datetime
 
         return cleaned_data
 

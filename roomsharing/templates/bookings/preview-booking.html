@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <h3>{% trans "Preview" %}</h3>
+  <div class="card mb-3 mt-4">
+    <div class="row g-0">
+      <div class="col col-md-2 card-body text-center">
+        <p class="h6">{{ booking.timespan.0|date:"l" }}</p>
+        <p class="h4">{{ booking.timespan.0|date:"d" }}. {{ booking.timespan.0|date:"F" }}</p>
+        <p class="h6">{{ booking.timespan.0|date:"H:i" }} - {{ booking.timespan.1|date:"H:i" }}</p>
+      </div>
+      <div class="col-md-6">
+        <div class="card-body">
+          <h5 class="card-title">{{ booking.room }}</h5>
+          <p class="card-text">{{ booking.timespan.0|date:"d.m.Y - H:i" }} - {{ booking.timespan.1 }}</p>
+          <p class="card-text">
+            {% trans "Booked by:" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-body">
+          {% if message %}
+            <p class="card-text">{% trans "Message" %}</p>
+            <p class="card-text">{{ message }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="submit"
+           name="submit"
+           value="Absenden"
+           class="btn btn-primary"
+           id="submit-id-submit" />
+  </form>
+{% endblock content %}

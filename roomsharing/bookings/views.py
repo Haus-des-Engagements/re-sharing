@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
 
+from dateutil.parser import isoparse
 from dateutil.rrule import DAILY
 from dateutil.rrule import FR
 from dateutil.rrule import MO
@@ -199,6 +200,53 @@ def cancel_booking(request, slug, from_page):
 
 
 @login_required
+def preview_booking_view(request):
+    booking_data = request.session["booking_data"]
+    if not booking_data:
+        return redirect("bookings:create-booking")
+    message = booking_data["message"]
+    booking = Booking()
+    booking.user = request.user
+    booking.title = booking_data["title"]
+    booking.room = get_object_or_404(Room, slug=booking_data["room"])
+    timespan = booking_data["timespan"]
+    booking.timespan = (isoparse(timespan[0]), isoparse(timespan[1]))
+    booking.organization = get_object_or_404(
+        Organization, slug=booking_data["organization"]
+    )
+    default_booking_status = DefaultBookingStatus.objects.filter(
+        organization=booking.organization, room=booking.room
+    )
+    if default_booking_status.exists():
+        booking.status = default_booking_status.first().status
+    else:
+        booking.status = BookingStatus.PENDING
+
+    if request.method == "GET":
+        return render(
+            request,
+            "bookings/preview-booking.html",
+            {"booking": booking, "message": message},
+        )
+
+    if request.method == "POST":
+        booking.save()
+        if message:
+            booking_message = BookingMessage(
+                booking=booking,
+                text=message,
+                user=request.user,
+            )
+            booking_message.save()
+            request.session.pop("booking_data", None)
+
+        messages.success(request, _("Booking created successfully!"))
+        return redirect("bookings:show-booking", booking.slug)
+
+    return redirect("bookings:create-booking")
+
+
+@login_required
 def create_booking_view(request):
     if request.method == "GET":
         # Extract startdate and starttime from query parameters
@@ -225,39 +273,25 @@ def create_booking_view(request):
             initial_data["endtime"] = endtime
 
         form = BookingForm(user=user, initial=initial_data)
-        return render(request, "bookings/booking_form.html", {"form": form})
+        return render(request, "bookings/create-booking.html", {"form": form})
 
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
         if form.is_valid():
-            booking = Booking()
-            booking.user = request.user
-            booking.title = form.cleaned_data["title"]
-            booking.room = form.cleaned_data["room"]
-            booking.timespan = form.cleaned_data["timespan"]
-            booking.organization = form.cleaned_data["organization"]
-            default_booking_status = DefaultBookingStatus.objects.filter(
-                organization=booking.organization, room=booking.room
-            )
-            if default_booking_status.exists():
-                booking.status = default_booking_status.first().status
-            else:
-                booking.status = BookingStatus.PENDING
+            if isinstance(form.cleaned_data["timespan"], tuple):
+                timespan_start, timespan_end = form.cleaned_data["timespan"]
+                timespan = (timespan_start.isoformat(), timespan_end.isoformat())
 
-            booking.save()
-            message = form.cleaned_data["message"]
-            if message:
-                booking_message = BookingMessage(
-                    booking=booking,
-                    text=message,
-                    user=request.user,
-                )
-                booking_message.save()
+            request.session["booking_data"] = {
+                "title": form.cleaned_data["title"],
+                "room": form.cleaned_data["room"].slug,
+                "timespan": timespan,
+                "organization": form.cleaned_data["organization"].slug,
+                "message": form.cleaned_data["message"],
+            }
+            return redirect("bookings:preview-booking")
 
-            messages.success(request, _("Booking created successfully!"))
-            return redirect("bookings:show-booking", booking.slug)
-
-    return render(request, "bookings/booking_form.html", {"form": form})
+    return render(request, "bookings/create-booking.html", {"form": form})
 
 
 @login_required

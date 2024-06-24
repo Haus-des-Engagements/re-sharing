@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <h1>Raum buchen</h1>
+  <form method="post">
+    {% crispy form form.helper %}
+  </form>
+{% endblock content %}
