@@ -1,5 +1,11 @@
 import datetime
 
+from crispy_bootstrap5.bootstrap5 import FloatingField
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Div
+from crispy_forms.layout import Field
+from crispy_forms.layout import Layout
+from crispy_forms.layout import Submit
 from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -54,10 +60,10 @@ class BookingForm(forms.Form):
     )
     starttime = forms.ChoiceField(label=_("Start Time"))
     enddate = forms.DateField(
-        label=_("Start Date"),
+        label=_("End Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
-    endtime = forms.ChoiceField(label=_("Start Time"))
+    endtime = forms.ChoiceField(label=_("End Time"))
 
     organization = forms.ModelChoiceField(
         queryset=None,
@@ -75,6 +81,62 @@ class BookingForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = "id-exampleForm"
+        self.helper.form_class = "form-inline"
+        self.helper.form_method = "post"
+        self.helper.form_action = "submit_survey"
+        self.fields["startdate"].label = False
+        self.fields["starttime"].label = False
+        self.fields["enddate"].label = False
+        self.fields["endtime"].label = False
+        from crispy_forms.layout import HTML
+
+        self.helper.layout = Layout(
+            Div(
+                FloatingField("title", css_class="form-control", wrapper_class="col-8"),
+                css_class="row g-2",
+            ),
+            Div(
+                FloatingField("room", css_class="form-control", wrapper_class="col-4"),
+                FloatingField(
+                    "organization", css_class="form-control", wrapper_class="col-4"
+                ),
+                css_class="row g-2",
+            ),
+            Div(
+                Div(
+                    HTML(
+                        '{% load i18n %}<label class="control-label">{% trans "From" %}'
+                        "</label>"
+                    ),
+                    css_class="col-1",
+                ),
+                Field("startdate", css_class="form-control", wrapper_class="col-2"),
+                Field("starttime", css_class="form-control", wrapper_class="col-1"),
+                css_class="row g-2",
+            ),
+            Div(
+                Div(
+                    HTML(
+                        '{% load i18n %}<label class="control-label">'
+                        '{% trans "Until" %}</label>'
+                    ),
+                    css_class="col-1",
+                ),
+                Field("enddate", css_class="form-control", wrapper_class="col-2"),
+                Field("endtime", css_class="form-control", wrapper_class="col-1"),
+                css_class="row g-2",
+            ),
+            Div(
+                Field(
+                    "message", css_class="form-control", wrapper_class="col-8", rows="3"
+                ),
+                css_class="row g-2",
+            ),
+        )
+
+        self.helper.add_input(Submit("submit", "Submit"))
         organizations = (
             Organization.objects.filter(organization_of_membership__user=user)
             .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
