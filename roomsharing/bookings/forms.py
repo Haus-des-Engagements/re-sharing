@@ -30,7 +30,7 @@ class BookingListForm(forms.Form):
         required=False,
         label=_("Show past bookings"),
     )
-    status = forms.ChoiceField(
+    status = forms.MultipleChoiceField(
         choices=[("all", _("All")), *BookingStatus.choices],
         required=False,
         label=_("Status"),
@@ -155,9 +155,10 @@ class BookingForm(forms.Form):
 
 
 FREQUENCIES = [
-    ("MONTHLY", "Monthly"),
-    ("WEEKLY", "Weekly"),
-    ("DAILY", "Daily"),
+    ("MONTHLY_BY_DAY", _("Monthly by day")),
+    ("MONTHLY_BY_DATE", _("Monthly by date")),
+    ("WEEKLY", _("Weekly")),
+    ("DAILY", _("Daily")),
 ]
 
 WEEKDAYS = [
@@ -175,7 +176,6 @@ class RecurrenceForm(forms.Form):
     RECURRENCE_CHOICES = [
         ("count", _("after x times")),
         ("end_date", _("at date")),
-        ("none", _("Never")),
     ]
     recurrence_choice = forms.ChoiceField(
         choices=RECURRENCE_CHOICES,
@@ -186,7 +186,7 @@ class RecurrenceForm(forms.Form):
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
-    starttime = forms.TimeField()
+    starttime = forms.TimeField(label="Start time")
     frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
     interval = forms.IntegerField(required=False, label="Wiederholen alle", initial=1)
 
@@ -209,7 +209,7 @@ class RecurrenceForm(forms.Form):
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
-    BYMONTHDAY_CHOICES = [(None, "----")] + [(i, i) for i in range(1, 32)]
+    BYMONTHDAY_CHOICES = [(None, "----")] + [(i, i) for i in range(1, 31)]
     bymonthday = forms.ChoiceField(choices=BYMONTHDAY_CHOICES, required=False)
     end_date = forms.DateField(
         label=_("End Date"),

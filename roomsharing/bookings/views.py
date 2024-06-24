@@ -88,7 +88,7 @@ def filter_bookings_view(request):
             bookings = bookings.filter(organization__slug=organization)
 
         if status != "all":
-            bookings = bookings.filter(status=status)
+            bookings = bookings.filter(status__in=status)
 
         return render(
             request,
