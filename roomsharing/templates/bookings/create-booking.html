@@ -10,4 +10,35 @@
   <form method="post">
     {% crispy form form.helper %}
   </form>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', (event) => {
+      let repetitionsField = document.querySelector('select[name="rrule_repetitions"]');
+      let endsField = document.querySelector('select[name="rrule_ends"]');
+      let additionalFieldsDiv = document.querySelector('#rrule_additional_fields');
+      let endsCountField = document.querySelector('input[name="rrule_ends_count"]');
+      let endsEnddateField = document.querySelector('input[name="rrule_ends_enddate"]');
+
+      // initially hide specific end fields
+      endsCountField.parentElement.style.display = "block";
+      endsEnddateField.parentElement.style.display = "none";
+
+      repetitionsField.addEventListener('change', (event) => {
+        if (event.target.value === "NO_REPETITIONS") {
+          additionalFieldsDiv.style.display = "none";
+        } else {
+          additionalFieldsDiv.style.display = "block";
+        }
+      });
+
+      endsField.addEventListener('change', (event) => {
+        if (event.target.value === 'after') {
+          endsCountField.parentElement.style.display = "block";
+          endsEnddateField.parentElement.style.display = "none";
+        } else {
+          endsCountField.parentElement.style.display = "none";
+          endsEnddateField.parentElement.style.display = "block";
+        }
+      });
+    });
+  </script>
 {% endblock content %}

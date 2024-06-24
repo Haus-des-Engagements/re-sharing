@@ -1,6 +1,7 @@
 import datetime
 
 from crispy_bootstrap5.bootstrap5 import FloatingField
+from crispy_forms.bootstrap import InlineCheckboxes
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML
 from crispy_forms.layout import Div
@@ -55,6 +56,47 @@ class BookingListForm(forms.Form):
 
 
 class BookingForm(forms.Form):
+    FREQUENCIES = [
+        ("NO_REPETITIONS", _("No repetitions")),
+        ("DAILY", _("Daily")),
+        ("WEEKLY", _("Weekly")),
+        ("MONTHLY_BY_DATE", _("Monthly by date")),
+        ("MONTHLY_BY_DAY", _("Monthly by weekday")),
+    ]
+    RRULE_ENDS_CHOICES = [
+        ("after", _("nach")),
+        ("at", _("am")),
+    ]
+    WEEKDAYS = [
+        ("MO", "Monday"),
+        ("TU", "Tuesday"),
+        ("WE", "Wednesday"),
+        ("TH", "Thursday"),
+        ("FR", "Friday"),
+        ("SA", "Saturday"),
+        ("SU", "Sunday"),
+    ]
+    rrule_weekly_byweekday = forms.MultipleChoiceField(
+        choices=WEEKDAYS,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label=_("Repeat on these days"),
+    )
+    rrule_ends = forms.ChoiceField(
+        choices=RRULE_ENDS_CHOICES,
+        initial="none",
+        label=_("ends"),
+    )
+    rrule_repetitions = forms.ChoiceField(choices=FREQUENCIES, label=_("Repeat"))
+    rrule_interval = forms.IntegerField(
+        required=False, label="Wiederholen alle", initial=1
+    )
+    rrule_ends_enddate = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+        required=False,
+    )
+    rrule_ends_count = forms.IntegerField(required=False)
     startdate = forms.DateField(
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -89,6 +131,9 @@ class BookingForm(forms.Form):
         self.fields["starttime"].label = False
         self.fields["enddate"].label = False
         self.fields["endtime"].label = False
+        self.fields["rrule_ends_enddate"].label = False
+        self.fields["rrule_ends_count"].label = False
+        self.fields["rrule_ends"].label = False
         self.helper.layout = Layout(
             Div(
                 FloatingField("title", css_class="form-control", wrapper_class="col-8"),
@@ -130,6 +175,49 @@ class BookingForm(forms.Form):
                     "message", css_class="form-control", wrapper_class="col-8", rows="3"
                 ),
                 css_class="row g-2",
+            ),
+            Div(
+                Field(
+                    "rrule_repetitions",
+                    css_class="form-control",
+                    wrapper_class="col-2",
+                ),
+                css_class="row g-2",
+            ),
+            Div(
+                Div(
+                    Div(
+                        HTML(
+                            '{% load i18n %}<label class="control-label">'
+                            '{% trans "ends" %}</label>'
+                        ),
+                        css_class="col-1",
+                    ),
+                    Field(
+                        "rrule_ends",
+                        css_class="form-control",
+                        wrapper_class="col-2",
+                    ),
+                    Field(
+                        "rrule_ends_enddate",
+                        css_class="form-control",
+                        wrapper_class="col-2",
+                    ),
+                    Field(
+                        "rrule_ends_count",
+                        css_class="form-control",
+                        wrapper_class="col-1",
+                    ),
+                    InlineCheckboxes(
+                        "rrule_weekly_byweekday",
+                        css_class="form-control",
+                        wrapper_class="col-8",
+                    ),
+                    css_class="row g-2",
+                ),
+                css_class="row g-2",
+                css_id="rrule_additional_fields",
+                style="display: none",  # initially hidden
             ),
         )
         organizations = (
