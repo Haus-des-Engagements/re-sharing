@@ -15,6 +15,12 @@ from django.utils.translation import gettext_lazy as _
 from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
+from roomsharing.utils.dicts import MONTHDATES
+from roomsharing.utils.dicts import MONTHDAYS
+from roomsharing.utils.dicts import RRULE_DAILY_INTERVAL
+from roomsharing.utils.dicts import RRULE_MONTHLY_INTERVAL
+from roomsharing.utils.dicts import RRULE_WEEKLY_INTERVAL
+from roomsharing.utils.dicts import WEEKDAYS
 from roomsharing.utils.models import BookingStatus
 
 from .models import Booking
@@ -56,47 +62,6 @@ class BookingListForm(forms.Form):
 
 
 class BookingForm(forms.Form):
-    FREQUENCIES = [
-        ("NO_REPETITIONS", _("No repetitions")),
-        ("DAILY", _("Daily")),
-        ("WEEKLY", _("Weekly")),
-        ("MONTHLY_BY_DATE", _("Monthly by date")),
-        ("MONTHLY_BY_DAY", _("Monthly by weekday")),
-    ]
-    RRULE_ENDS_CHOICES = [
-        ("after", _("nach")),
-        ("at", _("am")),
-    ]
-    WEEKDAYS = [
-        ("MO", "Monday"),
-        ("TU", "Tuesday"),
-        ("WE", "Wednesday"),
-        ("TH", "Thursday"),
-        ("FR", "Friday"),
-        ("SA", "Saturday"),
-        ("SU", "Sunday"),
-    ]
-    rrule_weekly_byweekday = forms.MultipleChoiceField(
-        choices=WEEKDAYS,
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-        label=_("Repeat on these days"),
-    )
-    rrule_ends = forms.ChoiceField(
-        choices=RRULE_ENDS_CHOICES,
-        initial="none",
-        label=_("ends"),
-    )
-    rrule_repetitions = forms.ChoiceField(choices=FREQUENCIES, label=_("Repeat"))
-    rrule_interval = forms.IntegerField(
-        required=False, label="Wiederholen alle", initial=1
-    )
-    rrule_ends_enddate = forms.DateField(
-        label=_("End Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-        required=False,
-    )
-    rrule_ends_count = forms.IntegerField(required=False)
     startdate = forms.DateField(
         label=_("Start Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -122,6 +87,59 @@ class BookingForm(forms.Form):
         label=_("Room"),
     )
 
+    FREQUENCIES = [
+        ("NO_REPETITIONS", _("No repetitions")),
+        ("DAILY", _("Daily")),
+        ("WEEKLY", _("Weekly")),
+        ("MONTHLY_BY_DAY", _("Monthly by weekday")),
+        ("MONTHLY_BY_DATE", _("Monthly by date")),
+    ]
+    rrule_repetitions = forms.ChoiceField(choices=FREQUENCIES, label=_("Repeat"))
+    RRULE_ENDS_CHOICES = [
+        ("AFTER_TIMES", _("after")),
+        ("AT_DATE", _("at")),
+    ]
+    rrule_ends = forms.ChoiceField(
+        choices=RRULE_ENDS_CHOICES,
+        initial="none",
+        label=_("ends"),
+    )
+    rrule_ends_enddate = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+        required=False,
+    )
+    rrule_ends_count = forms.IntegerField(
+        required=False, max_value=100, min_value=1, initial=5
+    )
+    rrule_daily_interval = forms.ChoiceField(
+        choices=RRULE_DAILY_INTERVAL, label=_("Repetition frequency")
+    )
+    rrule_weekly_interval = forms.ChoiceField(
+        choices=RRULE_WEEKLY_INTERVAL, label=_("Repetition frequency")
+    )
+    rrule_weekly_byday = forms.MultipleChoiceField(
+        choices=WEEKDAYS,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label=_("Repeat on these days"),
+    )
+    rrule_monthly_interval = forms.ChoiceField(
+        choices=RRULE_MONTHLY_INTERVAL, label=_("Repetition frequency")
+    )
+    rrule_monthly_byday = forms.MultipleChoiceField(
+        choices=MONTHDAYS,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label=_("Repeat on these days"),
+    )
+    rrule_monthly_bydate = forms.MultipleChoiceField(
+        choices=MONTHDATES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label=_("Repeat on these days"),
+    )
+
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -134,6 +152,12 @@ class BookingForm(forms.Form):
         self.fields["rrule_ends_enddate"].label = False
         self.fields["rrule_ends_count"].label = False
         self.fields["rrule_ends"].label = False
+        self.fields["rrule_daily_interval"].label = False
+        self.fields["rrule_weekly_byday"].label = False
+        self.fields["rrule_weekly_interval"].label = False
+        self.fields["rrule_monthly_interval"].label = False
+        self.fields["rrule_monthly_byday"].label = False
+        self.fields["rrule_monthly_bydate"].label = False
         self.helper.layout = Layout(
             Div(
                 FloatingField("title", css_class="form-control", wrapper_class="col-8"),
@@ -189,7 +213,7 @@ class BookingForm(forms.Form):
                     Div(
                         HTML(
                             '{% load i18n %}<label class="control-label">'
-                            '{% trans "ends" %}</label>'
+                            '{% trans "Ends" %}</label>'
                         ),
                         css_class="col-1",
                     ),
@@ -208,12 +232,97 @@ class BookingForm(forms.Form):
                         css_class="form-control",
                         wrapper_class="col-1",
                     ),
-                    InlineCheckboxes(
-                        "rrule_weekly_byweekday",
-                        css_class="form-control",
-                        wrapper_class="col-8",
+                    css_class="row g-2",
+                ),
+                Div(
+                    Div(
+                        Div(
+                            HTML(
+                                '{% load i18n %}<label class="control-label">'
+                                '{% trans "Repeat" %}</label>'
+                            ),
+                            css_class="col-1",
+                        ),
+                        Field(
+                            "rrule_daily_interval",
+                            css_class="form-control",
+                            wrapper_class="col-2",
+                        ),
+                        css_class="row g-2",
                     ),
                     css_class="row g-2",
+                    css_id="rrule_daily",
+                    style="display: none",  # initially hidden
+                ),
+                Div(
+                    Div(
+                        Div(
+                            HTML(
+                                '{% load i18n %}<label class="control-label">'
+                                '{% trans "Repeat" %}</label>'
+                            ),
+                            css_class="col-1",
+                        ),
+                        Field(
+                            "rrule_weekly_interval",
+                            css_class="form-control",
+                            wrapper_class="col-2",
+                        ),
+                        InlineCheckboxes(
+                            "rrule_weekly_byday",
+                            css_class="form-control",
+                            wrapper_class="col-8",
+                        ),
+                        css_class="row g-2",
+                    ),
+                    css_class="row g-2",
+                    css_id="rrule_weekly",
+                    style="display: none",  # initially hidden
+                ),
+                Div(
+                    Div(
+                        Div(
+                            HTML(
+                                '{% load i18n %}<label class="control-label">'
+                                '{% trans "Repeat" %}</label>'
+                            ),
+                            css_class="col-1",
+                        ),
+                        Field(
+                            "rrule_monthly_interval",
+                            css_class="form-control",
+                            wrapper_class="col-2",
+                        ),
+                        InlineCheckboxes(
+                            "rrule_monthly_byday",
+                            css_class="form-control",
+                            wrapper_class="col-10",
+                        ),
+                        css_class="row g-2",
+                    ),
+                    css_class="row g-2",
+                    css_id="rrule_monthly_by_day",
+                    style="display: none",  # initially hidden
+                ),
+                Div(
+                    Div(
+                        Div(
+                            HTML(
+                                '{% load i18n %}<label class="control-label">'
+                                '{% trans "Repeat" %}</label>'
+                            ),
+                            css_class="col-1",
+                        ),
+                        InlineCheckboxes(
+                            "rrule_monthly_bydate",
+                            css_class="form-control",
+                            wrapper_class="col-10",
+                        ),
+                        css_class="row g-2",
+                    ),
+                    css_class="row g-2",
+                    css_id="rrule_monthly_by_date",
+                    style="display: none",  # initially hidden
                 ),
                 css_class="row g-2",
                 css_id="rrule_additional_fields",
@@ -251,52 +360,78 @@ class BookingForm(forms.Form):
         starttime = cleaned_data.get("starttime")
         enddate = cleaned_data.get("enddate")
         endtime = cleaned_data.get("endtime")
+        rrule_repetitions = cleaned_data.get("rrule_repetitions")
+        rrule_ends = cleaned_data.get("rrule_ends")
+        rrule_ends_count = cleaned_data.get("rrule_ends_count")
+        rrule_ends_enddate = cleaned_data.get("rrule_ends_enddate")
+        rrule_weekly_byday = cleaned_data.get("rrule_weekly_byday")
+        rrule_monthly_byday = cleaned_data.get("rrule_monthly_byday")
+        rrule_monthly_bydate = cleaned_data.get("rrule_monthly_bydate")
 
-        if room and startdate and starttime and enddate and endtime:
-            starttime_as_datetime = datetime.datetime.strptime(
-                starttime,
-                "%H:%M",
-            ).astimezone(datetime.UTC)
+        def convert_time(time_str):
+            time_as_datetime = datetime.datetime.strptime(time_str, "%H:%M").astimezone(
+                datetime.UTC
+            )
+            if time_as_datetime.minute not in [0, 30]:
+                raise ValueError(
+                    _("Start time must be selected in 30-minute intervals.")
+                )
+            return time_as_datetime.time()
 
-            if starttime_as_datetime.minute not in [0, 30]:
-                msg = _("Start time must be selected in 30-minute intervals.")
-                self.add_error("starttime", msg)
+        if all([startdate, starttime, enddate, endtime]):
+            try:
+                start_datetime = timezone.make_aware(
+                    datetime.datetime.combine(startdate, convert_time(starttime))
+                )
+                end_datetime = timezone.make_aware(
+                    datetime.datetime.combine(enddate, convert_time(endtime))
+                )
+            except ValueError as e:
+                self.add_error("starttime", str(e))
 
-            start_datetime = timezone.make_aware(
-                datetime.datetime.combine(
-                    startdate,
-                    starttime_as_datetime.time(),
+        cleaned_data["timespan"] = (start_datetime, end_datetime)
+
+        booking_overlap = Booking.objects.filter(
+            status=BookingStatus.CONFIRMED,
+            room=room,
+            timespan__overlap=(start_datetime, end_datetime),
+        )
+        if booking_overlap.exists():
+            msg = _("The room is already booked during your selected timeslot.")
+            self.add_error("room", msg)
+
+        field_errors = {
+            "rrule_ends_count": (
+                "Please define the number of ocurrences (between 1 and 100)",
+                (rrule_repetitions != "NO REPETITIONS")
+                and (rrule_ends == "AFTER_TIMES")
+                and not rrule_ends_count,
+            ),
+            "rrule_ends_enddate": (
+                "Please select a date in the future",
+                (rrule_repetitions != "NO REPETITIONS")
+                and (rrule_ends == "AT_DATE")
+                and (
+                    not rrule_ends_enddate or rrule_ends_enddate < timezone.now().date()
                 ),
-            )
+            ),
+            "rrule_weekly_byday": (
+                "Please select the days of the week when the booking should recur.",
+                rrule_repetitions == "WEEKLY" and not rrule_weekly_byday,
+            ),
+            "rrule_monthly_byday": (
+                "Please select the days of the month when the booking should recur.",
+                rrule_repetitions == "MONTHLY_BY_DAY" and not rrule_monthly_byday,
+            ),
+            "rrule_monthly_bydate": (
+                "Please select the dates of the month when the booking should recur.",
+                rrule_repetitions == "MONTHLY_BY_DATE" and not rrule_monthly_bydate,
+            ),
+        }
 
-            endtime_as_datetime = datetime.datetime.strptime(
-                endtime,
-                "%H:%M",
-            ).astimezone(datetime.UTC)
-
-            if endtime_as_datetime.minute not in [0, 30]:
-                msg = _("Start time must be selected in 30-minute intervals.")
-                self.add_error("starttime", msg)
-
-            end_datetime = timezone.make_aware(
-                datetime.datetime.combine(
-                    enddate,
-                    endtime_as_datetime.time(),
-                ),
-            )
-
-            booking_overlap = Booking.objects.filter(
-                status=BookingStatus.CONFIRMED,
-                room=room,
-                timespan__overlap=(start_datetime, end_datetime),
-            )
-            if booking_overlap.exists():
-                msg = _("The room is already booked during your selected timeslot.")
-                self.add_error("room", msg)
-
-            cleaned_data["timespan"] = (start_datetime, end_datetime)
-            cleaned_data["start_datetime"] = start_datetime
-            cleaned_data["end_datetime"] = end_datetime
+        for field, (msg, condition) in field_errors.items():
+            if condition:
+                self.add_error(field, _(msg))
 
         return cleaned_data
 

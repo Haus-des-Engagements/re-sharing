@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-18 22:03+0200\n"
+"POT-Creation-Date: 2024-06-25 12:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,7 +52,7 @@ msgstr "Alle Buchungen"
 
 #: htmlcov/d_c0763d407173a4a8_booking_list_item_html.html:100
 #: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:100
-#: roomsharing/bookings/forms.py:66 roomsharing/bookings/models.py:24
+#: roomsharing/bookings/forms.py:80 roomsharing/bookings/models.py:24
 #: roomsharing/rooms/models.py:20
 #: roomsharing/templates/bookings/partials/list_bookings_item.html:16
 msgid "Title"
@@ -62,6 +62,7 @@ msgstr "Titel"
 #: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:102
 #: roomsharing/templates/bookings/partials/list_bookings_item.html:18
 #: roomsharing/templates/bookings/partials/show_booking_item.html:17
+#: roomsharing/templates/bookings/preview-booking.html:22
 msgid "Booked by:"
 msgstr "Gebucht von"
 
@@ -69,6 +70,7 @@ msgstr "Gebucht von"
 #: htmlcov/z_c0763d407173a4a8_list_bookings_item_html.html:102
 #: roomsharing/templates/bookings/partials/list_bookings_item.html:18
 #: roomsharing/templates/bookings/partials/show_booking_item.html:17
+#: roomsharing/templates/bookings/preview-booking.html:22
 msgid "for"
 msgstr "für"
 
@@ -145,9 +147,9 @@ msgstr "Anmelden"
 
 #: htmlcov/d_e12b30945affa64c_room_detail_html.html:90
 #: htmlcov/z_e12b30945affa64c_show_room_html.html:90
-#: roomsharing/bookings/models.py:43 roomsharing/organizations/models.py:112
-#: roomsharing/rooms/models.py:31 roomsharing/rooms/models.py:51
-#: roomsharing/templates/rooms/show_room.html:6
+#: roomsharing/bookings/forms.py:87 roomsharing/bookings/models.py:43
+#: roomsharing/organizations/models.py:112 roomsharing/rooms/models.py:31
+#: roomsharing/rooms/models.py:51 roomsharing/templates/rooms/show_room.html:6
 msgid "Room"
 msgstr "Raum"
 
@@ -159,7 +161,7 @@ msgstr "Aktuelle Woche"
 
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:90
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:96
-#: roomsharing/bookings/forms.py:46 roomsharing/organizations/apps.py:7
+#: roomsharing/bookings/forms.py:60 roomsharing/organizations/apps.py:7
 #: roomsharing/organizations/models.py:46
 #: roomsharing/templates/organizations/list_organizations.html:6
 #: roomsharing/templates/organizations/list_organizations.html:12
@@ -267,61 +269,124 @@ msgstr "Keine Ergebnisse gefunden."
 msgid "Bookings"
 msgstr "Buchungen"
 
-#: roomsharing/bookings/forms.py:31
+#: roomsharing/bookings/forms.py:45
 msgid "Show past bookings"
 msgstr "Zeige vergangene Buchungen"
 
-#: roomsharing/bookings/forms.py:34 roomsharing/bookings/forms.py:45
+#: roomsharing/bookings/forms.py:48 roomsharing/bookings/forms.py:59
 msgid "All"
 msgstr "Alle"
 
-#: roomsharing/bookings/forms.py:36 roomsharing/bookings/models.py:48
+#: roomsharing/bookings/forms.py:50 roomsharing/bookings/models.py:48
 #: roomsharing/organizations/models.py:87
 #: roomsharing/organizations/models.py:118
 msgid "Status"
 msgstr "Status"
 
-#: roomsharing/bookings/forms.py:52 roomsharing/bookings/forms.py:57
-#: roomsharing/bookings/forms.py:208
+#: roomsharing/bookings/forms.py:66
 msgid "Start Date"
 msgstr "Startdatum"
 
-#: roomsharing/bookings/forms.py:55 roomsharing/bookings/forms.py:60
+#: roomsharing/bookings/forms.py:69
 msgid "Start Time"
 msgstr "Startuhrzeit"
 
-#: roomsharing/bookings/forms.py:64 roomsharing/organizations/models.py:45
+#: roomsharing/bookings/forms.py:71 roomsharing/bookings/forms.py:108
+msgid "End Date"
+msgstr ""
+
+#: roomsharing/bookings/forms.py:74
+msgid "End Time"
+msgstr ""
+
+#: roomsharing/bookings/forms.py:78 roomsharing/organizations/models.py:45
 #: roomsharing/organizations/models.py:77
 #: roomsharing/organizations/models.py:104
 msgid "Organization"
 msgstr "Organisation"
 
-#: roomsharing/bookings/forms.py:113 roomsharing/bookings/forms.py:129
+#: roomsharing/bookings/forms.py:91
+msgid "No repetitions"
+msgstr "Keine Wiederholungen"
+
+#: roomsharing/bookings/forms.py:92
+msgid "Daily"
+msgstr "Täglich"
+
+#: roomsharing/bookings/forms.py:93
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: roomsharing/bookings/forms.py:94
+msgid "Monthly by weekday"
+msgstr "Monatlich nach Wochentag"
+
+#: roomsharing/bookings/forms.py:95
+msgid "Monthly by date"
+msgstr "Monatlich nach Datum"
+
+#: roomsharing/bookings/forms.py:97
+msgid "Repeat"
+msgstr "Wiederholen"
+
+#: roomsharing/bookings/forms.py:99
+msgid "after"
+msgstr "nach"
+
+#: roomsharing/bookings/forms.py:100
+msgid "at"
+msgstr "am"
+
+#: roomsharing/bookings/forms.py:105
+msgid "ends"
+msgstr "endet"
+
+#: roomsharing/bookings/forms.py:116 roomsharing/bookings/forms.py:119
+#: roomsharing/bookings/forms.py:128
+msgid "Repetition frequency"
+msgstr "Wiederholungshäufigkeit"
+
+#: roomsharing/bookings/forms.py:125 roomsharing/bookings/forms.py:134
+#: roomsharing/bookings/forms.py:140
+msgid "Repeat on these days"
+msgstr "Wiederhole an diesen Tagen"
+
+#: roomsharing/bookings/forms.py:147
+#: roomsharing/templates/bookings/preview-booking.html:9
+msgid "Preview"
+msgstr "Vorschau"
+
+#: roomsharing/bookings/forms.py:381
 msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: roomsharing/bookings/forms.py:145
+#: roomsharing/bookings/forms.py:404
 msgid "The room is already booked during your selected timeslot."
 msgstr "Der Raum ist zu der Zeit (zumindest teilweise) belegt."
 
-#: roomsharing/bookings/forms.py:198
-msgid "after x times"
-msgstr "nach x mal"
-
-#: roomsharing/bookings/forms.py:199
-msgid "at date"
-msgstr "zum Datum"
-
-#: roomsharing/bookings/forms.py:200
-msgid "Never"
+#: roomsharing/bookings/forms.py:409
+msgid "Please define the number of ocurrences (between 1 and 100)"
 msgstr ""
 
-#: roomsharing/bookings/forms.py:205
-msgid "Ends"
+#: roomsharing/bookings/forms.py:415
+msgid "Please select a date in the future"
 msgstr ""
 
-#: roomsharing/bookings/forms.py:235
-msgid "End Date"
+#: roomsharing/bookings/forms.py:419 roomsharing/bookings/forms.py:424
+#: roomsharing/bookings/forms.py:435 roomsharing/bookings/forms.py:445
+msgid "Please select when the booking should recur."
+msgstr ""
+
+#: roomsharing/bookings/forms.py:429
+msgid "Please select the days of the week when the booking should recur."
+msgstr ""
+
+#: roomsharing/bookings/forms.py:439
+msgid "Please select the days of the month when the booking should recur."
+msgstr ""
+
+#: roomsharing/bookings/forms.py:450
+msgid "Please select the dates of the month when the booking should recur."
 msgstr ""
 
 #: roomsharing/bookings/models.py:28
@@ -346,6 +411,7 @@ msgstr ""
 
 #: roomsharing/bookings/models.py:85
 #: roomsharing/templates/bookings/partials/show_bookingmessage.html:21
+#: roomsharing/templates/bookings/preview-booking.html:29
 #: roomsharing/templates/bookings/show-booking.html:69
 msgid "Message"
 msgstr "Nachricht"
@@ -363,7 +429,7 @@ msgstr "Nachricht zur Buchung"
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: roomsharing/bookings/views.py:218
+#: roomsharing/bookings/views.py:242
 msgid "Booking created successfully!"
 msgstr "Buchung erstellt"
 
@@ -515,10 +581,6 @@ msgstr "Raumbild"
 msgid "Room Images"
 msgstr "Raumbilder"
 
-#: roomsharing/templates/bookings/booking_form.html:33
-msgid "Submit"
-msgstr "Abschicken"
-
 #: roomsharing/templates/bookings/show-booking.html:11
 msgid "Timeline"
 msgstr "Verlauf"
@@ -606,6 +668,431 @@ msgstr "Telefonnummer"
 #: roomsharing/users/tests/test_views.py:72 roomsharing/users/views.py:24
 msgid "Information successfully updated"
 msgstr "Informationen erfolgreich aktualisiert"
+
+#: roomsharing/utils/dicts.py:15
+msgid "first monday"
+msgstr "erster Montag"
+
+#: roomsharing/utils/dicts.py:16
+msgid "first tuesday"
+msgstr "erster Dienstag"
+
+#: roomsharing/utils/dicts.py:17
+msgid "first wednesday"
+msgstr "erster Mittwoch"
+
+#: roomsharing/utils/dicts.py:18
+msgid "first thursday"
+msgstr "erster Donnerstag"
+
+#: roomsharing/utils/dicts.py:19
+msgid "first friday"
+msgstr "erster Freitag"
+
+#: roomsharing/utils/dicts.py:20
+msgid "first saturday"
+msgstr "erster Samstag"
+
+#: roomsharing/utils/dicts.py:21
+msgid "first sunday"
+msgstr "erster Sonntag"
+
+#: roomsharing/utils/dicts.py:22
+msgid "second monday"
+msgstr "zweiter Montag"
+
+#: roomsharing/utils/dicts.py:23
+msgid "second tuesday"
+msgstr "zweiter Dienstag"
+
+#: roomsharing/utils/dicts.py:24
+msgid "second wednesday"
+msgstr "zweiter Mittwoch"
+
+#: roomsharing/utils/dicts.py:25
+msgid "second thursday"
+msgstr "zweiter Donnerstag"
+
+#: roomsharing/utils/dicts.py:26
+msgid "second friday"
+msgstr "zweiter Freitag"
+
+#: roomsharing/utils/dicts.py:27
+msgid "second saturday"
+msgstr "zweiter Samstag"
+
+#: roomsharing/utils/dicts.py:28
+msgid "second sunday"
+msgstr "zweiter Sonntag"
+
+#: roomsharing/utils/dicts.py:29
+msgid "third monday"
+msgstr "dritter Montag"
+
+#: roomsharing/utils/dicts.py:30
+msgid "third tuesday"
+msgstr "dritter Dienstag"
+
+#: roomsharing/utils/dicts.py:31
+msgid "third wednesday"
+msgstr "dritter Mittwoch"
+
+#: roomsharing/utils/dicts.py:32
+msgid "third thursday"
+msgstr "dritter Donnerstag"
+
+#: roomsharing/utils/dicts.py:33
+msgid "third friday"
+msgstr "dritter Freitag"
+
+#: roomsharing/utils/dicts.py:34
+msgid "third saturday"
+msgstr "dritter Samstag"
+
+#: roomsharing/utils/dicts.py:35
+msgid "third sunday"
+msgstr "dritter Sonntag"
+
+#: roomsharing/utils/dicts.py:36
+msgid "fourth monday"
+msgstr "vierter Montag"
+
+#: roomsharing/utils/dicts.py:37
+msgid "fourth tuesday"
+msgstr "vierter Dienstag"
+
+#: roomsharing/utils/dicts.py:38
+msgid "fourth wednesday"
+msgstr "vierter Mittwoch"
+
+#: roomsharing/utils/dicts.py:39
+msgid "fourth thursday"
+msgstr "vierter Donnerstag"
+
+#: roomsharing/utils/dicts.py:40
+msgid "fourth friday"
+msgstr "vierter Freitag"
+
+#: roomsharing/utils/dicts.py:41
+msgid "fourth saturday"
+msgstr "vierter Samstag"
+
+#: roomsharing/utils/dicts.py:42
+msgid "fourth sunday"
+msgstr "vierter Sonntag"
+
+#: roomsharing/utils/dicts.py:43
+msgid "last monday"
+msgstr "letzter Montag"
+
+#: roomsharing/utils/dicts.py:44
+msgid "last tuesday"
+msgstr "letzter Dienstag"
+
+#: roomsharing/utils/dicts.py:45
+msgid "last wednesday"
+msgstr "letzter Mittwoch"
+
+#: roomsharing/utils/dicts.py:46
+msgid "last thursday"
+msgstr "letzter Donnerstag"
+
+#: roomsharing/utils/dicts.py:47
+msgid "last friday"
+msgstr "letzter Freitag"
+
+#: roomsharing/utils/dicts.py:48
+msgid "last saturday"
+msgstr "letzter Samstag"
+
+#: roomsharing/utils/dicts.py:49
+msgid "last sunday"
+msgstr "letzter Sonntag"
+
+#: roomsharing/utils/dicts.py:52
+#, python-format
+msgid "%s. day"
+msgstr "%s. Tag"
+
+#: roomsharing/utils/dicts.py:55
+msgid "every month"
+msgstr "jeden Monat"
+
+#: roomsharing/utils/dicts.py:56
+msgid "every 2nd month"
+msgstr "jeden 2. Monat"
+
+#: roomsharing/utils/dicts.py:57
+msgid "every 3rd month"
+msgstr "jeden 3. Monat"
+
+#: roomsharing/utils/dicts.py:58
+msgid "every 4th month"
+msgstr "jeden 4. Monat"
+
+#: roomsharing/utils/dicts.py:59
+msgid "every 5th month"
+msgstr "jeden 5. Monat"
+
+#: roomsharing/utils/dicts.py:60
+msgid "every 6th month"
+msgstr "jeden 6. Monat"
+
+#: roomsharing/utils/dicts.py:61
+msgid "every 7th month"
+msgstr "jeden 7. Monat"
+
+#: roomsharing/utils/dicts.py:62
+msgid "every 8th month"
+msgstr "jeden 8. Monat"
+
+#: roomsharing/utils/dicts.py:63
+msgid "every 9th month"
+msgstr "jeden 9. Monat"
+
+#: roomsharing/utils/dicts.py:64
+msgid "every 10th month"
+msgstr "jeden 10. Monat"
+
+#: roomsharing/utils/dicts.py:65
+msgid "every 11th month"
+msgstr "jeden 11. Monat"
+
+#: roomsharing/utils/dicts.py:69
+msgid "every week"
+msgstr "jede Woche"
+
+#: roomsharing/utils/dicts.py:70
+msgid "every 2nd week"
+msgstr "jede 2. Woche"
+
+#: roomsharing/utils/dicts.py:71
+msgid "every 3rd week"
+msgstr "jede 3. Woche"
+
+#: roomsharing/utils/dicts.py:72
+msgid "every 4th week"
+msgstr "jede 4. Woche"
+
+#: roomsharing/utils/dicts.py:73
+msgid "every 5th week"
+msgstr "jede 5. Woche"
+
+#: roomsharing/utils/dicts.py:74
+msgid "every 6th week"
+msgstr "jede 6. Woche"
+
+#: roomsharing/utils/dicts.py:75
+msgid "every 7th week"
+msgstr "jede 7. Woche"
+
+#: roomsharing/utils/dicts.py:76
+msgid "every 8th week"
+msgstr "jede 8. Woche"
+
+#: roomsharing/utils/dicts.py:77
+msgid "every 9th week"
+msgstr "jede 9. Woche"
+
+#: roomsharing/utils/dicts.py:78
+msgid "every 10th week"
+msgstr "jede 10. Woche"
+
+#: roomsharing/utils/dicts.py:79
+msgid "every 11th week"
+msgstr "jede 11. Woche"
+
+#: roomsharing/utils/dicts.py:80
+msgid "every 12th week"
+msgstr "jede 12. Woche"
+
+#: roomsharing/utils/dicts.py:81
+msgid "every 13th week"
+msgstr "jede 13. Woche"
+
+#: roomsharing/utils/dicts.py:82
+msgid "every 14th week"
+msgstr "jede 14. Woche"
+
+#: roomsharing/utils/dicts.py:83
+msgid "every 15th week"
+msgstr "jede 15. Woche"
+
+#: roomsharing/utils/dicts.py:84
+msgid "every 16th week"
+msgstr "jede 16. Woche"
+
+#: roomsharing/utils/dicts.py:85
+msgid "every 17th week"
+msgstr "jede 17. Woche"
+
+#: roomsharing/utils/dicts.py:86
+msgid "every 18th week"
+msgstr "jede 18. Woche"
+
+#: roomsharing/utils/dicts.py:87
+msgid "every 19th week"
+msgstr "jede 19. Woche"
+
+#: roomsharing/utils/dicts.py:88
+msgid "every 20th week"
+msgstr "jede 20. Woche"
+
+#: roomsharing/utils/dicts.py:89
+msgid "every 21st week"
+msgstr "jede 21. Woche"
+
+#: roomsharing/utils/dicts.py:90
+msgid "every 22nd week"
+msgstr "jede 22. Woche"
+
+#: roomsharing/utils/dicts.py:91
+msgid "every 23rd week"
+msgstr "jede 23. Woche"
+
+#: roomsharing/utils/dicts.py:92
+msgid "every 24th week"
+msgstr "jede 24. Woche"
+
+#: roomsharing/utils/dicts.py:93
+msgid "every 25th week"
+msgstr "jede 25. Woche"
+
+#: roomsharing/utils/dicts.py:94
+msgid "every 26th week"
+msgstr "jede 26. Woche"
+
+#: roomsharing/utils/dicts.py:95
+msgid "every 27th week"
+msgstr "jede 27. Woche"
+
+#: roomsharing/utils/dicts.py:96
+msgid "every 28th week"
+msgstr "jede 28. Woche"
+
+#: roomsharing/utils/dicts.py:100
+msgid "every day"
+msgstr "jeden Tag"
+
+#: roomsharing/utils/dicts.py:101
+msgid "every 2nd day"
+msgstr "jeden 2. Tag"
+
+#: roomsharing/utils/dicts.py:102
+msgid "every 3rd day"
+msgstr "jeden 3. Tag"
+
+#: roomsharing/utils/dicts.py:103
+msgid "every 4th day"
+msgstr "jeden 4. Tag"
+
+#: roomsharing/utils/dicts.py:104
+msgid "every 5th day"
+msgstr "jeden 5. Tag"
+
+#: roomsharing/utils/dicts.py:105
+msgid "every 6th day"
+msgstr "jeden 6. Tag"
+
+#: roomsharing/utils/dicts.py:106
+msgid "every 7th day"
+msgstr "jeden 7. Tag"
+
+#: roomsharing/utils/dicts.py:107
+msgid "every 8th day"
+msgstr "jeden 8. Tag"
+
+#: roomsharing/utils/dicts.py:108
+msgid "every 9th day"
+msgstr "jeden 9. Tag"
+
+#: roomsharing/utils/dicts.py:109
+msgid "every 10th day"
+msgstr "jeden 10. Tag"
+
+#: roomsharing/utils/dicts.py:110
+msgid "every 11th day"
+msgstr "jeden 11. Tag"
+
+#: roomsharing/utils/dicts.py:111
+msgid "every 12th day"
+msgstr "jeden 12. Tag"
+
+#: roomsharing/utils/dicts.py:112
+msgid "every 13th day"
+msgstr "jeden 13. Tag"
+
+#: roomsharing/utils/dicts.py:113
+msgid "every 14th day"
+msgstr "jeden 14. Tag"
+
+#: roomsharing/utils/dicts.py:114
+msgid "every 15th day"
+msgstr "jeden 15. Tag"
+
+#: roomsharing/utils/dicts.py:115
+msgid "every 16th day"
+msgstr "jeden 16. Tag"
+
+#: roomsharing/utils/dicts.py:116
+msgid "every 17th day"
+msgstr "jeden 17. Tag"
+
+#: roomsharing/utils/dicts.py:117
+msgid "every 18th day"
+msgstr "jeden 18. Tag"
+
+#: roomsharing/utils/dicts.py:118
+msgid "every 19th day"
+msgstr "jeden 19. Tag"
+
+#: roomsharing/utils/dicts.py:119
+msgid "every 20th day"
+msgstr "jeden 20. Tag"
+
+#: roomsharing/utils/dicts.py:120
+msgid "every 21st day"
+msgstr "jeden 21. Tag"
+
+#: roomsharing/utils/dicts.py:121
+msgid "every 22nd day"
+msgstr "jeden 22. Tag"
+
+#: roomsharing/utils/dicts.py:122
+msgid "every 23rd day"
+msgstr "jeden 23. Tag"
+
+#: roomsharing/utils/dicts.py:123
+msgid "every 24th day"
+msgstr "jeden 24. Tag"
+
+#: roomsharing/utils/dicts.py:124
+msgid "every 25th day"
+msgstr "jeden 25. Tag"
+
+#: roomsharing/utils/dicts.py:125
+msgid "every 26th day"
+msgstr "jeden 26. Tag"
+
+#: roomsharing/utils/dicts.py:126
+msgid "every 27th day"
+msgstr "jeden 27. Tag"
+
+#: roomsharing/utils/dicts.py:127
+msgid "every 28th day"
+msgstr "jeden 28. Tag"
+
+#: roomsharing/utils/dicts.py:128
+msgid "every 29th day"
+msgstr "jeden 29. Tag"
+
+#: roomsharing/utils/dicts.py:129
+msgid "every 30th day"
+msgstr "jeden 30. Tag"
+
+#: roomsharing/utils/dicts.py:130
+msgid "every 31st day"
+msgstr "jeden 31. Tag"
 
 #: roomsharing/utils/models.py:10
 msgid "Created"

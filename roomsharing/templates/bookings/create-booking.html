@@ -15,30 +15,55 @@
       let repetitionsField = document.querySelector('select[name="rrule_repetitions"]');
       let endsField = document.querySelector('select[name="rrule_ends"]');
       let additionalFieldsDiv = document.querySelector('#rrule_additional_fields');
-      let endsCountField = document.querySelector('input[name="rrule_ends_count"]');
-      let endsEnddateField = document.querySelector('input[name="rrule_ends_enddate"]');
+      let endsCountFieldDiv = document.querySelector('#div_id_rrule_ends_count');
+      let endsEnddateFieldDiv = document.querySelector('#div_id_rrule_ends_enddate');
+      let rruleDailyDiv = document.querySelector('#rrule_daily');
+      let rruleWeeklyDiv = document.querySelector('#rrule_weekly');
+      let rruleMonthlyByDayDiv = document.querySelector('#rrule_monthly_by_day');
+      let rruleMonthlyByDateDiv = document.querySelector('#rrule_monthly_by_date');
 
-      // initially hide specific end fields
-      endsCountField.parentElement.style.display = "block";
-      endsEnddateField.parentElement.style.display = "none";
 
-      repetitionsField.addEventListener('change', (event) => {
-        if (event.target.value === "NO_REPETITIONS") {
-          additionalFieldsDiv.style.display = "none";
-        } else {
+      function handleRepetitionsChange() {
+        // initially hide specific end fields
+        endsEnddateFieldDiv.style.display = "none";
+        rruleDailyDiv.style.display = "none";
+        rruleWeeklyDiv.style.display = "none";
+        rruleMonthlyByDayDiv.style.display = "none";
+        rruleMonthlyByDateDiv.style.display = "none";
+        additionalFieldsDiv.style.display = "none";
+
+        if (repetitionsField.value !== "NO_REPETITIONS") {
           additionalFieldsDiv.style.display = "block";
-        }
-      });
 
-      endsField.addEventListener('change', (event) => {
-        if (event.target.value === 'after') {
-          endsCountField.parentElement.style.display = "block";
-          endsEnddateField.parentElement.style.display = "none";
-        } else {
-          endsCountField.parentElement.style.display = "none";
-          endsEnddateField.parentElement.style.display = "block";
+          if (repetitionsField.value === "DAILY") {
+            rruleDailyDiv.style.display = "block";
+          } else if (repetitionsField.value === "WEEKLY") {
+            rruleWeeklyDiv.style.display = "block";
+          } else if (repetitionsField.value === "MONTHLY_BY_DAY") {
+            rruleMonthlyByDayDiv.style.display = "block";
+          } else if (repetitionsField.value === "MONTHLY_BY_DATE") {
+            rruleMonthlyByDateDiv.style.display = "block";
+          }
         }
-      });
+      }
+
+      function handleEndsChange() {
+        if (endsField.value === 'AFTER_TIMES') {
+          endsCountFieldDiv.style.display = "block";
+          endsEnddateFieldDiv.style.display = "none";
+        } else {
+          endsCountFieldDiv.style.display = "none";
+          endsEnddateFieldDiv.style.display = "block";
+        }
+      }
+
+      //Listen to changes
+      repetitionsField.addEventListener('change', handleRepetitionsChange);
+      endsField.addEventListener('change', handleEndsChange);
+
+      //Call once at start
+      handleRepetitionsChange();
+      handleEndsChange();
     });
   </script>
 {% endblock content %}
