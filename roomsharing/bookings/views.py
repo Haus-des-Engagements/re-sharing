@@ -14,6 +14,7 @@ from dateutil.rrule import TU
 from dateutil.rrule import WE
 from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
+from dateutil.rrule import rrulestr
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -34,7 +35,6 @@ from roomsharing.utils.models import BookingStatus
 from .forms import BookingForm
 from .forms import BookingListForm
 from .forms import MessageForm
-from .forms import RecurrenceForm
 from .models import Booking
 from .models import BookingMessage
 
@@ -199,6 +199,79 @@ def cancel_booking(request, slug, from_page):
     return render(request, template_name, {"booking": booking})
 
 
+def create_rrule_string(cleaned_data):
+    rrule_repetitions = cleaned_data["rrule_repetitions"]
+    rrule_ends = cleaned_data["rrule_ends"]
+    rrule_ends_count = cleaned_data.get("rrule_ends_count")
+    rrule_ends_enddate = cleaned_data.get("rrule_ends_enddate")
+    rrule_daily_interval = cleaned_data["rrule_daily_interval"]
+    rrule_weekly_interval = cleaned_data["rrule_weekly_interval"]
+    rrule_weekly_byday = cleaned_data["rrule_weekly_byday"]
+    rrule_monthly_interval = cleaned_data["rrule_monthly_interval"]
+    rrule_monthly_bydate = cleaned_data["rrule_monthly_bydate"]
+    rrule_monthly_byday = cleaned_data["rrule_monthly_byday"]
+    startdate = cleaned_data["startdate"]
+
+    if rrule_ends == "AFTER_TIMES":
+        count = rrule_ends_count
+        rrule_enddate = None
+    else:
+        count = None
+        rrule_enddate = rrule_ends_enddate
+
+    byweekday, bymonthday = None, None
+    weekdays_dict = {
+        "MO": MO,
+        "TU": TU,
+        "WE": WE,
+        "TH": TH,
+        "FR": FR,
+        "SA": SA,
+        "SU": SU,
+    }
+
+    if rrule_repetitions == "DAILY":
+        interval = rrule_daily_interval
+
+    if rrule_repetitions == "WEEKLY":
+        interval = rrule_weekly_interval
+        byweekday = rrule_weekly_byday
+        byweekday = [weekdays_dict.get(day) for day in byweekday]
+
+    if rrule_repetitions == "MONTHLY_BY_DAY":
+        interval = rrule_monthly_interval
+        byweekday_str = rrule_monthly_byday
+        byweekday = []
+        for day in byweekday_str:
+            weekday, week_number = day.split("(")
+            week_number = int(week_number.strip(")"))
+            byweekday.append(weekdays_dict[weekday](week_number))
+
+    if rrule_repetitions == "MONTHLY_BY_DATE":
+        interval = rrule_monthly_interval
+        bymonthday_str = rrule_monthly_bydate
+        bymonthday = [int(x) for x in bymonthday_str]
+
+    frequency_dict = {
+        "DAILY": DAILY,
+        "WEEKLY": WEEKLY,
+        "MONTHLY_BY_DAY": MONTHLY,
+        "MONTHLY_BY_DATE": MONTHLY,
+    }
+
+    recurrence_pattern = rrule(
+        frequency_dict[rrule_repetitions],
+        interval=interval,
+        byweekday=byweekday,
+        bymonthday=bymonthday,
+        dtstart=startdate,
+        bysetpos=None,
+        until=rrule_enddate,
+        count=count,
+    )
+    return str(recurrence_pattern)
+
+
 @login_required
 def preview_booking_view(request):
     booking_data = request.session["booking_data"]
@@ -222,11 +295,46 @@ def preview_booking_view(request):
     else:
         booking.status = BookingStatus.PENDING
 
+    rrule_string = booking_data["rrule_string"]
+    if rrule_string:
+        occurrences = list(rrulestr(rrule_string))
+
+        duration = 90
+        room_availability = []
+
+        for occurrence in occurrences:
+            start_datetime = occurrence
+            end_datetime = start_datetime + timedelta(minutes=duration)
+            timespan = (start_datetime, end_datetime)
+            booking_overlap = Booking.objects.filter(
+                status=BookingStatus.CONFIRMED,
+                room=booking.room,
+                timespan__overlap=timespan,
+            ).exists()
+            room_booked = booking_overlap
+            room_availability.append(
+                {
+                    "room_booked": room_booked,
+                    "occurrence": occurrence,
+                    "timespan": timespan,
+                    "room": booking.room,
+                }
+            )
+
+    else:
+        occurrences = []
+
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
-            {"booking": booking, "message": message},
+            {
+                "booking": booking,
+                "message": message,
+                "rrule_string": rrule_string,
+                "occurrences": occurrences,
+                "room_availability": room_availability,
+            },
         )
 
     if request.method == "POST":
@@ -289,118 +397,11 @@ def create_booking_view(request):
                 "organization": form.cleaned_data["organization"].slug,
                 "message": form.cleaned_data["message"],
             }
+
+            if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
+                rrule_string = create_rrule_string(form.cleaned_data)
+                request.session["booking_data"]["rrule_string"] = rrule_string
+
             return redirect("bookings:preview-booking")
 
     return render(request, "bookings/create-booking.html", {"form": form})
-
-
-@login_required
-def book_occurrences_view(request):
-    if request.method == "POST":
-        pass
-
-
-@login_required
-def recurrence_view(request):
-    if request.method == "POST":
-        form = RecurrenceForm(request.POST)
-        if form.is_valid():
-            start_date = form.cleaned_data.get("start_date")
-            frequency = form.cleaned_data.get("frequency")
-            interval = form.cleaned_data.get("interval") or 1
-            bysetpos = (
-                [int(x) for x in form.cleaned_data.get("bysetpos")]
-                if form.cleaned_data.get("bysetpos")
-                else None
-            )
-            byweekday = form.cleaned_data.get("byweekday") or None
-            bymonthday = form.cleaned_data.get("bymonthday")
-            bymonthday = int(bymonthday) if bymonthday else None
-            recurrence_choice = form.cleaned_data.get("recurrence_choice")
-
-            count = (
-                form.cleaned_data.get("count") if recurrence_choice == "count" else None
-            )
-            end_date = (
-                form.cleaned_data.get("end_date")
-                if recurrence_choice == "end_date"
-                else None
-            )
-
-            freq_dict = {
-                "MONTHLY": MONTHLY,
-                "WEEKLY": WEEKLY,
-                "DAILY": DAILY,
-            }
-
-            weekdays_dict = {
-                "MO": MO,
-                "TU": TU,
-                "WE": WE,
-                "TH": TH,
-                "FR": FR,
-                "SA": SA,
-                "SU": SU,
-            }
-
-            if byweekday:
-                byweekday = [weekdays_dict.get(day) for day in byweekday]
-
-            if freq_dict[frequency] == DAILY:
-                bysetpos = None
-                bymonthday = None
-                byweekday = None
-            elif freq_dict[frequency] == WEEKLY:
-                bysetpos = None
-                bymonthday = None
-
-            recurrence_pattern = rrule(
-                freq_dict[frequency],
-                interval=interval,
-                byweekday=byweekday,
-                bymonthday=bymonthday,
-                dtstart=start_date,
-                bysetpos=bysetpos,
-                until=end_date,
-                count=count,
-            )
-            room = form.cleaned_data.get("room")
-            duration = form.cleaned_data.get("duration")
-            room = Room.objects.get(name=room)
-
-            occurrences = list(recurrence_pattern)
-            room_availability = []
-
-            for occurrence in occurrences:
-                start_datetime = occurrence
-                end_datetime = start_datetime + timedelta(minutes=duration)
-                timespan = (start_datetime, end_datetime)
-                booking_overlap = Booking.objects.filter(
-                    status=BookingStatus.CONFIRMED,
-                    room=room,
-                    timespan__overlap=timespan,
-                ).exists()
-                room_booked = booking_overlap
-                room_availability.append(
-                    {
-                        "room_booked": room_booked,
-                        "occurrence": occurrence,
-                        "timespan": timespan,
-                        "room": room.slug,
-                    }
-                )
-
-            rrule_string = str(recurrence_pattern)
-            return render(
-                request,
-                "bookings/recurrence.html",
-                {
-                    "occurrences": occurrences,
-                    "rrule_string": rrule_string,
-                    "room_availability": room_availability,
-                },
-            )
-    if request.method == "GET":
-        form = RecurrenceForm()
-
-    return render(request, "bookings/recurrence.html", {"form": form})

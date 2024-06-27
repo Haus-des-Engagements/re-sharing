@@ -173,25 +173,25 @@ class BookingForm(forms.Form):
             Div(
                 Div(
                     HTML(
-                        '{% load i18n %}<label class="control-label">{% trans "From" %}'
+                        '{% load i18n %}<label class="control-label">{% trans "von" %}'
                         "</label>"
                     ),
                     css_class="col-1",
                 ),
                 Field("startdate", css_class="form-control", wrapper_class="col-2"),
-                Field("starttime", css_class="form-control", wrapper_class="col-1"),
+                Field("starttime", css_class="form-control", wrapper_class="col-2"),
                 css_class="row g-2",
             ),
             Div(
                 Div(
                     HTML(
                         '{% load i18n %}<label class="control-label">'
-                        '{% trans "Until" %}</label>'
+                        '{% trans "bis" %}</label>'
                     ),
                     css_class="col-1",
                 ),
                 Field("enddate", css_class="form-control", wrapper_class="col-2"),
-                Field("endtime", css_class="form-control", wrapper_class="col-1"),
+                Field("endtime", css_class="form-control", wrapper_class="col-2"),
                 css_class="row g-2",
             ),
             Div(
@@ -213,7 +213,7 @@ class BookingForm(forms.Form):
                     Div(
                         HTML(
                             '{% load i18n %}<label class="control-label">'
-                            '{% trans "Ends" %}</label>'
+                            '{% trans "Endet" %}</label>'
                         ),
                         css_class="col-1",
                     ),
@@ -297,31 +297,18 @@ class BookingForm(forms.Form):
                             "rrule_monthly_byday",
                             css_class="form-control",
                             wrapper_class="col-10",
-                        ),
-                        css_class="row g-2",
-                    ),
-                    css_class="row g-2",
-                    css_id="rrule_monthly_by_day",
-                    style="display: none",  # initially hidden
-                ),
-                Div(
-                    Div(
-                        Div(
-                            HTML(
-                                '{% load i18n %}<label class="control-label">'
-                                '{% trans "Repeat" %}</label>'
-                            ),
-                            css_class="col-1",
+                            css_id="rrule_monthly_bydate",
                         ),
                         InlineCheckboxes(
                             "rrule_monthly_bydate",
                             css_class="form-control",
+                            css_id="rrule_monthly_bydate",
                             wrapper_class="col-10",
                         ),
                         css_class="row g-2",
                     ),
                     css_class="row g-2",
-                    css_id="rrule_monthly_by_date",
+                    css_id="rrule_monthly",
                     style="display: none",  # initially hidden
                 ),
                 css_class="row g-2",
@@ -341,19 +328,16 @@ class BookingForm(forms.Form):
             self.fields["organization"].initial = organizations.first()
 
         self.fields["starttime"].choices = [
-            (time.strftime("%H:%M"), time.strftime("%H:%M"))
-            for time in (
-                datetime.datetime.combine(
-                    datetime.datetime.now(tz=datetime.UTC).date(),
-                    datetime.time(hour, minute),
-                )
-                for hour in range(6, 24)
-                for minute in (0, 30)
+            (
+                datetime.time(hour, minute).strftime("%H:%M"),
+                datetime.time(hour, minute).strftime("%H:%M"),
             )
+            for hour in range(6, 24)
+            for minute in range(0, 60, 30)
         ]
         self.fields["endtime"].choices = self.fields["starttime"].choices
 
-    def clean(self):
+    def clean(self):  # noqa: C901
         cleaned_data = super().clean()
         room = cleaned_data.get("room")
         startdate = cleaned_data.get("startdate")
@@ -369,9 +353,7 @@ class BookingForm(forms.Form):
         rrule_monthly_bydate = cleaned_data.get("rrule_monthly_bydate")
 
         def convert_time(time_str):
-            time_as_datetime = datetime.datetime.strptime(time_str, "%H:%M").astimezone(
-                datetime.UTC
-            )
+            time_as_datetime = datetime.datetime.strptime(time_str, "%H:%M")  # noqa: DTZ007
             if time_as_datetime.minute not in [0, 30]:
                 raise ValueError(
                     _("Start time must be selected in 30-minute intervals.")
@@ -380,14 +362,27 @@ class BookingForm(forms.Form):
 
         if all([startdate, starttime, enddate, endtime]):
             try:
+                starttime = convert_time(starttime)
+                cleaned_data["starttime"] = starttime
                 start_datetime = timezone.make_aware(
-                    datetime.datetime.combine(startdate, convert_time(starttime))
+                    datetime.datetime.combine(startdate, starttime)
                 )
+                endtime = convert_time(endtime)
+                cleaned_data["endtime"] = endtime
                 end_datetime = timezone.make_aware(
-                    datetime.datetime.combine(enddate, convert_time(endtime))
+                    datetime.datetime.combine(enddate, endtime)
                 )
             except ValueError as e:
                 self.add_error("starttime", str(e))
+
+        if end_datetime <= start_datetime:
+            msg = _("The end must be after the start.")
+            for field in ["endtime", "starttime", "enddate", "startdate"]:
+                self.add_error(field, msg)
+
+        if start_datetime < timezone.now():
+            msg = _("The start must be in the future.")
+            self.add_error("starttime", msg)
 
         cleaned_data["timespan"] = (start_datetime, end_datetime)
 
@@ -433,87 +428,4 @@ class BookingForm(forms.Form):
             if condition:
                 self.add_error(field, _(msg))
 
-        return cleaned_data
-
-
-FREQUENCIES = [
-    ("MONTHLY_BY_DAY", _("Monthly by day")),
-    ("MONTHLY_BY_DATE", _("Monthly by date")),
-    ("WEEKLY", _("Weekly")),
-    ("DAILY", _("Daily")),
-]
-
-WEEKDAYS = [
-    ("MO", "Monday"),
-    ("TU", "Tuesday"),
-    ("WE", "Wednesday"),
-    ("TH", "Thursday"),
-    ("FR", "Friday"),
-    ("SA", "Saturday"),
-    ("SU", "Sunday"),
-]
-
-
-class RecurrenceForm(forms.Form):
-    RECURRENCE_CHOICES = [
-        ("count", _("after x times")),
-        ("end_date", _("at date")),
-    ]
-    recurrence_choice = forms.ChoiceField(
-        choices=RECURRENCE_CHOICES,
-        initial="none",
-        label=_("Ends"),
-    )
-    start_date = forms.DateField(
-        label=_("Start Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
-    starttime = forms.TimeField(label="Start time")
-    frequency = forms.ChoiceField(choices=FREQUENCIES, label="Wiederkehrender ")
-    interval = forms.IntegerField(required=False, label="Wiederholen alle", initial=1)
-
-    BYSETPOS_CHOICES = [
-        (1, "first"),
-        (2, "second"),
-        (3, "third"),
-        (4, "fourth"),
-        (5, "fifth"),
-        (-1, "last"),
-    ]
-
-    bysetpos = forms.MultipleChoiceField(
-        choices=BYSETPOS_CHOICES,
-        required=False,
-        label="By Set Pos",
-    )
-    byweekday = forms.MultipleChoiceField(
-        choices=WEEKDAYS,
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-    )
-    BYMONTHDAY_CHOICES = [(None, "----")] + [(i, i) for i in range(1, 31)]
-    bymonthday = forms.ChoiceField(choices=BYMONTHDAY_CHOICES, required=False)
-    end_date = forms.DateField(
-        label=_("End Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-        required=False,
-    )
-    count = forms.IntegerField(required=False)
-    room = forms.ModelChoiceField(
-        queryset=Room.objects.all(),
-        label=_("Room"),
-    )
-    duration = forms.IntegerField(required=True, label=_("Duration"), initial=90)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        start_date = cleaned_data.get("start_date")
-        starttime = cleaned_data.get("starttime")
-
-        starttime = timezone.make_aware(
-            datetime.datetime.combine(
-                start_date,
-                starttime,
-            ),
-        )
         return cleaned_data

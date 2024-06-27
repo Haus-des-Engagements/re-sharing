@@ -5,14 +5,12 @@ from .views import create_booking_view
 from .views import filter_bookings_view
 from .views import list_bookings_view
 from .views import preview_booking_view
-from .views import recurrence_view
 from .views import show_booking_view
 from .views import write_bookingmessage
 
 app_name = "bookings"
 urlpatterns = [
     path("", list_bookings_view, name="list-bookings"),
-    path("recurrence/", recurrence_view, name="recurrence"),
     path(
         "filter-bookings/",
         filter_bookings_view,
