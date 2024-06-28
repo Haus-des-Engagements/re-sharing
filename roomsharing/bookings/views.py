@@ -1,5 +1,4 @@
 from datetime import datetime
-from datetime import timedelta
 from http import HTTPStatus
 
 from dateutil.parser import isoparse
@@ -272,84 +271,102 @@ def create_rrule_string(cleaned_data):
     return str(recurrence_pattern)
 
 
+def get_default_booking_status(organization, room):
+    default_booking_status = DefaultBookingStatus.objects.filter(
+        organization=organization, room=room
+    )
+    if default_booking_status.exists():
+        return default_booking_status.first().status
+
+    return BookingStatus.PENDING
+
+
 @login_required
-def preview_booking_view(request):
+def preview_booking_view(request):  # noqa: C901
     booking_data = request.session["booking_data"]
     if not booking_data:
         return redirect("bookings:create-booking")
     message = booking_data["message"]
-    booking = Booking()
-    booking.user = request.user
-    booking.title = booking_data["title"]
-    booking.room = get_object_or_404(Room, slug=booking_data["room"])
     timespan = booking_data["timespan"]
-    booking.timespan = (isoparse(timespan[0]), isoparse(timespan[1]))
-    booking.organization = get_object_or_404(
-        Organization, slug=booking_data["organization"]
-    )
-    default_booking_status = DefaultBookingStatus.objects.filter(
-        organization=booking.organization, room=booking.room
-    )
-    if default_booking_status.exists():
-        booking.status = default_booking_status.first().status
-    else:
-        booking.status = BookingStatus.PENDING
+    timespan = (isoparse(timespan[0]), isoparse(timespan[1]))
+    user = request.user
+    title = booking_data["title"]
+    room = get_object_or_404(Room, slug=booking_data["room"])
+    organization = get_object_or_404(Organization, slug=booking_data["organization"])
+    status = get_default_booking_status(organization, room)
 
-    rrule_string = booking_data["rrule_string"]
-    if rrule_string:
-        occurrences = list(rrulestr(rrule_string))
+    bookings = []
 
-        duration = 90
-        room_availability = []
-
+    if booking_data.get("rrule_string"):
+        occurrences = list(rrulestr(booking_data["rrule_string"]))
+        starttime = timespan[0].time()
+        endtime = timespan[1].time()
         for occurrence in occurrences:
-            start_datetime = occurrence
-            end_datetime = start_datetime + timedelta(minutes=duration)
-            timespan = (start_datetime, end_datetime)
-            booking_overlap = Booking.objects.filter(
-                status=BookingStatus.CONFIRMED,
-                room=booking.room,
-                timespan__overlap=timespan,
-            ).exists()
-            room_booked = booking_overlap
-            room_availability.append(
-                {
-                    "room_booked": room_booked,
-                    "occurrence": occurrence,
-                    "timespan": timespan,
-                    "room": booking.room,
-                }
+            start_datetime = timezone.make_aware(
+                datetime.combine(occurrence, starttime)
             )
+            end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
+
+            booking = Booking(
+                user=user,
+                title=title,
+                room=room,
+                timespan=(start_datetime, end_datetime),
+                organization=organization,
+                status=status,
+            )
+            booking_overlap = (
+                Booking.objects.all()
+                .filter(
+                    status=BookingStatus.CONFIRMED,
+                    room=booking.room,
+                    timespan__overlap=(start_datetime, end_datetime),
+                )
+                .exists()
+            )
+            booking.room_booked = booking_overlap
+            bookings.append(booking)
 
     else:
-        occurrences = []
+        booking = Booking(
+            user=user,
+            title=title,
+            room=room,
+            timespan=timespan,
+            organization=organization,
+            status=status,
+        )
+        bookings.append(booking)
 
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
             {
-                "booking": booking,
                 "message": message,
-                "rrule_string": rrule_string,
-                "occurrences": occurrences,
-                "room_availability": room_availability,
+                "bookings": bookings,
             },
         )
 
     if request.method == "POST":
-        booking.save()
-        if message:
-            booking_message = BookingMessage(
-                booking=booking,
-                text=message,
-                user=request.user,
-            )
-            booking_message.save()
+        if is_member_of_booking_organization(request.user, booking.organization):
+            for booking in bookings:
+                if booking.room_booked is False:
+                    booking.save()
+                    if message:
+                        booking_message = BookingMessage(
+                            booking=booking,
+                            text=message,
+                            user=request.user,
+                        )
+                        booking_message.save()
             request.session.pop("booking_data", None)
 
-        messages.success(request, _("Booking created successfully!"))
-        return redirect("bookings:show-booking", booking.slug)
+            messages.success(request, _("Bookings created successfully!"))
+            if len(bookings) == 1:
+                return redirect("bookings:show-booking", booking.slug)
+
+            return redirect("bookings:list-bookings")
 
     return redirect("bookings:create-booking")
 
