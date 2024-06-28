@@ -24,8 +24,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import DefaultBookingStatus
-from roomsharing.organizations.models import Membership
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
@@ -40,9 +40,9 @@ from .models import BookingMessage
 
 def is_member_of_booking_organization(user, booking):
     return (
-        Membership.objects.filter(organization=booking.organization)
+        BookingPermission.objects.filter(organization=booking.organization)
         .filter(user=booking.user)
-        .filter(status=Membership.Status.CONFIRMED)
+        .filter(status=BookingPermission.Status.CONFIRMED)
         .exists()
     )
 
@@ -50,8 +50,12 @@ def is_member_of_booking_organization(user, booking):
 @login_required
 def list_bookings_view(request):
     organizations = (
-        Organization.objects.filter(organization_of_membership__user=request.user)
-        .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+        Organization.objects.filter(
+            organization_of_bookingpermission__user=request.user
+        )
+        .filter(
+            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
+        )
         .distinct()
     )
     form = BookingListForm(request.POST or None, organizations=organizations)
@@ -69,8 +73,12 @@ def list_bookings_view(request):
 @login_required
 def filter_bookings_view(request):
     organizations = (
-        Organization.objects.filter(organization_of_membership__user=request.user)
-        .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+        Organization.objects.filter(
+            organization_of_bookingpermission__user=request.user
+        )
+        .filter(
+            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
+        )
         .distinct()
     )
     form = BookingListForm(request.POST or None, organizations=organizations)

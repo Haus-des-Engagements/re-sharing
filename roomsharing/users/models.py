@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
-from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
 from roomsharing.users.managers import UserManager
 from roomsharing.utils.models import TimeStampedModel
@@ -32,7 +32,7 @@ class User(AbstractUser, TimeStampedModel):
     username = None  # type: ignore[assignment]
     organizations = ManyToManyField(
         Organization,
-        through=Membership,
+        through=BookingPermission,
         verbose_name=_("Organizations"),
         related_name="users_of_organization",
         related_query_name="user_of_organization",

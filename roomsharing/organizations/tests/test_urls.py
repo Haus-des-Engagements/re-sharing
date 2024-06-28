@@ -21,49 +21,51 @@ def test_filter_organizations():
     )
 
 
-def test_request_membership(organization: Organization):
+def test_request_bookingpermission(organization: Organization):
     assert (
         reverse(
-            "organizations:request-membership",
+            "organizations:request-bookingpermission",
             kwargs={"organization": organization.slug},
         )
-        == f"/organizations/{organization.slug}/request-membership/"
-    )
-    assert (
-        resolve(f"/organizations/{organization.slug}/request-membership/").view_name
-        == "organizations:request-membership"
-    )
-
-
-def test_confirm_membership(organization: Organization, user: User):
-    assert (
-        reverse(
-            "organizations:confirm-membership",
-            kwargs={"organization": organization.slug, "user": user.slug},
-        )
-        == f"/organizations/{organization.slug}/confirm-membership/{user.slug}/"
+        == f"/organizations/{organization.slug}/request-bookingpermission/"
     )
     assert (
         resolve(
-            f"/organizations/{organization.slug}/confirm-membership/{user.slug}/"
+            f"/organizations/{organization.slug}/request-bookingpermission/"
         ).view_name
-        == "organizations:confirm-membership"
+        == "organizations:request-bookingpermission"
     )
 
 
-def test_cancel_membership(organization: Organization, user: User):
+def test_confirm_bookingpermission(organization: Organization, user: User):
     assert (
         reverse(
-            "organizations:cancel-membership",
+            "organizations:confirm-bookingpermission",
             kwargs={"organization": organization.slug, "user": user.slug},
         )
-        == f"/organizations/{organization.slug}/cancel-membership/{user.slug}/"
+        == f"/organizations/{organization.slug}/confirm-bookingpermission/{user.slug}/"
     )
     assert (
         resolve(
-            f"/organizations/{organization.slug}/cancel-membership/{user.slug}/"
+            f"/organizations/{organization.slug}/confirm-bookingpermission/{user.slug}/"
         ).view_name
-        == "organizations:cancel-membership"
+        == "organizations:confirm-bookingpermission"
+    )
+
+
+def test_cancel_bookingpermission(organization: Organization, user: User):
+    assert (
+        reverse(
+            "organizations:cancel-bookingpermission",
+            kwargs={"organization": organization.slug, "user": user.slug},
+        )
+        == f"/organizations/{organization.slug}/cancel-bookingpermission/{user.slug}/"
+    )
+    assert (
+        resolve(
+            f"/organizations/{organization.slug}/cancel-bookingpermission/{user.slug}/"
+        ).view_name
+        == "organizations:cancel-bookingpermission"
     )
 
 

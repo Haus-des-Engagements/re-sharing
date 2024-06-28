@@ -47,32 +47,34 @@
       </div>
     </div>
     <div class="row mt-5 mb-2">
-      <h2>{% trans "Members" %}</h2>
+      <h2>{% trans "Persons authorised to make bookings" %}</h2>
     </div>
-    {% if not members %}
-      <div>{% trans "Members are only visible for other members." %}</div>
+    {% if not permitted %}
+      <div>{% trans "Only visible for other authorised persons." %}</div>
     {% else %}
-      {% for member in members %}
+      {% for perm in permitted %}
         <div class="card mb-3">
           <div class="row g-0">
             <div class="col-md-10">
               <div class="card-body">
-                <h5 class="card-title">{{ member.first_name }} {{ member.last_name }}</h5>
+                <h5 class="card-title">{{ perm.first_name }} {{ perm.last_name }}</h5>
                 <p class="card-text">
-                  {% if member.membership_role == 1 %}<span class="badge rounded-pill text-bg-primary">Administrator</span>{% endif %}
+                  {% if perm.bookingpermission_role == 1 %}
+                    <span class="badge rounded-pill text-bg-primary">Administrator</span>
+                  {% endif %}
                 </p>
                 <p class="card-text">
                   <svg class="fs-4 me-1" width="1em" height="1em">
                     <use href="#bi-envelope-at" />
                   </svg>
-                  {{ member.email }}
+                  {{ perm.email }}
                 </p>
                 <p class="card-text">
                   <svg class="fs-4 me-1" width="1em" height="1em">
                     <use href="#bi-geo-alt" />
                   </svg>
                   {% if is_admin %}
-                    {{ member.street }} {{ member.house_number }}, {{ member.zip_code }} {{ member.city }}
+                    {{ perm.street }} {{ perm.house_number }}, {{ perm.zip_code }} {{ perm.city }}
                   {% else %}
                     {% trans "Addresses are only visible to admins" %}
                   {% endif %}
@@ -82,39 +84,35 @@
             <div class="col-md-2">
               <div class="card-body">
                 <div class="d-grid gap-2">
-                  {% if is_admin and member.membership_status == 1 %}
-                    <div id="{{ member.slug }}-confirm-membership">
+                  {% if is_admin and perm.bookingpermission_status == 1 %}
+                    <div id="{{ perm.slug }}-confirm-bookingpermission">
                       <button class="btn btn-outline-primary"
-                              hx-post="{% url 'organizations:confirm-membership' organization=organization.slug user=member.slug %}"
-                              hx-target="#{{ member.slug }}-confirm-membership">
-                        {% trans "Confirm Membership" %}
+                              hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=member.slug %}"
+                              hx-target="#{{ perm.slug }}-confirm-bookingpermission">
+                        {% trans "Confirm booking permission" %}
                       </button>
                     </div>
                   {% endif %}
-                  {% if is_admin and member.membership_status == 2 %}
-                    <div id="{{ member.slug }}-cancel-membership">
+                  {% if is_admin and perm.bookingpermission_status == 2 %}
+                    <div id="{{ perm.slug }}-cancel-bookingpermission">
                       <button class="btn btn-outline-danger"
-                              hx-post="{% url 'organizations:cancel-membership' organization=organization.slug user=member.slug %}"
-                              hx-target="#{{ member.slug }}-cancel-membership">
-                        {% trans "Cancel Membership" %}
+                              hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=perm.slug %}"
+                              hx-target="#{{ member.slug }}-cancel-bookingpermission">
+                        {% trans "Cancel booking permission" %}
                       </button>
                     </div>
-                    {% if member.membership_role == 2 %}
-                      <div id="{{ member.slug }}-promote-to-admin-membership">
+                    {% if perm.bookingpermission_role == 2 %}
+                      <div id="{{ perm.slug }}-promote-to-admin">
                         <button class="btn btn-outline-success"
-                                hx-post="{% url 'organizations:promote-to-admin-membership' organization=organization.slug user=member.slug %}"
-                                hx-target="#{{ member.slug }}-promote-to-admin-membership">
-                          {% trans "Promote to admin" %}
-                        </button>
+                                hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=perm.slug %}"
+                                hx-target="#{{ perm.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
                       </div>
                     {% endif %}
-                    {% if member.membership_role == 1 %}
-                      <div id="{{ member.slug }}-demote-to-booker-membership">
+                    {% if perm.bookingpermission_role == 1 %}
+                      <div id="{{ perm.slug }}-demote-to-booker">
                         <button class="btn btn-outline-warning"
-                                hx-post="{% url 'organizations:demote-to-booker-membership' organization=organization.slug user=member.slug %}"
-                                hx-target="#{{ member.slug }}-demote-to-booker-membership">
-                          {% trans "Demote to booker" %}
-                        </button>
+                                hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=perm.slug %}"
+                                hx-target="#{{ perm.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
                       </div>
                     {% endif %}
                   {% endif %}

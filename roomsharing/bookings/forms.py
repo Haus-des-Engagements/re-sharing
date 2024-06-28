@@ -12,7 +12,7 @@ from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
 from roomsharing.utils.dicts import MONTHDATES
@@ -318,7 +318,9 @@ class BookingForm(forms.Form):
         )
         organizations = (
             Organization.objects.filter(organization_of_membership__user=user)
-            .filter(organization_of_membership__status=Membership.Status.CONFIRMED)
+            .filter(
+                organization_of_membership__status=BookingPermission.Status.CONFIRMED
+            )
             .distinct()
         )
 

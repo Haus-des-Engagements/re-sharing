@@ -13,8 +13,8 @@ from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.views import list_bookings_view
-from roomsharing.organizations.models import Membership
-from roomsharing.organizations.tests.factories import MembershipFactory
+from roomsharing.organizations.models import BookingPermission
+from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
@@ -46,8 +46,8 @@ class TestListBookingsView(TestCase):
         client.force_login(self.user)
 
         o1 = OrganizationFactory()
-        MembershipFactory(
-            organization=o1, user=self.user, status=Membership.Status.CONFIRMED
+        BookingPermissionFactory(
+            organization=o1, user=self.user, status=BookingPermission.Status.CONFIRMED
         )
         total_bookings_for_o1 = 2
         r1 = RoomFactory()

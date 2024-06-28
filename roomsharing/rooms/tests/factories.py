@@ -1,9 +1,11 @@
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
+from factory import SubFactory
 from factory.django import DjangoModelFactory
 
 from roomsharing.rooms.models import Room
+from roomsharing.users.tests.factories import UserFactory
 
 
 class RoomFactory(DjangoModelFactory):
@@ -16,6 +18,7 @@ class RoomFactory(DjangoModelFactory):
     pricing = Faker("sentence", nb_words=6)
     included_equipment = Faker("sentence", nb_words=6)
     bookable_equipment = Faker("sentence", nb_words=6)
+    manager = SubFactory(UserFactory)
 
     class Meta:
         model = Room

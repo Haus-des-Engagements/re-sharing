@@ -8,9 +8,9 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
-from roomsharing.organizations.models import Membership
+from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
-from roomsharing.organizations.tests.factories import MembershipFactory
+from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.organizations.views import show_organization_view
 from roomsharing.users.tests.factories import UserFactory
@@ -26,10 +26,10 @@ class TestListOrganizationView(TestCase):
     def test_list_organizations(self):
         user = UserFactory()
         self.client.force_login(user)
-        MembershipFactory(
+        BookingPermissionFactory(
             user=user,
             organization=self.organization1,
-            role=Membership.Role.BOOKER,
+            role=BookingPermission.Role.BOOKER,
         )
 
         response = self.client.get(self.list_organizations_url)
@@ -54,30 +54,30 @@ class TestShowOrganizationView(TestCase):
     def test_access_user_is_member(self):
         user = UserFactory()
         self.client.force_login(user)
-        MembershipFactory(
+        BookingPermissionFactory(
             user=user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
+            role=BookingPermission.Role.BOOKER,
         )
 
         response = self.client.get(self.show_organization_url)
         assert response.status_code == HTTPStatus.OK
         assert not response.context["is_admin"]
-        assert "membership_status" not in response.context["members"].values()[0]
+        assert "permission_status" not in response.context["permitted"].values()[0]
 
     def test_access_user_is_admin(self):
         user = UserFactory()
         self.client.force_login(user)
-        MembershipFactory(
+        BookingPermissionFactory(
             user=user,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
+            role=BookingPermission.Role.ADMIN,
         )
 
         response = self.client.get(self.show_organization_url)
         assert response.status_code == HTTPStatus.OK
         assert response.context["is_admin"]
-        assert "membership_status" in response.context["members"].values()[0]
+        assert "permission_status" in response.context["permitted"].values()[0]
 
     def test_access_by_anonymous_user(self):
         request = self.rf.get("/fake-url/")
@@ -91,25 +91,25 @@ class TestShowOrganizationView(TestCase):
         assert response.url == f"{login_url}?next=/fake-url/"
 
 
-class TestRequestMembershipView(TestCase):
+class TestRequestBookingpermissionView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.client.force_login(self.user)
         self.organization = OrganizationFactory()
-        self.request_membership_url = reverse(
-            "organizations:request-membership",
+        self.request_bookingpermission_url = reverse(
+            "organizations:request-bookingpermission",
             kwargs={"organization": self.organization.slug},
         )
 
     def test_request_pending(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.PENDING,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.PENDING,
         )
 
-        response = self.client.get(self.request_membership_url)
+        response = self.client.get(self.request_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
             response,
@@ -117,43 +117,43 @@ class TestRequestMembershipView(TestCase):
         )
 
     def test_already_confirmed(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
 
-        response = self.client.get(self.request_membership_url)
+        response = self.client.get(self.request_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(response, "You are already member of this organization.")
 
     def test_rejected(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.REJECTED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.REJECTED,
         )
 
-        response = self.client.get(self.request_membership_url)
+        response = self.client.get(self.request_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
             response, "You have already been rejected by this organization."
         )
 
     def test_new_request(self):
-        response = self.client.get(self.request_membership_url)
-        membership = (
-            Membership.objects.filter(organization=self.organization)
+        response = self.client.get(self.request_bookingpermission_url)
+        bookingpermission = (
+            BookingPermission.objects.filter(organization=self.organization)
             .filter(user=self.user)
             .first()
         )
-        assert membership
-        assert membership.organization == self.organization
-        assert membership.user == self.user
-        assert membership.role == Membership.Role.BOOKER
-        assert membership.status == Membership.Status.PENDING
+        assert bookingpermission
+        assert bookingpermission.organization == self.organization
+        assert bookingpermission.user == self.user
+        assert bookingpermission.role == BookingPermission.Role.BOOKER
+        assert bookingpermission.status == BookingPermission.Status.PENDING
 
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
@@ -163,228 +163,234 @@ class TestRequestMembershipView(TestCase):
         )
 
 
-class ConfirmMembershipView(TestCase):
+class ConfirmBookingpermissionView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.orga_admin = UserFactory()
         self.organization = OrganizationFactory()
-        self.confirm_membership_url = reverse(
-            "organizations:confirm-membership",
+        self.confirm_bookingpermission_url = reverse(
+            "organizations:confirm-bookingpermission",
             kwargs={"organization": self.organization.slug, "user": self.user.slug},
         )
 
-    def test_confirm_already_confirmed_membership_by_admin(self):
-        MembershipFactory(
+    def test_confirm_already_confirmed_bookingpermission_by_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.confirm_membership_url)
+        response = self.client.get(self.confirm_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Membership has already been confirmed.")
+        self.assertContains(response, "Booking permission has already been confirmed.")
 
-    def test_confirm_new_membership_by_admin(self):
-        MembershipFactory(
+    def test_confirm_new_bookingpermission_by_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.PENDING,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.PENDING,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.confirm_membership_url)
+        response = self.client.get(self.confirm_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Membership has been confirmed.")
+        self.assertContains(response, "Booking permission has been confirmed.")
 
-    def test_confirm_new_membership_by_non_admin(self):
-        MembershipFactory(
+    def test_confirm_new_bookingpermission_by_non_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.PENDING,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.PENDING,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.confirm_membership_url)
+        response = self.client.get(self.confirm_bookingpermission_url)
         self.assertContains(
-            response, "You are not allowed to confirm this membership.", status_code=401
+            response,
+            "You are not allowed to confirm this booking permission.",
+            status_code=401,
         )
 
 
-class CancelMembershipView(TestCase):
+class CancelBookingpermissionView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.orga_admin = UserFactory()
         self.organization = OrganizationFactory()
-        self.cancel_membership_url = reverse(
-            "organizations:cancel-membership",
+        self.cancel_bookingpermission_url = reverse(
+            "organizations:cancel-bookingpermission",
             kwargs={"organization": self.organization.slug, "user": self.user.slug},
         )
 
-    def test_cancel_existing_membership_by_admin(self):
-        MembershipFactory(
+    def test_cancel_existing_bookingpermission_by_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
 
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.cancel_membership_url)
+        response = self.client.get(self.cancel_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
             response,
-            "Membership has been cancelled.",
+            "Booking permission has been cancelled.",
         )
         assert (
-            not Membership.objects.filter(organization=self.organization)
+            not BookingPermission.objects.filter(organization=self.organization)
             .filter(user__slug=self.user)
             .exists()
         )
 
-    def test_cancel_not_existing_membership_by_admin(self):
-        MembershipFactory(
+    def test_cancel_not_existing_bookingpermission_by_admin(self):
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.cancel_membership_url)
+        response = self.client.get(self.cancel_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
             response,
-            "Membership does not exist.",
+            "Booking permission does not exist.",
         )
         assert (
-            not Membership.objects.filter(organization=self.organization)
+            not BookingPermission.objects.filter(organization=self.organization)
             .filter(user__slug=self.user)
             .exists()
         )
 
-    def test_cancel_membership_by_non_admin(self):
+    def test_cancel_bookingpermission_by_non_admin(self):
         orga_booker = UserFactory()
-        MembershipFactory(
+        BookingPermissionFactory(
             user=orga_booker,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(orga_booker)
 
-        response = self.client.get(self.cancel_membership_url)
+        response = self.client.get(self.cancel_bookingpermission_url)
         self.assertContains(
-            response, "You are not allowed to cancel this membership.", status_code=401
+            response,
+            "You are not allowed to cancel this booking permission.",
+            status_code=401,
         )
 
-    def test_cancel_membership_by_user_itself(self):
-        MembershipFactory(
+    def test_cancel_bookingpermission_by_user_itself(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.user)
 
-        response = self.client.get(self.cancel_membership_url)
+        response = self.client.get(self.cancel_bookingpermission_url)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(
             response,
-            "Membership has been cancelled.",
+            "Booking permission has been cancelled.",
         )
         assert (
-            not Membership.objects.filter(organization=self.organization)
+            not BookingPermission.objects.filter(organization=self.organization)
             .filter(user__slug=self.user)
             .exists()
         )
 
 
-class PromoteToAdminMembershipView(TestCase):
+class PromoteToAdminView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.orga_admin = UserFactory()
         self.organization = OrganizationFactory()
-        self.promote_to_admin_membership = reverse(
-            "organizations:promote-to-admin-membership",
+        self.promote_to_admin_url = reverse(
+            "organizations:promote-to-admin",
             kwargs={"organization": self.organization.slug, "user": self.user.slug},
         )
 
     def test_promote_to_admin_membership_by_admin(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.promote_to_admin_membership)
+        response = self.client.get(self.promote_to_admin_url)
         assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Member has been promoted to admin.")
+        self.assertContains(response, "User has been promoted to admin.")
         assert (
-            Membership.objects.filter(organization=self.organization, user=self.user)
+            BookingPermission.objects.filter(
+                organization=self.organization, user=self.user
+            )
             .first()
             .role
-            == Membership.Role.ADMIN
+            == BookingPermission.Role.ADMIN
         )
 
-    def test_promote_to_admin_membership_by_non_admin(self):
-        MembershipFactory(
+    def test_promote_to_admin_by_non_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.promote_to_admin_membership)
+        response = self.client.get(self.promote_to_admin_url)
         self.assertContains(
             response,
             "You are not allowed to promote.",
@@ -392,57 +398,59 @@ class PromoteToAdminMembershipView(TestCase):
         )
 
 
-class DemoteToBookerMembershipView(TestCase):
+class DemoteToBookerView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.orga_admin = UserFactory()
         self.organization = OrganizationFactory()
-        self.demote_to_booker_membership = reverse(
-            "organizations:demote-to-booker-membership",
+        self.demote_to_booker_url = reverse(
+            "organizations:demote-to-booker",
             kwargs={"organization": self.organization.slug, "user": self.user.slug},
         )
 
-    def test_demote_to_booker_membership_by_admin(self):
-        MembershipFactory(
+    def test_demote_to_booker_by_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.demote_to_booker_membership)
+        response = self.client.get(self.demote_to_booker_url)
         assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Member has been demoted to booker.")
+        self.assertContains(response, "User has been demoted to booker.")
         assert (
-            Membership.objects.filter(organization=self.organization, user=self.user)
+            BookingPermission.objects.filter(
+                organization=self.organization, user=self.user
+            )
             .first()
             .role
-            == Membership.Role.BOOKER
+            == BookingPermission.Role.BOOKER
         )
 
-    def test_demote_to_admin_membership_by_non_admin(self):
-        MembershipFactory(
+    def test_demote_to_admin_by_non_admin(self):
+        BookingPermissionFactory(
             user=self.user,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
-        response = self.client.get(self.demote_to_booker_membership)
+        response = self.client.get(self.demote_to_booker_url)
         self.assertContains(
             response,
             "You are not allowed to demote.",
@@ -461,11 +469,11 @@ class DeleteOrganizationView(TestCase):
         )
 
     def test_delete_ogranization_by_admin(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.ADMIN,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
         )
 
         self.client.force_login(self.orga_admin)
@@ -477,11 +485,11 @@ class DeleteOrganizationView(TestCase):
             self.organization.refresh_from_db()
 
     def test_delete_organization_by_non_admin(self):
-        MembershipFactory(
+        BookingPermissionFactory(
             user=self.orga_admin,
             organization=self.organization,
-            role=Membership.Role.BOOKER,
-            status=Membership.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
         )
         self.client.force_login(self.orga_admin)
 
