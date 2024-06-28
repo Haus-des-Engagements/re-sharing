@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
+from django.db.models import PROTECT
 from django.db.models import CharField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
@@ -26,6 +27,7 @@ class Room(Model):
     pricing = TextField(_("Pricing conditions"), max_length=512, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
     bookable_equipment = TextField(_("Bookable Equipment"), max_length=512, blank=True)
+    manager = ForeignKey("users.User", on_delete=PROTECT, verbose_name=_("Manager"))
 
     class Meta:
         verbose_name = _("Room")
