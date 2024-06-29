@@ -38,7 +38,7 @@ from .models import Booking
 from .models import BookingMessage
 
 
-def is_member_of_booking_organization(user, booking):
+def has_booking_permission(user, booking):
     return (
         BookingPermission.objects.filter(organization=booking.organization)
         .filter(user=booking.user)
@@ -47,17 +47,29 @@ def is_member_of_booking_organization(user, booking):
     )
 
 
-@login_required
-def list_bookings_view(request):
-    organizations = (
-        Organization.objects.filter(
-            organization_of_bookingpermission__user=request.user
-        )
+def organizations_with_bookingpermission(user):
+    return (
+        Organization.objects.filter(organization_of_bookingpermission__user=user)
         .filter(
             organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
         )
         .distinct()
     )
+
+
+def get_default_booking_status(organization, room):
+    default_booking_status = DefaultBookingStatus.objects.filter(
+        organization=organization, room=room
+    )
+    if default_booking_status.exists():
+        return default_booking_status.first().status
+
+    return BookingStatus.PENDING
+
+
+@login_required
+def list_bookings_view(request):
+    organizations = organizations_with_bookingpermission(user=request.user)
     form = BookingListForm(request.POST or None, organizations=organizations)
     bookings = Booking.objects.filter(organization__in=organizations).filter(
         timespan__endswith__gte=timezone.now(),
@@ -72,15 +84,7 @@ def list_bookings_view(request):
 
 @login_required
 def filter_bookings_view(request):
-    organizations = (
-        Organization.objects.filter(
-            organization_of_bookingpermission__user=request.user
-        )
-        .filter(
-            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
-        )
-        .distinct()
-    )
+    organizations = organizations_with_bookingpermission(user=request.user)
     form = BookingListForm(request.POST or None, organizations=organizations)
     bookings = Booking.objects.filter(organization__in=organizations)
 
@@ -115,7 +119,7 @@ def show_booking_view(request, slug):
     activity_stream = []
     booking = get_object_or_404(Booking, slug=slug)
 
-    if not is_member_of_booking_organization(request.user, booking):
+    if not has_booking_permission(request.user, booking):
         return HttpResponse(
             "You do not have permission to do this action",
             status=HTTPStatus.UNAUTHORIZED,
@@ -170,7 +174,7 @@ def write_bookingmessage(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
     form = MessageForm(request.POST or None)
 
-    if not is_member_of_booking_organization(request.user, booking):
+    if not has_booking_permission(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
     if form.is_valid():
@@ -189,7 +193,7 @@ def write_bookingmessage(request, slug):
 def cancel_booking(request, slug, from_page):
     booking = get_object_or_404(Booking, slug=slug)
 
-    if not is_member_of_booking_organization(request.user, booking):
+    if not has_booking_permission(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
     if booking.status in (BookingStatus.CONFIRMED, BookingStatus.PENDING):
@@ -279,16 +283,6 @@ def create_rrule_string(cleaned_data):
     return str(recurrence_pattern)
 
 
-def get_default_booking_status(organization, room):
-    default_booking_status = DefaultBookingStatus.objects.filter(
-        organization=organization, room=room
-    )
-    if default_booking_status.exists():
-        return default_booking_status.first().status
-
-    return BookingStatus.PENDING
-
-
 @login_required
 def preview_booking_view(request):  # noqa: C901
     booking_data = request.session["booking_data"]
@@ -357,7 +351,7 @@ def preview_booking_view(request):  # noqa: C901
         )
 
     if request.method == "POST":
-        if is_member_of_booking_organization(request.user, booking.organization):
+        if has_booking_permission(request.user, booking.organization):
             for booking in bookings:
                 if booking.room_booked is False:
                     booking.save()
