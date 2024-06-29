@@ -3,10 +3,11 @@
 {% load i18n %}
 {% load static %}
 {% load tz %}
+{% load crispy_forms_tags %}
 
 {% block content %}
   <h1 class="mt-4">
-    {% trans "All bookings" %}
+    {% trans "My bookings" %}
     <a class="btn btn-outline-primary"
        href="{% url 'bookings:create-booking' %}"
        role="button">
@@ -20,7 +21,7 @@
         hx-target="#booking-list"
         hx-trigger="change">
     {% csrf_token %}
-    {{ form }}
+    {{ form|crispy }}
   </form>
   <div id="booking-list">{% include "bookings/partials/list_bookings.html" %}</div>
 {% endblock content %}

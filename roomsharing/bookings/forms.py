@@ -44,7 +44,7 @@ class BookingListForm(forms.Form):
         required=False,
         label=_("Show past bookings"),
     )
-    status = forms.MultipleChoiceField(
+    status = forms.ChoiceField(
         choices=[("all", _("All")), *BookingStatus.choices],
         required=False,
         label=_("Status"),
