@@ -1,3 +1,5 @@
+import uuid
+
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.contrib.postgres.constraints import ExclusionConstraint
@@ -8,6 +10,7 @@ from django.db.models import CharField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
 from django.db.models import Q
+from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -20,6 +23,7 @@ from roomsharing.utils.models import TimeStampedModel
 
 
 class Booking(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     title = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="title", editable=False)
@@ -74,6 +78,7 @@ class Booking(TimeStampedModel):
 
 
 class BookingMessage(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     booking = ForeignKey(
         Booking,

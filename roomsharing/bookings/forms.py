@@ -317,9 +317,9 @@ class BookingForm(forms.Form):
             ),
         )
         organizations = (
-            Organization.objects.filter(organization_of_membership__user=user)
+            Organization.objects.filter(organization_of_bookingpermission__user=user)
             .filter(
-                organization_of_membership__status=BookingPermission.Status.CONFIRMED
+                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
             )
             .distinct()
         )

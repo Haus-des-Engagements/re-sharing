@@ -41,7 +41,7 @@ from .models import BookingMessage
 def has_booking_permission(user, booking):
     return (
         BookingPermission.objects.filter(organization=booking.organization)
-        .filter(user=booking.user)
+        .filter(user=user)
         .filter(status=BookingPermission.Status.CONFIRMED)
         .exists()
     )
@@ -115,13 +115,13 @@ def filter_bookings_view(request):
 
 
 @login_required
-def show_booking_view(request, slug):
+def show_booking_view(request, booking):
     activity_stream = []
-    booking = get_object_or_404(Booking, slug=slug)
+    booking = get_object_or_404(Booking, slug=booking)
 
     if not has_booking_permission(request.user, booking):
         return HttpResponse(
-            "You do not have permission to do this action",
+            "You do not have the permission to see this booking.",
             status=HTTPStatus.UNAUTHORIZED,
         )
 

@@ -18,7 +18,7 @@ urlpatterns = [
     ),
     path("create-booking/", create_booking_view, name="create-booking"),
     path("preview-booking/", preview_booking_view, name="preview-booking"),
-    path("<slug:slug>/", show_booking_view, name="show-booking"),
+    path("<slug:booking>/", show_booking_view, name="show-booking"),
     path(
         "<slug:slug>/cancel-booking/<from_page>/",
         cancel_booking,

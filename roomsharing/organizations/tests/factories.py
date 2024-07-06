@@ -10,6 +10,7 @@ from roomsharing.users.tests.factories import UserFactory
 
 
 class OrganizationFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
     name = Faker("company", locale="de_DE")
     slug = LazyAttribute(lambda o: slugify(o.name))
     street = Faker("street_name", locale="de_DE")

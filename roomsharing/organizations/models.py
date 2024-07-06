@@ -1,3 +1,5 @@
+import uuid
+
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.db.models import CASCADE
@@ -6,6 +8,7 @@ from django.db.models import CharField
 from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
+from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -29,6 +32,7 @@ class Organization(TimeStampedModel):
         INDIVIDUAL_ENTREPRENEUR = 10, _("Individual entrepreneur")
         OTHER = 11, _("Other")
 
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
     slug = AutoSlugField(populate_from="name")

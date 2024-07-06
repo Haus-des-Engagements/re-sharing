@@ -1,0 +1,29 @@
+# 10. ADR title
+
+Date: 2024-06.23
+
+## Status
+
+Accepted
+
+## Context
+
+The project aims at making room bookings a lot easier. It needs to be developed with little ressources and quickly.
+There is an existing booking process, that start with a wordpress form, a pdf, e-mail and a crm system and two spreadsheets.
+It is mandatory, that users can - in the new system - perform these (booking related) actions:
+- create a booking request for an organizations
+- cancel a booking
+- a booking can be a single date or multiple occurrences of a recurrence rule
+- write a message for a specific booking
+
+Room administrators on the other hand mus be able to:
+- confirm a booking request
+- cancel a booking request
+
+## Decision
+
+We will save all booking-related information in one and central Booking model.
+
+## Consequences
+
+The booking

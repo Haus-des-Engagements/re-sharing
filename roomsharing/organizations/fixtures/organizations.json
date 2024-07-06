@@ -7,7 +7,7 @@
             "updated": "2024-01-02 12:00+00",
             "name": "Haus des Engagements e.V.",
             "slug": "haus-des-engagements-e-v",
-            "type": 2,
+            "legal_form": 2,
             "street": "Rehlingstraße",
             "house_number": "9",
             "zip_code": "79100",
@@ -22,7 +22,7 @@
             "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
             "name": "RSTGH",
-            "type": 1,
+            "legal_form": 1,
             "slug": "rstgh",
             "street": "Rehlingstraße",
             "house_number": "9",
@@ -38,7 +38,7 @@
             "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
             "name": "kaliz",
-            "type": 3,
+            "legal_form": 3,
             "slug": "kaliz",
             "street": "Rehlingstraße",
             "house_number": "9",
@@ -48,7 +48,7 @@
         }
     },
   {
-        "model": "organizations.organizationmembership",
+        "model": "organizations.bookingpermission",
         "pk": 1,
         "fields": {
             "created": "2024-01-02 12:00+00",

@@ -11,7 +11,8 @@
             "bookable_times": "Mo-Fr 18:00 – 23 Uhr, Sa & So ganztägig",
             "pricing": "15€/Std., für Vereine nach Absprache",
             "included_equipment": "Beamer, Leinwand, Soundanlage, Flipchart, Pinnwand",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -26,7 +27,8 @@
             "bookable_times": "Mo-So 7 – 23 Uhr",
             "pricing": "10€/Std.,für Vereine auf Spendenbasis",
             "included_equipment": "Beamer, Pinnwand, Magnetwand, Flipchart, Flachbildschirm, Videokonferenztool",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -41,7 +43,8 @@
             "bookable_times": "Mo-Fr 18:00 – 23 Uhr",
             "pricing": "7€/Std., für Vereine\nauf Spendenbasis",
             "included_equipment": "Flipchart, Whiteboard, Beamer",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -56,7 +59,8 @@
             "bookable_times": "Mo-Fr 18:00 – 23 Uhr",
             "pricing": "5€/Std., für Vereine auf Spendenbasis",
             "included_equipment": "Flipchart",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -71,7 +75,8 @@
             "bookable_times": "Mo-So ganztägig",
             "pricing": "für Ehrenamtlich kostenfrei",
             "included_equipment": "Flipchart, Pinnwand, Beamer, Bildschirm",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -86,7 +91,8 @@
             "bookable_times": "Mo-Fr 18-23 Uhr, WE ganztägig",
             "pricing": "7 €/Std., für Vereine auf Spendenbasis",
             "included_equipment": "Flipchart, Whiteboard",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     },
     {
@@ -101,7 +107,8 @@
             "bookable_times": "Mo-So 7-23 Uhr",
             "pricing": "12/25/35€/Std., 100/200/300€ Tagessatz",
             "included_equipment": "Beamer, Leinwand, Pinnwand, Flipchart",
-            "bookable_equipment": ""
+            "bookable_equipment": "",
+            "manager": 1
         }
     }
 ]

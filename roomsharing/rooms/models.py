@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 from django.core.validators import FileExtensionValidator
@@ -9,6 +10,7 @@ from django.db.models import ImageField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
 from django.db.models import TextField
+from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -18,6 +20,7 @@ from roomsharing.utils.models import TimeStampedModel
 
 
 class Room(Model):
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
     name = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="name")
     description = TextField(_("Description"), max_length=512)

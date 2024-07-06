@@ -11,7 +11,7 @@ def test_list_bookings():
 
 def test_show_booking(booking: Booking):
     assert (
-        reverse("bookings:show-booking", kwargs={"slug": booking.slug})
+        reverse("bookings:show-booking", kwargs={"booking": booking.slug})
         == f"/bookings/{booking.slug}/"
     )
     assert resolve(f"/bookings/{booking.slug}/").view_name == "bookings:show-booking"

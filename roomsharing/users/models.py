@@ -1,3 +1,4 @@
+import uuid
 from typing import ClassVar
 
 from auditlog.models import AuditlogHistoryField
@@ -6,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
 from django.db.models import ManyToManyField
+from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -24,6 +26,7 @@ class User(AbstractUser, TimeStampedModel):
     """
 
     # First and last name do not cover name patterns around the globe
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     first_name = CharField(_("First Name"))
     last_name = CharField(_("Last Name"))
@@ -38,20 +41,11 @@ class User(AbstractUser, TimeStampedModel):
         related_query_name="user_of_organization",
         blank=True,
     )
-    street = CharField(_("Street"), max_length=56)
-    house_number = CharField(_("House Number"), max_length=8, blank=True)
-    zip_code = CharField(_("Zip Code"), max_length=12)
-    city = CharField(_("City"), max_length=24)
-    phone_number = CharField(_("Phone Number"), max_length=20)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = [
         "first_name",
         "last_name",
-        "street",
-        "city",
-        "zip_code",
-        "phone_number",
     ]
 
     objects: ClassVar[UserManager] = UserManager()

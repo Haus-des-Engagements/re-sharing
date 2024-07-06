@@ -11,6 +11,7 @@ from factory.fuzzy import FuzzyDateTime
 from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
+from roomsharing.bookings.models import BookingMessage
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
@@ -18,6 +19,7 @@ from roomsharing.utils.models import BookingStatus
 
 
 class BookingFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
     title = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.title))
     organization = SubFactory(OrganizationFactory)
@@ -39,3 +41,14 @@ class BookingFactory(DjangoModelFactory):
     class Meta:
         model = Booking
         django_get_or_create = ["slug"]
+
+
+class BookingMessageFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
+    text = Faker("word")
+    user = SubFactory(UserFactory)
+    booking = SubFactory(BookingFactory)
+
+    class Meta:
+        model = BookingMessage
+        django_get_or_create = ["uuid"]

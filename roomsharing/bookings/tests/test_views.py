@@ -12,12 +12,14 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.bookings.tests.factories import BookingMessageFactory
 from roomsharing.bookings.views import list_bookings_view
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
+from roomsharing.utils.models import BookingStatus
 
 
 class TestListBookingsView(TestCase):
@@ -69,3 +71,59 @@ class TestListBookingsView(TestCase):
 
         form = response.context.get("form")
         assert form is not None
+
+
+class TestShowBookingView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.booking = BookingFactory(organization=self.organization)
+        self.show_booking_url = reverse(
+            "bookings:show-booking",
+            kwargs={"booking": self.booking.slug},
+        )
+
+    def test_no_booking_permission(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.PENDING,
+        )
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(self.show_booking_url)
+        self.assertContains(
+            response,
+            "You do not have the permission to see this booking.",
+            status_code=HTTPStatus.UNAUTHORIZED,
+        )
+
+    def test_has_booking_permission(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(self.show_booking_url)
+        assert response.status_code == HTTPStatus.OK
+
+    def test_activity_stream(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        message1 = BookingMessageFactory(booking=self.booking, user=self.user)
+        message2 = BookingMessageFactory(booking=self.booking, user=self.user)
+        self.booking.status = BookingStatus.CONFIRMED
+        self.booking.status = BookingStatus.CANCELLED
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(self.show_booking_url)
+        self.assertContains(response, message1.text)
+        self.assertContains(response, message2.text)
+
+        assert response.status_code == HTTPStatus.OK

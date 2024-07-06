@@ -9,6 +9,7 @@ from roomsharing.users.tests.factories import UserFactory
 
 
 class RoomFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
     name = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.name))
     description = Faker("text", max_nb_chars=512)
