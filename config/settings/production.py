@@ -90,6 +90,17 @@ EMAIL_SUBJECT_PREFIX = env(
     default="[Roomsharing] ",
 )
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+SERVER_EMAIL = env("SERVER_EMAIL")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_TIMEOUT = env("EMAIL_TIMEOUT")
+
+
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL regex.
