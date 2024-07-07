@@ -63,15 +63,11 @@ class BookingListForm(forms.Form):
 
 class BookingForm(forms.Form):
     startdate = forms.DateField(
-        label=_("Start Date"),
+        label=_("Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
     )
-    starttime = forms.ChoiceField(label=_("Start Time"))
-    enddate = forms.DateField(
-        label=_("End Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
-    endtime = forms.ChoiceField(label=_("End Time"))
+    starttime = forms.ChoiceField(label=_("from"))
+    endtime = forms.ChoiceField(label=_("until"))
 
     organization = forms.ModelChoiceField(
         queryset=None,
@@ -145,10 +141,6 @@ class BookingForm(forms.Form):
         self.helper = FormHelper(self)
         self.helper.form_id = "inner-booking-form"
         self.helper.add_input(Submit("submit", _("Preview")))
-        self.fields["startdate"].label = False
-        self.fields["starttime"].label = False
-        self.fields["enddate"].label = False
-        self.fields["endtime"].label = False
         self.fields["rrule_ends_enddate"].label = False
         self.fields["rrule_ends_count"].label = False
         self.fields["rrule_ends"].label = False
@@ -171,26 +163,8 @@ class BookingForm(forms.Form):
                 css_class="row g-2",
             ),
             Div(
-                Div(
-                    HTML(
-                        '{% load i18n %}<label class="control-label">{% trans "von" %}'
-                        "</label>"
-                    ),
-                    css_class="col-1",
-                ),
                 Field("startdate", css_class="form-control", wrapper_class="col-2"),
                 Field("starttime", css_class="form-control", wrapper_class="col-2"),
-                css_class="row g-2",
-            ),
-            Div(
-                Div(
-                    HTML(
-                        '{% load i18n %}<label class="control-label">'
-                        '{% trans "bis" %}</label>'
-                    ),
-                    css_class="col-1",
-                ),
-                Field("enddate", css_class="form-control", wrapper_class="col-2"),
                 Field("endtime", css_class="form-control", wrapper_class="col-2"),
                 css_class="row g-2",
             ),
@@ -344,7 +318,6 @@ class BookingForm(forms.Form):
         room = cleaned_data.get("room")
         startdate = cleaned_data.get("startdate")
         starttime = cleaned_data.get("starttime")
-        enddate = cleaned_data.get("enddate")
         endtime = cleaned_data.get("endtime")
         rrule_repetitions = cleaned_data.get("rrule_repetitions")
         rrule_ends = cleaned_data.get("rrule_ends")
@@ -362,7 +335,7 @@ class BookingForm(forms.Form):
                 )
             return time_as_datetime.time()
 
-        if all([startdate, starttime, enddate, endtime]):
+        if all([startdate, starttime, endtime]):
             try:
                 starttime = convert_time(starttime)
                 cleaned_data["starttime"] = starttime
@@ -372,7 +345,7 @@ class BookingForm(forms.Form):
                 endtime = convert_time(endtime)
                 cleaned_data["endtime"] = endtime
                 end_datetime = timezone.make_aware(
-                    datetime.datetime.combine(enddate, endtime)
+                    datetime.datetime.combine(startdate, endtime)
                 )
             except ValueError as e:
                 self.add_error("starttime", str(e))
