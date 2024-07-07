@@ -338,6 +338,16 @@ def preview_booking_view(request):  # noqa: C901
             organization=organization,
             status=status,
         )
+        booking_overlap = (
+            Booking.objects.all()
+            .filter(
+                status=BookingStatus.CONFIRMED,
+                room=booking.room,
+                timespan__overlap=timespan,
+            )
+            .exists()
+        )
+        booking.room_booked = booking_overlap
         bookings.append(booking)
 
     if request.method == "GET":
@@ -351,7 +361,7 @@ def preview_booking_view(request):  # noqa: C901
         )
 
     if request.method == "POST":
-        if has_booking_permission(request.user, booking.organization):
+        if has_booking_permission(request.user, booking):
             for booking in bookings:
                 if booking.room_booked is False:
                     booking.save()
@@ -379,7 +389,6 @@ def create_booking_view(request):
         # Extract startdate and starttime from query parameters
         startdate = request.GET.get("startdate")
         starttime = request.GET.get("starttime")
-        enddate = request.GET.get("enddate")
         endtime = request.GET.get("endtime")
         user = request.user
         # Set initial data for the form
@@ -392,10 +401,6 @@ def create_booking_view(request):
             )
         if starttime:
             initial_data["starttime"] = starttime
-        if enddate:
-            initial_data["enddate"] = enddate
-        else:
-            initial_data["enddate"] = initial_data["startdate"]
         if endtime:
             initial_data["endtime"] = endtime
 
