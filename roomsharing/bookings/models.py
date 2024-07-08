@@ -7,9 +7,11 @@ from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import PROTECT
 from django.db.models import CharField
+from django.db.models import DateField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
 from django.db.models import Q
+from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -26,7 +28,7 @@ class Booking(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     title = CharField(_("Title"), max_length=160)
-    slug = AutoSlugField(populate_from="title", editable=False)
+    slug = AutoSlugField(populate_from=["start_date", "title"], editable=False)
     organization = ForeignKey(
         Organization,
         verbose_name=_("Booking Organization"),
@@ -51,6 +53,11 @@ class Booking(TimeStampedModel):
     )
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
 
+    # These fields are only stored for potential DST (Dailight Saving Time) problems.
+    start_date = DateField(_("Start Date"))
+    start_time = TimeField(_("Start Time"))
+    end_time = TimeField(_("End Time"))
+
     class Meta:
         verbose_name = _("Booking")
         verbose_name_plural = _("Bookings")
@@ -74,7 +81,7 @@ class Booking(TimeStampedModel):
         return str(self.title)
 
     def get_absolute_url(self):
-        return reverse("bookings:detail", kwargs={"slug": self.slug})
+        return reverse("bookings:show-booking", kwargs={"booking": self.slug})
 
 
 class BookingMessage(TimeStampedModel):

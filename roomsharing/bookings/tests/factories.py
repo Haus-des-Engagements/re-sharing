@@ -1,13 +1,14 @@
-from datetime import UTC
+import random
 from datetime import datetime
+from datetime import time
 from datetime import timedelta
 
+from django.utils import timezone
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
 from factory import SubFactory
 from factory.django import DjangoModelFactory
-from factory.fuzzy import FuzzyDateTime
 from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
@@ -26,17 +27,34 @@ class BookingFactory(DjangoModelFactory):
     user = SubFactory(UserFactory)
     room = SubFactory(RoomFactory)
     status = BookingStatus.CONFIRMED
+    start_date = Faker(
+        "date_between_dates",
+        date_start=datetime(2020, 1, 1).date(),  # noqa: DTZ001
+        date_end=timezone.now().date(),
+    )
+
+    @LazyAttribute
+    def start_time(self):
+        hour = random.randint(0, 21)  # noqa: S311
+        minute = random.choice([0, 30])  # Minute should be either 0 or 30 # noqa: S311
+        return time(hour, minute)
+
+    @LazyAttribute
+    def end_time(self):
+        return (
+            datetime.combine(self.start_date, self.start_time)
+            + timedelta(minutes=random.choice([30, 60, 90, 120, 150]))  # noqa: S311
+        ).time()
 
     @LazyAttribute
     def timespan(self):
-        start = FuzzyDateTime(
-            start_dt=datetime(2020, 1, 1, tzinfo=UTC),
-            force_minute=30,
-            force_second=0,
-            force_microsecond=0,
-        ).fuzz()
-        end = start + timedelta(hours=2)  # Adjust as needed
-        return Range(start, end, bounds="()")
+        start_datetime = timezone.make_aware(
+            datetime.combine(self.start_date, self.start_time)
+        )
+        end_datetime = timezone.make_aware(
+            datetime.combine(self.start_date, self.end_time)
+        )
+        return Range(start_datetime, end_datetime)
 
     class Meta:
         model = Booking

@@ -296,6 +296,9 @@ def preview_booking_view(request):  # noqa: C901
     room = get_object_or_404(Room, slug=booking_data["room"])
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
     status = get_default_booking_status(organization, room)
+    start_time = booking_data["start_time"]
+    end_time = booking_data["end_time"]
+    start_date = booking_data["start_date"]
 
     bookings = []
 
@@ -308,7 +311,6 @@ def preview_booking_view(request):  # noqa: C901
                 datetime.combine(occurrence, starttime)
             )
             end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
-
             booking = Booking(
                 user=user,
                 title=title,
@@ -316,6 +318,9 @@ def preview_booking_view(request):  # noqa: C901
                 timespan=(start_datetime, end_datetime),
                 organization=organization,
                 status=status,
+                start_date=occurrence.date(),
+                start_time=start_time,
+                end_time=end_time,
             )
             booking_overlap = (
                 Booking.objects.all()
@@ -337,6 +342,9 @@ def preview_booking_view(request):  # noqa: C901
             timespan=timespan,
             organization=organization,
             status=status,
+            start_date=start_date,
+            start_time=start_time,
+            end_time=end_time,
         )
         booking_overlap = (
             Booking.objects.all()
@@ -420,6 +428,9 @@ def create_booking_view(request):
                 "timespan": timespan,
                 "organization": form.cleaned_data["organization"].slug,
                 "message": form.cleaned_data["message"],
+                "start_date": form.cleaned_data["startdate"].isoformat(),
+                "start_time": form.cleaned_data["starttime"].isoformat(),
+                "end_time": form.cleaned_data["endtime"].isoformat(),
             }
 
             if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
