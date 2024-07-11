@@ -36,6 +36,7 @@ from .forms import BookingListForm
 from .forms import MessageForm
 from .models import Booking
 from .models import BookingMessage
+from .models import RecurrenceRule
 
 
 def has_booking_permission(user, booking):
@@ -283,14 +284,26 @@ def create_rrule_string(cleaned_data):
     return str(recurrence_pattern)
 
 
+def is_room_booked(room, start_datetime, end_datetime):
+    return (
+        Booking.objects.all()
+        .filter(
+            status=BookingStatus.CONFIRMED,
+            room=room,
+            timespan__overlap=(start_datetime, end_datetime),
+        )
+        .exists()
+    )
+
+
 @login_required
-def preview_booking_view(request):  # noqa: C901
+def generate_bookings(request):
     booking_data = request.session["booking_data"]
-    if not booking_data:
-        return redirect("bookings:create-booking")
     message = booking_data["message"]
-    timespan = booking_data["timespan"]
-    timespan = (isoparse(timespan[0]), isoparse(timespan[1]))
+    timespan = (
+        isoparse(booking_data["timespan"][0]),
+        isoparse(booking_data["timespan"][1]),
+    )
     user = request.user
     title = booking_data["title"]
     room = get_object_or_404(Room, slug=booking_data["room"])
@@ -299,11 +312,11 @@ def preview_booking_view(request):  # noqa: C901
     start_time = booking_data["start_time"]
     end_time = booking_data["end_time"]
     start_date = booking_data["start_date"]
+    rrule_string = booking_data.get("rrule_string", "")
 
     bookings = []
-
-    if booking_data.get("rrule_string"):
-        occurrences = list(rrulestr(booking_data["rrule_string"]))
+    if rrule_string:
+        occurrences = list(rrulestr(rrule_string))
         starttime = timespan[0].time()
         endtime = timespan[1].time()
         for occurrence in occurrences:
@@ -311,67 +324,82 @@ def preview_booking_view(request):  # noqa: C901
                 datetime.combine(occurrence, starttime)
             )
             end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
-            booking = Booking(
-                user=user,
-                title=title,
-                room=room,
-                timespan=(start_datetime, end_datetime),
-                organization=organization,
-                status=status,
-                start_date=occurrence.date(),
-                start_time=start_time,
-                end_time=end_time,
-            )
-            booking_overlap = (
-                Booking.objects.all()
-                .filter(
-                    status=BookingStatus.CONFIRMED,
-                    room=booking.room,
-                    timespan__overlap=(start_datetime, end_datetime),
-                )
-                .exists()
-            )
-            booking.room_booked = booking_overlap
-            bookings.append(booking)
+            booking_details = {
+                "user": user,
+                "title": title,
+                "room": room,
+                "start_datetime": start_datetime,
+                "end_datetime": end_datetime,
+                "organization": organization,
+                "status": status,
+                "timespan": (start_datetime, end_datetime),
+                "start_date": occurrence.date(),
+                "start_time": start_time,
+                "end_time": end_time,
+            }
+            room_booked = is_room_booked(room, start_datetime, end_datetime)
+            rrule = rrule_string
 
+            bookings.append(
+                create_booking(booking_details, room_booked=room_booked, rrule=rrule)
+            )
     else:
-        booking = Booking(
-            user=user,
-            title=title,
-            room=room,
-            timespan=timespan,
-            organization=organization,
-            status=status,
-            start_date=start_date,
-            start_time=start_time,
-            end_time=end_time,
-        )
-        booking_overlap = (
-            Booking.objects.all()
-            .filter(
-                status=BookingStatus.CONFIRMED,
-                room=booking.room,
-                timespan__overlap=timespan,
-            )
-            .exists()
-        )
-        booking.room_booked = booking_overlap
-        bookings.append(booking)
+        start_datetime = timespan[0]
+        end_datetime = timespan[1]
+        booking_details = {
+            "user": user,
+            "title": title,
+            "room": room,
+            "start_datetime": start_datetime,
+            "end_datetime": end_datetime,
+            "organization": organization,
+            "status": status,
+            "timespan": timespan,
+            "start_date": start_date,
+            "start_time": start_time,
+            "end_time": end_time,
+        }
+        room_booked = is_room_booked(room, start_datetime, end_datetime)
+        rrule = rrule_string
 
+        bookings.append(
+            create_booking(booking_details, room_booked=room_booked, rrule=rrule)
+        )
+
+    return bookings, message, rrule_string
+
+
+def create_booking(booking_details, **kwargs):
+    booking = Booking(
+        user=booking_details["user"],
+        title=booking_details["title"],
+        room=booking_details["room"],
+        timespan=booking_details["timespan"],
+        organization=booking_details["organization"],
+        status=booking_details["status"],
+        start_date=booking_details["start_date"],
+        start_time=booking_details["start_time"],
+        end_time=booking_details["end_time"],
+    )
+    booking.room_booked = kwargs.get("room_booked")
+    booking.rrule = kwargs.get("rrule")
+    return booking
+
+
+def handle_booking(request, bookings, message, rrule_string):  # noqa: C901
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
-            {
-                "message": message,
-                "bookings": bookings,
-            },
+            {"message": message, "bookings": bookings, "rrule_string": rrule_string},
         )
-
     if request.method == "POST":
-        if has_booking_permission(request.user, booking):
+        if has_booking_permission(request.user, bookings[0]):
+            excepted_dates = []
             for booking in bookings:
-                if booking.room_booked is False:
+                if booking.room_booked:
+                    excepted_dates.append(booking.start_date)
+                else:
                     booking.save()
                     if message:
                         booking_message = BookingMessage(
@@ -380,15 +408,45 @@ def preview_booking_view(request):  # noqa: C901
                             user=request.user,
                         )
                         booking_message.save()
+
+            if bookings[0].rrule and len(excepted_dates) != len(bookings):
+                rrule = RecurrenceRule()
+                rrule.rrule = bookings[0].rrule
+                rrule.start_time = bookings[0].start_time
+                rrule.end_time = bookings[0].end_time
+                rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
+                rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
+                rrule.excepted_dates = excepted_dates
+                rrule.room = bookings[0].room
+                rrule.save()
+                for booking in bookings:
+                    if not booking.room_booked:
+                        booking.recurrence_rule = rrule
+                        booking.save()
+
             request.session.pop("booking_data", None)
 
             messages.success(request, _("Bookings created successfully!"))
             if len(bookings) == 1:
-                return redirect("bookings:show-booking", booking.slug)
+                return redirect("bookings:show-booking", bookings[0].slug)
 
             return redirect("bookings:list-bookings")
 
+        messages.warning(request, _("You dont have the required permissions."))
+        return redirect("bookings:create-booking")
+
+    messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
+
+
+@login_required
+def preview_booking_view(request):
+    booking_data = request.session["booking_data"]
+    if not booking_data:
+        return redirect("bookings:create-booking")
+
+    bookings, message, rrule_string = generate_bookings(request)
+    return handle_booking(request, bookings, message, rrule_string)
 
 
 @login_required

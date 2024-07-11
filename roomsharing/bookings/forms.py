@@ -151,10 +151,7 @@ class BookingForm(forms.Form):
         self.fields["rrule_monthly_byday"].label = False
         self.fields["rrule_monthly_bydate"].label = False
         self.helper.layout = Layout(
-            Div(
-                FloatingField("title", css_class="form-control", wrapper_class="col-8"),
-                css_class="row g-2",
-            ),
+            self.get_title_field(),
             Div(
                 FloatingField("room", css_class="form-control", wrapper_class="col-4"),
                 FloatingField(
@@ -312,6 +309,12 @@ class BookingForm(forms.Form):
             for minute in range(0, 60, 30)
         ]
         self.fields["endtime"].choices = self.fields["starttime"].choices
+
+    def get_title_field(self):
+        return Div(
+            FloatingField("title", css_class="form-control", wrapper_class="col-8"),
+            css_class="row g-2",
+        )
 
     def clean(self):  # noqa: C901
         cleaned_data = super().clean()

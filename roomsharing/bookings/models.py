@@ -3,8 +3,10 @@ import uuid
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
+from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import CharField
 from django.db.models import DateField
@@ -22,6 +24,34 @@ from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
+
+
+class RecurrenceRule(TimeStampedModel):
+    history = AuditlogHistoryField()
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
+    rrule = CharField(_("Recurrence rule"), max_length=200)
+    start_time = TimeField(_("Start time"))
+    end_time = TimeField(_("End time"))
+    first_occurrence_date = DateField(_("First occurrence date"))
+    last_occurrence_date = DateField(_("Last occurrence date"))
+    room = ForeignKey(
+        Room,
+        verbose_name=_("Room"),
+        on_delete=PROTECT,
+        related_name="recurrencerules_of_room",
+        related_query_name="recurrencerule_of_room",
+    )
+    excepted_dates = ArrayField(
+        DateField(), verbose_name=_("Excepted dates"), blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Recurrence rule")
+        verbose_name_plural = _("Recurrence rules")
+        ordering = ["created"]
+
+    def __str__(self):
+        return self.rrule
 
 
 class Booking(TimeStampedModel):
@@ -52,7 +82,15 @@ class Booking(TimeStampedModel):
         related_query_name="booking_of_room",
     )
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
-
+    recurrence_rule = ForeignKey(
+        RecurrenceRule,
+        verbose_name=_("Recurrence rule"),
+        on_delete=CASCADE,
+        related_name="bookings_of_recurrencerule",
+        related_query_name="booking_of_recurrencerule",
+        null=True,
+        blank=True,
+    )
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
     start_date = DateField(_("Start Date"))
     start_time = TimeField(_("Start Time"))
@@ -114,3 +152,4 @@ class BookingMessage(TimeStampedModel):
 
 auditlog.register(Booking, exclude_fields=["created, updated"])
 auditlog.register(BookingMessage, exclude_fields=["created, updated"])
+auditlog.register(RecurrenceRule, exclude_fields=["created, updated"])

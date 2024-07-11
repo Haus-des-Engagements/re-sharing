@@ -37,5 +37,8 @@
         </div>
       </div>
     </div>
+    {% if booking.recurrence_rule %}
+      <div class="card-footer">{% trans "This booking is part of a recurring booking series." %}</div>
+    {% endif %}
   </div>
 </div>
