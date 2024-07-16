@@ -116,7 +116,7 @@ def write_bookingmessage(request, slug):
 
 
 @login_required
-def cancel_booking_view(request, slug, from_page):
+def cancel_booking_view(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
 
     if not user_has_booking_permission(request.user, booking):
@@ -129,12 +129,7 @@ def cancel_booking_view(request, slug, from_page):
             "You cannot cancel a booking in the past or already cancelled."
         )
 
-    if from_page == "detail":
-        template_name = "bookings/partials/show_booking_item.html"
-    else:
-        template_name = "bookings/partials/list_bookings_item.html"
-
-    return render(request, template_name, {"booking": booking})
+    return render(request, "bookings/partials/booking_item.html", {"booking": booking})
 
 
 @login_required

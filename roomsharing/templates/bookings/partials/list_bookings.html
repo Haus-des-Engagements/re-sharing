@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% for booking in bookings %}
-  {% include "bookings/partials/list_bookings_item.html" %}
+  {% include "bookings/partials/booking_item.html" %}
 {% empty %}
   <div>{% trans "No results found." %}</div>
 {% endfor %}

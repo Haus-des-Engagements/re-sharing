@@ -20,7 +20,7 @@ urlpatterns = [
     path("preview-booking/", preview_booking_view, name="preview-booking"),
     path("<slug:booking>/", show_booking_view, name="show-booking"),
     path(
-        "<slug:slug>/cancel-booking/<from_page>/",
+        "<slug:slug>/cancel-booking/",
         cancel_booking_view,
         name="cancel-booking",
     ),

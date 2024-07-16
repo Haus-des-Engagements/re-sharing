@@ -22,15 +22,17 @@
     <div class="col-md-2">
       <div class="card-body">
         <div class="d-grid gap-2">
-          <a class="btn btn-outline-primary"
-             href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "View Details" %}</a>
+          {% if request.resolver_match.view_name == 'bookings:list-bookings' %}
+            <a class="btn btn-outline-primary"
+               href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "View Details" %}</a>
+          {% endif %}
           {% if booking.is_cancelable %}
             <button id="cancel-button"
                     type="submit"
                     class="btn btn-outline-danger mb-3"
                     value="Submit"
                     onclick="return confirm('Are you sure you want to cancel this booking?');"
-                    hx-post="{% url 'bookings:cancel-booking' slug=booking.slug from_page='list' %}"
+                    hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
                     hx-target="#booking-list-item-{{ booking.slug }}"
                     hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
           {% endif %}
