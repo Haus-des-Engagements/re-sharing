@@ -16,6 +16,7 @@ from django.db.models import Q
 from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
@@ -120,6 +121,12 @@ class Booking(TimeStampedModel):
 
     def get_absolute_url(self):
         return reverse("bookings:show-booking", kwargs={"booking": self.slug})
+
+    def is_in_the_past(self):
+        return self.timespan.lower < timezone.now()
+
+    def is_cancelable(self):
+        return not self.is_in_the_past() and self.status != BookingStatus.CANCELLED
 
 
 class BookingMessage(TimeStampedModel):

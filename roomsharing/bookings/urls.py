@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import cancel_booking
+from .views import cancel_booking_view
 from .views import create_booking_view
 from .views import filter_bookings_view
 from .views import list_bookings_view
@@ -21,7 +21,7 @@ urlpatterns = [
     path("<slug:booking>/", show_booking_view, name="show-booking"),
     path(
         "<slug:slug>/cancel-booking/<from_page>/",
-        cancel_booking,
+        cancel_booking_view,
         name="cancel-booking",
     ),
     path(
