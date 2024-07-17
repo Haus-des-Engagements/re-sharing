@@ -43,7 +43,14 @@
              name="show_past_bookings"
              class="form-check-input"
              id="id_show_past_bookings" />
-      <label for="id_show_past_bookings" class="form-check-label">Zeige vergangene Buchungen</label>
+      <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
+    </div>
+    <div class="col-auto form-check">
+      <input type="checkbox"
+             name="hide_recurring_bookings"
+             class="form-check-input"
+             id="id_hide_recurring_bookings" />
+      <label for="id_hide_recurring_bookings" class="form-check-label">{% trans "hide recurring bookings" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

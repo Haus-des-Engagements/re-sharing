@@ -69,7 +69,9 @@ def get_booking_activity_stream(booking):
     return sorted(activity_stream, key=lambda x: x["date"], reverse=True)
 
 
-def filter_bookings_list(organization, show_past_bookings, status, user):
+def filter_bookings_list(
+    organization, show_past_bookings, status, user, hide_recurring_bookings
+):
     organizations = organizations_with_bookingpermission(user)
     bookings = Booking.objects.filter(organization__in=organizations)
     if not show_past_bookings:
@@ -78,5 +80,7 @@ def filter_bookings_list(organization, show_past_bookings, status, user):
         bookings = bookings.filter(organization__slug=organization)
     if status != "all":
         bookings = bookings.filter(status__in=status)
+    if hide_recurring_bookings:
+        bookings = bookings.filter(recurrence_rule__isnull=True)
 
     return bookings, organizations

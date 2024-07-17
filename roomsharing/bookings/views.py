@@ -31,9 +31,10 @@ def list_bookings_view(request):
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "all"
     organization = request.GET.get("organization") or "all"
+    hide_recurring_bookings = request.GET.get("hide_recurring_bookings") or False
 
     bookings, organizations = filter_bookings_list(
-        organization, show_past_bookings, status, request.user
+        organization, show_past_bookings, status, request.user, hide_recurring_bookings
     )
 
     context = {
