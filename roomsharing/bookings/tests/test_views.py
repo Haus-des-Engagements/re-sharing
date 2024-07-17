@@ -69,9 +69,6 @@ class TestListBookingsView(TestCase):
         assert response.status_code == HTTPStatus.OK
         assert len(list(response.context["bookings"])) == total_bookings_for_o1
 
-        form = response.context.get("form")
-        assert form is not None
-
 
 class TestShowBookingView(TestCase):
     def setUp(self):

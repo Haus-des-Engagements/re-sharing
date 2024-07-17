@@ -17,32 +17,18 @@ def test_show_booking(booking: Booking):
     assert resolve(f"/bookings/{booking.slug}/").view_name == "bookings:show-booking"
 
 
-def test_filter_bookings():
-    assert reverse("bookings:filter-bookings") == "/bookings/filter-bookings/"
-    assert resolve("/bookings/filter-bookings/").view_name == "bookings:filter-bookings"
-
-
 def test_create_booking():
     assert reverse("bookings:create-booking") == "/bookings/create-booking/"
     assert resolve("/bookings/create-booking/").view_name == "bookings:create-booking"
 
 
 def test_cancel_booking(booking: Booking):
-    expected_url_details = f"/bookings/{booking.slug}/cancel-booking/detail/"
     assert (
         reverse(
             "bookings:cancel-booking",
-            kwargs={"slug": booking.slug, "from_page": "detail"},
+            kwargs={"slug": booking.slug},
         )
-        == expected_url_details
-    )
-    expected_url_list = f"/bookings/{booking.slug}/cancel-booking/list/"
-    assert (
-        reverse(
-            "bookings:cancel-booking",
-            kwargs={"slug": booking.slug, "from_page": "list"},
-        )
-        == expected_url_list
+        == f"/bookings/{booking.slug}/cancel-booking/"
     )
 
 
