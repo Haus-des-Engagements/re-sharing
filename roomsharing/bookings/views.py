@@ -10,16 +10,14 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from roomsharing.organizations.selectors import organizations_with_bookingpermission
 from roomsharing.organizations.selectors import user_has_booking_permission
+from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
-from .forms import BookingListForm
 from .forms import MessageForm
 from .models import Booking
 from .selectors import filter_bookings_list
 from .selectors import get_booking_activity_stream
-from .selectors import get_future_bookings
 from .services import cancel_booking
 from .services import create_rrule_string
 from .services import generate_bookings
@@ -30,43 +28,25 @@ from .services import set_initial_booking_data
 
 @login_required
 def list_bookings_view(request):
-    organizations = organizations_with_bookingpermission(user=request.user)
-    form = BookingListForm(request.POST or None, organizations=organizations)
-    bookings = get_future_bookings(organizations)
+    show_past_bookings = request.GET.get("show_past_bookings") or False
+    status = request.GET.get("status") or "all"
+    organization = request.GET.get("organization") or "all"
 
-    return render(
-        request,
-        "bookings/list_bookings.html",
-        {"bookings": bookings, "form": form, "current_time": timezone.now()},
+    bookings, organizations = filter_bookings_list(
+        organization, show_past_bookings, status, request.user
     )
 
+    context = {
+        "bookings": bookings,
+        "current_time": timezone.now(),
+        "organizations": organizations,
+        "statuses": BookingStatus.choices,
+    }
 
-@login_required
-def filter_bookings_view(request):
-    organizations = organizations_with_bookingpermission(user=request.user)
-    bookings = Booking.objects.filter(organization__in=organizations)
+    if request.headers.get("HX-Request"):
+        return render(request, "bookings/partials/list_bookings.html", context)
 
-    form = BookingListForm(request.POST or None, organizations=organizations)
-
-    if form.is_valid():
-        show_past_bookings = form.cleaned_data.get("show_past_bookings")
-        status = form.cleaned_data["status"]
-        organization = form.cleaned_data.get("organization")
-
-        bookings = filter_bookings_list(
-            bookings, organization, show_past_bookings, status
-        )
-
-        return render(
-            request,
-            "bookings/partials/list_bookings.html",
-            {"bookings": bookings, "form": form, "current_time": timezone.now()},
-        )
-
-    return HttpResponse(
-        f'<p class="error">Your form submission was unsuccessful. '
-        f"Please would you correct the errors? The current errors: {form.errors}</p>",
-    )
+    return render(request, "bookings/list_bookings.html", context)
 
 
 @login_required
@@ -138,7 +118,7 @@ def preview_booking_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    bookings, message, rrule_string = generate_bookings(request)
+    bookings, message, rrule_string = generate_bookings(booking_data)
     if request.method == "GET":
         return render(
             request,
@@ -191,6 +171,7 @@ def create_booking_view(request):
                 "start_date": form.cleaned_data["startdate"].isoformat(),
                 "start_time": form.cleaned_data["starttime"].isoformat(),
                 "end_time": form.cleaned_data["endtime"].isoformat(),
+                "user": request.user.slug,
             }
 
             if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":

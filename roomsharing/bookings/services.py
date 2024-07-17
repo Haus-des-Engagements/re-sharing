@@ -23,6 +23,7 @@ from roomsharing.bookings.selectors import get_default_booking_status
 from roomsharing.bookings.selectors import room_is_booked
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
+from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
 
@@ -99,14 +100,13 @@ def create_rrule_string(rrule_data):
     return str(recurrence_pattern)
 
 
-def generate_bookings(request):
-    booking_data = request.session["booking_data"]
+def generate_bookings(booking_data):
     message = booking_data["message"]
     timespan = (
         isoparse(booking_data["timespan"][0]),
         isoparse(booking_data["timespan"][1]),
     )
-    user = request.user
+    user = get_object_or_404(User, slug=booking_data["user"])
     title = booking_data["title"]
     room = get_object_or_404(Room, slug=booking_data["room"])
     organization = get_object_or_404(Organization, slug=booking_data["organization"])

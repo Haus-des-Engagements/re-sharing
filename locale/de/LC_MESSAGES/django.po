@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-28 11:53+0200\n"
+"POT-Creation-Date: 2024-07-17 08:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:52
+#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:102
 msgid "Bookings"
 msgstr "Buchungen"
 
@@ -38,134 +38,182 @@ msgstr "Zeige vergangene Buchungen"
 msgid "All"
 msgstr "Alle"
 
-#: roomsharing/bookings/forms.py:50 roomsharing/bookings/models.py:48
-#: roomsharing/organizations/models.py:87
-#: roomsharing/organizations/models.py:118
+#: roomsharing/bookings/forms.py:50 roomsharing/bookings/models.py:85
+#: roomsharing/organizations/models.py:91
+#: roomsharing/organizations/models.py:122
 msgid "Status"
 msgstr "Status"
 
 #: roomsharing/bookings/forms.py:60 roomsharing/organizations/apps.py:7
-#: roomsharing/organizations/models.py:46
+#: roomsharing/organizations/models.py:50
 #: roomsharing/templates/organizations/list_organizations.html:6
 #: roomsharing/templates/organizations/list_organizations.html:12
-#: roomsharing/users/models.py:36
+#: roomsharing/users/models.py:39
 msgid "Organizations"
 msgstr "Organisationen"
 
 #: roomsharing/bookings/forms.py:66
-msgid "Start Date"
-msgstr "Startdatum"
-
-#: roomsharing/bookings/forms.py:69
-msgid "Start Time"
-msgstr "Startuhrzeit"
-
-#: roomsharing/bookings/forms.py:71 roomsharing/bookings/forms.py:108
-msgid "End Date"
+#, fuzzy
+#| msgid "End Date"
+msgid "Date"
 msgstr "Enddatum"
 
-#: roomsharing/bookings/forms.py:74
-msgid "End Time"
-msgstr "Enduhrzeit"
+#: roomsharing/bookings/forms.py:69
+msgid "from"
+msgstr ""
 
-#: roomsharing/bookings/forms.py:78 roomsharing/organizations/models.py:45
-#: roomsharing/organizations/models.py:77
-#: roomsharing/organizations/models.py:104
+#: roomsharing/bookings/forms.py:70
+msgid "until"
+msgstr ""
+
+#: roomsharing/bookings/forms.py:74 roomsharing/organizations/models.py:49
+#: roomsharing/organizations/models.py:81
+#: roomsharing/organizations/models.py:108
 msgid "Organization"
 msgstr "Organisation"
 
-#: roomsharing/bookings/forms.py:80 roomsharing/bookings/models.py:24
-#: roomsharing/rooms/models.py:21
-#: roomsharing/templates/bookings/partials/list_bookings_item.html:16
+#: roomsharing/bookings/forms.py:76 roomsharing/bookings/models.py:61
+#: roomsharing/rooms/models.py:24
+#: roomsharing/templates/bookings/partials/booking_item.html:16
 msgid "Title"
 msgstr "Titel"
 
-#: roomsharing/bookings/forms.py:87 roomsharing/bookings/models.py:43
-#: roomsharing/organizations/models.py:112 roomsharing/rooms/models.py:33
-#: roomsharing/rooms/models.py:53 roomsharing/templates/rooms/show_room.html:6
+#: roomsharing/bookings/forms.py:83 roomsharing/bookings/models.py:40
+#: roomsharing/bookings/models.py:80 roomsharing/organizations/models.py:116
+#: roomsharing/rooms/models.py:36 roomsharing/rooms/models.py:56
+#: roomsharing/templates/rooms/show_room.html:6
 msgid "Room"
 msgstr "Raum"
 
-#: roomsharing/bookings/forms.py:91
+#: roomsharing/bookings/forms.py:87
 msgid "No repetitions"
 msgstr "Keine Wiederholungen"
 
-#: roomsharing/bookings/forms.py:92
+#: roomsharing/bookings/forms.py:88
 msgid "Daily"
 msgstr "Täglich"
 
-#: roomsharing/bookings/forms.py:93
+#: roomsharing/bookings/forms.py:89
 msgid "Weekly"
 msgstr "Wöchentlich"
 
-#: roomsharing/bookings/forms.py:94
+#: roomsharing/bookings/forms.py:90
 msgid "Monthly by weekday"
 msgstr "Monatlich nach Wochentag"
 
-#: roomsharing/bookings/forms.py:95
+#: roomsharing/bookings/forms.py:91
 msgid "Monthly by date"
 msgstr "Monatlich nach Datum"
 
-#: roomsharing/bookings/forms.py:97
+#: roomsharing/bookings/forms.py:93
 msgid "Repeat"
 msgstr "Wiederholen"
 
-#: roomsharing/bookings/forms.py:99
+#: roomsharing/bookings/forms.py:95
 msgid "after"
 msgstr "nach"
 
-#: roomsharing/bookings/forms.py:100
+#: roomsharing/bookings/forms.py:96
 msgid "at"
 msgstr "am"
 
-#: roomsharing/bookings/forms.py:105
+#: roomsharing/bookings/forms.py:101
 msgid "ends"
 msgstr "endet"
 
-#: roomsharing/bookings/forms.py:116 roomsharing/bookings/forms.py:119
-#: roomsharing/bookings/forms.py:128
+#: roomsharing/bookings/forms.py:104
+msgid "End Date"
+msgstr "Enddatum"
+
+#: roomsharing/bookings/forms.py:112 roomsharing/bookings/forms.py:115
+#: roomsharing/bookings/forms.py:124
 msgid "Repetition frequency"
 msgstr "Wiederholungshäufigkeit"
 
-#: roomsharing/bookings/forms.py:125 roomsharing/bookings/forms.py:134
-#: roomsharing/bookings/forms.py:140
+#: roomsharing/bookings/forms.py:121 roomsharing/bookings/forms.py:130
+#: roomsharing/bookings/forms.py:136
 msgid "Repeat on these days"
 msgstr "Wiederhole an diesen Tagen"
 
-#: roomsharing/bookings/forms.py:147
+#: roomsharing/bookings/forms.py:143
 #: roomsharing/templates/bookings/preview-booking.html:9
 msgid "Preview"
 msgstr "Vorschau"
 
-#: roomsharing/bookings/forms.py:359
+#: roomsharing/bookings/forms.py:337
 msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: roomsharing/bookings/forms.py:379
+#: roomsharing/bookings/forms.py:357
 msgid "The end must be after the start."
 msgstr ""
 
-#: roomsharing/bookings/forms.py:384
+#: roomsharing/bookings/forms.py:362
 msgid "The start must be in the future."
 msgstr ""
 
-#: roomsharing/bookings/forms.py:395
+#: roomsharing/bookings/forms.py:373
 msgid "The room is already booked during your selected timeslot."
 msgstr "Der Raum ist zu der Zeit (zumindest teilweise) belegt."
 
-#: roomsharing/bookings/models.py:28
+#: roomsharing/bookings/models.py:33 roomsharing/bookings/models.py:50
+#: roomsharing/bookings/models.py:88
+msgid "Recurrence rule"
+msgstr ""
+
+#: roomsharing/bookings/models.py:34
+#, fuzzy
+#| msgid "Start Time"
+msgid "Start time"
+msgstr "Startuhrzeit"
+
+#: roomsharing/bookings/models.py:35
+#, fuzzy
+#| msgid "End Time"
+msgid "End time"
+msgstr "Enduhrzeit"
+
+#: roomsharing/bookings/models.py:36
+msgid "First occurrence date"
+msgstr ""
+
+#: roomsharing/bookings/models.py:37
+msgid "Last occurrence date"
+msgstr ""
+
+#: roomsharing/bookings/models.py:46
+msgid "Excepted dates"
+msgstr ""
+
+#: roomsharing/bookings/models.py:51
+msgid "Recurrence rules"
+msgstr ""
+
+#: roomsharing/bookings/models.py:65
 msgid "Booking Organization"
 msgstr "Buchende Organisation"
 
-#: roomsharing/bookings/models.py:35
+#: roomsharing/bookings/models.py:72
 msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
-#: roomsharing/bookings/models.py:51 roomsharing/bookings/models.py:80
+#: roomsharing/bookings/models.py:96
+msgid "Start Date"
+msgstr "Startdatum"
+
+#: roomsharing/bookings/models.py:97
+msgid "Start Time"
+msgstr "Startuhrzeit"
+
+#: roomsharing/bookings/models.py:98
+msgid "End Time"
+msgstr "Enduhrzeit"
+
+#: roomsharing/bookings/models.py:101 roomsharing/bookings/models.py:137
 msgid "Booking"
 msgstr "Buchung"
 
-#: roomsharing/bookings/models.py:58
+#: roomsharing/bookings/models.py:108
 msgid ""
 "The requested timespan overlaps with an existing booking for this room. "
 "Please chose another timespan."
@@ -173,186 +221,194 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diesen "
 "Raum. Bitte wähle einen anderen Zeitraum."
 
-#: roomsharing/bookings/models.py:85
+#: roomsharing/bookings/models.py:142
 #: roomsharing/templates/bookings/partials/show_bookingmessage.html:21
-#: roomsharing/templates/bookings/preview-booking.html:37
+#: roomsharing/templates/bookings/preview-booking.html:38
 #: roomsharing/templates/bookings/show-booking.html:69
 msgid "Message"
 msgstr "Nachricht"
 
-#: roomsharing/bookings/models.py:88 roomsharing/organizations/models.py:69
-#: roomsharing/users/models.py:60
+#: roomsharing/bookings/models.py:145 roomsharing/organizations/models.py:73
+#: roomsharing/users/models.py:54
 msgid "User"
 msgstr "Nutzer:in"
 
-#: roomsharing/bookings/models.py:95
+#: roomsharing/bookings/models.py:152
 msgid "Booking Message"
 msgstr "Nachricht zur Buchung"
 
-#: roomsharing/bookings/models.py:96
+#: roomsharing/bookings/models.py:153
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: roomsharing/bookings/views.py:365
+#: roomsharing/bookings/views.py:153
 msgid "Bookings created successfully!"
 msgstr "Buchungen erfolgreich erstellt!"
 
-#: roomsharing/organizations/models.py:20
+#: roomsharing/bookings/views.py:160
+msgid "You dont have the required permissions."
+msgstr ""
+
+#: roomsharing/bookings/views.py:163
+msgid "Sorry, something went wrong. Please try again."
+msgstr ""
+
+#: roomsharing/organizations/models.py:23
 msgid "Without legal form"
 msgstr "Ohne Rechtsform"
 
-#: roomsharing/organizations/models.py:21
+#: roomsharing/organizations/models.py:24
 msgid "Registered association"
 msgstr "eingetragener Verein (e.V.)"
 
-#: roomsharing/organizations/models.py:22
+#: roomsharing/organizations/models.py:25
 msgid "Not registered association"
 msgstr "nicht eingetragener Verein"
 
-#: roomsharing/organizations/models.py:23
+#: roomsharing/organizations/models.py:26
 msgid "Foundation"
 msgstr "Stifung"
 
-#: roomsharing/organizations/models.py:24
+#: roomsharing/organizations/models.py:27
 msgid "Civil law company"
 msgstr "Geselslchaft bürgerlichen Rechts (GbR)"
 
-#: roomsharing/organizations/models.py:25
+#: roomsharing/organizations/models.py:28
 msgid "Limited company"
 msgstr "Gesellschaft mit beschränkter Haftung (GmbH)"
 
-#: roomsharing/organizations/models.py:26
+#: roomsharing/organizations/models.py:29
 msgid "Limited charitable company"
 msgstr "gemeinnützige GmbH"
 
-#: roomsharing/organizations/models.py:27
+#: roomsharing/organizations/models.py:30
 msgid "Cooperative"
 msgstr "Genossenschaft"
 
-#: roomsharing/organizations/models.py:28
+#: roomsharing/organizations/models.py:31
 msgid "Charitable cooperative"
 msgstr "gemeinnützige Genossenschaft"
 
-#: roomsharing/organizations/models.py:29
+#: roomsharing/organizations/models.py:32
 msgid "Individual entrepreneur"
 msgstr "Einzelunternehmer:in"
 
-#: roomsharing/organizations/models.py:30
+#: roomsharing/organizations/models.py:33
 msgid "Other"
 msgstr "Andere"
 
-#: roomsharing/organizations/models.py:33
+#: roomsharing/organizations/models.py:37
 msgid "Name"
 msgstr "Name"
 
-#: roomsharing/organizations/models.py:35 roomsharing/users/models.py:41
+#: roomsharing/organizations/models.py:39
 msgid "Street"
 msgstr "Straße"
 
-#: roomsharing/organizations/models.py:36
+#: roomsharing/organizations/models.py:40
 msgid "House number"
 msgstr "Hausnummer"
 
-#: roomsharing/organizations/models.py:37 roomsharing/users/models.py:43
+#: roomsharing/organizations/models.py:41
 msgid "Zip Code"
 msgstr "Postleitzahl"
 
-#: roomsharing/organizations/models.py:38 roomsharing/users/models.py:44
+#: roomsharing/organizations/models.py:42
 msgid "City"
 msgstr "Stadt"
 
-#: roomsharing/organizations/models.py:39
+#: roomsharing/organizations/models.py:43
 msgid "Legal form"
 msgstr "Rechtsform"
 
-#: roomsharing/organizations/models.py:41
+#: roomsharing/organizations/models.py:45
 msgid "Certificate of tax exemption"
 msgstr "Freistellungsbescheid"
 
-#: roomsharing/organizations/models.py:58
+#: roomsharing/organizations/models.py:62
 msgid "Administrator"
 msgstr "Administrator"
 
-#: roomsharing/organizations/models.py:59
+#: roomsharing/organizations/models.py:63
 msgid "Booker"
 msgstr "Buchende:r"
 
-#: roomsharing/organizations/models.py:62 roomsharing/utils/models.py:27
+#: roomsharing/organizations/models.py:66 roomsharing/utils/models.py:27
 msgid "Pending"
 msgstr "Ausstehend"
 
-#: roomsharing/organizations/models.py:63 roomsharing/utils/models.py:28
+#: roomsharing/organizations/models.py:67 roomsharing/utils/models.py:28
 msgid "Confirmed"
 msgstr "Bestätigt"
 
-#: roomsharing/organizations/models.py:64
+#: roomsharing/organizations/models.py:68
 msgid "Rejected"
 msgstr "Abgelehnt"
 
-#: roomsharing/organizations/models.py:84
+#: roomsharing/organizations/models.py:88
 msgid "Role"
 msgstr "Rolle"
 
-#: roomsharing/organizations/models.py:92
+#: roomsharing/organizations/models.py:96
 msgid "Booking permission"
 msgstr "Buchungsberechtigung"
 
-#: roomsharing/organizations/models.py:93
+#: roomsharing/organizations/models.py:97
 msgid "Booking permissions"
 msgstr "Buchungsberechtigungen"
 
-#: roomsharing/organizations/models.py:122
+#: roomsharing/organizations/models.py:126
 msgid "Default booking status"
 msgstr "Standard Buchungsstatus"
 
-#: roomsharing/organizations/models.py:123
+#: roomsharing/organizations/models.py:127
 msgid "Default booking statuses"
 msgstr "Standard Buchungsstatuse"
 
-#: roomsharing/rooms/apps.py:7 roomsharing/rooms/models.py:34
+#: roomsharing/rooms/apps.py:7 roomsharing/rooms/models.py:37
 #: roomsharing/templates/base.html:67
 #: roomsharing/templates/rooms/list_rooms.html:6
 #: roomsharing/templates/rooms/list_rooms.html:9
 msgid "Rooms"
 msgstr "Räume"
 
-#: roomsharing/rooms/models.py:23 roomsharing/rooms/models.py:63
+#: roomsharing/rooms/models.py:26 roomsharing/rooms/models.py:66
 msgid "Description"
 msgstr "Beschreibung"
 
-#: roomsharing/rooms/models.py:24
+#: roomsharing/rooms/models.py:27
 msgid "Square Meters"
 msgstr "Quadratmeter"
 
-#: roomsharing/rooms/models.py:25
+#: roomsharing/rooms/models.py:28
 msgid "Maximum Number of Persons"
 msgstr "Maximale Anzahl an Personen"
 
-#: roomsharing/rooms/models.py:26
+#: roomsharing/rooms/models.py:29
 msgid "General Bookable Times"
 msgstr "Buchbare Zeiten"
 
-#: roomsharing/rooms/models.py:27
+#: roomsharing/rooms/models.py:30
 msgid "Pricing conditions"
 msgstr "Finanzielle Bedingungen"
 
-#: roomsharing/rooms/models.py:28
+#: roomsharing/rooms/models.py:31
 msgid "Included Equipment"
 msgstr "Vorhandene Ausstattung"
 
-#: roomsharing/rooms/models.py:29
+#: roomsharing/rooms/models.py:32
 msgid "Bookable Equipment"
 msgstr "Buchbare Ausstattung"
 
-#: roomsharing/rooms/models.py:30
+#: roomsharing/rooms/models.py:33
 msgid "Manager"
 msgstr ""
 
-#: roomsharing/rooms/models.py:69
+#: roomsharing/rooms/models.py:72
 msgid "Room Image"
 msgstr "Raumbild"
 
-#: roomsharing/rooms/models.py:70
+#: roomsharing/rooms/models.py:73
 msgid "Room Images"
 msgstr "Raumbilder"
 
@@ -385,43 +441,63 @@ msgstr "Abmelden"
 msgid "Sign Up"
 msgstr "Registrieren"
 
-#: roomsharing/templates/bookings/list_bookings.html:9
-msgid "All bookings"
-msgstr "Alle Buchungen"
+#: roomsharing/templates/bookings/list_bookings.html:10
+#, fuzzy
+#| msgid "My Bookings"
+msgid "My bookings"
+msgstr "Meine Buchungen"
 
-#: roomsharing/templates/bookings/list_bookings.html:16
+#: roomsharing/templates/bookings/list_bookings.html:17
 msgid "New Booking"
 msgstr "Neue Buchung"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:18
+#: roomsharing/templates/bookings/preview-booking.html:31
+msgid "Booked by:"
+msgstr "Gebucht von"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:18
+#: roomsharing/templates/bookings/preview-booking.html:31
+msgid "for"
+msgstr "für"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:27
+#: roomsharing/templates/organizations/partials/list_filter_organizations.html:34
+msgid "View Details"
+msgstr "Details ansehen"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:34
+msgid "Are you sure you want to cancel this booking?"
+msgstr "Möchest du diese Buchung wirklich stornieren?"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:37
+msgid "Cancel Booking"
+msgstr "Buchung stornieren"
+
+#: roomsharing/templates/bookings/partials/booking_item.html:43
+msgid "This booking is part of a recurring booking series."
+msgstr ""
 
 #: roomsharing/templates/bookings/partials/list_bookings.html:6
 msgid "No results found."
 msgstr "Keine Ergebnisse gefunden."
 
-#: roomsharing/templates/bookings/partials/list_bookings_item.html:18
-#: roomsharing/templates/bookings/partials/show_booking_item.html:17
-#: roomsharing/templates/bookings/preview-booking.html:30
-msgid "Booked by:"
-msgstr "Gebucht von"
-
-#: roomsharing/templates/bookings/partials/list_bookings_item.html:18
-#: roomsharing/templates/bookings/partials/show_booking_item.html:17
-#: roomsharing/templates/bookings/preview-booking.html:30
-msgid "for"
-msgstr "für"
-
-#: roomsharing/templates/bookings/partials/list_bookings_item.html:26
-#: roomsharing/templates/organizations/partials/list_filter_organizations.html:34
-msgid "View Details"
-msgstr "Details ansehen"
-
-#: roomsharing/templates/bookings/partials/list_bookings_item.html:35
-#: roomsharing/templates/bookings/partials/show_booking_item.html:32
-msgid "Cancel Booking"
-msgstr "Buchung stornieren"
-
-#: roomsharing/templates/bookings/preview-booking.html:23
+#: roomsharing/templates/bookings/preview-booking.html:24
 msgid "Room not free at this date"
 msgstr "Raum ist nict frei an diesem Datum"
+
+#: roomsharing/templates/bookings/preview-booking.html:48
+msgid ""
+"We will also create bookings for the following dates (same time, same room)."
+msgstr "Es werden auch Buchungn für die folgenden Daten (gleiche Uhrzeit, gleicher Raum) erstellt."
+
+#: roomsharing/templates/bookings/preview-booking.html:55
+msgid "Room not free at this date."
+msgstr "Raum ist nicht frei an diesem Datum"
+
+#: roomsharing/templates/bookings/preview-booking.html:65
+msgid "Back"
+msgstr "Zurück"
 
 #: roomsharing/templates/bookings/show-booking.html:11
 msgid "Timeline"
@@ -476,7 +552,7 @@ msgid "Cancel booking permission request"
 msgstr "Anfrage für Buchungsberechtigung abbrechen"
 
 #: roomsharing/templates/organizations/partials/list_filter_organizations.html:49
-#: roomsharing/templates/organizations/show_organization.html:99
+#: roomsharing/templates/organizations/show_organization.html:101
 msgid "Cancel booking permission"
 msgstr "Buchungsberechtigung beenden"
 
@@ -496,19 +572,19 @@ msgstr "Buchungsberechtigte"
 msgid "Only visible for other authorised persons."
 msgstr "Buchungsberechtigte sind nur für andere Buchungsberechtigte sichtbar."
 
-#: roomsharing/templates/organizations/show_organization.html:77
+#: roomsharing/templates/organizations/show_organization.html:79
 msgid "Addresses are only visible to admins"
 msgstr "Adressen können nur von Admins gesehen werden."
 
-#: roomsharing/templates/organizations/show_organization.html:90
+#: roomsharing/templates/organizations/show_organization.html:92
 msgid "Confirm booking permission"
 msgstr "Buchungsberechtigung bestätigen"
 
-#: roomsharing/templates/organizations/show_organization.html:107
+#: roomsharing/templates/organizations/show_organization.html:108
 msgid "Promote to admin"
 msgstr "Zum Admin machen"
 
-#: roomsharing/templates/organizations/show_organization.html:116
+#: roomsharing/templates/organizations/show_organization.html:115
 msgid "Demote to booker"
 msgstr "Zum Buchenden herabstufen"
 
@@ -558,7 +634,7 @@ msgstr "Berechtigungen"
 msgid "Important dates"
 msgstr "Wichtige Daten"
 
-#: roomsharing/users/apps.py:9 roomsharing/users/models.py:61
+#: roomsharing/users/apps.py:9 roomsharing/users/models.py:55
 msgid "Users"
 msgstr "Nutzer:innen"
 
@@ -566,25 +642,17 @@ msgstr "Nutzer:innen"
 msgid "This email has already been taken."
 msgstr "Diese E-Mail ist bereits vergeben."
 
-#: roomsharing/users/models.py:28
+#: roomsharing/users/models.py:31
 msgid "First Name"
 msgstr "Vorname"
 
-#: roomsharing/users/models.py:29
+#: roomsharing/users/models.py:32
 msgid "Last Name"
 msgstr "Nachname"
 
-#: roomsharing/users/models.py:31
+#: roomsharing/users/models.py:34
 msgid "email address"
 msgstr "E-Mail Adresse"
-
-#: roomsharing/users/models.py:42
-msgid "House Number"
-msgstr "Hausnummer"
-
-#: roomsharing/users/models.py:45
-msgid "Phone Number"
-msgstr "Telefonnummer"
 
 #: roomsharing/users/tests/test_views.py:72 roomsharing/users/views.py:24
 msgid "Information successfully updated"

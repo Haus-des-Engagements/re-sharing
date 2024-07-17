@@ -2,7 +2,6 @@ from django.urls import path
 
 from .views import cancel_booking_view
 from .views import create_booking_view
-from .views import filter_bookings_view
 from .views import list_bookings_view
 from .views import preview_booking_view
 from .views import show_booking_view
@@ -11,11 +10,6 @@ from .views import write_bookingmessage
 app_name = "bookings"
 urlpatterns = [
     path("", list_bookings_view, name="list-bookings"),
-    path(
-        "filter-bookings/",
-        filter_bookings_view,
-        name="filter-bookings",
-    ),
     path("create-booking/", create_booking_view, name="create-booking"),
     path("preview-booking/", preview_booking_view, name="preview-booking"),
     path("<slug:booking>/", show_booking_view, name="show-booking"),

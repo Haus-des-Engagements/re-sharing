@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from roomsharing.organizations.models import DefaultBookingStatus
+from roomsharing.organizations.selectors import organizations_with_bookingpermission
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
@@ -68,7 +69,9 @@ def get_booking_activity_stream(booking):
     return sorted(activity_stream, key=lambda x: x["date"], reverse=True)
 
 
-def filter_bookings_list(bookings, organization, show_past_bookings, status):
+def filter_bookings_list(organization, show_past_bookings, status, user):
+    organizations = organizations_with_bookingpermission(user)
+    bookings = Booking.objects.filter(organization__in=organizations)
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":
@@ -76,4 +79,4 @@ def filter_bookings_list(bookings, organization, show_past_bookings, status):
     if status != "all":
         bookings = bookings.filter(status__in=status)
 
-    return bookings
+    return bookings, organizations

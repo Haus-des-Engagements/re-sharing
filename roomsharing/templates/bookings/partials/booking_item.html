@@ -31,7 +31,7 @@
                     type="submit"
                     class="btn btn-outline-danger mb-3"
                     value="Submit"
-                    onclick="return confirm('Are you sure you want to cancel this booking?');"
+                    hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
                     hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
                     hx-target="#booking-list-item-{{ booking.slug }}"
                     hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
