@@ -1,6 +1,7 @@
 from datetime import datetime
 from http import HTTPStatus
 
+from auditlog.context import set_actor
 from dateutil.parser import isoparse
 from dateutil.rrule import DAILY
 from dateutil.rrule import FR
@@ -21,9 +22,9 @@ from django.utils import timezone
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
-from roomsharing.bookings.selectors import get_default_booking_status
-from roomsharing.bookings.selectors import room_is_booked
+from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Organization
+from roomsharing.organizations.selectors import organizations_with_bookingpermission
 from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
@@ -240,7 +241,7 @@ def set_initial_booking_data(endtime, startdate, starttime):
 
 
 class InvalidBookingOperationError(Exception):
-    def __init__(self, message, status_code):
+    def __init__(self):
         self.message = "You cannot perform this action."
         self.status_code = HTTPStatus.BAD_REQUEST
 
@@ -252,7 +253,103 @@ def cancel_booking(user, slug):
         raise PermissionDenied
 
     if booking.is_cancelable():
-        booking.status = BookingStatus.CANCELLED
+        with set_actor(user):
+            booking.status = BookingStatus.CANCELLED
+            booking.save()
+        return booking
+
+    raise InvalidBookingOperationError
+
+
+def room_is_booked(room, start_datetime, end_datetime):
+    return (
+        Booking.objects.all()
+        .filter(
+            status=BookingStatus.CONFIRMED,
+            room=room,
+            timespan__overlap=(start_datetime, end_datetime),
+        )
+        .exists()
+    )
+
+
+def get_default_booking_status(organization, room):
+    default_booking_status = DefaultBookingStatus.objects.filter(
+        organization=organization, room=room
+    )
+    if default_booking_status.exists():
+        return default_booking_status.first().status
+
+    return BookingStatus.PENDING
+
+
+def get_future_bookings(organizations):
+    return Booking.objects.filter(organization__in=organizations).filter(
+        timespan__endswith__gte=timezone.now()
+    )
+
+
+def get_booking_activity_stream(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    activity_stream = []
+    booking_logs = booking.history.filter(changes__has_key="status").exclude(
+        changes__status__contains="None"
+    )
+    for log_entry in booking_logs:
+        status_integer_old = int(log_entry.changes["status"][0])
+        status_text_old = dict(BookingStatus.choices).get(status_integer_old)
+
+        status_integer_new = int(log_entry.changes["status"][1])
+        status_text_new = dict(BookingStatus.choices).get(status_integer_new)
+        status_change_dict = {
+            "date": log_entry.timestamp,
+            "type": "status_change",
+            "old_status": [status_integer_old, status_text_old],
+            "new_status": [status_integer_new, status_text_new],
+            "user": get_object_or_404(User, id=log_entry.actor_id),
+        }
+        activity_stream.append(status_change_dict)
+    messages = BookingMessage.objects.filter(booking=booking)
+    for message in messages:
+        message_dict = {
+            "date": message.created,
+            "type": "message",
+            "text": message.text,
+            "user": message.user,
+        }
+        activity_stream.append(message_dict)
+    return sorted(activity_stream, key=lambda x: x["date"], reverse=True), booking
+
+
+def filter_bookings_list(
+    organization, show_past_bookings, status, user, hide_recurring_bookings
+):
+    organizations = organizations_with_bookingpermission(user)
+    bookings = Booking.objects.filter(organization__in=organizations)
+    if not show_past_bookings:
+        bookings = bookings.filter(timespan__endswith__gte=timezone.now())
+    if organization != "all":
+        bookings = bookings.filter(organization__slug=organization)
+    if status != "all":
+        bookings = bookings.filter(status__in=status)
+    if hide_recurring_bookings:
+        bookings = bookings.filter(recurrence_rule__isnull=True)
+
+    return bookings, organizations
+
+
+def confirm_booking(user, slug):
+    booking = get_object_or_404(Booking, slug=slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    if booking.is_confirmable():
+        booking.status = BookingStatus.CONFIRMED
         booking.save()
         return booking
 

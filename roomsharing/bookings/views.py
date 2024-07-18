@@ -15,12 +15,12 @@ from roomsharing.utils.models import BookingStatus
 from .forms import BookingForm
 from .forms import MessageForm
 from .models import Booking
-from .selectors import filter_bookings_list
-from .selectors import get_booking_activity_stream
 from .services import InvalidBookingOperationError
 from .services import cancel_booking
 from .services import create_rrule_string
+from .services import filter_bookings_list
 from .services import generate_bookings
+from .services import get_booking_activity_stream
 from .services import save_bookingmessage
 from .services import save_bookings
 from .services import set_initial_booking_data
@@ -52,9 +52,7 @@ def list_bookings_view(request):
 
 @login_required
 def show_booking_view(request, booking):
-    booking = get_object_or_404(Booking, slug=booking)
-    form = MessageForm()
-    activity_stream = get_booking_activity_stream(request.user, booking)
+    activity_stream, booking = get_booking_activity_stream(request.user, booking)
 
     return render(
         request,
@@ -62,8 +60,6 @@ def show_booking_view(request, booking):
         {
             "booking": booking,
             "activity_stream": activity_stream,
-            "form": form,
-            "current_time": timezone.now(),
         },
     )
 
