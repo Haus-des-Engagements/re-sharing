@@ -16,6 +16,8 @@ from .forms import OrganizationForm
 from .forms import OrganizationsListFilter
 from .models import BookingPermission
 from .models import Organization
+from .selectors import user_has_admin_bookingpermission
+from .selectors import user_has_normal_bookingpermission
 
 
 @login_required
@@ -75,25 +77,6 @@ def filter_organizations_view(request):
     )
 
 
-def user_has_bookingpermission(user, organization):
-    return (
-        BookingPermission.objects.filter(user=user)
-        .filter(organization=organization)
-        .filter(status=BookingPermission.Status.CONFIRMED)
-        .exists()
-    )
-
-
-def user_has_admin_bookingpermission(user, organization):
-    return (
-        BookingPermission.objects.filter(user=user)
-        .filter(organization=organization)
-        .filter(status=BookingPermission.Status.CONFIRMED)
-        .filter(role=BookingPermission.Role.ADMIN)
-        .exists()
-    )
-
-
 @login_required
 def show_organization_view(request, organization):
     organization = get_object_or_404(Organization, slug=organization)
@@ -109,7 +92,7 @@ def show_organization_view(request, organization):
         )
         is_admin = True
 
-    elif user_has_bookingpermission(request.user, organization):
+    elif user_has_normal_bookingpermission(request.user, organization):
         bookingpermissions = BookingPermission.objects.filter(organization=organization)
         permitted = User.objects.filter(
             user_of_bookingpermission__in=bookingpermissions

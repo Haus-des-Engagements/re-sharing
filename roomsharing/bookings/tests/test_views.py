@@ -90,11 +90,7 @@ class TestShowBookingView(TestCase):
         client = Client()
         client.force_login(self.user)
         response = client.get(self.show_booking_url)
-        self.assertContains(
-            response,
-            "You do not have the permission to see this booking.",
-            status_code=HTTPStatus.UNAUTHORIZED,
-        )
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     def test_has_booking_permission(self):
         BookingPermissionFactory(

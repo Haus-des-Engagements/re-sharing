@@ -1,8 +1,10 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.selectors import organizations_with_bookingpermission
+from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
@@ -38,7 +40,10 @@ def get_future_bookings(organizations):
     )
 
 
-def get_booking_activity_stream(booking):
+def get_booking_activity_stream(user, booking):
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
     activity_stream = []
     booking_logs = booking.history.filter(changes__has_key="status").exclude(
         changes__status__contains="None"

@@ -1,7 +1,6 @@
-from http import HTTPStatus
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
@@ -10,7 +9,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from roomsharing.organizations.selectors import user_has_booking_permission
+from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -18,6 +17,7 @@ from .forms import MessageForm
 from .models import Booking
 from .selectors import filter_bookings_list
 from .selectors import get_booking_activity_stream
+from .services import InvalidBookingOperationError
 from .services import cancel_booking
 from .services import create_rrule_string
 from .services import generate_bookings
@@ -53,15 +53,8 @@ def list_bookings_view(request):
 @login_required
 def show_booking_view(request, booking):
     booking = get_object_or_404(Booking, slug=booking)
-
-    if not user_has_booking_permission(request.user, booking):
-        return HttpResponse(
-            "You do not have the permission to see this booking.",
-            status=HTTPStatus.UNAUTHORIZED,
-        )
-
     form = MessageForm()
-    activity_stream = get_booking_activity_stream(booking)
+    activity_stream = get_booking_activity_stream(request.user, booking)
 
     return render(
         request,
@@ -80,7 +73,7 @@ def write_bookingmessage(request, slug):
     booking = get_object_or_404(Booking, slug=slug)
     form = MessageForm(request.POST or None)
 
-    if not user_has_booking_permission(request.user, booking):
+    if not user_has_bookingpermission(request.user, booking):
         return HttpResponseForbidden("You do not have permission to do this action")
 
     if form.is_valid():
@@ -98,17 +91,10 @@ def write_bookingmessage(request, slug):
 
 @login_required
 def cancel_booking_view(request, slug):
-    booking = get_object_or_404(Booking, slug=slug)
-
-    if not user_has_booking_permission(request.user, booking):
-        return HttpResponseForbidden("You do not have permission to do this action")
-
-    if booking.is_cancelable():
-        cancel_booking(booking)
-    else:
-        return HttpResponse(
-            "You cannot cancel a booking in the past or already cancelled."
-        )
+    try:
+        booking = cancel_booking(request.user, slug)
+    except (InvalidBookingOperationError, PermissionDenied) as e:
+        return HttpResponse(e.message, status=e.status_code)
 
     return render(request, "bookings/partials/booking_item.html", {"booking": booking})
 
@@ -127,7 +113,7 @@ def preview_booking_view(request):
             {"message": message, "bookings": bookings, "rrule_string": rrule_string},
         )
     if request.method == "POST":
-        if user_has_booking_permission(request.user, bookings[0]):
+        if user_has_bookingpermission(request.user, bookings[0]):
             save_bookings(bookings, message, rrule_string)
 
             request.session.pop("booking_data", None)

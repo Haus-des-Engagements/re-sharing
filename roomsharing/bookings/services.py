@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 
 from dateutil.parser import isoparse
 from dateutil.rrule import DAILY
@@ -13,6 +14,7 @@ from dateutil.rrule import WE
 from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
 from dateutil.rrule import rrulestr
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -22,6 +24,7 @@ from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.bookings.selectors import get_default_booking_status
 from roomsharing.bookings.selectors import room_is_booked
 from roomsharing.organizations.models import Organization
+from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
@@ -236,7 +239,21 @@ def set_initial_booking_data(endtime, startdate, starttime):
     return initial_data
 
 
-def cancel_booking(booking):
-    booking.status = BookingStatus.CANCELLED
-    booking.save()
-    return booking
+class InvalidBookingOperationError(Exception):
+    def __init__(self, message, status_code):
+        self.message = "You cannot perform this action."
+        self.status_code = HTTPStatus.BAD_REQUEST
+
+
+def cancel_booking(user, slug):
+    booking = get_object_or_404(Booking, slug=slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    if booking.is_cancelable():
+        booking.status = BookingStatus.CANCELLED
+        booking.save()
+        return booking
+
+    raise InvalidBookingOperationError
