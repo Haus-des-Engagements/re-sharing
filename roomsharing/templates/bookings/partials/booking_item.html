@@ -40,7 +40,12 @@
       </div>
     </div>
     {% if booking.recurrence_rule %}
-      <div class="card-footer">{% trans "This booking is part of a recurring booking series." %}</div>
+      <div class="card-footer">
+        <svg width="1em" height="1em">
+          <use href="#bi-arrow-repeat" />
+        </svg>
+        {{ booking.recurrence_rule.get_human_readable_rrule }} <a href="{% url 'bookings:show-recurrence' rrule=booking.recurrence_rule.uuid %}"> ({% trans "show all occurrences" %})</a>
+      </div>
     {% endif %}
   </div>
 </div>

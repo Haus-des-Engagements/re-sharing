@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <h1 class="mt-4">
+    {% trans "My recurring bookings" %}
+    <a class="btn btn-outline-primary"
+       href="{% url 'bookings:create-booking' %}"
+       role="button">
+      <svg width="1em" height="1em">
+        <use href="#bi-plus-lg" />
+      </svg>
+      {% trans "New Booking" %}
+    </a>
+  </h1>
+  <div id="recurrences-list">
+    {% for rrule in recurrences %}
+      <div class="card mb-3 mt-4">
+        <div class="row g-0">
+          <div class="col col-md-2 card-body text-center">
+            <p class="h5">
+              {{ rrule.first_occurrence_date }}
+              <br />
+              -
+              <br />
+              {{ rrule.last_occurrence_date }}
+            </p>
+            <p class="h6">{{ rrule.start_time|date:"H:i" }} - {{ rrule.end_time|date:"H:i" }}</p>
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">{{ rrule.room }}</h5>
+              <p class="card-text">
+                {% trans "Title" %}: <em>{{ rrule }}</em>
+                <br />
+                {% trans "Booked by:" %} <em>{{ rrule.get_first_booking.user }}</em> {% trans "for" %}
+                <em>{{ rrule.get_first_booking.organization }}</em>
+                <br />
+                {% trans "Occurrences" %}: {{ rrule.number_of_occurrences }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <a class="btn btn-outline-primary"
+                   href="{% url 'bookings:show-recurrence' rrule=rrule.uuid %}">{% trans "View Details" %}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">{{ rrule.get_human_readable_rrule }}</div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock content %}

@@ -1,7 +1,9 @@
+import re
 import uuid
 
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
+from dateutil.rrule import rrulestr
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import DateTimeRangeField
@@ -16,13 +18,18 @@ from django.db.models import Q
 from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.urls import reverse
+from django.utils import formats
 from django.utils import timezone
+from django.utils.dates import WEEKDAYS
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
+from roomsharing.utils.dicts import RRULE_DAILY_INTERVAL
+from roomsharing.utils.dicts import RRULE_MONTHLY_INTERVAL
+from roomsharing.utils.dicts import RRULE_WEEKLY_INTERVAL
 from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
 
@@ -52,7 +59,62 @@ class RecurrenceRule(TimeStampedModel):
         ordering = ["created"]
 
     def __str__(self):
-        return self.rrule
+        return self.bookings_of_recurrencerule.first().title
+
+    def get_rrule_params(self):
+        rrule = self.rrule[self.rrule.index(":") + 1 :]
+        matches = re.findall(r"(\w+)\=([\w,]+)", rrule)
+        return dict(matches)
+
+    def number_of_occurrences(self):
+        return self.bookings_of_recurrencerule.count()
+
+    def get_first_booking(self):
+        return self.bookings_of_recurrencerule.first()
+
+    def get_human_readable_frequency(self):
+        rrule = rrulestr(self.rrule)
+        if "DAILY" in self.rrule:
+            return RRULE_DAILY_INTERVAL[rrule._interval][1]  # noqa: SLF001
+
+        if "WEEKLY" in self.rrule:
+            return RRULE_WEEKLY_INTERVAL[rrule._interval][1]  # noqa: SLF001
+
+        if "MONTHLY" in self.rrule:
+            return RRULE_MONTHLY_INTERVAL[rrule._interval][1]  # noqa: SLF001
+
+        return None
+
+    def get_human_readable_end(self):
+        rrule = rrulestr(self.rrule)
+        if rrule._count:  # noqa: SLF001
+            return _("ends after ") + str(rrule._count) + _(" times")  # noqa: SLF001
+
+        if rrule._until:  # noqa: SLF001
+            date_string = formats.date_format(rrule._until.date(), "SHORT_DATE_FORMAT")  # noqa: SLF001
+            return _("ends at the ") + date_string
+
+        return None
+
+    def get_human_readable_weekdays(self):
+        rrule = rrulestr(self.rrule)
+        if rrule._byweekday:  # noqa: SLF001
+            if "WEKKLY" in self.rrule:
+                weekdays = [str(WEEKDAYS[day]) for day in rrule._byweekday]  # noqa: SLF001
+                return _("at the weekdays ") + ", ".join(weekdays)
+
+            if "MONTHLY" in self.rrule:
+                return "not yet implemented"
+
+        return None
+
+    def get_human_readable_rrule(self):
+        frequency = self.get_human_readable_frequency()
+        ends = self.get_human_readable_end()
+        weekdays = self.get_human_readable_weekdays()
+        if weekdays is not None:
+            return frequency + ", " + weekdays + ", " + ends
+        return frequency + ", " + ends
 
 
 class Booking(TimeStampedModel):

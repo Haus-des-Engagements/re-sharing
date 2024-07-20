@@ -21,6 +21,8 @@ from .services import create_rrule_string
 from .services import filter_bookings_list
 from .services import generate_bookings
 from .services import get_booking_activity_stream
+from .services import get_occurrences
+from .services import get_recurrences_list
 from .services import save_bookingmessage
 from .services import save_bookings
 from .services import set_initial_booking_data
@@ -60,6 +62,29 @@ def show_booking_view(request, booking):
         {
             "booking": booking,
             "activity_stream": activity_stream,
+        },
+    )
+
+
+@login_required
+def list_recurrences_view(request):
+    recurrences = get_recurrences_list(request.user)
+
+    return render(
+        request, "bookings/list_recurrences.html", {"recurrences": recurrences}
+    )
+
+
+@login_required
+def show_recurrence_view(request, rrule):
+    rrule, bookings = get_occurrences(request.user, rrule)
+
+    return render(
+        request,
+        "bookings/show_recurrence.html",
+        {
+            "bookings": bookings,
+            "rrule": rrule,
         },
     )
 

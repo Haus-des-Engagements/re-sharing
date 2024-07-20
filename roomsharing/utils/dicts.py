@@ -1,13 +1,13 @@
 from django.utils.translation import gettext as _
 
 WEEKDAYS = [
-    ("MO", "Monday"),
-    ("TU", "Tuesday"),
-    ("WE", "Wednesday"),
-    ("TH", "Thursday"),
-    ("FR", "Friday"),
-    ("SA", "Saturday"),
-    ("SU", "Sunday"),
+    ("MO", _("Monday")),
+    ("TU", _("Tuesday")),
+    ("WE", _("Wednesday")),
+    ("TH", _("Thursday")),
+    ("FR", _("Friday")),
+    ("SA", _("Saturday")),
+    ("SU", _("Sunday")),
 ]
 
 

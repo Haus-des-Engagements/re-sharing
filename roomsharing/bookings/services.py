@@ -16,6 +16,7 @@ from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
 from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -340,6 +341,23 @@ def filter_bookings_list(
         bookings = bookings.filter(recurrence_rule__isnull=True)
 
     return bookings, organizations
+
+
+def get_recurrences_list(user):
+    organizations = organizations_with_bookingpermission(user)
+    return RecurrenceRule.objects.filter(
+        booking_of_recurrencerule__organization__in=organizations
+    ).distinct()
+
+
+def get_occurrences(user, recurrence_uuid):
+    rrule = get_object_or_404(RecurrenceRule, uuid=recurrence_uuid)
+    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+
+    if not user_has_bookingpermission(user, bookings[0]):
+        raise PermissionDenied
+
+    return rrule, bookings
 
 
 def confirm_booking(user, slug):
