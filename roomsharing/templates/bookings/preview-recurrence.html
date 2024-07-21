@@ -71,13 +71,15 @@
   </div>
   <div class="d-flex">
     <button onclick="history.back();" class="btn btn-secondary me-2">{% trans "Back" %}</button>
-    <form method="post">
-      {% csrf_token %}
-      <input type="submit"
-             name="submit"
-             value="Absenden"
-             class="btn btn-primary"
-             id="submit-id-submit" />
-    </form>
+    {% if bookable %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="submit"
+               name="submit"
+               value="{% trans 'Book' %}"
+               class="btn btn-primary"
+               id="submit-id-submit" />
+      </form>
+    {% endif %}
   </div>
 {% endblock content %}

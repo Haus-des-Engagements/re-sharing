@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import cancel_booking_view
-from .views import create_booking_view
+from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_bookings_view
 from .views import list_recurrences_view
@@ -12,23 +12,35 @@ from .views import show_recurrence_view
 
 app_name = "bookings"
 urlpatterns = [
-    path("", list_bookings_view, name="list-bookings"),
-    path("recurrences/", list_recurrences_view, name="list-recurrences"),
-    path("create-booking/", create_booking_view, name="create-booking"),
-    path("preview-booking/", preview_booking_view, name="preview-booking"),
-    path("preview-recurrence/", preview_recurrence_view, name="preview-recurrence"),
-    path("<slug:booking>/", show_booking_view, name="show-booking"),
-    path("recurrences/<uuid:rrule>", show_recurrence_view, name="show-recurrence"),
+    path("", list_bookings_view, name="list-bookings"),  # GET bookings list
+    path(
+        "recurrences/", list_recurrences_view, name="list-recurrences"
+    ),  # GET recurrence list
+    path(
+        "create-booking/", create_booking_data_form_view, name="create-booking"
+    ),  # GET & POST booking form
+    path(
+        "preview-booking/", preview_booking_view, name="preview-booking"
+    ),  # GET booking data & POST single booking
+    path(
+        "preview-recurrence/", preview_recurrence_view, name="preview-recurrence"
+    ),  # GET recurrence & POST recurrence
+    path(
+        "<slug:booking>/", show_booking_view, name="show-booking"
+    ),  # GET booking object
+    path(
+        "recurrences/<uuid:rrule>", show_recurrence_view, name="show-recurrence"
+    ),  # GET recurrence object
     path(
         "<slug:slug>/cancel-booking/",
         cancel_booking_view,
         name="cancel-booking",
-    ),
+    ),  # PATCH booking object
     path(
         "<slug:slug>/create-bookingmessage/",
         create_bookingmessage_view,
         name="create-bookingmessage",
-    ),
+    ),  # POST bookingmessage object
 ]
 
 htmx_patterns = []

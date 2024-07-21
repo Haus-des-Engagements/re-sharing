@@ -346,7 +346,7 @@ class BookingForm(forms.Form):
             room=room,
             timespan__overlap=(start_datetime, end_datetime),
         )
-        if booking_overlap.exists():
+        if rrule_repetitions == "NO_REPETITIONS" and booking_overlap.exists():
             msg = _("The room is already booked during your selected timeslot.")
             self.add_error("room", msg)
 

@@ -198,8 +198,11 @@ def generate_recurrence(booking_data):
         bookings.append(
             create_booking(booking_details, room_booked=room.is_booked(timespan))
         )
+    bookable = len([booking for booking in bookings if booking.room_booked]) < len(
+        bookings
+    )
 
-    return bookings, message, rrule
+    return bookings, message, rrule, bookable
 
 
 def create_booking(booking_details, **kwargs):

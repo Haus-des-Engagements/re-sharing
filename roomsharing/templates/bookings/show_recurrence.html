@@ -50,7 +50,8 @@
             <div class="col-md-10">
               <div class="card-body">
                 <div class="card-text">
-                  <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</a> <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                  <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</a> <span id="status-{{ booking.slug }}"
+       class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
                 </div>
               </div>
             </div>
@@ -64,7 +65,7 @@
                             value="Submit"
                             hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
                             hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
-                            hx-target="#booking-list-item-{{ booking.slug }}"
+                            hx-target="this"
                             hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
                   {% endif %}
                 </div>

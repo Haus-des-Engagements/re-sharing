@@ -110,7 +110,13 @@ def cancel_booking_view(request, slug):
     except (InvalidBookingOperationError, PermissionDenied) as e:
         return HttpResponse(e.message, status=e.status_code)
 
-    return render(request, "bookings/partials/booking_item.html", {"booking": booking})
+    message = _("Successfully cancelled.")
+
+    return HttpResponse(
+        f'{message} <span id="status-{booking.slug}" '
+        f'hx-swap-oob="true" class="fs-6 badge text-bg-status-{booking.status}">'
+        f"{booking.get_status_display()}</span>"
+    )
 
 
 @login_required
@@ -148,7 +154,7 @@ def preview_recurrence_view(request):
         return redirect("bookings:create-booking")
 
     try:
-        bookings, message, rrule = generate_recurrence(booking_data)
+        bookings, message, rrule, bookable = generate_recurrence(booking_data)
     except PermissionDenied as e:
         return HttpResponse(e.message, status=e.status_code)
 
@@ -156,7 +162,12 @@ def preview_recurrence_view(request):
         return render(
             request,
             "bookings/preview-recurrence.html",
-            {"message": message, "bookings": bookings, "rrule": rrule},
+            {
+                "message": message,
+                "bookings": bookings,
+                "rrule": rrule,
+                "bookable": bookable,
+            },
         )
 
     if request.method == "POST":
@@ -174,7 +185,7 @@ def preview_recurrence_view(request):
 
 
 @login_required
-def create_booking_view(request):
+def create_booking_data_form_view(request):
     if request.method == "GET":
         startdate = request.GET.get("startdate")
         starttime = request.GET.get("starttime")
