@@ -10,7 +10,8 @@
     <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title">
-          {{ booking.room }} <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+          {{ booking.room }} <span id="status-{{ booking.slug }}"
+       class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
         </h5>
         <p class="card-text">
           {% trans "Title" %}: <em>{{ booking.title }}</em>
@@ -32,8 +33,8 @@
                     class="btn btn-outline-danger mb-3"
                     value="Submit"
                     hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
-                    hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
-                    hx-target="#booking-list-item-{{ booking.slug }}"
+                    hx-patch="{% url 'bookings:cancel-booking' slug=booking.slug %}"
+                    hx-target="this"
                     hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
           {% endif %}
         </div>
