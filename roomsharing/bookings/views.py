@@ -7,7 +7,6 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -17,11 +16,13 @@ from .services import cancel_booking
 from .services import create_bookingmessage
 from .services import create_rrule_string
 from .services import filter_bookings_list
-from .services import generate_bookings
+from .services import generate_recurrence
+from .services import generate_single_booking
 from .services import get_booking_activity_stream
 from .services import get_occurrences
 from .services import get_recurrences_list
-from .services import save_bookings
+from .services import save_booking
+from .services import save_recurrence
 from .services import set_initial_booking_data
 
 
@@ -118,27 +119,55 @@ def preview_booking_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    bookings, message, rrule_string = generate_bookings(booking_data)
+    booking, message = generate_single_booking(booking_data)
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
-            {"message": message, "bookings": bookings, "rrule_string": rrule_string},
+            {"message": message, "booking": booking},
         )
+
     if request.method == "POST":
-        if user_has_bookingpermission(request.user, bookings[0]):
-            save_bookings(bookings, message, rrule_string)
+        try:
+            booking = save_booking(request.user, booking, message)
+        except PermissionDenied as e:
+            return HttpResponse(e.message, status=e.status_code)
 
-            request.session.pop("booking_data", None)
-            messages.success(request, _("Bookings created successfully!"))
+        request.session.pop("booking_data", None)
+        messages.success(request, _("Booking created successfully!"))
+        return redirect("bookings:show-booking", booking.slug)
 
-            if len(bookings) == 1:
-                return redirect("bookings:show-booking", bookings[0].slug)
+    messages.error(request, _("Sorry, something went wrong. Please try again."))
+    return redirect("bookings:create-booking")
 
-            return redirect("bookings:list-bookings")
 
-        messages.warning(request, _("You dont have the required permissions."))
+@login_required
+def preview_recurrence_view(request):
+    booking_data = request.session["booking_data"]
+    if not booking_data:
         return redirect("bookings:create-booking")
+
+    try:
+        bookings, message, rrule = generate_recurrence(booking_data)
+    except PermissionDenied as e:
+        return HttpResponse(e.message, status=e.status_code)
+
+    if request.method == "GET":
+        return render(
+            request,
+            "bookings/preview-recurrence.html",
+            {"message": message, "bookings": bookings, "rrule": rrule},
+        )
+
+    if request.method == "POST":
+        try:
+            bookings, rrule = save_recurrence(request.user, bookings, message, rrule)
+        except PermissionDenied as e:
+            return HttpResponse(e.message, status=e.status_code)
+
+        request.session.pop("booking_data", None)
+        messages.success(request, _("Recurrence created successfully!"))
+        return redirect("bookings:show-recurrence", rrule.uuid)
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
@@ -177,6 +206,7 @@ def create_booking_view(request):
             if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
                 rrule_string = create_rrule_string(form.cleaned_data)
                 request.session["booking_data"]["rrule_string"] = rrule_string
+                return redirect("bookings:preview-recurrence")
 
             return redirect("bookings:preview-booking")
 

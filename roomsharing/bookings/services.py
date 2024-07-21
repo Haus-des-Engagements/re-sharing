@@ -110,7 +110,46 @@ def create_rrule_string(rrule_data):
     return str(recurrence_pattern)
 
 
-def generate_bookings(booking_data):
+def generate_single_booking(booking_data):
+    message = booking_data["message"]
+    timespan = (
+        isoparse(booking_data["timespan"][0]),
+        isoparse(booking_data["timespan"][1]),
+    )
+    organization = get_object_or_404(Organization, slug=booking_data["organization"])
+    room = get_object_or_404(Room, slug=booking_data["room"])
+
+    start_datetime = timespan[0]
+    end_datetime = timespan[1]
+    booking_details = {
+        "user": get_object_or_404(User, slug=booking_data["user"]),
+        "title": booking_data["title"],
+        "room": room,
+        "start_datetime": start_datetime,
+        "end_datetime": end_datetime,
+        "organization": organization,
+        "status": organization.default_booking_status(room),
+        "timespan": timespan,
+        "start_date": booking_data["start_date"],
+        "start_time": booking_data["start_time"],
+        "end_time": booking_data["end_time"],
+    }
+    booking = create_booking(booking_details)
+    return booking, message
+
+
+def save_booking(user, booking, message):
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    booking.save()
+    if message:
+        save_bookingmessage(booking, message, user)
+
+    return booking
+
+
+def generate_recurrence(booking_data):
     message = booking_data["message"]
     timespan = (
         isoparse(booking_data["timespan"][0]),
@@ -123,43 +162,16 @@ def generate_bookings(booking_data):
     status = organization.default_booking_status(room)
     start_time = booking_data["start_time"]
     end_time = booking_data["end_time"]
-    start_date = booking_data["start_date"]
     rrule_string = booking_data.get("rrule_string", "")
 
     bookings = []
-    if rrule_string:
-        occurrences = list(rrulestr(rrule_string))
-        starttime = timespan[0].time()
-        endtime = timespan[1].time()
-        for occurrence in occurrences:
-            start_datetime = timezone.make_aware(
-                datetime.combine(occurrence, starttime)
-            )
-            end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
-            timespan = (start_datetime, end_datetime)
-            booking_details = {
-                "user": user,
-                "title": title,
-                "room": room,
-                "start_datetime": start_datetime,
-                "end_datetime": end_datetime,
-                "organization": organization,
-                "status": status,
-                "timespan": timespan,
-                "start_date": occurrence.date(),
-                "start_time": start_time,
-                "end_time": end_time,
-            }
-            rrule = rrule_string
-
-            bookings.append(
-                create_booking(
-                    booking_details, room_booked=room.is_booked(timespan), rrule=rrule
-                )
-            )
-    else:
-        start_datetime = timespan[0]
-        end_datetime = timespan[1]
+    occurrences = list(rrulestr(rrule_string))
+    starttime = timespan[0].time()
+    endtime = timespan[1].time()
+    for occurrence in occurrences:
+        start_datetime = timezone.make_aware(datetime.combine(occurrence, starttime))
+        end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
+        timespan = (start_datetime, end_datetime)
         booking_details = {
             "user": user,
             "title": title,
@@ -169,19 +181,25 @@ def generate_bookings(booking_data):
             "organization": organization,
             "status": status,
             "timespan": timespan,
-            "start_date": start_date,
+            "start_date": occurrence.date(),
             "start_time": start_time,
             "end_time": end_time,
         }
-        rrule = rrule_string
+
+        rrule = RecurrenceRule()
+        rrule.rrule = rrule_string
+        rrule.start_time = starttime
+        rrule.end_time = endtime
+        rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
+        rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
+        rrule.excepted_dates = []
+        rrule.room = room
 
         bookings.append(
-            create_booking(
-                booking_details, room_booked=room.is_booked(timespan), rrule=rrule
-            )
+            create_booking(booking_details, room_booked=room.is_booked(timespan))
         )
 
-    return bookings, message, rrule_string
+    return bookings, message, rrule
 
 
 def create_booking(booking_details, **kwargs):
@@ -196,8 +214,8 @@ def create_booking(booking_details, **kwargs):
         start_time=booking_details["start_time"],
         end_time=booking_details["end_time"],
     )
-    booking.room_booked = kwargs.get("room_booked")
-    booking.rrule = kwargs.get("rrule")
+    booking.room_booked = kwargs.get("room_booked") or None
+    booking.rrule = kwargs.get("rrule") or None
     return booking
 
 
@@ -224,29 +242,26 @@ def create_bookingmessage(booking_slug, form, user):
     raise InvalidBookingOperationError
 
 
-def save_bookings(bookings, message, rrule_string):
+def save_recurrence(user, bookings, message, rrule):
+    if not user_has_bookingpermission(user, bookings[0]):
+        raise PermissionDenied
+
     excepted_dates = []
     for booking in bookings:
         if booking.room_booked:
             excepted_dates.append(booking.start_date)
         else:
-            booking.save()
-            if message:
-                save_bookingmessage(booking, message, booking.user)
-    if bookings[0].rrule and len(excepted_dates) != len(bookings):
-        rrule = RecurrenceRule()
-        rrule.rrule = bookings[0].rrule
-        rrule.start_time = bookings[0].start_time
-        rrule.end_time = bookings[0].end_time
-        rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
-        rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
+            save_booking(user, booking, message)
+
+    if len(excepted_dates) != len(bookings):
         rrule.excepted_dates = excepted_dates
-        rrule.room = bookings[0].room
         rrule.save()
         for booking in bookings:
             if not booking.room_booked:
                 booking.recurrence_rule = rrule
                 booking.save()
+
+    return bookings, rrule
 
 
 def set_initial_booking_data(endtime, startdate, starttime):

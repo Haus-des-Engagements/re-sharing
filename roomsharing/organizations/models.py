@@ -57,7 +57,9 @@ class Organization(TimeStampedModel):
         return reverse("organizations:show-organization", args=[str(self.slug)])
 
     def default_booking_status(self, room):
-        default_booking_status = self.defaultbookingstatuses_of_organization(room=room)
+        default_booking_status = self.defaultbookingstatuses_of_organization.filter(
+            room=room
+        )
         if default_booking_status:
             return default_booking_status.first().status
         return BookingStatus.PENDING

@@ -7,60 +7,32 @@
 
 {% block content %}
   <h3>{% trans "Preview" %}</h3>
-  {% for booking in bookings %}
-    {% if forloop.first %}
-      <div class="card mb-3 mt-4">
-        <div class="row g-0">
-          <div class="col col-md-2 card-body text-center">
-            <p class="h6">{{ booking.timespan.0|date:"l" }}</p>
-            <p class="h4">{{ booking.timespan.0|date:"d" }}. {{ booking.timespan.0|date:"F" }}</p>
-            <p class="h6">{{ booking.timespan.0|date:"H:i" }} - {{ booking.timespan.1|date:"H:i" }}</p>
-          </div>
-          <div class="col-md-6">
-            <div class="card-body">
-              <h5 class="card-title">
-                {% if booking.room_booked %}
-                  <s>{{ booking.room }}</s> -
-                  <p class="text-danger">{% trans "Room not free at this date" %}</p>
-                {% else %}
-                  {{ booking.room }}
-                {% endif %}
-              </h5>
-              <p class="card-text">{{ booking.timespan.0|date:"d.m.Y - H:i" }} - {{ booking.timespan.1 }}</p>
-              <p class="card-text">
-                {% trans "Booked by:" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
-              </p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card-body">
-              {% if message %}
-                <p class="card-text">{% trans "Message" %}</p>
-                <p class="card-text">{{ message }}</p>
-              {% endif %}
-            </div>
-          </div>
+  <div class="card mb-3 mt-4">
+    <div class="row g-0">
+      <div class="col col-md-2 card-body text-center">
+        <p class="h6">{{ booking.timespan.0|date:"l" }}</p>
+        <p class="h4">{{ booking.timespan.0|date:"d" }}. {{ booking.timespan.0|date:"F" }}</p>
+        <p class="h6">{{ booking.timespan.0|date:"H:i" }} - {{ booking.timespan.1|date:"H:i" }}</p>
+      </div>
+      <div class="col-md-6">
+        <div class="card-body">
+          <h5 class="card-title">{{ booking.room }}</h5>
+          <p class="card-text">{{ booking.timespan.0|date:"d.m.Y - H:i" }} - {{ booking.timespan.1 }}</p>
+          <p class="card-text">
+            {% trans "Booked by:" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
+          </p>
         </div>
       </div>
-    {% endif %}
-  {% endfor %}
-  {% if bookings|length > 1 %}
-    <span><bold>{% trans "We will also create bookings for the following dates (same time, same room)." %}</bold></span>
-    <ul>
-      {% for booking in bookings %}
-        {% if not forloop.first %}
-          <li class="font-monospace">
-            {% if booking.room_booked %}
-              <s>{{ booking.timespan.0|date:"D, d.m.Y" }}</s>
-              <span class="text-danger">{% trans "Room not free at this date." %}</span>
-            {% else %}
-              {{ booking.timespan.0|date:"D, d.m.Y" }}
-            {% endif %}
-          </li>
-        {% endif %}
-      {% endfor %}
-    </ul>
-  {% endif %}
+      <div class="col-md-4">
+        <div class="card-body">
+          {% if message %}
+            <p class="card-text">{% trans "Message" %}</p>
+            <p class="card-text">{{ message }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="d-flex">
     <button onclick="history.back();" class="btn btn-secondary me-2">{% trans "Back" %}</button>
     <form method="post">

@@ -59,7 +59,7 @@ class RecurrenceRule(TimeStampedModel):
         ordering = ["created"]
 
     def __str__(self):
-        return self.bookings_of_recurrencerule.first().title
+        return str(self.uuid)
 
     def get_rrule_params(self):
         rrule = self.rrule[self.rrule.index(":") + 1 :]

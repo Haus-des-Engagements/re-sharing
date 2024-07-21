@@ -10,23 +10,23 @@
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
-          {{ rrule.first_occurrence_date }}
+          {{ rrule.first_occurrence_date|date:"SHORT_DATE_FORMAT" }}
           <br />
           -
           <br />
-          {{ rrule.last_occurrence_date }}
+          {{ rrule.last_occurrence_date|date:"SHORT_DATE_FORMAT" }}
         </p>
-        <p class="h6">{{ rrule.start_time|date:"H:i" }} - {{ rrule.end_time|date:"H:i" }}</p>
+        <p class="h6">{{ rrule.start_time|time:"H:i" }} - {{ rrule.end_time|time:"H:i" }}</p>
       </div>
       <div class="col-md-8">
         <div class="card-body">
           <h5 class="card-title">{{ rrule.room }}</h5>
           <p class="card-text">
-            {% trans "Title" %}: <em>{{ rrule }}</em>
+            {% trans "Title" %}: <em>{{ bookings.0 }}</em>
             <br />
-            {% trans "Booked for:" %}<em>{{ rrule.get_first_booking.organization }}</em>
+            {% trans "Booked for:" %} <em>{{ bookings.0.organization }}</em>
             <br />
-            {% trans "Occurrences:" %} {{ rrule.number_of_occurrences }}
+            {% trans "Occurrences" %}: {{ bookings|length }}
           </p>
         </div>
       </div>
@@ -50,29 +50,34 @@
             <div class="col-md-10">
               <div class="card-body">
                 <div class="card-text">
-                  <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</a> <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                  {% if booking.room_booked %}
+                    <s>{{ booking.timespan.0|date:"D, d.m.Y" }}</s>
+                    <span class="text-danger">{% trans "Room not free at this date." %}</span>
+                  {% else %}
+                    {{ booking.timespan.0|date:"D, d.m.Y" }}
+                  {% endif %}
                 </div>
               </div>
             </div>
             <div class="col-md-2">
               <div class="card-body">
-                <div class="d-flex">
-                  {% if booking.is_cancelable %}
-                    <button id="cancel-button"
-                            type="submit"
-                            class="btn btn-outline-danger"
-                            value="Submit"
-                            hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
-                            hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
-                            hx-target="#booking-list-item-{{ booking.slug }}"
-                            hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
-                  {% endif %}
-                </div>
+                <div class="d-flex"></div>
               </div>
             </div>
           </div>
         </div>
       {% endfor %}
     </div>
+  </div>
+  <div class="d-flex">
+    <button onclick="history.back();" class="btn btn-secondary me-2">{% trans "Back" %}</button>
+    <form method="post">
+      {% csrf_token %}
+      <input type="submit"
+             name="submit"
+             value="Absenden"
+             class="btn btn-primary"
+             id="submit-id-submit" />
+    </form>
   </div>
 {% endblock content %}
