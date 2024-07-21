@@ -23,13 +23,18 @@ from django.utils import timezone
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
-from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.selectors import organizations_with_bookingpermission
 from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
+
+
+class InvalidBookingOperationError(Exception):
+    def __init__(self):
+        self.message = "You cannot perform this action."
+        self.status_code = HTTPStatus.BAD_REQUEST
 
 
 def create_rrule_string(rrule_data):
@@ -115,7 +120,7 @@ def generate_bookings(booking_data):
     title = booking_data["title"]
     room = get_object_or_404(Room, slug=booking_data["room"])
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
-    status = get_default_booking_status(organization, room)
+    status = organization.default_booking_status(room)
     start_time = booking_data["start_time"]
     end_time = booking_data["end_time"]
     start_date = booking_data["start_date"]
@@ -131,6 +136,7 @@ def generate_bookings(booking_data):
                 datetime.combine(occurrence, starttime)
             )
             end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
+            timespan = (start_datetime, end_datetime)
             booking_details = {
                 "user": user,
                 "title": title,
@@ -139,16 +145,17 @@ def generate_bookings(booking_data):
                 "end_datetime": end_datetime,
                 "organization": organization,
                 "status": status,
-                "timespan": (start_datetime, end_datetime),
+                "timespan": timespan,
                 "start_date": occurrence.date(),
                 "start_time": start_time,
                 "end_time": end_time,
             }
-            room_booked = room_is_booked(room, start_datetime, end_datetime)
             rrule = rrule_string
 
             bookings.append(
-                create_booking(booking_details, room_booked=room_booked, rrule=rrule)
+                create_booking(
+                    booking_details, room_booked=room.is_booked(timespan), rrule=rrule
+                )
             )
     else:
         start_datetime = timespan[0]
@@ -166,11 +173,12 @@ def generate_bookings(booking_data):
             "start_time": start_time,
             "end_time": end_time,
         }
-        room_booked = room_is_booked(room, start_datetime, end_datetime)
         rrule = rrule_string
 
         bookings.append(
-            create_booking(booking_details, room_booked=room_booked, rrule=rrule)
+            create_booking(
+                booking_details, room_booked=room.is_booked(timespan), rrule=rrule
+            )
         )
 
     return bookings, message, rrule_string
@@ -201,6 +209,19 @@ def save_bookingmessage(booking, message, user):
     )
     booking_message.save()
     return booking_message
+
+
+def create_bookingmessage(booking_slug, form, user):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    if form.is_valid():
+        message = form.cleaned_data["text"]
+        return save_bookingmessage(booking, message, user)
+
+    raise InvalidBookingOperationError
 
 
 def save_bookings(bookings, message, rrule_string):
@@ -241,12 +262,6 @@ def set_initial_booking_data(endtime, startdate, starttime):
     return initial_data
 
 
-class InvalidBookingOperationError(Exception):
-    def __init__(self):
-        self.message = "You cannot perform this action."
-        self.status_code = HTTPStatus.BAD_REQUEST
-
-
 def cancel_booking(user, slug):
     booking = get_object_or_404(Booking, slug=slug)
 
@@ -260,34 +275,6 @@ def cancel_booking(user, slug):
         return booking
 
     raise InvalidBookingOperationError
-
-
-def room_is_booked(room, start_datetime, end_datetime):
-    return (
-        Booking.objects.all()
-        .filter(
-            status=BookingStatus.CONFIRMED,
-            room=room,
-            timespan__overlap=(start_datetime, end_datetime),
-        )
-        .exists()
-    )
-
-
-def get_default_booking_status(organization, room):
-    default_booking_status = DefaultBookingStatus.objects.filter(
-        organization=organization, room=room
-    )
-    if default_booking_status.exists():
-        return default_booking_status.first().status
-
-    return BookingStatus.PENDING
-
-
-def get_future_bookings(organizations):
-    return Booking.objects.filter(organization__in=organizations).filter(
-        timespan__endswith__gte=timezone.now()
-    )
 
 
 def get_booking_activity_stream(user, booking_slug):

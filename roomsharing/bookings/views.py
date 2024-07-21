@@ -2,8 +2,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
-from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils import timezone
@@ -14,16 +12,15 @@ from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
 from .forms import MessageForm
-from .models import Booking
 from .services import InvalidBookingOperationError
 from .services import cancel_booking
+from .services import create_bookingmessage
 from .services import create_rrule_string
 from .services import filter_bookings_list
 from .services import generate_bookings
 from .services import get_booking_activity_stream
 from .services import get_occurrences
 from .services import get_recurrences_list
-from .services import save_bookingmessage
 from .services import save_bookings
 from .services import set_initial_booking_data
 
@@ -90,24 +87,19 @@ def show_recurrence_view(request, rrule):
 
 
 @login_required
-def write_bookingmessage(request, slug):
-    booking = get_object_or_404(Booking, slug=slug)
-    form = MessageForm(request.POST or None)
+def create_bookingmessage_view(request, slug):
+    try:
+        form = MessageForm(data=request.POST)
+        bookingmessage = create_bookingmessage(slug, form, request.user)
 
-    if not user_has_bookingpermission(request.user, booking):
-        return HttpResponseForbidden("You do not have permission to do this action")
+    except (InvalidBookingOperationError, PermissionDenied) as e:
+        return HttpResponse(e.message, status=e.status_code)
 
-    if form.is_valid():
-        bookingmessage = save_bookingmessage(
-            booking, form.cleaned_data["text"], request.user
-        )
-        return render(
-            request,
-            "bookings/partials/show_bookingmessage.html",
-            {"message": bookingmessage},
-        )
-
-    return render(request, "bookings/show-booking.html", {"form": form})
+    return render(
+        request,
+        "bookings/partials/show_bookingmessage.html",
+        {"message": bookingmessage},
+    )
 
 
 @login_required

@@ -2,12 +2,12 @@ from django.urls import path
 
 from .views import cancel_booking_view
 from .views import create_booking_view
+from .views import create_bookingmessage_view
 from .views import list_bookings_view
 from .views import list_recurrences_view
 from .views import preview_booking_view
 from .views import show_booking_view
 from .views import show_recurrence_view
-from .views import write_bookingmessage
 
 app_name = "bookings"
 urlpatterns = [
@@ -23,9 +23,9 @@ urlpatterns = [
         name="cancel-booking",
     ),
     path(
-        "<slug:slug>/write-bookingmessage/",
-        write_bookingmessage,
-        name="write-bookingmessage",
+        "<slug:slug>/create-bookingmessage/",
+        create_bookingmessage_view,
+        name="create-bookingmessage",
     ),
 ]
 

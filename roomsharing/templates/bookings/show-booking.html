@@ -31,12 +31,12 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">{% trans "Write a new message" %}</h5>
-            <form hx-post="{% url 'bookings:write-bookingmessage' booking.slug %}"
+            <form hx-post="{% url 'bookings:create-bookingmessage' booking.slug %}"
                   hx-target="#message-form"
                   hx-swap="afterend">
               {% csrf_token %}
               <div class="mb-3">
-                <textarea class="form-control" name="text" rows="3"></textarea>
+                <textarea class="form-control" name="text" rows="3" required="true"></textarea>
               </div>
               <button type="submit" class="btn btn-outline-primary mb-3" value="Submit">{% trans "Send new message" %}</button>
             </form>

@@ -43,6 +43,9 @@ class Room(Model):
     def get_absolute_url(self):
         return reverse("rooms:show-room", kwargs={"slug": self.slug})
 
+    def is_booked(self, timespan):
+        return self.bookings_of_room.filter(timespan__overlap=timespan).exists()
+
 
 def create_roomimage_path(instance, filename):
     room_slug = instance.room.slug
