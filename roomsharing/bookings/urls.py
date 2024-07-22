@@ -18,7 +18,7 @@ urlpatterns = [
     ),  # GET recurrence list
     path(
         "create-booking/", create_booking_data_form_view, name="create-booking"
-    ),  # GET & POST booking form
+    ),  # GET & POST booking form data
     path(
         "preview-booking/", preview_booking_view, name="preview-booking"
     ),  # GET booking data & POST single booking

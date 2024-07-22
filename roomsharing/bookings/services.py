@@ -290,6 +290,7 @@ def cancel_booking(user, slug):
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
+
         return booking
 
     raise InvalidBookingOperationError
@@ -377,3 +378,27 @@ def confirm_booking(user, slug):
         return booking
 
     raise InvalidBookingOperationError
+
+
+def create_booking_data(user, form):
+    if isinstance(form.cleaned_data["timespan"], tuple):
+        timespan_start, timespan_end = form.cleaned_data["timespan"]
+        timespan = (timespan_start.isoformat(), timespan_end.isoformat())
+
+    booking_data = {
+        "title": form.cleaned_data["title"],
+        "room": form.cleaned_data["room"].slug,
+        "timespan": timespan,
+        "organization": form.cleaned_data["organization"].slug,
+        "message": form.cleaned_data["message"],
+        "start_date": form.cleaned_data["startdate"].isoformat(),
+        "start_time": form.cleaned_data["starttime"].isoformat(),
+        "end_time": form.cleaned_data["endtime"].isoformat(),
+        "user": user.slug,
+    }
+    rrule_string = None
+    if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
+        rrule_string = create_rrule_string(form.cleaned_data)
+        booking_data["rrule_string"] = rrule_string
+
+    return booking_data, rrule_string

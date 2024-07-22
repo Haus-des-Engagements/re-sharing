@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -13,8 +14,8 @@ from .forms import BookingForm
 from .forms import MessageForm
 from .services import InvalidBookingOperationError
 from .services import cancel_booking
+from .services import create_booking_data
 from .services import create_bookingmessage
-from .services import create_rrule_string
 from .services import filter_bookings_list
 from .services import generate_recurrence
 from .services import generate_single_booking
@@ -138,6 +139,10 @@ def preview_booking_view(request):
             booking = save_booking(request.user, booking, message)
         except PermissionDenied as e:
             return HttpResponse(e.message, status=e.status_code)
+        except IntegrityError:
+            return HttpResponse(
+                "Booking not possbile at the given date(s).", status=400
+            )
 
         request.session.pop("booking_data", None)
         messages.success(request, _("Booking created successfully!"))
@@ -197,28 +202,12 @@ def create_booking_data_form_view(request):
 
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
+
         if form.is_valid():
-            if isinstance(form.cleaned_data["timespan"], tuple):
-                timespan_start, timespan_end = form.cleaned_data["timespan"]
-                timespan = (timespan_start.isoformat(), timespan_end.isoformat())
-
-            request.session["booking_data"] = {
-                "title": form.cleaned_data["title"],
-                "room": form.cleaned_data["room"].slug,
-                "timespan": timespan,
-                "organization": form.cleaned_data["organization"].slug,
-                "message": form.cleaned_data["message"],
-                "start_date": form.cleaned_data["startdate"].isoformat(),
-                "start_time": form.cleaned_data["starttime"].isoformat(),
-                "end_time": form.cleaned_data["endtime"].isoformat(),
-                "user": request.user.slug,
-            }
-
-            if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
-                rrule_string = create_rrule_string(form.cleaned_data)
-                request.session["booking_data"]["rrule_string"] = rrule_string
+            booking_data, rrule_string = create_booking_data(request.user, form)
+            request.session["booking_data"] = booking_data
+            if rrule_string:
                 return redirect("bookings:preview-recurrence")
-
             return redirect("bookings:preview-booking")
 
     return render(request, "bookings/create-booking.html", {"form": form})
