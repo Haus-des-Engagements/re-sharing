@@ -8,13 +8,17 @@
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
   <div class="row">
-    <form hx-post="{% url 'rooms:filter-rooms' %}" hx-target="#room-list">
-      {% csrf_token %}
-      <input type="text" name="max_persons" placeholder="Persons" />
+    <form hx-get="{% url 'rooms:list-rooms' %}"
+          hx-target="#room-list"
+          hx-trigger="change"
+          hx-indicator="#spinner">
+      <input type="number" name="max_persons" placeholder="Persons" />
       <input type="text" name="name" placeholder="Room Name" />
-      {{ form.start_datetime }}
-      <input type="number" name="duration" placeholder="Duration" />
-      <input type="submit" value="Submit" />
+      <div id="spinner"
+           class="spinner-border col-auto htmx-indicator"
+           role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </form>
   </div>
   <div id="room-list">{% include "rooms/partials/list_filter_rooms.html" %}</div>

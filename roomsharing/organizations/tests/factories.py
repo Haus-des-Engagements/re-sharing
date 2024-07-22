@@ -5,7 +5,9 @@ from factory import SubFactory
 from factory.django import DjangoModelFactory
 
 from roomsharing.organizations.models import BookingPermission
+from roomsharing.organizations.models import DefaultBookingStatus
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 
 
@@ -32,3 +34,12 @@ class BookingPermissionFactory(DjangoModelFactory):
 
     class Meta:
         model = BookingPermission
+
+
+class DefaultBookingStatusFactory(DjangoModelFactory):
+    organization = SubFactory(OrganizationFactory)
+    room = SubFactory(RoomFactory)
+    status = BookingPermission.Status.CONFIRMED
+
+    class Meta:
+        model = DefaultBookingStatus

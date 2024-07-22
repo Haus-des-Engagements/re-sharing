@@ -1,7 +1,9 @@
 import pytest
 
 from roomsharing.bookings.models import Booking
+from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.bookings.tests.factories import BookingMessageFactory
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.models import Room
@@ -33,3 +35,8 @@ def booking(db) -> Booking:
 @pytest.fixture()
 def organization(db) -> Organization:
     return OrganizationFactory()
+
+
+@pytest.fixture()
+def bookingmessage(db) -> BookingMessage:
+    return BookingMessageFactory()

@@ -216,7 +216,7 @@ class BookingMessage(TimeStampedModel):
         ordering = ["created"]
 
     def get_absolute_url(self):
-        return reverse("bookings:detail", kwargs={"slug": self.booking.slug})
+        return reverse("bookings:show-booking", kwargs={"booking": self.booking.slug})
 
 
 auditlog.register(Booking, exclude_fields=["created, updated"])

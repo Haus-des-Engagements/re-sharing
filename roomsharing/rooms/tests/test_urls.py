@@ -16,11 +16,6 @@ def test_list_rooms():
     assert resolve("/rooms/").view_name == "rooms:list-rooms"
 
 
-def test_filter_rooms():
-    assert reverse("rooms:filter-rooms") == "/rooms/filter-rooms/"
-    assert resolve("/rooms/filter-rooms/").view_name == "rooms:filter-rooms"
-
-
 def test_get_weekly_bookings(room: Room):
     assert (
         reverse("rooms:get-weekly-bookings", kwargs={"slug": room.slug})

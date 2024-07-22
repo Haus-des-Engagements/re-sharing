@@ -1,18 +1,23 @@
 from datetime import timedelta
+from unittest.mock import Mock
 
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 
+from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
+from roomsharing.bookings.services import create_bookingmessage
 from roomsharing.bookings.services import get_booking_activity_stream
+from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
+from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
 
@@ -109,3 +114,133 @@ class TestBookingActivityStream(TestCase):
             BookingStatus.CANCELLED,
             status_text_mapping[BookingStatus.CANCELLED],
         ]
+
+
+class TestSaveBooking(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.room = RoomFactory()
+        self.booking = BookingFactory(
+            status=BookingStatus.PENDING, organization=self.organization
+        )
+
+    def test_save_booking_without_message(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking.status = BookingStatus(BookingStatus.CONFIRMED)
+        save_booking(self.user, self.booking, message=None)
+        self.booking.refresh_from_db()
+
+        assert self.booking.status == BookingStatus.CONFIRMED
+        assert (
+            BookingMessage.objects.filter(user=self.user, booking=self.booking).count()
+            == 0
+        )
+
+    def test_save_booking_with_message(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        message = "I need a room!"
+        self.booking.status = BookingStatus(BookingStatus.CONFIRMED)
+        save_booking(self.user, self.booking, message)
+        self.booking.refresh_from_db()
+
+        assert self.booking.status == BookingStatus.CONFIRMED
+        booking_message = BookingMessage.objects.filter(
+            user=self.user, booking=self.booking
+        ).first()
+        assert booking_message.text == message
+        assert booking_message.user == self.user
+
+    def test_no_booking_permission(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.PENDING,
+        )
+        with pytest.raises(PermissionDenied):
+            save_booking(self.user, self.booking, message=None)
+
+
+class TestCreateBookingMessage(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.room = RoomFactory()
+        self.booking = BookingFactory(
+            status=BookingStatus.PENDING, organization=self.organization
+        )
+
+    def test_create_bookingmessage_valid(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        form = Mock()
+        form.is_valid.return_value = True
+        text_message = "I need a room!"
+        form.cleaned_data = {"text": text_message}
+        create_bookingmessage(self.booking.slug, form, self.user)
+        booking_message = BookingMessage.objects.filter(
+            user=self.user, booking=self.booking
+        ).first()
+
+        assert booking_message.text == text_message
+        assert booking_message.user == self.user
+
+    def test_create_bookingmessage_invalid(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        form = Mock()  # Assuming form is a Django form
+        form.is_valid.return_value = False
+        with pytest.raises(InvalidBookingOperationError):
+            create_bookingmessage(self.booking.slug, form, self.user)
+
+    def test_no_booking_permission(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.PENDING,
+        )
+        form = Mock()  # Assuming form is a Django form
+        form.is_valid.return_value = True
+        with pytest.raises(PermissionDenied):
+            create_bookingmessage(self.booking.slug, form, self.user)
+
+
+class TestSaveBookingMessage(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.booking = BookingFactory(
+            status=BookingStatus.PENDING, organization=self.organization
+        )
+
+    def test_save_booking_message(self):
+        message_text = "This is a new message!"
+        booking_message_returned = save_bookingmessage(
+            self.booking, message_text, self.user
+        )
+
+        assert booking_message_returned.text == message_text
+        assert booking_message_returned.user == self.user
+        assert booking_message_returned.booking == self.booking
+
+        booking_message_in_db = BookingMessage.objects.filter(
+            user=self.user, booking=self.booking
+        ).first()
+
+        assert booking_message_in_db.text == message_text
+        assert booking_message_in_db.user == self.user
+        assert booking_message_in_db.booking == self.booking
