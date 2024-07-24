@@ -18,7 +18,7 @@ def test_list_rooms():
 
 def test_get_weekly_bookings(room: Room):
     assert (
-        reverse("rooms:get-weekly-bookings", kwargs={"slug": room.slug})
+        reverse("rooms:get-weekly-bookings", kwargs={"room_slug": room.slug})
         == f"/rooms/{room.slug}/get-weekly-bookings/"
     )
     assert (

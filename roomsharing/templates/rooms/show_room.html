@@ -61,12 +61,13 @@
     </div>
   </div>
   <h2 class="mt-4">Bookings</h2>
-  <div class="btn-group" role="group" aria-label="Basic outlined example">
-    <button type="button"
-            class="btn btn-outline-primary"
-            hx-post="{% url 'rooms:get-weekly-bookings' room.slug %}"
-            hx-target="#results"
-            hx-trigger="click, load">{% trans "Current Week" %}</button>
-  </div>
+  <form hx-get="{% url 'rooms:get-weekly-bookings' room_slug=room.slug %}"
+        hx-trigger="load, change"
+        hx-target="#results">
+    <div class="btn-group" role="group" aria-label="Basic outlined example">
+      <input type="date" name="date" />
+    </div>
+  </form>
+  <br />
   <div id="results">{% include "rooms/partials/get_weekly_bookings.html" %}</div>
 {% endblock content %}

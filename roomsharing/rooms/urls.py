@@ -8,7 +8,7 @@ app_name = "rooms"
 urlpatterns = [
     path("", list_rooms_view, name="list-rooms"),
     path(
-        "<slug:slug>/get-weekly-bookings/",
+        "<slug:room_slug>/get-weekly-bookings/",
         get_weekly_bookings_view,
         name="get-weekly-bookings",
     ),

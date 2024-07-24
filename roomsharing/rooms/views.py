@@ -30,14 +30,14 @@ def list_rooms_view(request):
     return render(request, "rooms/list_rooms.html", context)
 
 
-def get_weekly_bookings_view(request, slug):
-    time_slots, weekdays, weekly_bookings = get_weekly_bookings(slug)
+def get_weekly_bookings_view(request, room_slug):
+    date_string = request.GET.get("date")
+    time_slots, weekdays = get_weekly_bookings(room_slug, date_string)
 
     return render(
         request,
         "rooms/partials/get_weekly_bookings.html",
         {
-            "weekly_bookings": weekly_bookings,
             "weekdays": weekdays,
             "time_slots": time_slots,
         },
