@@ -18,18 +18,6 @@ def show_room_view(request, slug):
     )
 
 
-def list_rooms_view(request):
-    max_persons = request.GET.get("max_persons")
-    room_name = request.GET.get("name")
-    rooms = filter_rooms(room_name, max_persons)
-
-    context = {"rooms": rooms}
-    if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/list_filter_rooms.html", context)
-
-    return render(request, "rooms/list_rooms.html", context)
-
-
 def get_weekly_bookings_view(request, room_slug):
     date_string = request.GET.get("date")
     time_slots, weekdays = get_weekly_bookings(room_slug, date_string)
@@ -42,3 +30,15 @@ def get_weekly_bookings_view(request, room_slug):
             "time_slots": time_slots,
         },
     )
+
+
+def list_rooms_view(request):
+    max_persons = request.GET.get("max_persons")
+    room_name = request.GET.get("name")
+    rooms = filter_rooms(room_name, max_persons)
+
+    context = {"rooms": rooms}
+    if request.headers.get("HX-Request"):
+        return render(request, "rooms/partials/list_filter_rooms.html", context)
+
+    return render(request, "rooms/list_rooms.html", context)
