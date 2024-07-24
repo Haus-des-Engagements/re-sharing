@@ -72,9 +72,9 @@ STORAGES = {
     "default": {
         "BACKEND": "storages.backends.sftpstorage.SFTPStorage",
         "OPTIONS": {
-            "SFTP_STORAGE_HOST": env("DJANGO_SFTP_STORAGE_HOST"),
-            "SFTP_STORAGE_ROOT": env("DJANGO_SFTP_STORAGE_ROOT"),
-            "SFTP_STORAGE_PARAMS": {
+            "host": env("DJANGO_SFTP_STORAGE_HOST"),
+            "root_path": env("DJANGO_SFTP_STORAGE_ROOT"),
+            "params": {
                 "username": env("DJANGO_SFTP_USERNAME"),
                 "password": env("DJANGO_SFTP_PASSWORD"),
             },
