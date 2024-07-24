@@ -66,9 +66,15 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
 
 # STATIC & MEDIA
 # ------------------------
+
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "storages.backends.sftpstorage.SFTPStorage",
+        "OPTIONS": {
+            "SFTP_STORAGE_HOST": env("DJANGO_SFTP_STORAGE_HOST"),
+            "SFTP_STORAGE_ROOT": env("DJANGO_SFTP_STORAGE_ROOT"),
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
