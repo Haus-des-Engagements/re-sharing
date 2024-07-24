@@ -74,6 +74,10 @@ STORAGES = {
         "OPTIONS": {
             "SFTP_STORAGE_HOST": env("DJANGO_SFTP_STORAGE_HOST"),
             "SFTP_STORAGE_ROOT": env("DJANGO_SFTP_STORAGE_ROOT"),
+            "SFTP_STORAGE_PARAMS": {
+                "username": env("DJANGO_SFTP_USERNAME"),
+                "password": env("DJANGO_SFTP_PASSWORD"),
+            },
         },
     },
     "staticfiles": {
