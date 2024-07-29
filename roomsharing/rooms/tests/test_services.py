@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -6,8 +7,12 @@ from django.test import TestCase
 from django.utils import timezone
 
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.services import filter_rooms
+from roomsharing.rooms.services import get_access_code
 from roomsharing.rooms.services import get_weekly_bookings
+from roomsharing.rooms.tests.factories import AccessCodeFactory
+from roomsharing.rooms.tests.factories import AccessFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.utils.models import BookingStatus
 
@@ -120,3 +125,75 @@ def test_filter_rooms(room_name, max_persons, expected):
 
     rooms = filter_rooms(room_name, max_persons)
     assert {room.name for room in rooms} == set(expected)
+
+
+class TestGetAccessCode(TestCase):
+    """
+    Given an organization, room and a timestamp,
+    when I ask for an access code for that room,
+    I get back the correct code.
+    """
+
+    def setUp(self):
+        self.timestamp = timezone.make_aware(timezone.datetime(2024, 7, 23, 13, 30))
+        self.access1 = AccessFactory()
+        self.access2 = AccessFactory()
+        self.room1 = RoomFactory(access=self.access1)
+        self.room2 = RoomFactory(access=self.access2)
+        self.organization1 = OrganizationFactory()
+        self.organization2 = OrganizationFactory()
+        self.access_code1 = AccessCodeFactory(
+            access=self.access1, validity_start=self.timestamp, organization=None
+        )
+        self.access_code2 = AccessCodeFactory(
+            access=self.access1,
+            validity_start=self.timestamp + timedelta(days=7),
+            organization=self.organization2,
+        )
+        self.access_code3 = AccessCodeFactory(
+            access=self.access1,
+            validity_start=self.timestamp + timedelta(days=14),
+            organization=None,
+        )
+
+    def test_get_general_access_code(self):
+        # gets as access_code1, as there is no access_key having a specific organization
+        assert (
+            get_access_code(
+                room_slug=self.room1.slug,
+                organization_slug=self.organization1.slug,
+                timestamp=(self.timestamp + timedelta(days=1)),
+            )
+            == self.access_code1
+        )
+
+        # we should still get back access_code1,
+        # because access_code2 is only for organization2
+        assert (
+            get_access_code(
+                room_slug=self.room1.slug,
+                organization_slug=self.organization1.slug,
+                timestamp=(self.timestamp + timedelta(days=10)),
+            )
+            == self.access_code1
+        )
+
+        # we should get back access_code2,
+        # because access_code2 is only for organization2
+        assert (
+            get_access_code(
+                room_slug=self.room1.slug,
+                organization_slug=self.organization2.slug,
+                timestamp=(self.timestamp + timedelta(days=10)),
+            )
+            == self.access_code2
+        )
+
+        assert (
+            get_access_code(
+                room_slug=self.room2.slug,
+                organization_slug=self.organization1.slug,
+                timestamp=(self.timestamp + timedelta(days=1)),
+            )
+            is None
+        )

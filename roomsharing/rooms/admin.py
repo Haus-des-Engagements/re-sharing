@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from .models import Access
+from .models import AccessCode
 from .models import Room
 from .models import RoomImage
 
@@ -13,3 +15,5 @@ class RoomAdmin(admin.ModelAdmin):
 
 
 admin.site.register(RoomImage)
+admin.site.register(Access)
+admin.site.register(AccessCode)

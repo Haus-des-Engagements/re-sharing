@@ -27,6 +27,7 @@ from roomsharing.organizations.models import Organization
 from roomsharing.organizations.selectors import organizations_with_bookingpermission
 from roomsharing.organizations.selectors import user_has_bookingpermission
 from roomsharing.rooms.models import Room
+from roomsharing.rooms.services import get_access_code
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
 
@@ -35,6 +36,24 @@ class InvalidBookingOperationError(Exception):
     def __init__(self):
         self.message = "You cannot perform this action."
         self.status_code = HTTPStatus.BAD_REQUEST
+
+
+def show_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    activity_stream = get_booking_activity_stream(booking)
+
+    if booking.status in [BookingStatus.PENDING, BookingStatus.CANCELLED]:
+        access_code = None
+    else:
+        access_code = get_access_code(
+            booking.room.slug, booking.organization.slug, booking.timespan.lower
+        )
+
+    return booking, activity_stream, access_code
 
 
 def create_rrule_string(rrule_data):
@@ -280,8 +299,8 @@ def set_initial_booking_data(endtime, startdate, starttime):
     return initial_data
 
 
-def cancel_booking(user, slug):
-    booking = get_object_or_404(Booking, slug=slug)
+def cancel_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
 
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
@@ -296,12 +315,7 @@ def cancel_booking(user, slug):
     raise InvalidBookingOperationError
 
 
-def get_booking_activity_stream(user, booking_slug):
-    booking = get_object_or_404(Booking, slug=booking_slug)
-
-    if not user_has_bookingpermission(user, booking):
-        raise PermissionDenied
-
+def get_booking_activity_stream(booking):
     activity_stream = []
     booking_logs = booking.history.filter(changes__has_key="status").exclude(
         changes__status__contains="None"
@@ -329,7 +343,7 @@ def get_booking_activity_stream(user, booking_slug):
             "user": message.user,
         }
         activity_stream.append(message_dict)
-    return sorted(activity_stream, key=lambda x: x["date"], reverse=True), booking
+    return sorted(activity_stream, key=lambda x: x["date"], reverse=True)
 
 
 def filter_bookings_list(
@@ -366,16 +380,17 @@ def get_occurrences(user, recurrence_uuid):
     return rrule, bookings
 
 
-def confirm_booking(user, slug):
-    booking = get_object_or_404(Booking, slug=slug)
+def confirm_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
 
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
     if booking.is_confirmable():
-        booking.status = BookingStatus.CONFIRMED
-        booking.save()
-        return booking
+        with set_actor(user):
+            booking.status = BookingStatus.CONFIRMED
+            booking.save()
+            return booking
 
     raise InvalidBookingOperationError
 

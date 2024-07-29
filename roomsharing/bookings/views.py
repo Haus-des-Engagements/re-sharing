@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -19,12 +21,12 @@ from .services import create_bookingmessage
 from .services import filter_bookings_list
 from .services import generate_recurrence
 from .services import generate_single_booking
-from .services import get_booking_activity_stream
 from .services import get_occurrences
 from .services import get_recurrences_list
 from .services import save_booking
 from .services import save_recurrence
 from .services import set_initial_booking_data
+from .services import show_booking
 
 
 @login_required
@@ -53,7 +55,10 @@ def list_bookings_view(request):
 
 @login_required
 def show_booking_view(request, booking):
-    activity_stream, booking = get_booking_activity_stream(request.user, booking)
+    try:
+        booking, activity_stream, access_code = show_booking(request.user, booking)
+    except PermissionDenied as e:
+        return HttpResponse(str(e), status=HTTPStatus.FORBIDDEN)
 
     return render(
         request,
@@ -61,6 +66,7 @@ def show_booking_view(request, booking):
         {
             "booking": booking,
             "activity_stream": activity_stream,
+            "access_code": access_code,
         },
     )
 

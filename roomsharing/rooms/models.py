@@ -4,7 +4,9 @@ from pathlib import Path
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
 from django.db.models import PROTECT
+from django.db.models import SET_NULL
 from django.db.models import CharField
+from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
 from django.db.models import Model
@@ -19,10 +21,64 @@ from PIL import Image
 from roomsharing.utils.models import TimeStampedModel
 
 
+class Access(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = CharField(_("Name"), max_length=255)
+    slug = AutoSlugField(_("Slug"), populate_from="name")
+    instructions = TextField(_("Instructions"), max_length=512)
+
+    class Meta:
+        verbose_name = _("Access")
+        verbose_name_plural = _("Accesses")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class AccessCode(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    access = ForeignKey(
+        Access,
+        verbose_name=_("Access"),
+        on_delete=CASCADE,
+        related_name="accesscodes_of_access",
+        related_query_name="accesscode_of_access",
+    )
+    code = CharField(_("Code"), max_length=256)
+    validity_start = DateTimeField(_("Validity start"))
+    organization = ForeignKey(
+        "organizations.Organization",
+        verbose_name=_("Organization"),
+        on_delete=CASCADE,
+        related_name="organizations_of_access",
+        related_query_name="organization_of_access",
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Access code")
+        verbose_name_plural = _("Access codes")
+        ordering = ["validity_start"]
+
+    def __str__(self):
+        return self.access.name + " " + self.validity_start.strftime("%Y-%m-%d %H:%M")
+
+
 class Room(Model):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     name = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="name")
+    access = ForeignKey(
+        Access,
+        verbose_name=_("Access"),
+        on_delete=SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rooms_of_access",
+        related_query_name="room_of_access",
+    )
     description = TextField(_("Description"), max_length=512)
     square_meters = PositiveIntegerField(_("Square Meters"), null=True, blank=True)
     max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)

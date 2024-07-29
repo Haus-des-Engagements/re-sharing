@@ -9,14 +9,18 @@ from django.utils import timezone
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
+from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_bookingmessage
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
+from roomsharing.bookings.services import show_booking
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
+from roomsharing.rooms.tests.factories import AccessCodeFactory
+from roomsharing.rooms.tests.factories import AccessFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
@@ -72,15 +76,6 @@ class TestBookingActivityStream(TestCase):
             organization=self.organization, status=BookingStatus.PENDING
         )
 
-    def test_no_booking_permission(self):
-        BookingPermissionFactory(
-            organization=self.organization,
-            user=self.user,
-            status=BookingPermission.Status.PENDING,
-        )
-        with pytest.raises(PermissionDenied):
-            get_booking_activity_stream(self.user, self.booking.slug)
-
     def test_activity_stream(self):
         BookingPermissionFactory(
             organization=self.organization,
@@ -96,9 +91,7 @@ class TestBookingActivityStream(TestCase):
         save_bookingmessage(self.booking, bookingmessage, self.user)
         self.booking.refresh_from_db()
 
-        activity_stream, booking = get_booking_activity_stream(
-            self.user, self.booking.slug
-        )
+        activity_stream = get_booking_activity_stream(self.booking)
         assert activity_stream[0]["type"] == "message"
         assert activity_stream[0]["text"] == bookingmessage
         assert activity_stream[0]["user"] == self.user
@@ -114,6 +107,72 @@ class TestBookingActivityStream(TestCase):
             BookingStatus.CANCELLED,
             status_text_mapping[BookingStatus.CANCELLED],
         ]
+
+
+class TestShowBooking(TestCase):
+    def setUp(self):
+        self.access = AccessFactory()
+        self.room = RoomFactory(access=self.access)
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.start_datetime = timezone.now() + timedelta(days=10)
+        self.booking = BookingFactory(
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            room=self.room,
+            timespan=(self.start_datetime, self.start_datetime + timedelta(hours=2)),
+        )
+        validity_start = self.start_datetime - timedelta(days=1)
+        self.access_code = AccessCodeFactory(
+            access=self.access,
+            validity_start=validity_start,
+            organization=self.organization,
+        )
+
+    def test_no_booking_permission(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.PENDING,
+        )
+        with pytest.raises(PermissionDenied):
+            show_booking(self.user, self.booking.slug)
+
+    def test_access_code_for_cancelled_booking(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking.status = BookingStatus.CANCELLED
+        booking, activity_stream, access_code = show_booking(
+            self.user, self.booking.slug
+        )
+        assert access_code is None
+
+    def test_access_code_for_pending_booking(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking.status = BookingStatus.PENDING
+        booking, activity_stream, access_code = show_booking(
+            self.user, self.booking.slug
+        )
+        assert access_code is None
+
+    def test_access_code_for_confirmed_booking(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        confirm_booking(self.user, self.booking.slug)
+        booking, activity_stream, access_code = show_booking(
+            self.user, self.booking.slug
+        )
+        assert access_code == self.access_code
 
 
 class TestSaveBooking(TestCase):
@@ -244,3 +303,12 @@ class TestSaveBookingMessage(TestCase):
         assert booking_message_in_db.text == message_text
         assert booking_message_in_db.user == self.user
         assert booking_message_in_db.booking == self.booking
+
+
+class TestGetBooking(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.booking = BookingFactory(
+            status=BookingStatus.PENDING, organization=self.organization
+        )

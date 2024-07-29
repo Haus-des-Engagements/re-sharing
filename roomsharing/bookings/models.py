@@ -190,6 +190,9 @@ class Booking(TimeStampedModel):
     def is_cancelable(self):
         return not self.is_in_the_past() and self.status != BookingStatus.CANCELLED
 
+    def is_confirmable(self):
+        return not self.is_in_the_past() and self.status == BookingStatus.PENDING
+
 
 class BookingMessage(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)

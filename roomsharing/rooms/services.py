@@ -3,10 +3,13 @@ from datetime import time
 from datetime import timedelta
 
 from dateutil import parser
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from roomsharing.bookings.models import Booking
+from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import AccessCode
 from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 
@@ -71,3 +74,33 @@ def filter_rooms(room_name, max_persons):
         rooms = rooms.filter(name__icontains=room_name)
 
     return rooms.prefetch_related("roomimages_of_room")
+
+
+def get_access_code(room_slug, organization_slug, timestamp):
+    room = get_object_or_404(Room, slug=room_slug)
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    access_code = (
+        AccessCode.objects.filter(
+            Q(access=room.access)
+            & Q(validity_start__lte=timestamp)
+            & Q(organization=organization)
+        )
+        .order_by("-validity_start")
+        .first()
+    )
+
+    # when there is no organization specific AccessCode,
+    # we try to get the general, unspecific one
+    if not access_code:
+        access_code = (
+            AccessCode.objects.filter(
+                Q(access=room.access)
+                & Q(validity_start__lte=timestamp)
+                & Q(organization=None)
+            )
+            .order_by("-validity_start")
+            .first()
+        )
+
+    return access_code

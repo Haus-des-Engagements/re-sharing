@@ -9,6 +9,15 @@
         <option value="Scratches and Consoles" />
       </list>
     </option>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="django-storages" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="UnresolvedReference" enabled="true" level="ERROR" enabled_by_default="true">
       <scope name="Project Files" level="ERROR" enabled="true" />
     </inspection_tool>

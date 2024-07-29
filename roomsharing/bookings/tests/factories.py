@@ -13,8 +13,6 @@ from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
-from roomsharing.organizations.tests.factories import OrganizationFactory
-from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
 
@@ -23,14 +21,16 @@ class BookingFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     title = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.title))
-    organization = SubFactory(OrganizationFactory)
+    organization = SubFactory(
+        "roomsharing.organizations.tests.factories.OrganizationFactory"
+    )
     user = SubFactory(UserFactory)
-    room = SubFactory(RoomFactory)
+    room = SubFactory("roomsharing.rooms.tests.factories.RoomFactory")
     status = BookingStatus.CONFIRMED
     start_date = Faker(
         "date_between_dates",
         date_start=datetime(2020, 1, 1).date(),  # noqa: DTZ001
-        date_end=timezone.now().date(),
+        date_end=timezone.now().date() + timedelta(days=300),
     )
 
     @LazyAttribute
