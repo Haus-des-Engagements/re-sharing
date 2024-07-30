@@ -17,7 +17,7 @@
       <div class="col-md-5">
         <div class="card-body">
           <h5 class="card-title">
-            <a href="{% url 'rooms:show-room' slug=room.slug %}">{{ room.name }}</a>
+            <a href="{% url 'rooms:show-room' room_slug=room.slug %}">{{ room.name }}</a>
           </h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">

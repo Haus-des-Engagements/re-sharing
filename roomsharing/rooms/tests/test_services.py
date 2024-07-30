@@ -23,7 +23,7 @@ class GetWeeklyBookingsTest(TestCase):
 
         room = RoomFactory()
         date_string = date.strftime("%Y-%m-%d")
-        time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
 
         # Check the length of returned lists
         number_of_timeslots = 32
@@ -76,7 +76,7 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
 
         number_of_timeslots = 32
         assert len(time_slots) == number_of_timeslots
@@ -96,7 +96,7 @@ class GetWeeklyBookingsTest(TestCase):
     def test_without_date(self):
         date_string = None
         room = RoomFactory()
-        time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
         assert time_slots[0]["booked"] == [
             False,
             False,
@@ -200,4 +200,8 @@ class TestGetAccessCode(TestCase):
 
 
 class TestMultipleRoomCalender(TestCase):
+    pass
+
+
+def test_room_planner_table():
     pass

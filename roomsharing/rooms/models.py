@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 from pathlib import Path
 
 from django.core.validators import FileExtensionValidator
@@ -18,6 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 from PIL import Image
 
+from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
 
 
@@ -97,10 +99,17 @@ class Room(Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("rooms:show-room", kwargs={"slug": self.slug})
+        return reverse("rooms:show-room", kwargs={"room_slug": self.slug})
 
     def is_booked(self, timespan):
         return self.bookings_of_room.filter(timespan__overlap=timespan).exists()
+
+    def is_bookable(self, start_datetime):
+        end_datetime = start_datetime + timedelta(minutes=30)
+        return not self.bookings_of_room.filter(
+            timespan__overlap=(start_datetime, end_datetime),
+            status=BookingStatus.CONFIRMED,
+        ).exists()
 
 
 def create_roomimage_path(instance, filename):

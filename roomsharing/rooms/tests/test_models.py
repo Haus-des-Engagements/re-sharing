@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+import pytest
+from dateutil.parser import parse
 from django.test import TestCase
 from django.utils import timezone
 from psycopg.types.range import Range
@@ -9,6 +11,7 @@ from roomsharing.rooms.models import Access
 from roomsharing.rooms.models import AccessCode
 from roomsharing.rooms.models import Room
 from roomsharing.rooms.tests.factories import RoomFactory
+from roomsharing.utils.models import BookingStatus
 
 
 def test_room_get_absolute_url(room: Room):
@@ -66,3 +69,46 @@ def test_access_code_str(access_code: AccessCode):
         + " "
         + access_code.validity_start.strftime("%Y-%m-%d %H:%M")
     )
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    ("start_datetime", "booking_exists", "expected"),
+    [
+        (
+            "2024-07-25T12:00",
+            False,
+            True,
+        ),  # Room is not yet booked, so it should be bookable
+        (
+            "2024-07-25T12:00",
+            True,
+            False,
+        ),  # Room is already booked, so it should not be bookable
+        (
+            "2024-07-25T12:20",
+            True,
+            False,
+        ),  # Room is booked and new booking overlaps, so it should not be bookable
+    ],
+)
+def test_room_is_bookable(start_datetime, booking_exists, expected):
+    # Create a room instance
+    room = RoomFactory(name="TestRoom")
+
+    # Create a confirmed booking if booking_exists parameter is True
+    if booking_exists:
+        BookingFactory(
+            room=room,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(parse("2024-07-25T12:00")),
+                timezone.make_aware(parse("2024-07-25T12:30")),
+            ),
+        )
+
+    # Call the is_bookable method on the room instance
+    result = room.is_bookable(timezone.make_aware(parse(start_datetime)))
+
+    # Assert the result is as expected
+    assert result == expected

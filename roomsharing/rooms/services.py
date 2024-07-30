@@ -62,7 +62,7 @@ def get_weekly_bookings(room_slug, date_string):
                     if 0 <= slot_index < number_of_slots:
                         time_slots[slot_index]["booked"][day_index] = True
                 booking_start += timedelta(minutes=30)
-    return time_slots, weekdays
+    return room, time_slots, weekdays
 
 
 def filter_rooms(persons_count, start_datetime):
