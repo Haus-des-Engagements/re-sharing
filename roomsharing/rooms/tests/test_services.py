@@ -110,20 +110,20 @@ class GetWeeklyBookingsTest(TestCase):
 
 @pytest.mark.django_db()  # Mark for db access
 @pytest.mark.parametrize(
-    ("room_name", "max_persons", "expected"),
+    ("persons_count", "start_datetime", "expected"),
     [
-        ("Room", 2, ["Room1", "Room2"]),
-        ("Small Room", None, ["Small Room"]),
-        (None, 3, ["Room2"]),
+        ("2", None, ["Room1", "Room2"]),
+        ("1", "2024-07-25T12:30", ["Room1", "Room2", "Small Room"]),
+        ("3", None, ["Room2"]),
         (None, None, ["Room1", "Room2", "Small Room"]),
     ],
 )
-def test_filter_rooms(room_name, max_persons, expected):
+def test_filter_rooms(persons_count, start_datetime, expected):
     RoomFactory.create(name="Room1", max_persons=2)
     RoomFactory.create(name="Room2", max_persons=3)
     RoomFactory.create(name="Small Room", max_persons=1)
 
-    rooms = filter_rooms(room_name, max_persons)
+    rooms = filter_rooms(persons_count, start_datetime)
     assert {room.name for room in rooms} == set(expected)
 
 
@@ -197,3 +197,7 @@ class TestGetAccessCode(TestCase):
             )
             is None
         )
+
+
+class TestMultipleRoomCalender(TestCase):
+    pass

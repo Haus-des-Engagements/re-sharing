@@ -65,14 +65,19 @@ def get_weekly_bookings(room_slug, date_string):
     return time_slots, weekdays
 
 
-def filter_rooms(room_name, max_persons):
+def filter_rooms(persons_count, start_datetime):
     rooms = Room.objects.all()
 
-    if max_persons:
-        rooms = rooms.filter(max_persons__gte=max_persons)
-    if room_name:
-        rooms = rooms.filter(name__icontains=room_name)
-
+    if persons_count:
+        rooms = rooms.filter(max_persons__gte=persons_count)
+    if start_datetime:
+        start_datetime = timezone.make_aware(parser.parse(start_datetime))
+        end_datetime = start_datetime + timedelta(minutes=30)
+        overlapping_bookings = Booking.objects.filter(
+            timespan__overlap=(start_datetime, end_datetime),
+        )
+        booked_room_ids = overlapping_bookings.values_list("room_id", flat=True)
+        rooms = rooms.exclude(id__in=booked_room_ids)
     return rooms.prefetch_related("roomimages_of_room")
 
 

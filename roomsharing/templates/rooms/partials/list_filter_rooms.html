@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% for room in rooms %}
-  <div class="card mb-3 mt-4">
+  <div class="card mb-3">
     <div class="row g-0">
       <div class="col-md-2">
         {% with room.roomimages_of_room.all.0.image.url as img_url %}
@@ -62,4 +62,6 @@
       </div>
     </div>
   </div>
+{% empty %}
+  {% trans "No room matches your filter." %}
 {% endfor %}

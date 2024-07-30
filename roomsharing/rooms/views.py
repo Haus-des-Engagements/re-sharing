@@ -33,10 +33,9 @@ def get_weekly_bookings_view(request, room_slug):
 
 
 def list_rooms_view(request):
-    max_persons = request.GET.get("max_persons")
-    room_name = request.GET.get("name")
-    rooms = filter_rooms(room_name, max_persons)
-
+    persons_count = request.GET.get("persons_count")
+    start_datetime = request.GET.get("start_datetime")
+    rooms = filter_rooms(persons_count, start_datetime)
     context = {"rooms": rooms}
     if request.headers.get("HX-Request"):
         return render(request, "rooms/partials/list_filter_rooms.html", context)

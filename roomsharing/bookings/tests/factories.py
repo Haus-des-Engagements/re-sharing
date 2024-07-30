@@ -35,7 +35,7 @@ class BookingFactory(DjangoModelFactory):
 
     @LazyAttribute
     def start_time(self):
-        hour = random.randint(0, 21)  # noqa: S311
+        hour = random.randint(0, 20)  # noqa: S311
         minute = random.choice([0, 30])  # Minute should be either 0 or 30 # noqa: S311
         return time(hour, minute)
 

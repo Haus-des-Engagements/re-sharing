@@ -7,19 +7,32 @@
 {% endblock title %}
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
-  <div class="row">
-    <form hx-get="{% url 'rooms:list-rooms' %}"
-          hx-target="#room-list"
-          hx-trigger="change"
-          hx-indicator="#spinner">
-      <input type="number" name="max_persons" placeholder="Persons" />
-      <input type="text" name="name" placeholder="Room Name" />
-      <div id="spinner"
-           class="spinner-border col-auto htmx-indicator"
-           role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </form>
+  <form class="row g-2"
+        hx-get="{% url 'rooms:list-rooms' %}"
+        hx-target="#room-list"
+        hx-trigger="input change"
+        hx-indicator="#spinner">
+    <div id="div_start_datetime" class="form-floating mb-3 col-3">
+      <input type="datetime-local"
+             name="start_datetime"
+             class="form-control textinput"
+             placeholder="{% trans 'Find a free room' %}"
+             id="start_datetime" />
+      <label for="start_datetime">{% trans "Find a free room" %}</label>
+    </div>
+    <div id="div_persons_count" class="form-floating mb-3 col-3">
+      <input type="number"
+             name="persons_count"
+             class="form-control textinput"
+             placeholder="{% trans 'Anzahl Personen' %}"
+             id="persons_count" />
+      <label for="persons_count">{% trans "Number of persons" %}</label>
+    </div>
+  </form>
+  <div id="spinner"
+       class="spinner-border col-auto htmx-indicator"
+       role="status">
+    <span class="visually-hidden">Loading...</span>
   </div>
   <div id="room-list">{% include "rooms/partials/list_filter_rooms.html" %}</div>
 {% endblock content %}

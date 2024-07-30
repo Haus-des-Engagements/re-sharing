@@ -5,6 +5,8 @@ from django.utils import timezone
 from psycopg.types.range import Range
 
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.rooms.models import Access
+from roomsharing.rooms.models import AccessCode
 from roomsharing.rooms.models import Room
 from roomsharing.rooms.tests.factories import RoomFactory
 
@@ -47,3 +49,20 @@ class TestRoomIsBooked(TestCase):
         )
 
         assert is_booked is False
+
+
+def test_room_str(room: Room):
+    assert room.__str__() == room.name
+
+
+def test_access_str(access: Access):
+    assert access.__str__() == access.name
+
+
+def test_access_code_str(access_code: AccessCode):
+    assert (
+        access_code.__str__()
+        == access_code.access.name
+        + " "
+        + access_code.validity_start.strftime("%Y-%m-%d %H:%M")
+    )
