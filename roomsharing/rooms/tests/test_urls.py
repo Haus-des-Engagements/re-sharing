@@ -15,3 +15,8 @@ def test_show_room(room: Room):
 def test_list_rooms():
     assert reverse("rooms:list-rooms") == "/rooms/"
     assert resolve("/rooms/").view_name == "rooms:list-rooms"
+
+
+def test_room_planner():
+    assert reverse("rooms:planner") == "/rooms/planner/"
+    assert resolve("/rooms/planner/").view_name == "rooms:planner"

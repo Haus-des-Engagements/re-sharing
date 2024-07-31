@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Planner" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "Planner" %}</h1>
+  {% include "rooms/partials/planner_table.html" %}
+{% endblock content %}

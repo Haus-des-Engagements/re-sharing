@@ -10,7 +10,8 @@ from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.services import filter_rooms
 from roomsharing.rooms.services import get_access_code
-from roomsharing.rooms.services import get_weekly_bookings
+from roomsharing.rooms.services import planner_table
+from roomsharing.rooms.services import show_room
 from roomsharing.rooms.tests.factories import AccessCodeFactory
 from roomsharing.rooms.tests.factories import AccessFactory
 from roomsharing.rooms.tests.factories import RoomFactory
@@ -23,7 +24,7 @@ class GetWeeklyBookingsTest(TestCase):
 
         room = RoomFactory()
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = show_room(room.slug, date_string)
 
         # Check the length of returned lists
         number_of_timeslots = 32
@@ -76,7 +77,7 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = show_room(room.slug, date_string)
 
         number_of_timeslots = 32
         assert len(time_slots) == number_of_timeslots
@@ -96,7 +97,7 @@ class GetWeeklyBookingsTest(TestCase):
     def test_without_date(self):
         date_string = None
         room = RoomFactory()
-        room, time_slots, weekdays = get_weekly_bookings(room.slug, date_string)
+        room, time_slots, weekdays = show_room(room.slug, date_string)
         assert time_slots[0]["booked"] == [
             False,
             False,
@@ -199,9 +200,84 @@ class TestGetAccessCode(TestCase):
         )
 
 
-class TestMultipleRoomCalender(TestCase):
-    pass
+class TestRoomPlanner(TestCase):
+    def test_empty_planner_table(self):
+        date = timezone.make_aware(timezone.datetime(2024, 7, 23))
+        date_string = date.strftime("%Y-%m-%d")
 
+        room1 = RoomFactory()
+        room2 = RoomFactory()
+        rooms, timeslots, dates = planner_table(date_string)
 
-def test_room_planner_table():
-    pass
+        number_of_timeslots = 48
+        assert len(timeslots) == number_of_timeslots
+        assert set(rooms) == {room1, room2}
+
+        # Check some sample values
+        assert (
+            dates["previous_day"]
+            == timezone.make_naive(date - timedelta(days=1)).date()
+        )
+        assert dates["next_day"] == timezone.make_naive(date + timedelta(days=1)).date()
+        assert dates["shown_date"] == timezone.make_naive(date).date()
+        assert timeslots[16]["time"] == timezone.datetime(
+            2024, 7, 23, 8, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
+        )
+        assert timeslots[16]["booked"] == [
+            False,
+            False,
+        ]
+
+        # Check that every slot is False (not booked)
+        for slot in timeslots:
+            assert all(booked is False for booked in slot["booked"])
+
+    def test_some_bookings_exist(self):
+        room1 = RoomFactory()
+        room2 = RoomFactory()
+        booking1 = BookingFactory(
+            room=room1,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2024, 6, 5, 5, 0)),
+                timezone.make_aware(timezone.datetime(2024, 6, 5, 9, 0)),
+            ),
+        )
+        booking2 = BookingFactory(
+            room=room1,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2024, 6, 5, 18, 0)),
+                timezone.make_aware(timezone.datetime(2024, 6, 5, 22, 0)),
+            ),
+        )
+        booking3 = BookingFactory(
+            room=room2,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2024, 6, 5, 23, 0)),
+                timezone.make_aware(timezone.datetime(2024, 6, 6, 22, 0)),
+            ),
+        )
+        booking1.save()
+        booking2.save()
+        booking3.save()
+
+        date = timezone.make_aware(timezone.datetime(2024, 6, 5))
+
+        date_string = date.strftime("%Y-%m-%d")
+        rooms, timeslots, dates = planner_table(date_string)
+
+        number_of_timeslots = 48
+        assert len(timeslots) == number_of_timeslots
+
+        assert (
+            timeslots[16]["booked"][0] is True
+        )  # This should be True because we booked the slot from 8:00 to 9:00
+        assert (
+            timeslots[26]["booked"][0] is False
+        )  # This should be False because we did not book the slot
+        assert timeslots[36]["booked"][0] is True  # This should be False
+        assert (
+            timeslots[36]["booked"][1] is False
+        )  # This should be True because we booked the slot from 18:00 to 22:00

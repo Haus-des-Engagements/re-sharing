@@ -7,7 +7,14 @@
 {% endblock title %}
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
-  <form class="row g-2"
+  <div class="col-auto">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-calendar4-week" />
+    </svg>
+    {% url 'rooms:planner' as planner_url %}
+    {% blocktrans %}You can also find free slots in the <a href="{{ planner_url }}">planner overview</a>.{% endblocktrans %}
+  </div>
+  <form class="row g-2 mt-2"
         hx-get="{% url 'rooms:list-rooms' %}"
         hx-target="#room-list"
         hx-trigger="input change"
@@ -28,11 +35,11 @@
              id="persons_count" />
       <label for="persons_count">{% trans "Number of persons" %}</label>
     </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
   </form>
-  <div id="spinner"
-       class="spinner-border col-auto htmx-indicator"
-       role="status">
-    <span class="visually-hidden">Loading...</span>
-  </div>
   <div id="room-list">{% include "rooms/partials/list_filter_rooms.html" %}</div>
 {% endblock content %}

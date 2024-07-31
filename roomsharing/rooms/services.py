@@ -14,7 +14,7 @@ from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 
 
-def get_weekly_bookings(room_slug, date_string):
+def show_room(room_slug, date_string):
     room = get_object_or_404(Room, slug=room_slug)
     # Calculate the start and end dates for the week
     date = parser.parse(date_string).date() if date_string else timezone.now().date()
@@ -109,3 +109,59 @@ def get_access_code(room_slug, organization_slug, timestamp):
         )
 
     return access_code
+
+
+def planner_table(date_string):
+    rooms = Room.objects.all().order_by("id")
+
+    shown_date = (
+        parser.parse(date_string).date() if date_string else timezone.now().date()
+    )
+    start_of_day = timezone.make_aware(
+        datetime.combine(shown_date, time(hour=0)),
+    )
+    end_of_day = timezone.make_aware(
+        datetime.combine(shown_date, time(hour=23, minute=59)),
+    )
+
+    # Calculate the time slots for each day
+    number_of_slots = 48
+    timeslots = [
+        {
+            "timeslot": i,
+            "time": start_of_day + timedelta(minutes=30) * i,
+            "booked": [False] * rooms.count(),
+        }
+        for i in range(number_of_slots)
+    ]
+    daily_bookings = (
+        Booking.objects.filter(room__in=rooms)
+        .filter(status=BookingStatus.CONFIRMED)
+        .filter(timespan__overlap=(start_of_day, end_of_day))
+    )
+
+    room_ids = [room.id for room in rooms]
+
+    for booking in daily_bookings:
+        booking_start = max(booking.timespan.lower, start_of_day)
+        booking_end = min(booking.timespan.upper, end_of_day)
+
+        # Convert booking start and end times to time slot indices
+        start_index = int((booking_start - start_of_day).total_seconds() // 1800)
+        end_index = int((booking_end - start_of_day).total_seconds() // 1800)
+
+        room_index = room_ids.index(booking.room.id)
+
+        # Mark corresponding time slots as booked
+        for i in range(start_index, end_index):
+            timeslots[i]["booked"][room_index] = True
+
+    previous_day = shown_date - timedelta(days=1)
+    next_day = shown_date + timedelta(days=1)
+    dates = {
+        "previous_day": previous_day,
+        "shown_date": shown_date,
+        "next_day": next_day,
+    }
+
+    return rooms, timeslots, dates

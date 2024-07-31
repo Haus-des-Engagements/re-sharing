@@ -1,0 +1,76 @@
+{% load i18n %}
+
+<div id="planner-table" class="row g-2 d-flex">
+  <button type="button"
+          id="prevDay"
+          class="col-auto btn btn-secondary"
+          hx-get="{% url 'rooms:planner' %}?date={{ dates.previous_day|date:'Y-m-d' }}"
+          hx-target="#planner-table"
+          hx-trigger="click"
+          hx-indicator="#spinner"
+          hx-push-url="true"
+          hx-swap="outerHTML">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-chevron-left" />
+    </svg>
+  </button>
+  <div id="div_date" class="col-auto">
+    <input type="date"
+           name="date"
+           class="form-control textinput"
+           placeholder="{% trans 'Date' %}"
+           id="date"
+           value="{{ dates.shown_date|date:'Y-m-d' }}"
+           hx-get="{% url 'rooms:planner' %}"
+           hx-target="#planner-table"
+           hx-swap="outerHTML"
+           hx-trigger="input change"
+           hx-indicator="#spinner"
+           hx-push-url="true" />
+  </div>
+  <button type="button"
+          id="nextDay"
+          class="col-auto btn btn-secondary"
+          hx-get="{% url 'rooms:planner' %}?date={{ dates.next_day|date:'Y-m-d' }}"
+          hx-target="#planner-table"
+          hx-trigger="click"
+          hx-swap="outerHTML"
+          hx-indicator="#spinner"
+          hx-push-url="true">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-chevron-right" />
+    </svg>
+  </button>
+  <div id="spinner"
+       class="spinner-border col-auto htmx-indicator"
+       role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-sm-little-padding table-bordered small">
+      <thead>
+        <tr>
+          <th>Time</th>
+          {% for room in rooms %}
+            <th scope="col">
+              <a href="{% url 'rooms:show-room' room_slug=room.slug %}">{{ room.name }}</a>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for slot in timeslots %}
+          <!-- start showing timeslots from 6 AM on (6h * 2 slots/h = 12) --!>
+{% if slot.timeslot >= 12 %}
+<tr>
+<td>{{ slot.time|date:"H:i" }}</td>
+{% for booked in slot.booked %}
+<td class=" {% if booked %}table-primary{% endif %} "></td>
+{% endfor %}
+</tr>
+{% endif %}
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>

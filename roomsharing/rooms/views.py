@@ -1,12 +1,13 @@
 from django.shortcuts import render
 
 from roomsharing.rooms.services import filter_rooms
-from roomsharing.rooms.services import get_weekly_bookings
+from roomsharing.rooms.services import planner_table
+from roomsharing.rooms.services import show_room
 
 
 def show_room_view(request, room_slug):
     date_string = request.GET.get("date")
-    room, time_slots, weekdays = get_weekly_bookings(room_slug, date_string)
+    room, time_slots, weekdays = show_room(room_slug, date_string)
 
     context = {
         "room": room,
@@ -19,20 +20,6 @@ def show_room_view(request, room_slug):
     return render(request, "rooms/show_room.html", context)
 
 
-def get_weekly_bookings_view(request, room_slug):
-    date_string = request.GET.get("date")
-    time_slots, weekdays = get_weekly_bookings(room_slug, date_string)
-
-    return render(
-        request,
-        "rooms/partials/get_weekly_bookings.html",
-        {
-            "weekdays": weekdays,
-            "time_slots": time_slots,
-        },
-    )
-
-
 def list_rooms_view(request):
     persons_count = request.GET.get("persons_count")
     start_datetime = request.GET.get("start_datetime")
@@ -42,3 +29,13 @@ def list_rooms_view(request):
         return render(request, "rooms/partials/list_filter_rooms.html", context)
 
     return render(request, "rooms/list_rooms.html", context)
+
+
+def planner_view(request):
+    date_string = request.GET.get("date")
+    rooms, timeslots, dates = planner_table(date_string)
+    context = {"rooms": rooms, "timeslots": timeslots, "dates": dates}
+
+    if request.headers.get("HX-Request"):
+        return render(request, "rooms/partials/planner_table.html", context)
+    return render(request, "rooms/planner.html", context)
