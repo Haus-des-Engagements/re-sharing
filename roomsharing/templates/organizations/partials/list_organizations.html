@@ -33,31 +33,6 @@
               <a class="btn btn-outline-primary"
                  href="{% url 'organizations:show-organization' organization=organization.slug %}">{% trans "View Details" %}
               </a>
-              {% if organization.bookingpermission_status == 1 %}
-                <div id="{{ organization.slug }}-cancel-bookingpermission">
-                  <button class="btn btn-outline-danger"
-                          hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
-                          hx-target="#{{ organization.slug }}-cancel-bookingpermission">
-                    {% trans "Cancel booking permission request" %}
-                  </button>
-                </div>
-              {% elif organization.bookingpermission_status == 2 %}
-                <div id="{{ organization.slug }}-cancel-bookingpermission">
-                  <button class="btn btn-outline-danger"
-                          hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
-                          hx-target="#{{ organization.slug }}-cancel-bookingpermission">
-                    {% trans "Cancel booking permission" %}
-                  </button>
-                </div>
-              {% else %}
-                <div id="{{ organization.slug }}-request-bookingpermission">
-                  <button class="btn btn-outline-success"
-                          hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
-                          hx-target="#{{ organization.slug }}-request-bookingpermission">
-                    {% trans "Request booking permission" %}
-                  </button>
-                </div>
-              {% endif %}
             </div>
           </div>
         </div>

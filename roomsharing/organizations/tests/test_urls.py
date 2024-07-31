@@ -10,17 +10,6 @@ def test_list_organizations():
     assert resolve("/organizations/").view_name == "organizations:list-organizations"
 
 
-def test_filter_organizations():
-    assert (
-        reverse("organizations:filter-organizations")
-        == "/organizations/filter-organizations/"
-    )
-    assert (
-        resolve("/organizations/filter-organizations/").view_name
-        == "organizations:filter-organizations"
-    )
-
-
 def test_request_bookingpermission(organization: Organization):
     assert (
         reverse(

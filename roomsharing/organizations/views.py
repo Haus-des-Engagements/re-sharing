@@ -3,8 +3,6 @@ from http import HTTPStatus
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
-from django.db.models import OuterRef
-from django.db.models import Subquery
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
@@ -12,69 +10,24 @@ from django.shortcuts import render
 
 from roomsharing.users.models import User
 
-from .forms import OrganizationForm
-from .forms import OrganizationsListFilter
 from .models import BookingPermission
 from .models import Organization
 from .selectors import user_has_admin_bookingpermission
 from .selectors import user_has_normal_bookingpermission
+from .services import filter_organizations
 
 
-@login_required
 def list_organizations_view(request):
-    filter_form = OrganizationsListFilter(request.POST or None)
-    user = request.user
-    bookingpermission = BookingPermission.objects.filter(
-        user=user, organization=OuterRef("pk")
-    ).values("status")[:1]
-    organizations = Organization.objects.annotate(
-        bookingpermission_status=Subquery(bookingpermission)
-    )
+    organization_name = request.GET.get("organization_name")
+    organizations = filter_organizations(organization_name)
 
-    if request.method == "POST":
-        form = OrganizationForm(request.POST)
-        if form.is_valid():
-            new_org = form.save(commit=False)
-
-            new_org.save()
-            bookingpermission = BookingPermission(
-                user=user,
-                organization=new_org,
-                status=BookingPermission.Status.CONFIRMED,
-                role=BookingPermission.Role.ADMIN,
-            )
-            bookingpermission.save()
-
-            return redirect("organizations:list-organizations")
-    else:
-        form = OrganizationForm()
-
-    return render(
-        request,
-        "organizations/list_organizations.html",
-        {"organizations": organizations, "form": form, "filter-form": filter_form},
-    )
-
-
-def filter_organizations_view(request):
-    form = OrganizationsListFilter(request.POST or None)
-    organizations = Organization.objects.all()
-
-    if form.is_valid():
-        name = form.cleaned_data.get("name")
-        if name:
-            organizations = organizations.filter(name__icontains=name)
-
+    context = {"organizations": organizations}
+    if request.headers.get("HX-Request"):
         return render(
-            request,
-            "organizations/partials/list_filter_organizations.html",
-            {"organizations": organizations, "form": form},
+            request, "organizations/partials/list_organizations.html", context
         )
 
-    return HttpResponse(
-        f'<p class="error">Your form submission was unsuccessful. '
-        f"Please would you correct the errors? The current errors: {form.errors}</p>",
-    )
+    return render(request, "organizations/list_organizations.html", context)
 
 
 @login_required

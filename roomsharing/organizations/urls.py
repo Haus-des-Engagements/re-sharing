@@ -4,7 +4,6 @@ from .views import cancel_bookingpermission_view
 from .views import confirm_bookingpermission_view
 from .views import delete_organization_view
 from .views import demote_to_booker_view
-from .views import filter_organizations_view
 from .views import list_organizations_view
 from .views import promote_to_admin_view
 from .views import request_bookingpermission_view
@@ -13,9 +12,6 @@ from .views import show_organization_view
 app_name = "organizations"
 urlpatterns = [
     path("", list_organizations_view, name="list-organizations"),
-    path(
-        "filter-organizations/", filter_organizations_view, name="filter-organizations"
-    ),
     path(
         "<slug:organization>/request-bookingpermission/",
         request_bookingpermission_view,

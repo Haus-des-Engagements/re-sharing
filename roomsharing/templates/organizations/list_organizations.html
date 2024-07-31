@@ -28,14 +28,25 @@
     </div>
   </div>
   <div class="row">
-    <form hx-post="{% url 'organizations:filter-organizations' %}"
-          hx-target="#list-organizations"
-          hx-trigger="keyup">
-      {% csrf_token %}
-      <input type="text" name="name" placeholder="Organization Name" />
-    </form>
+    <div id="div_persons_count" class="form-floating mb-3 col-3">
+      <input type="text"
+             name="organization_name"
+             class="form-control textinput"
+             placeholder="{% trans 'Search organizations' %}"
+             id="organization_name"
+             hx-get="{% url 'organizations:list-organizations' %}"
+             hx-target="#list-organizations"
+             hx-trigger="keyup"
+             hx-indicator="#spinner" />
+      <label for="organization_name">{% trans "Search organizations" %}</label>
+    </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
   </div>
-  <div id="list-organizations" class="mt-4">{% include "organizations/partials/list_filter_organizations.html" %}</div>
+  <div id="list-organizations" class="mt-4">{% include "organizations/partials/list_organizations.html" %}</div>
   <div class="modal fade"
        id="createOrganizationModal"
        tabindex="-1"
@@ -52,8 +63,6 @@
         </div>
         <div class="modal-body">
           <form method="post" action="{% url 'organizations:list-organizations' %}">
-            {% csrf_token %}
-            {{ form.as_p }}
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>

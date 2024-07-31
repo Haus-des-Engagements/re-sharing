@@ -12,6 +12,7 @@ from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
+from roomsharing.organizations.views import list_organizations_view
 from roomsharing.organizations.views import show_organization_view
 from roomsharing.users.tests.factories import UserFactory
 
@@ -24,22 +25,20 @@ class TestListOrganizationView(TestCase):
         self.list_organizations_url = reverse("organizations:list-organizations")
 
     def test_list_organizations(self):
-        user = UserFactory()
-        self.client.force_login(user)
-        BookingPermissionFactory(
-            user=user,
-            organization=self.organization1,
-            role=BookingPermission.Role.BOOKER,
-        )
-
         response = self.client.get(self.list_organizations_url)
         assert response.status_code == HTTPStatus.OK
         self.assertTemplateUsed(response, "organizations/list_organizations.html")
         organizations = response.context.get("organizations")
-        form = response.context.get("form")
 
         assert set(organizations) == {self.organization1, self.organization2}
-        assert form is not None
+
+    @pytest.mark.django_db()
+    def test_list_organizations_view_hx_request(self):
+        request = self.rf.get(
+            reverse("organizations:list-organizations"), HTTP_HX_REQUEST="true"
+        )
+        response = list_organizations_view(request)
+        assert response.status_code == HTTPStatus.OK
 
 
 class TestShowOrganizationView(TestCase):
