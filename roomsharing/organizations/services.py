@@ -35,10 +35,13 @@ def show_organization(user, organization_slug):
         elif user_has_normal_bookingpermission(user, organization):
             bookingpermissions = BookingPermission.objects.filter(
                 organization=organization
+            ).filter(status=BookingPermission.Status.CONFIRMED)
+            permitted_users = (
+                User.objects.filter(user_of_bookingpermission__in=bookingpermissions)
+                .annotate(permission_status=F("user_of_bookingpermission__status"))
+                .annotate(permission_role=F("user_of_bookingpermission__role"))
+                .order_by("id")
             )
-            permitted_users = User.objects.filter(
-                user_of_bookingpermission__in=bookingpermissions
-            ).order_by("id")
 
     return organization, permitted_users, is_admin
 
