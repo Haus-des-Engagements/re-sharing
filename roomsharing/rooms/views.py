@@ -5,6 +5,17 @@ from roomsharing.rooms.services import planner_table
 from roomsharing.rooms.services import show_room
 
 
+def list_rooms_view(request):
+    persons_count = request.GET.get("persons_count")
+    start_datetime = request.GET.get("start_datetime")
+    rooms = filter_rooms(persons_count, start_datetime)
+    context = {"rooms": rooms}
+    if request.headers.get("HX-Request"):
+        return render(request, "rooms/partials/list_filter_rooms.html", context)
+
+    return render(request, "rooms/list_rooms.html", context)
+
+
 def show_room_view(request, room_slug):
     date_string = request.GET.get("date")
     room, time_slots, weekdays = show_room(room_slug, date_string)
@@ -18,17 +29,6 @@ def show_room_view(request, room_slug):
         return render(request, "rooms/partials/get_weekly_bookings.html", context)
 
     return render(request, "rooms/show_room.html", context)
-
-
-def list_rooms_view(request):
-    persons_count = request.GET.get("persons_count")
-    start_datetime = request.GET.get("start_datetime")
-    rooms = filter_rooms(persons_count, start_datetime)
-    context = {"rooms": rooms}
-    if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/list_filter_rooms.html", context)
-
-    return render(request, "rooms/list_rooms.html", context)
 
 
 def planner_view(request):

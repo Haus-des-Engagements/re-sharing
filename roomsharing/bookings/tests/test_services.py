@@ -6,16 +6,20 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 
+from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
 from roomsharing.bookings.services import confirm_booking
+from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
+from roomsharing.bookings.services import filter_bookings_list
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
 from roomsharing.bookings.services import show_booking
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.bookings.tests.factories import create_timespan
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
@@ -312,3 +316,99 @@ class TestGetBooking(TestCase):
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization
         )
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    (
+        "show_past_bookings",
+        "organization",
+        "status",
+        "hide_recurring_bookings",
+        "expected",
+    ),
+    [
+        (True, "all", "all", True, 2),
+        (True, "all", [1], True, 1),
+        (False, "all", "all", True, 1),
+        (True, "org1", "all", True, 0),
+    ],
+)
+def test_filter_bookings_list(
+    show_past_bookings, organization, status, hide_recurring_bookings, expected
+):
+    """
+    Test the 'filter_bookings_list' function
+    """
+    # Arrange
+    user = UserFactory()
+    org = OrganizationFactory()
+    OrganizationFactory(name="org1")
+    BookingPermissionFactory(
+        organization=org, user=user, status=BookingPermission.Status.CONFIRMED
+    )
+    BookingFactory(
+        user=user,
+        organization=org,
+        status=BookingStatus.PENDING,
+        timespan=(
+            timezone.now() + timezone.timedelta(days=1),
+            timezone.now() + timezone.timedelta(days=1, hours=1),
+        ),
+    )
+    BookingFactory(
+        user=user,
+        organization=org,
+        timespan=(
+            timezone.now() - timezone.timedelta(days=1, hours=2),
+            timezone.now() - timezone.timedelta(days=1),
+        ),
+    )
+    # Act
+    bookings, organizations = filter_bookings_list(
+        organization, show_past_bookings, status, user, hide_recurring_bookings
+    )
+    # Assert
+    assert len(bookings) == expected
+
+
+@pytest.mark.django_db()
+def test_create_booking():
+    """Test the create_booking function."""
+
+    # Arrange
+    user = UserFactory()
+    organization = OrganizationFactory()
+    room = RoomFactory()
+    timespan = create_timespan(None, None)
+
+    booking_details = {
+        "user": user,
+        "title": "Test Booking",
+        "room": room,
+        "timespan": timespan,
+        "organization": organization,
+        "status": BookingStatus.PENDING,
+        "start_date": timespan.lower.date(),
+        "start_time": timespan.lower.time(),
+        "end_time": timespan.upper.time(),
+    }
+    kwargs = {"room_booked": True, "rrule": "FREQ=DAILY"}
+
+    # Act
+    booking = create_booking(booking_details, **kwargs)
+
+    # Assert
+    assert isinstance(booking, Booking)
+    assert booking.user == booking_details["user"]
+    assert booking.title == booking_details["title"]
+    assert booking.room == booking_details["room"]
+    assert booking.timespan == booking_details["timespan"]
+    assert booking.organization == booking_details["organization"]
+    assert booking.status == booking_details["status"]
+    assert booking.start_date == booking_details["start_date"]
+    assert booking.start_time == booking_details["start_time"]
+    assert booking.end_time == booking_details["end_time"]
+    assert booking.room_booked == kwargs["room_booked"]
+    assert booking.rrule == kwargs["rrule"]
+    assert not booking.pk  # Not saved in the database

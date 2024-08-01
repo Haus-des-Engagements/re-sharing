@@ -17,6 +17,15 @@ from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
 
 
+def create_timespan(start_datetime, duration_in_hours):
+    if start_datetime is None:
+        start_datetime = timezone.now()
+    if duration_in_hours is None:
+        duration_in_hours = 2
+
+    return Range(start_datetime, start_datetime + timedelta(hours=duration_in_hours))
+
+
 class BookingFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     title = Faker("word")

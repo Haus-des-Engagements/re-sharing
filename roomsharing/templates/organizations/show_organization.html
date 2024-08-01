@@ -51,6 +51,13 @@
     </div>
     {% if not permitted_users %}
       <div>{% trans "Only visible for other authorised persons." %}</div>
+      <div id="{{ organization.slug }}-request-bookingpermission">
+        <button class="btn btn-outline-success"
+                hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
+                hx-target="#{{ organization.slug }}-request-bookingpermission">
+          {% trans "Request booking permission" %}
+        </button>
+      </div>
     {% else %}
       {% for user in permitted_users %}
         <div class="card mb-3">
