@@ -77,13 +77,10 @@ def user_has_normal_bookingpermission(user, organization):
 
 
 def organizations_with_bookingpermission(user):
-    return (
-        Organization.objects.filter(organization_of_bookingpermission__user=user)
-        .filter(
-            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
-        )
-        .distinct()
-    )
+    return Organization.objects.filter(
+        organization_of_bookingpermission__user=user,
+        organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+    ).distinct()
 
 
 def user_has_admin_bookingpermission(user, organization):
