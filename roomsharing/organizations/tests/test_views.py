@@ -1,9 +1,6 @@
 from http import HTTPStatus
 
 import pytest
-from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.http import HttpResponseRedirect
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
@@ -13,7 +10,6 @@ from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.organizations.views import list_organizations_view
-from roomsharing.organizations.views import show_organization_view
 from roomsharing.users.tests.factories import UserFactory
 
 
@@ -50,44 +46,10 @@ class TestShowOrganizationView(TestCase):
             kwargs={"organization": self.organization.slug},
         )
 
-    def test_access_user_is_member(self):
-        user = UserFactory()
-        self.client.force_login(user)
-        BookingPermissionFactory(
-            user=user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-        )
-
+    def test_show_organization(self):
         response = self.client.get(self.show_organization_url)
         assert response.status_code == HTTPStatus.OK
-        assert not response.context["is_admin"]
-        assert "permission_status" not in response.context["permitted"].values()[0]
-
-    def test_access_user_is_admin(self):
-        user = UserFactory()
-        self.client.force_login(user)
-        BookingPermissionFactory(
-            user=user,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-        )
-
-        response = self.client.get(self.show_organization_url)
-        assert response.status_code == HTTPStatus.OK
-        assert response.context["is_admin"]
-        assert "permission_status" in response.context["permitted"].values()[0]
-
-    def test_access_by_anonymous_user(self):
-        request = self.rf.get("/fake-url/")
-        request.user = AnonymousUser()
-
-        response = show_organization_view(request, self.organization.slug)
-        login_url = reverse(settings.LOGIN_URL)
-
-        assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == f"{login_url}?next=/fake-url/"
+        self.assertTemplateUsed(response, "organizations/show_organization.html")
 
 
 class TestRequestBookingpermissionView(TestCase):

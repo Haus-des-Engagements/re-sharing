@@ -24,8 +24,8 @@ from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.organizations.models import Organization
-from roomsharing.organizations.selectors import organizations_with_bookingpermission
-from roomsharing.organizations.selectors import user_has_bookingpermission
+from roomsharing.organizations.services import organizations_with_bookingpermission
+from roomsharing.organizations.services import user_has_bookingpermission
 from roomsharing.rooms.models import Room
 from roomsharing.rooms.services import get_access_code
 from roomsharing.users.models import User

@@ -2,19 +2,16 @@ from http import HTTPStatus
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 
-from roomsharing.users.models import User
-
 from .models import BookingPermission
 from .models import Organization
-from .selectors import user_has_admin_bookingpermission
-from .selectors import user_has_normal_bookingpermission
 from .services import filter_organizations
+from .services import show_organization
+from .services import user_has_admin_bookingpermission
 
 
 def list_organizations_view(request):
@@ -30,32 +27,16 @@ def list_organizations_view(request):
     return render(request, "organizations/list_organizations.html", context)
 
 
-@login_required
 def show_organization_view(request, organization):
-    organization = get_object_or_404(Organization, slug=organization)
-    permitted = []
-    is_admin = False
-
-    if user_has_admin_bookingpermission(request.user, organization):
-        bookingpermissions = BookingPermission.objects.filter(organization=organization)
-        permitted = (
-            User.objects.filter(user_of_bookingpermission__in=bookingpermissions)
-            .annotate(permission_status=F("user_of_bookingpermission__status"))
-            .annotate(permission_role=F("user_of_bookingpermission__role"))
-        )
-        is_admin = True
-
-    elif user_has_normal_bookingpermission(request.user, organization):
-        bookingpermissions = BookingPermission.objects.filter(organization=organization)
-        permitted = User.objects.filter(
-            user_of_bookingpermission__in=bookingpermissions
-        ).values("first_name", "last_name", "email")
-
-    return render(
-        request,
-        "organizations/show_organization.html",
-        {"organization": organization, "permitted": permitted, "is_admin": is_admin},
+    organization, permitted_users, is_admin = show_organization(
+        request.user, organization_slug=organization
     )
+    context = {
+        "organization": organization,
+        "permitted_users": permitted_users,
+        "is_admin": is_admin,
+    }
+    return render(request, "organizations/show_organization.html", context)
 
 
 @login_required
