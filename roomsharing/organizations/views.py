@@ -7,8 +7,10 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 
+from .forms import OrganizationForm
 from .models import BookingPermission
 from .models import Organization
+from .services import create_organization
 from .services import filter_organizations
 from .services import show_organization
 from .services import user_has_admin_bookingpermission
@@ -17,8 +19,15 @@ from .services import user_has_admin_bookingpermission
 def list_organizations_view(request):
     organization_name = request.GET.get("organization_name")
     organizations = filter_organizations(organization_name)
+    form = OrganizationForm()
 
-    context = {"organizations": organizations}
+    if request.method == "POST":
+        form = OrganizationForm(request.POST)
+        if form.is_valid():
+            create_organization(request.user, form)
+            return redirect("organizations:list-organizations")
+
+    context = {"organizations": organizations, "form": form}
     if request.headers.get("HX-Request"):
         return render(
             request, "organizations/partials/list_organizations.html", context

@@ -46,6 +46,18 @@ def show_organization(user, organization_slug):
     return organization, permitted_users, is_admin
 
 
+def create_organization(user, form):
+    new_org = form.save(commit=False)
+    new_org.save()
+    bookingpermission = BookingPermission(
+        user=user,
+        organization=new_org,
+        status=BookingPermission.Status.CONFIRMED,
+        role=BookingPermission.Role.ADMIN,
+    )
+    bookingpermission.save()
+
+
 def user_has_bookingpermission(user, booking):
     return (
         BookingPermission.objects.filter(organization=booking.organization)
