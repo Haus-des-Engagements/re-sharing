@@ -176,7 +176,7 @@ def planner_table(date_string):
                 room["booking_link"] = (
                     f"?starttime={timeslot['time'].strftime('%H:%M')}"
                     f"&endtime="
-                    f"{(timeslot['time']+ relativedelta(90)).strftime('%H:%M')}"
+                    f"{(timeslot['time']+ relativedelta(minutes=90)).strftime('%H:%M')}"
                     f"&startdate={shown_date.strftime('%Y-%m-%d')}&room={rooms[i].slug}"
                 )
 
