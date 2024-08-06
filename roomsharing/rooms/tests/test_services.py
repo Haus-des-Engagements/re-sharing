@@ -232,14 +232,21 @@ class TestRoomPlanner(TestCase):
         assert timeslots[16]["time"] == timezone.datetime(
             2024, 7, 23, 8, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
-        assert timeslots[16]["booked"] == [
-            False,
-            False,
+
+        booking_link1 = (
+            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&room=" + room1.slug
+        )
+        booking_link2 = (
+            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&room=" + room2.slug
+        )
+        assert timeslots[16]["slot"] == [
+            {"booked": False, "booking_link": booking_link1},
+            {"booked": False, "booking_link": booking_link2},
         ]
 
         # Check that every slot is False (not booked)
-        for slot in timeslots:
-            assert all(booked is False for booked in slot["booked"])
+        for item in timeslots:
+            assert all(room["booked"] is False for room in item["slot"])
 
     def test_some_bookings_exist(self):
         room1 = RoomFactory()
@@ -279,14 +286,16 @@ class TestRoomPlanner(TestCase):
 
         number_of_timeslots = 48
         assert len(timeslots) == number_of_timeslots
-
-        assert (
-            timeslots[16]["booked"][0] is True
-        )  # This should be True because we booked the slot from 8:00 to 9:00
-        assert (
-            timeslots[26]["booked"][0] is False
-        )  # This should be False because we did not book the slot
-        assert timeslots[36]["booked"][0] is True  # This should be False
-        assert (
-            timeslots[36]["booked"][1] is False
-        )  # This should be True because we booked the slot from 18:00 to 22:00
+        assert timeslots[16]["slot"][0] == {"booked": True, "booking_link": None}
+        # This should be True because we booked the slot from 8:00 to 9:00
+        assert timeslots[26]["slot"][0] == {
+            "booked": False,
+            "booking_link": "?starttime=13:00&endtime=14:30&startdate=2024-06-05&room="
+            + room1.slug,
+        }  # This should be False because we did not book the slot
+        assert timeslots[36]["slot"][0] == {"booked": True, "booking_link": None}
+        assert timeslots[36]["slot"][1] == {
+            "booked": False,
+            "booking_link": "?starttime=18:00&endtime=19:30&startdate=2024-06-05&room="
+            + room2.slug,
+        }  # This should be True because we booked the slot from 18:00 to 22:00

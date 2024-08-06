@@ -3,6 +3,7 @@ from datetime import time
 from datetime import timedelta
 
 from dateutil import parser
+from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -141,7 +142,9 @@ def planner_table(date_string):
         {
             "timeslot": i,
             "time": start_of_day + timedelta(minutes=30) * i,
-            "booked": [False] * rooms.count(),
+            "slot": [
+                {"booked": False, "booking_link": None} for _ in range(rooms.count())
+            ],
         }
         for i in range(number_of_slots)
     ]
@@ -165,7 +168,17 @@ def planner_table(date_string):
 
         # Mark corresponding time slots as booked
         for i in range(start_index, end_index):
-            timeslots[i]["booked"][room_index] = True
+            timeslots[i]["slot"][room_index]["booked"] = True
+
+    for timeslot in timeslots:
+        for i, room in enumerate(timeslot["slot"]):
+            if not room["booked"]:
+                room["booking_link"] = (
+                    f"?starttime={timeslot['time'].strftime('%H:%M')}"
+                    f"&endtime="
+                    f"{(timeslot['time']+ relativedelta(90)).strftime('%H:%M')}"
+                    f"&startdate={shown_date.strftime('%Y-%m-%d')}&room={rooms[i].slug}"
+                )
 
     previous_day = shown_date - timedelta(days=1)
     next_day = shown_date + timedelta(days=1)
@@ -174,5 +187,4 @@ def planner_table(date_string):
         "shown_date": shown_date,
         "next_day": next_day,
     }
-
     return rooms, timeslots, dates

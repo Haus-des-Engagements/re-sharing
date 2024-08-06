@@ -33,3 +33,33 @@
     color: #fff;
     background-color: #dc3545;
 }
+
+.cover-link {
+    display: block;
+    height: 100%;
+    width: 100%;
+    text-decoration: none;
+}
+
+.table-crosshaired {
+  overflow: hidden;
+}
+
+.table-crosshaired tr:hover {
+  background-color: #f4f4f4;
+}
+
+.table-crosshaired td, th {
+  position: relative;
+}
+.table-crosshaired td:hover::after,
+.table-crosshaired th:hover::after {
+  content: "";
+  position: absolute;
+  background-color: #edebeb;
+  left: 0;
+  top: -5000px;
+  height: 10000px;
+  width: 100%;
+  z-index: -1;
+}

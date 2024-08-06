@@ -201,7 +201,8 @@ def create_booking_data_form_view(request):
         startdate = request.GET.get("startdate")
         starttime = request.GET.get("starttime")
         endtime = request.GET.get("endtime")
-        initial_data = set_initial_booking_data(endtime, startdate, starttime)
+        room = request.GET.get("room")
+        initial_data = set_initial_booking_data(endtime, startdate, starttime, room)
 
         form = BookingForm(user=request.user, initial=initial_data)
         return render(request, "bookings/create-booking.html", {"form": form})

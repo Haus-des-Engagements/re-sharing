@@ -6,7 +6,6 @@
           class="col-auto btn btn-secondary"
           hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.previous_week|date:'Y-m-d' }}"
           hx-target="#planner-table"
-          hx-trigger="click"
           hx-indicator="#spinner"
           hx-push-url="true"
           hx-swap="outerHTML">
@@ -24,7 +23,6 @@
            hx-get="{% url 'rooms:show-room' room_slug=room.slug %}"
            hx-target="#planner-table"
            hx-swap="outerHTML"
-           hx-trigger="input change"
            hx-indicator="#spinner"
            hx-push-url="true" />
   </div>
@@ -33,7 +31,6 @@
           class="col-auto btn btn-secondary"
           hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.next_week|date:'Y-m-d' }}"
           hx-target="#planner-table"
-          hx-trigger="click"
           hx-swap="outerHTML"
           hx-indicator="#spinner"
           hx-push-url="true">

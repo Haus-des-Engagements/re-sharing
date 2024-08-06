@@ -6,7 +6,6 @@
           class="col-auto btn btn-secondary"
           hx-get="{% url 'rooms:planner' %}?date={{ dates.previous_day|date:'Y-m-d' }}"
           hx-target="#planner-table"
-          hx-trigger="click"
           hx-indicator="#spinner"
           hx-push-url="true"
           hx-swap="outerHTML">
@@ -24,7 +23,6 @@
            hx-get="{% url 'rooms:planner' %}"
            hx-target="#planner-table"
            hx-swap="outerHTML"
-           hx-trigger="input change"
            hx-indicator="#spinner"
            hx-push-url="true" />
   </div>
@@ -33,7 +31,6 @@
           class="col-auto btn btn-secondary"
           hx-get="{% url 'rooms:planner' %}?date={{ dates.next_day|date:'Y-m-d' }}"
           hx-target="#planner-table"
-          hx-trigger="click"
           hx-swap="outerHTML"
           hx-indicator="#spinner"
           hx-push-url="true">
@@ -47,7 +44,7 @@
     <span class="visually-hidden">Loading...</span>
   </div>
   <div class="table-responsive">
-    <table class="table table-sm table-sm-little-padding table-bordered small">
+    <table class="table table-sm table-sm-little-padding table-bordered small table-crosshaired">
       <thead>
         <tr>
           <th>Time</th>
@@ -59,18 +56,23 @@
         </tr>
       </thead>
       <tbody>
+        <!-- start showing timeslots from 6 AM on (6h * 2 slots/h = 12) -->
         {% for slot in timeslots %}
-          <!-- start showing timeslots from 6 AM on (6h * 2 slots/h = 12) --!>
-{% if slot.timeslot >= 12 %}
-<tr>
-<td>{{ slot.time|date:"H:i" }}</td>
-{% for booked in slot.booked %}
-<td class=" {% if booked %}table-primary{% endif %} "></td>
-{% endfor %}
-</tr>
-{% endif %}
-{% endfor %}
-</tbody>
-</table>
-</div>
+          {% if slot.timeslot >= 12 %}
+            <tr>
+              <td>{{ slot.time|date:"H:i" }}</td>
+              {% for item in slot.slot %}
+                <td {% if item.booked %}class="table-primary"{% endif %}>
+                  {% if not item.booked %}
+                    <a href="{% url 'bookings:create-booking' %}{{ item.booking_link }}"
+                       class="cover-link">&nbsp</a>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>

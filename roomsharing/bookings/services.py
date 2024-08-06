@@ -286,7 +286,7 @@ def save_recurrence(user, bookings, message, rrule):
     return bookings, rrule
 
 
-def set_initial_booking_data(endtime, startdate, starttime):
+def set_initial_booking_data(endtime, startdate, starttime, room):
     initial_data = {}
     if startdate:
         initial_data["startdate"] = startdate
@@ -296,6 +296,8 @@ def set_initial_booking_data(endtime, startdate, starttime):
         initial_data["starttime"] = starttime
     if endtime:
         initial_data["endtime"] = endtime
+    if room:
+        initial_data["room"] = get_object_or_404(Room, slug=room)
     return initial_data
 
 
