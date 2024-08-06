@@ -18,15 +18,16 @@ def list_rooms_view(request):
 
 def show_room_view(request, room_slug):
     date_string = request.GET.get("date")
-    room, time_slots, weekdays = show_room(room_slug, date_string)
+    room, time_slots, weekdays, dates = show_room(room_slug, date_string)
 
     context = {
         "room": room,
         "weekdays": weekdays,
         "time_slots": time_slots,
+        "dates": dates,
     }
     if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/get_weekly_bookings.html", context)
+        return render(request, "rooms/partials/weekly_bookings_table.html", context)
 
     return render(request, "rooms/show_room.html", context)
 

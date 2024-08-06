@@ -24,7 +24,7 @@ class GetWeeklyBookingsTest(TestCase):
 
         room = RoomFactory()
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
 
         # Check the length of returned lists
         number_of_timeslots = 32
@@ -53,6 +53,15 @@ class GetWeeklyBookingsTest(TestCase):
         for slot in time_slots:
             assert all(booked is False for booked in slot["booked"])
 
+        assert dates["shown_date"] == timezone.make_naive(date).date()
+        assert (
+            dates["previous_week"]
+            == timezone.make_naive(date - timedelta(days=7)).date()
+        )
+        assert (
+            dates["next_week"] == timezone.make_naive(date + timedelta(days=7)).date()
+        )
+
     def test_some_bookings_exist(self):
         room = RoomFactory()
         booking1 = BookingFactory(
@@ -77,7 +86,7 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
 
         number_of_timeslots = 32
         assert len(time_slots) == number_of_timeslots
@@ -97,7 +106,7 @@ class GetWeeklyBookingsTest(TestCase):
     def test_without_date(self):
         date_string = None
         room = RoomFactory()
-        room, time_slots, weekdays = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
         assert time_slots[0]["booked"] == [
             False,
             False,

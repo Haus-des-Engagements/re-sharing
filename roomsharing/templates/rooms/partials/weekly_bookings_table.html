@@ -1,0 +1,76 @@
+{% load i18n %}
+
+<div id="planner-table" class="row g-2 d-flex">
+  <button type="button"
+          id="prevDay"
+          class="col-auto btn btn-secondary"
+          hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.previous_week|date:'Y-m-d' }}"
+          hx-target="#planner-table"
+          hx-trigger="click"
+          hx-indicator="#spinner"
+          hx-push-url="true"
+          hx-swap="outerHTML">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-chevron-left" />
+    </svg>
+  </button>
+  <div id="div_date" class="col-auto">
+    <input type="date"
+           name="date"
+           class="form-control textinput"
+           placeholder="{% trans 'Date' %}"
+           id="date"
+           value="{{ dates.shown_date|date:'Y-m-d' }}"
+           hx-get="{% url 'rooms:show-room' room_slug=room.slug %}"
+           hx-target="#planner-table"
+           hx-swap="outerHTML"
+           hx-trigger="input change"
+           hx-indicator="#spinner"
+           hx-push-url="true" />
+  </div>
+  <button type="button"
+          id="nextDay"
+          class="col-auto btn btn-secondary"
+          hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.next_week|date:'Y-m-d' }}"
+          hx-target="#planner-table"
+          hx-trigger="click"
+          hx-swap="outerHTML"
+          hx-indicator="#spinner"
+          hx-push-url="true">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-chevron-right" />
+    </svg>
+  </button>
+  <div id="spinner"
+       class="spinner-border col-auto htmx-indicator"
+       role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <table class="table table-sm table-sm-little-padding table-bordered small">
+    <thead>
+      <tr>
+        <th>Time</th>
+        {% for day in weekdays %}
+          <th>{{ day|date:"l d.m" }}</th>
+          {# Format the day variable to get the weekday name #}
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for slot in time_slots %}
+        <tr>
+          <td>{{ slot.time|date:"H:i" }}</td>
+          {# Format the time variable to get the time in "Hour:Minute" format #}
+          {% for booked in slot.booked %}
+            <td class=" {% if booked %}table-primary  {# your CSS class to highlight the cell #}{% endif %} "></td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <ul>
+    {% for booking in weekly_bookings %}
+      <li>{{ booking.timespan.lower }} - {{ booking.timespan.upper }}: {{ booking.get_status_display }}</li>
+    {% endfor %}
+  </ul>
+</div>

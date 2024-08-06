@@ -17,15 +17,21 @@ from roomsharing.utils.models import BookingStatus
 def show_room(room_slug, date_string):
     room = get_object_or_404(Room, slug=room_slug)
     # Calculate the start and end dates for the week
-    date = parser.parse(date_string).date() if date_string else timezone.now().date()
+    shown_date = (
+        parser.parse(date_string).date() if date_string else timezone.now().date()
+    )
     start_of_week = timezone.make_aware(
-        datetime.combine(date - timedelta(days=date.weekday()), datetime.min.time()),
+        datetime.combine(
+            shown_date - timedelta(days=shown_date.weekday()), datetime.min.time()
+        ),
     )
     end_of_week = timezone.make_aware(
         datetime.combine(start_of_week + timedelta(days=6), datetime.max.time()),
     )
     start_of_day = timezone.make_aware(
-        datetime.combine(date - timedelta(days=date.weekday()), time(hour=8)),
+        datetime.combine(
+            shown_date - timedelta(days=shown_date.weekday()), time(hour=8)
+        ),
     )
     # Calculate the time slots for each day
     number_of_slots = 32
@@ -62,7 +68,12 @@ def show_room(room_slug, date_string):
                     if 0 <= slot_index < number_of_slots:
                         time_slots[slot_index]["booked"][day_index] = True
                 booking_start += timedelta(minutes=30)
-    return room, time_slots, weekdays
+    dates = {
+        "previous_week": shown_date - timedelta(days=7),
+        "shown_date": shown_date,
+        "next_week": shown_date + timedelta(days=7),
+    }
+    return room, time_slots, weekdays, dates
 
 
 def filter_rooms(persons_count, start_datetime):

@@ -61,13 +61,6 @@
     </div>
   </div>
   <h2 class="mt-4">Bookings</h2>
-  <form hx-get="{% url 'rooms:show-room' room_slug=room.slug %}"
-        hx-trigger="change"
-        hx-target="#results">
-    <div class="btn-group" role="group" aria-label="Basic outlined example">
-      <input type="date" name="date" />
-    </div>
-  </form>
   <br />
-  <div id="results">{% include "rooms/partials/get_weekly_bookings.html" %}</div>
+  <div id="results">{% include "rooms/partials/weekly_bookings_table.html" %}</div>
 {% endblock content %}
