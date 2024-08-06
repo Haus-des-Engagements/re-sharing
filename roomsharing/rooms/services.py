@@ -30,11 +30,11 @@ def show_room(room_slug, date_string):
     )
     start_of_day = timezone.make_aware(
         datetime.combine(
-            shown_date - timedelta(days=shown_date.weekday()), time(hour=8)
+            shown_date - timedelta(days=shown_date.weekday()), time(hour=6)
         ),
     )
     # Calculate the time slots for each day
-    number_of_slots = 32
+    number_of_slots = 36
     time_slots = [
         {"time": start_of_day + timedelta(minutes=30) * i, "booked": [False] * 7}
         for i in range(number_of_slots)
@@ -61,7 +61,7 @@ def show_room(room_slug, date_string):
             )
             while booking_start < booking_end:
                 # Restart the time with start of each day
-                start_of_day = booking_start.replace(hour=8, minute=0, second=0)
+                start_of_day = booking_start.replace(hour=6, minute=0, second=0)
                 if start_of_week <= booking_start < end_of_week:
                     day_index = (booking_start - start_of_week).days
                     slot_index = (booking_start - start_of_day).seconds // (30 * 60)

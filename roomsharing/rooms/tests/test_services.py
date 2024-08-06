@@ -27,14 +27,14 @@ class GetWeeklyBookingsTest(TestCase):
         room, time_slots, weekdays, dates = show_room(room.slug, date_string)
 
         # Check the length of returned lists
-        number_of_timeslots = 32
+        number_of_timeslots = 36
         assert len(time_slots) == number_of_timeslots
         number_of_weekdays = 7
         assert len(weekdays) == number_of_weekdays
 
         # Check some sample values
         assert time_slots[0]["time"] == timezone.datetime(
-            2024, 7, 22, 8, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
+            2024, 7, 22, 6, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
         assert time_slots[0]["booked"] == [
             False,
@@ -88,19 +88,19 @@ class GetWeeklyBookingsTest(TestCase):
         date_string = date.strftime("%Y-%m-%d")
         room, time_slots, weekdays, dates = show_room(room.slug, date_string)
 
-        number_of_timeslots = 32
+        number_of_timeslots = 36
         assert len(time_slots) == number_of_timeslots
         number_of_weekdays = 7
         assert len(weekdays) == number_of_weekdays
 
         assert (
-            time_slots[0]["booked"][2] is True
+            time_slots[4]["booked"][2] is True
         )  # This should be True because we booked the slot from 8:00 to 9:00
         assert (
-            time_slots[10]["booked"][2] is False
+            time_slots[14]["booked"][2] is False
         )  # This should be False because we did not book the slot
         assert (
-            time_slots[20]["booked"][2] is True
+            time_slots[24]["booked"][2] is True
         )  # This should be True because we booked the slot from 18:00 to 22:00
 
     def test_without_date(self):
