@@ -61,6 +61,9 @@ class RecurrenceRule(TimeStampedModel):
     def __str__(self):
         return str(self.uuid)
 
+    def get_absolute_url(self):
+        return reverse("bookings:show-recurrence", kwargs={"rrule": self.uuid})
+
     def get_rrule_params(self):
         rrule = self.rrule[self.rrule.index(":") + 1 :]
         matches = re.findall(r"(\w+)\=([\w,]+)", rrule)
@@ -75,45 +78,54 @@ class RecurrenceRule(TimeStampedModel):
     def get_human_readable_frequency(self):
         rrule = rrulestr(self.rrule)
         if "DAILY" in self.rrule:
-            return RRULE_DAILY_INTERVAL[rrule._interval][1]  # noqa: SLF001
+            return RRULE_DAILY_INTERVAL[rrule._interval - 1][1]  # noqa: SLF001
 
         if "WEEKLY" in self.rrule:
-            return RRULE_WEEKLY_INTERVAL[rrule._interval][1]  # noqa: SLF001
+            return RRULE_WEEKLY_INTERVAL[rrule._interval - 1][1]  # noqa: SLF001
 
-        if "MONTHLY" in self.rrule:
-            return RRULE_MONTHLY_INTERVAL[rrule._interval][1]  # noqa: SLF001
-
-        return None
+        return RRULE_MONTHLY_INTERVAL[rrule._interval - 1][1]  # noqa: SLF001
 
     def get_human_readable_end(self):
         rrule = rrulestr(self.rrule)
         if rrule._count:  # noqa: SLF001
             return _("ends after ") + str(rrule._count) + _(" times")  # noqa: SLF001
 
-        if rrule._until:  # noqa: SLF001
-            date_string = formats.date_format(rrule._until.date(), "SHORT_DATE_FORMAT")  # noqa: SLF001
-            return _("ends at the ") + date_string
-
-        return None
+        date_string = formats.date_format(rrule._until.date(), "SHORT_DATE_FORMAT")  # noqa: SLF001
+        return _("ends at the ") + date_string
 
     def get_human_readable_weekdays(self):
         rrule = rrulestr(self.rrule)
-        if rrule._byweekday:  # noqa: SLF001
-            if "WEKKLY" in self.rrule:
-                weekdays = [str(WEEKDAYS[day]) for day in rrule._byweekday]  # noqa: SLF001
-                return _("at the weekdays ") + ", ".join(weekdays)
+        if rrule._bynweekday:  # noqa: SLF001
+            bynweekdays = [
+                f"{day[1]}." + " " + WEEKDAYS[day[0]]
+                if day[1] != -1
+                else "last " + WEEKDAYS[day[0]]
+                for day in rrule._bynweekday  # noqa: SLF001
+            ]
+            return _(" at the ") + ", ".join(bynweekdays)
 
-            if "MONTHLY" in self.rrule:
-                return "not yet implemented"
+        if len(rrule._byweekday) == 7:  # noqa: SLF001, PLR2004
+            return _(" (on all days of the week)")
 
-        return None
+        weekdays = [str(WEEKDAYS[day]) + "s" for day in rrule._byweekday]  # noqa: SLF001
+        return " (" + _("only ") + ", ".join(weekdays) + ")"
 
-    def get_human_readable_rrule(self):
+    def get_human_readable_monthdays(self):
+        rrule = rrulestr(self.rrule)
+        monthdays = [str(day) + "." for day in rrule._bymonthday]  # noqa: SLF001
+        return (
+            " (" + _("only at the") + " " + ", ".join(monthdays) + " " + _("day") + ")"
+        )
+
+    def get_human_readable_rule(self):
         frequency = self.get_human_readable_frequency()
         ends = self.get_human_readable_end()
         weekdays = self.get_human_readable_weekdays()
+        monthdays = self.get_human_readable_monthdays()
         if weekdays is not None:
-            return frequency + ", " + weekdays + ", " + ends
+            return frequency + weekdays + ", " + ends
+        if monthdays is not None:
+            return frequency + monthdays + ", " + ends
         return frequency + ", " + ends
 
 

@@ -3,6 +3,7 @@ from django.contrib import admin
 
 from .models import Booking
 from .models import BookingMessage
+from .models import RecurrenceRule
 
 
 @admin.register(Booking)
@@ -15,3 +16,4 @@ class BookingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BookingMessage)
+admin.site.register(RecurrenceRule)

@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 
+from dateutil.rrule import rrulestr
 from django.utils import timezone
 from django.utils.text import slugify
 from factory import Faker
@@ -13,6 +14,8 @@ from psycopg.types.range import Range
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
+from roomsharing.bookings.models import RecurrenceRule
+from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
 
@@ -78,4 +81,35 @@ class BookingMessageFactory(DjangoModelFactory):
 
     class Meta:
         model = BookingMessage
+        django_get_or_create = ["uuid"]
+
+
+class RecurrenceRuleFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
+    rrule = "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=5;BYDAY=MO,TU"
+    excepted_dates = []
+    room = SubFactory(RoomFactory)
+
+    @LazyAttribute
+    def first_occurrence_date(self):
+        return next(iter(rrulestr(self.rrule)))
+
+    @LazyAttribute
+    def last_occurrence_date(self):
+        return list(rrulestr(self.rrule))[-1]
+
+    @LazyAttribute
+    def start_time(self):
+        hour = random.randint(0, 20)  # noqa: S311
+        minute = random.choice([0, 30])  # Minute should be either 0 or 30 # noqa: S311
+        return time(hour, minute)
+
+    @LazyAttribute
+    def end_time(self):
+        hour = random.randint(21, 23)  # noqa: S311
+        minute = random.choice([0, 30])  # Minute should be either 0 or 30 # noqa: S311
+        return time(hour, minute)
+
+    class Meta:
+        model = RecurrenceRule
         django_get_or_create = ["uuid"]

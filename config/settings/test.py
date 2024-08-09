@@ -36,3 +36,5 @@ TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
 MEDIA_URL = "http://media.testserver"
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+LANGUAGE_CODE = "en"
