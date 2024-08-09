@@ -1,4 +1,3 @@
-import re
 import uuid
 
 from auditlog.models import AuditlogHistoryField
@@ -63,11 +62,6 @@ class RecurrenceRule(TimeStampedModel):
 
     def get_absolute_url(self):
         return reverse("bookings:show-recurrence", kwargs={"rrule": self.uuid})
-
-    def get_rrule_params(self):
-        rrule = self.rrule[self.rrule.index(":") + 1 :]
-        matches = re.findall(r"(\w+)\=([\w,]+)", rrule)
-        return dict(matches)
 
     def number_of_occurrences(self):
         return self.bookings_of_recurrencerule.count()

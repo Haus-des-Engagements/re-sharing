@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.test import TestCase
+from django.utils import timezone
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import RecurrenceRule
@@ -83,3 +86,22 @@ def test_human_readable_rule():
         rrule8.get_human_readable_rule()
         == "every month (only at the 18. day), ends at the 12/04/2024"
     )
+
+
+@pytest.mark.django_db()
+def test_number_of_occurrences():
+    rrule = RecurrenceRuleFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
+    BookingFactory(recurrence_rule=rrule)
+    BookingFactory(recurrence_rule=rrule)
+    BookingFactory(recurrence_rule=rrule)
+    assert rrule.number_of_occurrences() == 3  # noqa: PLR2004
+
+
+@pytest.mark.django_db()
+def test_get_first_booking():
+    rrule = RecurrenceRuleFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
+    start_date = timezone.now()
+    b1 = BookingFactory(recurrence_rule=rrule, start_date=start_date.date())
+    BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
+    BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
+    assert rrule.get_first_booking() == b1
