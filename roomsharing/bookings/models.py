@@ -99,23 +99,34 @@ class RecurrenceRule(TimeStampedModel):
             bynweekdays = [
                 f"{day[1]}." + " " + WEEKDAYS[day[0]]
                 if day[1] != -1
-                else "last " + WEEKDAYS[day[0]]
+                else _("last ") + WEEKDAYS[day[0]]
                 for day in rrule._bynweekday  # noqa: SLF001
             ]
             return _(" at the ") + ", ".join(bynweekdays)
 
-        if len(rrule._byweekday) == 7:  # noqa: SLF001, PLR2004
-            return _(" (on all days of the week)")
+        if rrule._byweekday:  # noqa: SLF001
+            if len(rrule._byweekday) == 7:  # noqa: SLF001, PLR2004
+                return _(" (on all days of the week)")
 
-        weekdays = [str(WEEKDAYS[day]) + "s" for day in rrule._byweekday]  # noqa: SLF001
-        return " (" + _("only ") + ", ".join(weekdays) + ")"
+            weekdays = [str(WEEKDAYS[day]) + "s" for day in rrule._byweekday]  # noqa: SLF001
+            return " (" + _("only ") + ", ".join(weekdays) + ")"
+
+        return None
 
     def get_human_readable_monthdays(self):
         rrule = rrulestr(self.rrule)
-        monthdays = [str(day) + "." for day in rrule._bymonthday]  # noqa: SLF001
-        return (
-            " (" + _("only at the") + " " + ", ".join(monthdays) + " " + _("day") + ")"
-        )
+        if rrule._bymonthday:  # noqa: SLF001
+            monthdays = [str(day) + "." for day in rrule._bymonthday]  # noqa: SLF001
+            return (
+                " ("
+                + _("only at the")
+                + " "
+                + ", ".join(monthdays)
+                + " "
+                + _("day")
+                + ")"
+            )
+        return None
 
     def get_human_readable_rule(self):
         frequency = self.get_human_readable_frequency()

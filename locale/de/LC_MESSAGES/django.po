@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-09 16:13+0200\n"
+"POT-Creation-Date: 2024-08-09 16:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -165,7 +165,7 @@ msgid "Send new message"
 msgstr "Neue Nachricht senden"
 
 #: htmlcov/z_864cde98194f1daa_show-booking_html.html:153
-#: roomsharing/bookings/models.py:218
+#: roomsharing/bookings/models.py:224
 #: roomsharing/templates/bookings/partials/show_bookingmessage.html:21
 #: roomsharing/templates/bookings/preview-booking.html:29
 #: roomsharing/templates/bookings/show-booking.html:94
@@ -216,7 +216,7 @@ msgid "Request booking permission"
 msgstr "Buchungsberechtigung anfragen"
 
 #: htmlcov/z_c0763d407173a4a8_booking_item_html.html:101
-#: roomsharing/bookings/forms.py:53 roomsharing/bookings/models.py:134
+#: roomsharing/bookings/forms.py:53 roomsharing/bookings/models.py:140
 #: roomsharing/rooms/models.py:73
 #: roomsharing/templates/bookings/list_recurrences.html:37
 #: roomsharing/templates/bookings/partials/booking_item.html:17
@@ -309,7 +309,7 @@ msgstr "Anmelden"
 
 #: htmlcov/z_e12b30945affa64c_show_room_html.html:90
 #: roomsharing/bookings/forms.py:60 roomsharing/bookings/models.py:47
-#: roomsharing/bookings/models.py:153 roomsharing/organizations/models.py:124
+#: roomsharing/bookings/models.py:159 roomsharing/organizations/models.py:124
 #: roomsharing/rooms/models.py:94 roomsharing/rooms/models.py:124
 #: roomsharing/templates/rooms/show_room.html:6
 msgid "Room"
@@ -319,7 +319,7 @@ msgstr "Raum"
 msgid "Current Week"
 msgstr "Aktuelle Woche"
 
-#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:175
+#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:181
 msgid "Bookings"
 msgstr "Buchungen"
 
@@ -411,7 +411,7 @@ msgid "The room is already booked during your selected timeslot."
 msgstr "Der Raum ist zu der Zeit (zumindest teilweise) belegt."
 
 #: roomsharing/bookings/models.py:40 roomsharing/bookings/models.py:57
-#: roomsharing/bookings/models.py:161
+#: roomsharing/bookings/models.py:167
 msgid "Recurrence rule"
 msgstr "Wiederholung"
 
@@ -452,55 +452,59 @@ msgid "ends at the "
 msgstr "endet am "
 
 #: roomsharing/bookings/models.py:102
+msgid "last "
+msgstr "letzten "
+
+#: roomsharing/bookings/models.py:105
 msgid " at the "
 msgstr " am "
 
-#: roomsharing/bookings/models.py:106
+#: roomsharing/bookings/models.py:109
 msgid " (on all days of the week)"
 msgstr " (an allen Tagen der Woche)"
 
-#: roomsharing/bookings/models.py:109
+#: roomsharing/bookings/models.py:112
 msgid "only "
 msgstr "nur "
 
-#: roomsharing/bookings/models.py:116
+#: roomsharing/bookings/models.py:121
 msgid "only at the"
 msgstr "nur am"
 
-#: roomsharing/bookings/models.py:116
+#: roomsharing/bookings/models.py:121
 msgid "day"
 msgstr "Tag"
 
-#: roomsharing/bookings/models.py:138
+#: roomsharing/bookings/models.py:144
 msgid "Booking Organization"
 msgstr "Buchende Organisation"
 
-#: roomsharing/bookings/models.py:145
+#: roomsharing/bookings/models.py:151
 msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
-#: roomsharing/bookings/models.py:158 roomsharing/organizations/models.py:99
+#: roomsharing/bookings/models.py:164 roomsharing/organizations/models.py:99
 #: roomsharing/organizations/models.py:130
 msgid "Status"
 msgstr "Status"
 
-#: roomsharing/bookings/models.py:169
+#: roomsharing/bookings/models.py:175
 msgid "Start Date"
 msgstr "Startdatum"
 
-#: roomsharing/bookings/models.py:170
+#: roomsharing/bookings/models.py:176
 msgid "Start Time"
 msgstr "Startuhrzeit"
 
-#: roomsharing/bookings/models.py:171
+#: roomsharing/bookings/models.py:177
 msgid "End Time"
 msgstr "Enduhrzeit"
 
-#: roomsharing/bookings/models.py:174 roomsharing/bookings/models.py:213
+#: roomsharing/bookings/models.py:180 roomsharing/bookings/models.py:219
 msgid "Booking"
 msgstr "Buchung"
 
-#: roomsharing/bookings/models.py:181
+#: roomsharing/bookings/models.py:187
 msgid ""
 "The requested timespan overlaps with an existing booking for this room. "
 "Please chose another timespan."
@@ -508,16 +512,16 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diesen "
 "Raum. Bitte wähle einen anderen Zeitraum."
 
-#: roomsharing/bookings/models.py:221 roomsharing/organizations/models.py:81
+#: roomsharing/bookings/models.py:227 roomsharing/organizations/models.py:81
 #: roomsharing/users/models.py:54
 msgid "User"
 msgstr "Nutzer:in"
 
-#: roomsharing/bookings/models.py:228
+#: roomsharing/bookings/models.py:234
 msgid "Booking Message"
 msgstr "Nachricht zur Buchung"
 
-#: roomsharing/bookings/models.py:229
+#: roomsharing/bookings/models.py:235
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
