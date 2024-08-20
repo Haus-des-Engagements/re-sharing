@@ -5,7 +5,7 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{{ bookings.0 }}</h1>
+  <h1 class="mt-4">{{ rrule.get_first_booking }}</h1>
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
@@ -16,13 +16,15 @@
           <br />
           {{ rrule.last_occurrence_date }}
         </p>
-        <p class="h6">{{ rrule.start_time|date:"H:i" }} - {{ rrule.end_time|date:"H:i" }}</p>
+        <p class="h6">
+          {{ rrule.get_first_booking.start_time|date:"H:i" }} - {{ rrule.get_first_booking.end_time|date:"H:i" }}
+        </p>
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ rrule.room }}</h5>
+          <h5 class="card-title">{{ rrule.get_first_booking.room }}</h5>
           <p class="card-text">
-            {% trans "Title" %}: <em>{{ rrule }}</em>
+            {% trans "Title" %}: <em>{{ rrule.get_first_booking.title }}</em>
             <br />
             {% trans "Booked for:" %}<em>{{ rrule.get_first_booking.organization }}</em>
             <br />
@@ -37,7 +39,7 @@
       </div>
     </div>
     <div class="card-footer">
-      {{ bookings.0.recurrence_rule.get_human_readable_rule }}
+      {{ rrule.get_first_booking.recurrence_rule.get_human_readable_rule }}
       <br />
     </div>
   </div>

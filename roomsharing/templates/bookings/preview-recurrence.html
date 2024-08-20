@@ -20,7 +20,7 @@
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ rrule.room }}</h5>
+          <h5 class="card-title">{{ bookings.0.room }}</h5>
           <p class="card-text">
             {% trans "Title" %}: <em>{{ bookings.0 }}</em>
             <br />
@@ -37,7 +37,7 @@
       </div>
     </div>
     <div class="card-footer">
-      {{ bookings.0.recurrence_rule.get_human_readable_rule }}
+      {{ rrule.get_human_readable_rule }}
       <br />
     </div>
   </div>

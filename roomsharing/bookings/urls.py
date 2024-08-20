@@ -42,5 +42,3 @@ urlpatterns = [
         name="create-bookingmessage",
     ),  # POST bookingmessage object
 ]
-
-htmx_patterns = []

@@ -37,17 +37,8 @@ class RecurrenceRule(TimeStampedModel):
     history = AuditlogHistoryField()
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     rrule = CharField(_("Recurrence rule"), max_length=200)
-    start_time = TimeField(_("Start time"))
-    end_time = TimeField(_("End time"))
     first_occurrence_date = DateField(_("First occurrence date"))
     last_occurrence_date = DateField(_("Last occurrence date"))
-    room = ForeignKey(
-        Room,
-        verbose_name=_("Room"),
-        on_delete=PROTECT,
-        related_name="recurrencerules_of_room",
-        related_query_name="recurrencerule_of_room",
-    )
     excepted_dates = ArrayField(
         DateField(), verbose_name=_("Excepted dates"), blank=True
     )

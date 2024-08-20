@@ -212,7 +212,6 @@ def generate_recurrence(booking_data):
         rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
         rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
         rrule.excepted_dates = []
-        rrule.room = room
 
         bookings.append(
             create_booking(booking_details, room_booked=room.is_booked(timespan))

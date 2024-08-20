@@ -32,9 +32,9 @@
           </div>
           <div class="col-md-8">
             <div class="card-body">
-              <h5 class="card-title">{{ rrule.room }}</h5>
+              <h5 class="card-title">{{ rrule.get_first_booking.room }}</h5>
               <p class="card-text">
-                {% trans "Title" %}: <em>{{ rrule }}</em>
+                {% trans "Title" %}: <em>{{ rrule.get_first_booking.title }}</em>
                 <br />
                 {% trans "Booked by:" %} <em>{{ rrule.get_first_booking.user }}</em> {% trans "for" %}
                 <em>{{ rrule.get_first_booking.organization }}</em>
