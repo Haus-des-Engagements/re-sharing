@@ -70,15 +70,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
 
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.sftpstorage.SFTPStorage",
-        "OPTIONS": {
-            "host": env("DJANGO_SFTP_STORAGE_HOST"),
-            "root_path": env("DJANGO_SFTP_STORAGE_ROOT"),
-            "params": {
-                "username": env("DJANGO_SFTP_USERNAME"),
-                "password": env("DJANGO_SFTP_PASSWORD"),
-            },
-        },
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
