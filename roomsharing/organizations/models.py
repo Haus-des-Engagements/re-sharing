@@ -19,6 +19,11 @@ from roomsharing.utils.models import TimeStampedModel
 
 
 class Organization(TimeStampedModel):
+    class Status(IntegerChoices):
+        PENDING = 1, _("Pending")
+        CONFIRMED = 2, _("Confirmed")
+        REJECTED = 3, _("Rejected")
+
     class LegalForm(IntegerChoices):
         NO_LEGAL_FORM = 1, _("Without legal form")
         REGISTERED_ASSOCIATION = 2, _("Registered association")
@@ -26,9 +31,7 @@ class Organization(TimeStampedModel):
         FOUNDATION = 4, _("Foundation")
         CIVIL_LAW_COMPANY = 5, _("Civil law company")
         LIMITED_COMPANY = 6, _("Limited company")
-        LIMITED_CHARITABLE_COMPANY = 7, _("Limited charitable company")
         COOPERATIVE = 8, _("Cooperative")
-        CHARITABLE_COOPERATIVE = 9, _("Charitable cooperative")
         INDIVIDUAL_ENTREPRENEUR = 10, _("Individual entrepreneur")
         OTHER = 11, _("Other")
 
@@ -41,8 +44,16 @@ class Organization(TimeStampedModel):
     zip_code = CharField(_("Zip Code"), max_length=12)
     city = CharField(_("City"), max_length=24)
     legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
-    certificate_of_tax_exemption = BooleanField(
-        _("Certificate of tax exemption"), default=False
+    other_legal_form = CharField(_("Other legal form"), max_length=160, blank=True)
+    is_charitable = BooleanField(
+        _("Charitable"),
+        help_text=_(
+            "Only applicable if you have a valid certificate of tax exemption."
+        ),
+        default=False,
+    )
+    status = IntegerField(
+        verbose_name=_("Status"), choices=Status.choices, default=Status.PENDING
     )
 
     class Meta:

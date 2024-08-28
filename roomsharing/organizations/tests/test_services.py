@@ -1,10 +1,14 @@
 from unittest.mock import patch
 
+import pytest
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
+from roomsharing.organizations.forms import OrganizationForm
 from roomsharing.organizations.models import BookingPermission
+from roomsharing.organizations.models import Organization
+from roomsharing.organizations.services import create_organization
 from roomsharing.organizations.services import show_organization
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
@@ -78,3 +82,37 @@ class ShowOrganizationTest(TestCase):
         )
         assert is_admin is True
         assert set(permitted_users) == {self.user, self.user2}
+
+
+@pytest.mark.django_db()
+def test_create_organization():
+    # Create a test user
+    test_user = UserFactory()
+
+    # Mock form data
+    form_data = {
+        "name": "Test Organization",
+        "street": "123 Test Street",
+        "house_number": "1",
+        "zip_code": "12345",
+        "city": "Test City",
+        "legal_form": Organization.LegalForm.NO_LEGAL_FORM,
+    }
+    form = OrganizationForm(data=form_data)
+
+    # Ensure form is valid
+    assert form.is_valid(), form.errors
+
+    # Call the create_organization function
+    new_org = create_organization(test_user, form)
+
+    # Check that the organization was created correctly
+    assert Organization.objects.filter(name="Test Organization").exists()
+    assert new_org.status == Organization.Status.PENDING
+
+    # Check that the booking permission was created correctly
+    booking_permission = BookingPermission.objects.get(
+        user=test_user, organization=new_org
+    )
+    assert booking_permission.status == BookingPermission.Status.CONFIRMED
+    assert booking_permission.role == BookingPermission.Role.ADMIN

@@ -10,20 +10,19 @@
     <div>
       <h1>
         {% trans "Organizations" %}
-        <button type="button"
-                class="btn btn-outline-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#createOrganizationModal">
+        <a class="btn btn-outline-primary"
+           href="{% url 'organizations:create-organization' %}"
+           role="button">
           <svg width="1em" height="1em">
             <use href="#bi-plus-lg" />
           </svg>
-          {% trans "Add new organization" %}
-        </button>
+          {% trans "New Organization" %}
+        </a>
       </h1>
     </div>
     <div class="row">
       <p>
-        {% trans "Only organisations can book rooms. If your organization does not exists yet, please add it as new organization. If it exists already, you can request the membership to book rooms in the name of that organization." %}
+        {% trans "Only organisations can book rooms. If your organization does not exists yet, please add it as new organization." %}
       </p>
     </div>
   </div>
@@ -47,31 +46,4 @@
     </div>
   </div>
   <div id="list-organizations" class="mt-4">{% include "organizations/partials/list_organizations.html" %}</div>
-  <div class="modal fade"
-       id="createOrganizationModal"
-       tabindex="-1"
-       aria-labelledby="createOrganizationModalLabel"
-       aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="createOrganizationModalLabel">{% trans "Add new organization" %}</h5>
-          <button type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form method="post" action="{% url 'organizations:list-organizations' %}">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
 {% endblock content %}

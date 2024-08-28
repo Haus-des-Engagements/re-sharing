@@ -13,5 +13,5 @@ class OrganizationForm(forms.ModelForm):
             "zip_code",
             "city",
             "legal_form",
-            "certificate_of_tax_exemption",
+            "is_charitable",
         )

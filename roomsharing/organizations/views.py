@@ -178,3 +178,17 @@ def demote_to_booker_view(request, organization, user):
     return HttpResponse(
         "You are not allowed to demote.", status=HTTPStatus.UNAUTHORIZED
     )
+
+
+@login_required
+def create_organization_view(request):
+    form = OrganizationForm()
+
+    if request.method == "POST":
+        form = OrganizationForm(data=request.POST)
+
+        if form.is_valid():
+            organization = create_organization(request.user, form)
+            return redirect("organizations:show-organization", organization.slug)
+
+    return render(request, "organizations/create_organization.html", {"form": form})

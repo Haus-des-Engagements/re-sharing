@@ -56,6 +56,7 @@ def create_organization(user, form):
         role=BookingPermission.Role.ADMIN,
     )
     bookingpermission.save()
+    return new_org
 
 
 def user_has_bookingpermission(user, booking):

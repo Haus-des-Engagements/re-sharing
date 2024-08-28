@@ -4,6 +4,11 @@ from .models import BookingPermission
 from .models import DefaultBookingStatus
 from .models import Organization
 
-admin.site.register(Organization)
+
+@admin.register(Organization)
+class OrganizationAdmin(admin.ModelAdmin):
+    list_filter = ("status",)
+
+
 admin.site.register(BookingPermission)
 admin.site.register(DefaultBookingStatus)

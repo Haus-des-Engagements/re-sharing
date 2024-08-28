@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {{ organization.name }}
+{% endblock title %}
+{% block content %}
+  <div class="row mt-5 mb-2">
+    <h1>{% trans "Create organization" %}</h1>
+  </div>
+  <div class="row">
+    <p>
+      {% trans "Only organisations can book rooms. If your organization does not exists yet, please add it as new organization." %}
+    </p>
+  </div>
+  <form method="post" action="{% url 'organizations:create-organization' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
+  </form>
+{% endblock content %}
