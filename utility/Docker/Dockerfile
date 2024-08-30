@@ -26,7 +26,6 @@ FROM python as python-run-stage
 
 ARG BUILD_ENVIRONMENT=production
 ARG APP_HOME=/app
-ARG MEDIA_ROOT=/app/media
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -37,10 +36,6 @@ WORKDIR ${APP_HOME}
 RUN addgroup --system django \
     && adduser --system --ingroup django django
 
-
-# Create media directory and set permissions
-RUN mkdir -p ${MEDIA_ROOT} \
-    && chown -R django:django ${MEDIA_ROOT}
 
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
