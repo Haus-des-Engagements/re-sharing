@@ -11,22 +11,21 @@
   <div class="card mb-3 mt-2" id="access">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
-        <p class="h6">{% trans "Access Code" %}</p>
-        <p class="h4">
-          {% if access_code %}
-            {{ access_code.code }}
-          {% else %}
-            ******
-          {% endif %}
-        </p>
+        <p class="h6">{% trans "Access Code" %}:</p>
+        <p class="h6">{{ access_code }}</p>
       </div>
       <div class="col-md-10">
         <div class="card-body">
-          {% if access_code %}
-            <h5 class="card-title">{% trans "Instructions" %}</h5>
-            <p class="card-text">{{ access_code.access.instructions }}</p>
-          {% else %}
-            <p class="card-text">{% trans "The access code and instructions are only visible for confirmed bookings." %}</p>
+          <h5 class="card-title">{% trans "Instructions" %}</h5>
+          <p class="card-text">
+            {% if booking.room.access.instructions %}
+              {% if not access_code %}
+                <p class="card-text">{% trans "The access code and instructions are only visible for confirmed bookings." %}</p>
+              {% endif %}
+              {{ booking.room.access.instructions }}
+            {% else %}
+              The room has no specific access information.
+            </p>
           {% endif %}
         </div>
       </div>

@@ -19,6 +19,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
@@ -46,12 +47,19 @@ def show_booking(user, booking_slug):
 
     activity_stream = get_booking_activity_stream(booking)
 
-    if booking.status in [BookingStatus.PENDING, BookingStatus.CANCELLED]:
-        access_code = None
+    access_code = get_access_code(
+        booking.room.slug, booking.organization.slug, booking.timespan.lower
+    )
+
+    if access_code and booking.status in [
+        BookingStatus.PENDING,
+        BookingStatus.CANCELLED,
+    ]:
+        access_code = _("only shown when confirmed")
+    elif access_code and booking.status == BookingStatus.CONFIRMED:
+        access_code = access_code.code
     else:
-        access_code = get_access_code(
-            booking.room.slug, booking.organization.slug, booking.timespan.lower
-        )
+        access_code = "not necessary"
 
     return booking, activity_stream, access_code
 
