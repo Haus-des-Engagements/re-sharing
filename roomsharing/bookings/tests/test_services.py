@@ -152,7 +152,7 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert access_code is None
+        assert access_code == "only shown when confirmed"
 
     def test_access_code_for_pending_booking(self):
         BookingPermissionFactory(
@@ -164,7 +164,7 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert access_code is None
+        assert access_code == "only shown when confirmed"
 
     def test_access_code_for_confirmed_booking(self):
         BookingPermissionFactory(
@@ -176,7 +176,7 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert access_code == self.access_code
+        assert str(access_code) == str(self.access_code.code)
 
 
 class TestSaveBooking(TestCase):
