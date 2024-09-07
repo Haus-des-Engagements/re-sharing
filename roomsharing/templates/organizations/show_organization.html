@@ -9,125 +9,147 @@
   <div class="row mt-5 mb-4">
     <h1>{{ organization.name }}</h1>
   </div>
-  <div class="card mb-3">
-    <div class="row g-0">
-      <div class="col-md-2">
-        <svg class="bd-placeholder-img img-fluid rounded-start"
-             xmlns="http://www.w3.org/2000/svg"
-             role="img"
-             aria-label="Placeholder: Image"
-             preserveAspectRatio="xMidYMid slice"
-             focusable="false">
-          <title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="25%" y="50%" fill="#dee2e6" dy=".3em">Image missing</text>
-          </svg>
+  <div class="row g-0">
+    <div class="col-md-5">
+      <div class="card-body">
+        <p class="card-text">Description of Organization</p>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-geo-alt" />
+            </svg>
+            {{ organization.street_and_housenb }}, {{ organization.zip_code }} {{ organization.city }}
+          </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-envelope-at" />
+            </svg>
+            {{ organization.email }}
+          </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-globe2" />
+            </svg>
+            <a href="{{ organization.website }}">{{ organization.website }}</a>
+          </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-telephone" />
+            </svg>
+            {{ organization.phone }}
+          </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-file-earmark-text" />
+            </svg>
+            {% if other_legal_form %}
+              {{ other_legal_form }}
+            {% else %}
+              {{ organization.get_legal_form_display }}
+            {% endif %}
+          </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-clipboard-heart" />
+            </svg>
+            {{ organization.get_area_of_activity_display }}
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-5 mt-3">
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            {% if is_admin %}
+              <a class="btn btn-outline-danger"
+                 href="{% url 'organizations:delete-organization' organization=organization.slug %}">{% trans "Delete Organization" %}</a>
+            {% endif %}
+          </div>
         </div>
-        <div class="col-md-8">
-          <div class="card-body">
-            <p class="card-text">Description of Organization</p>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
+      </div>
+    </div>
+  </div>
+  <div class="row mt-5 mb-2">
+    <h2>{% trans "Persons authorised to make bookings" %}</h2>
+  </div>
+  {% if not permitted_users %}
+    <div>{% trans "Only visible for other authorised persons." %}</div>
+    <div id="{{ organization.slug }}-request-bookingpermission">
+      <button class="btn btn-outline-success"
+              hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
+              hx-target="#{{ organization.slug }}-request-bookingpermission">
+        {% trans "Request booking permission" %}
+      </button>
+    </div>
+  {% else %}
+    {% for user in permitted_users %}
+      <div class="card mb-3">
+        <div class="row g-0">
+          <div class="col-md-9">
+            <div class="card-body">
+              <h5 class="card-title">
+                {{ user.first_name }} {{ user.last_name }}
+                {% if user == request.user %}
+                  <em class="h6">- {% trans "that's you" %}!</em>
+                {% endif %}
+                {% if user.permission_role == 1 %}<span class="badge rounded-pill text-bg-primary">Administrator</span>{% endif %}
+              </h5>
+              <p class="card-text">
+                {% trans "Booking permission" %}:
+                {% if user.permission_status == 2 %}
+                  <span class="badge rounded-pill text-bg-success">{% trans "Approved" %}</span>
+                {% endif %}
+                {% if user.permission_status == 1 %}
+                  <span class="badge rounded-pill text-bg-warning">{% trans "Pending" %}</span>
+                {% endif %}
+              </p>
+              <p class="card-text">
                 <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-geo-alt" />
+                  <use href="#bi-envelope-at" />
                 </svg>
-                {{ organization.street }} {{ organization.house_number }}, {{ organization.zip_code }} {{ organization.city }}
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="card-body">
-            <div class="d-grid gap-2">
-              {% if is_admin %}
-                <a class="btn btn-outline-danger"
-                   href="{% url 'organizations:delete-organization' organization=organization.slug %}">{% trans "Delete Organization" %}</a>
-              {% endif %}
+                {{ user.email }}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mt-5 mb-2">
-      <h2>{% trans "Persons authorised to make bookings" %}</h2>
-    </div>
-    {% if not permitted_users %}
-      <div>{% trans "Only visible for other authorised persons." %}</div>
-      <div id="{{ organization.slug }}-request-bookingpermission">
-        <button class="btn btn-outline-success"
-                hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
-                hx-target="#{{ organization.slug }}-request-bookingpermission">
-          {% trans "Request booking permission" %}
-        </button>
-      </div>
-    {% else %}
-      {% for user in permitted_users %}
-        <div class="card mb-3">
-          <div class="row g-0">
-            <div class="col-md-9">
-              <div class="card-body">
-                <h5 class="card-title">
-                  {{ user.first_name }} {{ user.last_name }}
-                  {% if user == request.user %}
-                    <em class="h6">- {% trans "that's you" %}!</em>
-                  {% endif %}
-                  {% if user.permission_role == 1 %}<span class="badge rounded-pill text-bg-primary">Administrator</span>{% endif %}
-                </h5>
-                <p class="card-text">
-                  {% trans "Booking permission" %}:
-                  {% if user.permission_status == 2 %}
-                    <span class="badge rounded-pill text-bg-success">{% trans "Approved" %}</span>
-                  {% endif %}
-                  {% if user.permission_status == 1 %}
-                    <span class="badge rounded-pill text-bg-warning">{% trans "Pending" %}</span>
-                  {% endif %}
-                </p>
-                <p class="card-text">
-                  <svg class="fs-4 me-1" width="1em" height="1em">
-                    <use href="#bi-envelope-at" />
-                  </svg>
-                  {{ user.email }}
-                </p>
-              </div>
-            </div>
-            <div class="col-md-3 text-end">
-              <div class="card-body">
-                <div class="d-grid gap-2">
-                  {% if is_admin and user.permission_status == 1 %}
-                    <div id="{{ user.slug }}-confirm-bookingpermission">
-                      <button class="btn btn-outline-primary"
-                              hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=user.slug %}"
-                              hx-target="#{{ user.slug }}-confirm-bookingpermission">
-                        {% trans "Confirm booking permission" %}
-                      </button>
-                    </div>
-                  {% endif %}
-                  {% if request.user == user and user.permission_status == 2 %}
-                    <div id="{{ user.slug }}-cancel-bookingpermission">
-                      <button class="btn btn-outline-danger"
-                              hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
-                              hx-target="#{{ user.slug }}-cancel-bookingpermission">
-                        {% trans "Cancel booking permission" %}
-                      </button>
-                    </div>
-                  {% endif %}
-                  {% if is_admin and user.permission_role == 2 %}
-                    <div id="{{ user.slug }}-promote-to-admin">
-                      <button class="btn btn-outline-success"
-                              hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=user.slug %}"
-                              hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
-                    </div>
-                  {% endif %}
-                  {% if is_admin and user.permission_role == 1 %}
-                    <div id="{{ user.slug }}-demote-to-booker">
-                      <button class="btn btn-outline-warning"
-                              hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"
-                              hx-target="#{{ user.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
-                    </div>
-                  {% endif %}
-                </div>
+          <div class="col-md-3 text-end">
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                {% if is_admin and user.permission_status == 1 %}
+                  <div id="{{ user.slug }}-confirm-bookingpermission">
+                    <button class="btn btn-outline-primary"
+                            hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=user.slug %}"
+                            hx-target="#{{ user.slug }}-confirm-bookingpermission">
+                      {% trans "Confirm booking permission" %}
+                    </button>
+                  </div>
+                {% endif %}
+                {% if request.user == user and user.permission_status == 2 %}
+                  <div id="{{ user.slug }}-cancel-bookingpermission">
+                    <button class="btn btn-outline-danger"
+                            hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
+                            hx-target="#{{ user.slug }}-cancel-bookingpermission">
+                      {% trans "Cancel booking permission" %}
+                    </button>
+                  </div>
+                {% endif %}
+                {% if is_admin and user.permission_role == 2 %}
+                  <div id="{{ user.slug }}-promote-to-admin">
+                    <button class="btn btn-outline-success"
+                            hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=user.slug %}"
+                            hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
+                  </div>
+                {% endif %}
+                {% if is_admin and user.permission_role == 1 %}
+                  <div id="{{ user.slug }}-demote-to-booker">
+                    <button class="btn btn-outline-warning"
+                            hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"
+                            hx-target="#{{ user.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
         </div>
-      {% endfor %}
-    {% endif %}
-  {% endblock content %}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endblock content %}

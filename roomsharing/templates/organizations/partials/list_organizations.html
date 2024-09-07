@@ -3,39 +3,13 @@
 {% for organization in organizations %}
   <div class="card mb-3">
     <div class="row g-0">
-      <div class="col-md-2">
-        <svg class="bd-placeholder-img img-fluid rounded-start"
-             xmlns="http://www.w3.org/2000/svg"
-             role="img"
-             aria-label="Placeholder: Image"
-             preserveAspectRatio="xMidYMid slice"
-             focusable="false">
-          <title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="25%" y="50%" fill="#dee2e6" dy=".3em">Image missing</text>
-          </svg>
-        </div>
-        <div class="col-md-8">
-          <div class="card-body">
-            <h5 class="card-title">{{ organization.name }}</h5>
-            <p class="card-text">Description of Organization</p>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-geo-alt" />
-                </svg>
-                {{ organization.street }} {{ organization.house_number }}, {{ organization.zip_code }} {{ organization.city }}
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="card-body">
-            <div class="d-grid gap-2">
-              <a class="btn btn-outline-primary"
-                 href="{% url 'organizations:show-organization' organization=organization.slug %}">{% trans "View Details" %}
-              </a>
-            </div>
-          </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <a class="card-title"
+             href="{% url 'organizations:show-organization' organization=organization.slug %}">{{ organization.name }}
+          </a>
         </div>
       </div>
     </div>
-  {% endfor %}
+  </div>
+{% endfor %}

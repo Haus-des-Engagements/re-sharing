@@ -5,6 +5,7 @@ from auditlog.registry import auditlog
 from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import EmailField
 from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
@@ -24,6 +25,28 @@ class Organization(TimeStampedModel):
         CONFIRMED = 2, _("Confirmed")
         REJECTED = 3, _("Rejected")
 
+    class ActivityArea(IntegerChoices):
+        SPORT_EXERCISE = 1, _("Sport and exercise")
+        CULTURE_MUSIC = 2, _("Culture and music")
+        SOCIAL = 3, _("Social area")
+        SCHOOL_NURSERY = 4, _("School or nursery area")
+        CHURCH_RELIGIOUS = 5, _("Church or religious area")
+        LEISURE_SOCIAL_INTERACTION = 6, _("Leisure and social interaction")
+        ENVIRONMENT_NATURE_ANIMALS = (
+            7,
+            _("Environment, nature protection or animal rights"),
+        )
+        YOUTH_ADULT_EDUCATION = 8, _("Youth work outside school or adult education")
+        POLITICS = 9, _("Politics and political interest groups")
+        AMBULANCE_FIREBRIGADE = (
+            10,
+            _("Accident or ambulance service or voluntary fire brigade"),
+        )
+        HEALTH = 11, _("Health area")
+        PROF_INTEREST = 12, _("Professional interest groups outside work")
+        JUSTICE_CRIMINALITY = 13, _("Justice and criminality")
+        NOT_MENTIONED = 14, _("Area not yet mentioned")
+
     class LegalForm(IntegerChoices):
         NO_LEGAL_FORM = 1, _("Without legal form")
         REGISTERED_ASSOCIATION = 2, _("Registered association")
@@ -31,22 +54,29 @@ class Organization(TimeStampedModel):
         FOUNDATION = 4, _("Foundation")
         CIVIL_LAW_COMPANY = 5, _("Civil law company")
         LIMITED_COMPANY = 6, _("Limited company")
-        COOPERATIVE = 8, _("Cooperative")
-        INDIVIDUAL_ENTREPRENEUR = 10, _("Individual entrepreneur")
-        OTHER = 11, _("Other")
+        COOPERATIVE = 7, _("Cooperative")
+        INDIVIDUAL_ENTREPRENEUR = 8, _("Individual entrepreneur")
+        OTHER = 9, _("Other")
 
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
+    description = CharField(
+        _("Description"),
+        max_length=512,
+        help_text=_("Describe shortly what your organization does."),
+    )
     slug = AutoSlugField(populate_from="name")
-    street = CharField(_("Street"), max_length=56)
-    house_number = CharField(_("House number"), max_length=8, blank=True)
+    street_and_housenb = CharField(_("Street and housenumber"), max_length=56)
     zip_code = CharField(_("Zip Code"), max_length=12)
     city = CharField(_("City"), max_length=24)
+    email = EmailField(_("E-Mail"), max_length=64)
+    phone = CharField(_("Phone number"), max_length=32)
+    website = CharField(_("Website"), max_length=128, blank=True)
     legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
     other_legal_form = CharField(_("Other legal form"), max_length=160, blank=True)
     is_charitable = BooleanField(
-        _("Charitable"),
+        _("We are a charitable organization."),
         help_text=_(
             "Only applicable if you have a valid certificate of tax exemption."
         ),
@@ -54,6 +84,27 @@ class Organization(TimeStampedModel):
     )
     status = IntegerField(
         verbose_name=_("Status"), choices=Status.choices, default=Status.PENDING
+    )
+    area_of_activity = IntegerField(
+        verbose_name=_("Main area of activity"), choices=ActivityArea.choices
+    )
+    is_coworking = BooleanField(
+        _("Co-Worker:in"),
+        help_text=_("Only applicable if you are currently co-working in the HdE"),
+        default=False,
+    )
+    is_public = BooleanField(
+        _("Organization information is publicly visible"),
+        default=True,
+        help_text=_(
+            "If checked, we'll show the following information to others: name, "
+            "description, city, website, area of activity"
+        ),
+    )
+    values_approval = BooleanField(_("Approval of values"))
+    entitled = BooleanField(_("Approval of entitlement"))
+    notes = CharField(
+        _("Notes"), max_length=512, blank=True, help_text=_("Internal notes")
     )
 
     class Meta:

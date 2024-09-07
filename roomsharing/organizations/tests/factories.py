@@ -13,12 +13,18 @@ from roomsharing.users.tests.factories import UserFactory
 class OrganizationFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     name = Faker("company", locale="de_DE")
+    description = Faker("text", max_nb_chars=512)
     slug = LazyAttribute(lambda o: slugify(o.name))
-    street = Faker("street_name", locale="de_DE")
-    house_number = Faker("building_number", locale="de_DE")
+    street_and_housenb = Faker("street_address", locale="de_DE")
     zip_code = Faker("postcode", locale="de_DE")
     city = Faker("city", locale="de_DE")
+    email = Faker("email")
+    phone = Faker("phone_number")
+    website = Faker("url")
     legal_form = 1
+    area_of_activity = Organization.ActivityArea.ENVIRONMENT_NATURE_ANIMALS
+    entitled = True
+    values_approval = True
 
     class Meta:
         model = Organization

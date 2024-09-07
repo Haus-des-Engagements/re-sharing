@@ -27,17 +27,16 @@
     </div>
   </div>
   <div class="row">
-    <div id="div_persons_count" class="form-floating mb-3 col-3">
+    <div id="div_persons_count" class=" col-3">
       <input type="text"
              name="organization_name"
-             class="form-control textinput"
+             class="form-control"
              placeholder="{% trans 'Search organizations' %}"
              id="organization_name"
              hx-get="{% url 'organizations:list-organizations' %}"
              hx-target="#list-organizations"
              hx-trigger="keyup"
              hx-indicator="#spinner" />
-      <label for="organization_name">{% trans "Search organizations" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

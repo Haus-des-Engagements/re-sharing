@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
 {% load static i18n %}
+{% load crispy_forms_tags %}
 
 {% block title %}
   {{ organization.name }}
 {% endblock title %}
 {% block content %}
   <div class="row mt-5 mb-2">
-    <h1>{% trans "Create organization" %}</h1>
+    <h1>{% trans "Create a new organization" %}</h1>
   </div>
   <div class="row">
     <p>
@@ -16,7 +17,26 @@
   </div>
   <form method="post" action="{% url 'organizations:create-organization' %}">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">{% trans "Add organization" %}</button>
+    {% crispy form %}
   </form>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      var legalFormSelect = document.getElementById('id_legal_form');
+      var otherLegalFormDiv = document.getElementById('div_id_other_legal_form');
+
+      function toggleOtherLegalForm() {
+        if (legalFormSelect.value === '9') {
+          otherLegalFormDiv.style.display = 'block';
+        } else {
+          otherLegalFormDiv.style.display = 'none';
+        }
+      }
+
+      // Initial check in case form is pre-filled
+      toggleOtherLegalForm();
+
+      // Add event listener to toggle visibility on change
+      legalFormSelect.addEventListener('change', toggleOtherLegalForm);
+    });
+  </script>
 {% endblock content %}

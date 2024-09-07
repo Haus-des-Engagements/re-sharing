@@ -92,11 +92,16 @@ def test_create_organization():
     # Mock form data
     form_data = {
         "name": "Test Organization",
-        "street": "123 Test Street",
-        "house_number": "1",
+        "description": "We are so great, I can't believe it...",
+        "street_and_housenb": "Test Street 123",
         "zip_code": "12345",
         "city": "Test City",
         "legal_form": Organization.LegalForm.NO_LEGAL_FORM,
+        "email": "test@hde.fr",
+        "phone": "015839",
+        "area_of_activity": Organization.ActivityArea.ENVIRONMENT_NATURE_ANIMALS,
+        "entitled": True,
+        "values_approval": True,
     }
     form = OrganizationForm(data=form_data)
 
