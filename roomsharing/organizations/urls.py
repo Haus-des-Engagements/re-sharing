@@ -9,10 +9,16 @@ from .views import list_organizations_view
 from .views import promote_to_admin_view
 from .views import request_bookingpermission_view
 from .views import show_organization_view
+from .views import update_organization_view
 
 app_name = "organizations"
 urlpatterns = [
     path("", list_organizations_view, name="list-organizations"),  # GET organizations
+    path(
+        "<slug:organization>/edit/",
+        update_organization_view,
+        name="update-organization",
+    ),
     path("new/", create_organization_view, name="create-organization"),
     path(
         "<slug:organization>/request-bookingpermission/",

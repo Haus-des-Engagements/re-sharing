@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.db.models import F
 from django.shortcuts import get_object_or_404
 
@@ -8,10 +9,12 @@ from .models import Organization
 
 
 def filter_organizations(organization_name):
-    organizations = Organization.objects.all()
+    organizations = Organization.objects.filter(is_public=True)
 
     if organization_name:
-        organizations = organizations.filter(name__icontains=organization_name)
+        organizations = organizations.filter(name__icontains=organization_name).filter(
+            is_public=True
+        )
     return organizations
 
 
@@ -43,6 +46,9 @@ def show_organization(user, organization_slug):
                 .order_by("id")
             )
 
+    if not organization.is_public and not permitted_users:
+        raise PermissionDenied
+
     return organization, permitted_users, is_admin
 
 
@@ -57,6 +63,15 @@ def create_organization(user, form):
     )
     bookingpermission.save()
     return new_org
+
+
+def update_organization(user, form, organization):
+    if user_has_admin_bookingpermission(user, organization):
+        organization = form.save(commit=False)
+        organization.save()
+        return organization
+
+    raise PermissionDenied
 
 
 def user_has_bookingpermission(user, booking):

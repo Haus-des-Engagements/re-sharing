@@ -15,7 +15,7 @@
       {% trans "Only organisations can book rooms. If your organization does not exists yet, please add it as new organization." %}
     </p>
   </div>
-  <form method="post" action="{% url 'organizations:create-organization' %}">
+  <form method="post">
     {% csrf_token %}
     {% crispy form %}
   </form>

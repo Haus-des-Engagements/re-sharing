@@ -66,7 +66,7 @@ class Organization(TimeStampedModel):
         max_length=512,
         help_text=_("Describe shortly what your organization does."),
     )
-    slug = AutoSlugField(populate_from="name")
+    slug = AutoSlugField(populate_from="name", unique=True, editable=False)
     street_and_housenb = CharField(_("Street and housenumber"), max_length=56)
     zip_code = CharField(_("Zip Code"), max_length=12)
     city = CharField(_("City"), max_length=24)

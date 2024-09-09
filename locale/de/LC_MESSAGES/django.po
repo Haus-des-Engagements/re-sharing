@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-05 12:22+0200\n"
+"POT-Creation-Date: 2024-09-09 09:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,7 +42,7 @@ msgstr "Preisgestaltung"
 
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:90
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:96
-#: roomsharing/organizations/apps.py:7 roomsharing/organizations/models.py:81
+#: roomsharing/organizations/apps.py:7 roomsharing/organizations/models.py:112
 #: roomsharing/templates/organizations/list_organizations.html:6
 #: roomsharing/templates/organizations/list_organizations.html:12
 #: roomsharing/users/models.py:39
@@ -74,17 +74,17 @@ msgid "Close"
 msgstr "Abbrechen"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:126
-#: roomsharing/templates/organizations/show_organization.html:70
+#: roomsharing/templates/organizations/show_organization.html:71
 msgid "Delete Organization"
 msgstr "Organisation löschen"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:134
-#: roomsharing/templates/organizations/show_organization.html:78
+#: roomsharing/templates/organizations/show_organization.html:77
 msgid "Persons authorised to make bookings"
 msgstr "Buchungsberechtigte"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:137
-#: roomsharing/templates/organizations/show_organization.html:81
+#: roomsharing/templates/organizations/show_organization.html:80
 msgid "Only visible for other authorised persons."
 msgstr "Buchungsberechtigte sind nur für andere Buchungsberechtigte sichtbar."
 
@@ -93,23 +93,23 @@ msgid "Addresses are only visible to admins"
 msgstr "Adressen können nur von Admins gesehen werden."
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:176
-#: roomsharing/templates/organizations/show_organization.html:127
+#: roomsharing/templates/organizations/show_organization.html:126
 msgid "Confirm booking permission"
 msgstr "Buchungsberechtigung bestätigen"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:185
 #: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:133
-#: roomsharing/templates/organizations/show_organization.html:136
+#: roomsharing/templates/organizations/show_organization.html:135
 msgid "Cancel booking permission"
 msgstr "Buchungsberechtigung beenden"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:192
-#: roomsharing/templates/organizations/show_organization.html:144
+#: roomsharing/templates/organizations/show_organization.html:143
 msgid "Promote to admin"
 msgstr "Zum Admin machen"
 
 #: htmlcov/z_67616ee2c635d1d5_show_organization_html.html:199
-#: roomsharing/templates/organizations/show_organization.html:151
+#: roomsharing/templates/organizations/show_organization.html:150
 msgid "Demote to booker"
 msgstr "Zum Buchenden herabstufen"
 
@@ -197,7 +197,6 @@ msgstr "Wiederholen"
 #: htmlcov/z_c0763d407173a4a8_booking_item_html.html:112
 #: roomsharing/templates/bookings/list_recurrences.html:50
 #: roomsharing/templates/bookings/partials/booking_item.html:28
-#: roomsharing/templates/organizations/partials/list_organizations.html:34
 msgid "View Details"
 msgstr "Details ansehen"
 
@@ -206,7 +205,7 @@ msgid "Cancel booking permission request"
 msgstr "Anfrage für Buchungsberechtigung abbrechen"
 
 #: htmlcov/z_bb786494cfa0fa80_list_filter_organizations_html.html:141
-#: roomsharing/templates/organizations/show_organization.html:86
+#: roomsharing/templates/organizations/show_organization.html:85
 msgid "Request booking permission"
 msgstr "Buchungsberechtigung anfragen"
 
@@ -304,7 +303,7 @@ msgstr "Anmelden"
 
 #: htmlcov/z_e12b30945affa64c_show_room_html.html:90
 #: roomsharing/bookings/forms.py:60 roomsharing/bookings/models.py:150
-#: roomsharing/organizations/models.py:155 roomsharing/rooms/models.py:94
+#: roomsharing/organizations/models.py:186 roomsharing/rooms/models.py:94
 #: roomsharing/rooms/models.py:124 roomsharing/templates/rooms/show_room.html:6
 msgid "Room"
 msgstr "Raum"
@@ -353,9 +352,9 @@ msgstr "vom"
 msgid "until"
 msgstr "bis"
 
-#: roomsharing/bookings/forms.py:51 roomsharing/organizations/models.py:80
-#: roomsharing/organizations/models.py:120
-#: roomsharing/organizations/models.py:147 roomsharing/rooms/models.py:54
+#: roomsharing/bookings/forms.py:51 roomsharing/organizations/models.py:111
+#: roomsharing/organizations/models.py:151
+#: roomsharing/organizations/models.py:178 roomsharing/rooms/models.py:54
 msgid "Organization"
 msgstr "Organisation"
 
@@ -491,9 +490,9 @@ msgstr "Buchende Organisation"
 msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
-#: roomsharing/bookings/models.py:155 roomsharing/organizations/models.py:74
-#: roomsharing/organizations/models.py:130
+#: roomsharing/bookings/models.py:155 roomsharing/organizations/models.py:86
 #: roomsharing/organizations/models.py:161
+#: roomsharing/organizations/models.py:192
 msgid "Status"
 msgstr "Status"
 
@@ -521,7 +520,7 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diesen "
 "Raum. Bitte wähle einen anderen Zeitraum."
 
-#: roomsharing/bookings/models.py:218 roomsharing/organizations/models.py:112
+#: roomsharing/bookings/models.py:218 roomsharing/organizations/models.py:143
 #: roomsharing/users/models.py:54
 msgid "User"
 msgstr "Nutzer:in"
@@ -554,13 +553,16 @@ msgstr ""
 msgid "Recurrence created successfully!"
 msgstr "Wiederholungen erfolgreich erstellt!"
 
-#: roomsharing/organizations/forms.py:11
-#, fuzzy
-#| msgid "Create organization"
+#: roomsharing/organizations/forms.py:15
 msgid "Name of the organization"
-msgstr "Organisation erstellen"
+msgstr "Name der Organisation"
 
-#: roomsharing/organizations/forms.py:18
+#: roomsharing/organizations/forms.py:19 roomsharing/organizations/models.py:65
+#: roomsharing/rooms/models.py:84 roomsharing/rooms/models.py:134
+msgid "Description"
+msgstr "Beschreibung"
+
+#: roomsharing/organizations/forms.py:24
 msgid ""
 "I have read <a href='https://haus-des-engagements.de/wp-content/"
 "uploads/2024/08/Unsere-Werte-im-HdE.pdf' target='_blank'>Our Values in the "
@@ -569,209 +571,257 @@ msgid ""
 "target='_blank'>Procedure</a>. I will inform all members of my group about "
 "them. We agree to the values."
 msgstr ""
+"Ich habe <a href='https://haus-des-engagements.de/wp-content/uploads/2024/08/"
+"Unsere-Werte-im-HdE.pdf' target='_blank'>Unsere Werte im Haus des "
+"Engagements</a> sowie den dazugehörigen <a href='https://haus-des-"
+"engagements.de/wp-content/uploads/2024/08/Ablauf-Werte-im-HdE.pdf "
+"target='_blank'>Prozess</a> gelesen. Ich informiere die gesamte Gruppe "
+"darüber. Wir stimmen den Werten zu."
 
-#: roomsharing/organizations/forms.py:69
-#: roomsharing/templates/organizations/create_organization.html:11
-msgid "Create organization"
-msgstr "Organisation erstellen"
+#: roomsharing/organizations/forms.py:36
+msgid ""
+"I'm entitled by my organization to create this profile and make booking "
+"requests in its name."
+msgstr ""
+"Ich bin von der Organisation berechtigt, dieses Profil anzulegen und "
+"Buchungen in  ihrem Name durchzuführen."
 
-#: roomsharing/organizations/models.py:23
-#: roomsharing/organizations/models.py:105
-#: roomsharing/templates/organizations/show_organization.html:108
+#: roomsharing/organizations/forms.py:77
+msgid ""
+"We need some more information of your organization. If you don'thave an "
+"official address yet, you can also enter your personal address."
+msgstr ""
+"Wir benötigen ein paar mehr Informationen zu deiner Organisation. Wenn die "
+"Organisation noch keine Adresse u.ä. hat, kannst du auch deine private "
+"Adresse angeben."
+
+#: roomsharing/organizations/forms.py:97
+msgid "Save organization"
+msgstr "Organisation speichern"
+
+#: roomsharing/organizations/models.py:24
+#: roomsharing/organizations/models.py:136
+#: roomsharing/templates/organizations/show_organization.html:107
 #: roomsharing/utils/models.py:27
 msgid "Pending"
 msgstr "Ausstehend"
 
-#: roomsharing/organizations/models.py:24
-#: roomsharing/organizations/models.py:106 roomsharing/utils/models.py:28
+#: roomsharing/organizations/models.py:25
+#: roomsharing/organizations/models.py:137 roomsharing/utils/models.py:28
 msgid "Confirmed"
 msgstr "Bestätigt"
 
-#: roomsharing/organizations/models.py:25
-#: roomsharing/organizations/models.py:107
+#: roomsharing/organizations/models.py:26
+#: roomsharing/organizations/models.py:138
 msgid "Rejected"
 msgstr "Abgelehnt"
 
-#: roomsharing/organizations/models.py:28
+#: roomsharing/organizations/models.py:29
 msgid "Sport and exercise"
 msgstr "Sport und Bewegung"
 
-#: roomsharing/organizations/models.py:29
+#: roomsharing/organizations/models.py:30
 msgid "Culture and music"
 msgstr "Kultur und Musik"
 
-#: roomsharing/organizations/models.py:30
+#: roomsharing/organizations/models.py:31
 msgid "Social area"
 msgstr "Sozialer Bereich"
 
-#: roomsharing/organizations/models.py:31
+#: roomsharing/organizations/models.py:32
 msgid "School or nursery area"
 msgstr "Schule und Kindergarten"
 
-#: roomsharing/organizations/models.py:32
+#: roomsharing/organizations/models.py:33
 msgid "Church or religious area"
 msgstr "Kirchlicher oder religiöser Bereich"
 
-#: roomsharing/organizations/models.py:33
-
+#: roomsharing/organizations/models.py:34
 msgid "Leisure and social interaction"
 msgstr "Freizeit und Geselligkeit"
 
-#: roomsharing/organizations/models.py:34
+#: roomsharing/organizations/models.py:37
 msgid "Environment, nature protection or animal rights"
 msgstr "Umwelt, Naturschutz oder Tierschutz"
 
-#: roomsharing/organizations/models.py:35
+#: roomsharing/organizations/models.py:39
 msgid "Youth work outside school or adult education"
 msgstr "Außerschulische Jugendarbeit oder Bildungsarbeit für Erwachsene"
 
-#: roomsharing/organizations/models.py:36
+#: roomsharing/organizations/models.py:40
 msgid "Politics and political interest groups"
 msgstr "Politik und politische Interessenvertretung"
 
-#: roomsharing/organizations/models.py:37
+#: roomsharing/organizations/models.py:43
 msgid "Accident or ambulance service or voluntary fire brigade"
 msgstr "Unfall- oder Rettungsdienst oder freiwillige Feuerwehr"
 
-#: roomsharing/organizations/models.py:38
+#: roomsharing/organizations/models.py:45
 msgid "Health area"
 msgstr "Gesundheitsbereich"
 
-#: roomsharing/organizations/models.py:39
+#: roomsharing/organizations/models.py:46
 msgid "Professional interest groups outside work"
 msgstr "Berufliche Interessenvertretung außerhalb des Betriebes"
 
-#: roomsharing/organizations/models.py:40
+#: roomsharing/organizations/models.py:47
 msgid "Justice and criminality"
 msgstr "Justiz und Kriminalitätsprobleme"
 
-#: roomsharing/organizations/models.py:41
+#: roomsharing/organizations/models.py:48
 msgid "Area not yet mentioned"
 msgstr "Sonstiger Bereich"
 
-#: roomsharing/organizations/models.py:44
+#: roomsharing/organizations/models.py:51
 msgid "Without legal form"
 msgstr "Ohne Rechtsform"
 
-#: roomsharing/organizations/models.py:45
+#: roomsharing/organizations/models.py:52
 msgid "Registered association"
 msgstr "eingetragener Verein (e.V.)"
 
-#: roomsharing/organizations/models.py:46
+#: roomsharing/organizations/models.py:53
 msgid "Not registered association"
 msgstr "nicht eingetragener Verein"
 
-#: roomsharing/organizations/models.py:47
+#: roomsharing/organizations/models.py:54
 msgid "Foundation"
 msgstr "Stiftung"
 
-#: roomsharing/organizations/models.py:48
+#: roomsharing/organizations/models.py:55
 msgid "Civil law company"
 msgstr "Gesellschaft bürgerlichen Rechts (GbR)"
 
-#: roomsharing/organizations/models.py:49
+#: roomsharing/organizations/models.py:56
 msgid "Limited company"
 msgstr "Gesellschaft mit beschränkter Haftung (GmbH)"
 
-#: roomsharing/organizations/models.py:50
+#: roomsharing/organizations/models.py:57
 msgid "Cooperative"
 msgstr "Genossenschaft"
 
-#: roomsharing/organizations/models.py:51
+#: roomsharing/organizations/models.py:58
 msgid "Individual entrepreneur"
 msgstr "Einzelunternehmer:in"
 
-#: roomsharing/organizations/models.py:52
+#: roomsharing/organizations/models.py:59
 msgid "Other"
 msgstr "Andere"
 
-#: roomsharing/organizations/models.py:56 roomsharing/rooms/models.py:28
+#: roomsharing/organizations/models.py:63 roomsharing/rooms/models.py:28
 msgid "Name"
 msgstr "Name"
 
-#: roomsharing/organizations/models.py:57 roomsharing/rooms/models.py:84
-#: roomsharing/rooms/models.py:134
-msgid "Description"
-msgstr "Beschreibung"
-
-#: roomsharing/organizations/models.py:57
+#: roomsharing/organizations/models.py:67
 msgid "Describe shortly what your organization does."
 msgstr "Beschreibe kurz was deine Organisation macht."
 
-#: roomsharing/organizations/models.py:59
+#: roomsharing/organizations/models.py:70
 msgid "Street and housenumber"
 msgstr "Straße und Hausnummer"
 
-#: roomsharing/organizations/models.py:60
+#: roomsharing/organizations/models.py:71
 msgid "Zip Code"
 msgstr "Postleitzahl"
 
-#: roomsharing/organizations/models.py:61
+#: roomsharing/organizations/models.py:72
 msgid "City"
-msgstr "Stadt"
+msgstr "Gemeinde"
 
-#: roomsharing/organizations/models.py:62
+#: roomsharing/organizations/models.py:73
 msgid "E-Mail"
 msgstr "E-Mail"
 
-#: roomsharing/organizations/models.py:63
+#: roomsharing/organizations/models.py:74
 msgid "Phone number"
 msgstr "Telefonnummer"
 
-#: roomsharing/organizations/models.py:64
+#: roomsharing/organizations/models.py:75
+msgid "Website"
+msgstr "Webseite"
+
+#: roomsharing/organizations/models.py:76
 msgid "Legal form"
 msgstr "Rechtsform"
 
-#: roomsharing/organizations/models.py:65
+#: roomsharing/organizations/models.py:77
 msgid "Other legal form"
 msgstr "andere Rechtsform"
 
-#: roomsharing/organizations/models.py:67
-msgid "Charitable"
-msgstr "gemeinnützig"
+#: roomsharing/organizations/models.py:79
+msgid "We are a charitable organization."
+msgstr "Wir sind eine gemeinützige Organisation."
 
-#: roomsharing/organizations/models.py:69
+#: roomsharing/organizations/models.py:81
 msgid "Only applicable if you have a valid certificate of tax exemption."
 msgstr "Nur anwendbar wenn ein gültiger Freistellungsbescheid vorhanden ist."
 
-#: roomsharing/organizations/models.py:76
-msgid "Area of activity"
-msgstr "Engagementbereich"
+#: roomsharing/organizations/models.py:89
+msgid "Main area of activity"
+msgstr "Haupt-Engagementbereich"
 
-#: roomsharing/organizations/models.py:77
+#: roomsharing/organizations/models.py:92
 msgid "Co-Worker:in"
 msgstr "Co-Worker:in"
 
-#: roomsharing/organizations/models.py:77
+#: roomsharing/organizations/models.py:93
 msgid "Only applicable if you are currently co-working in the HdE"
-msgstr "Nur auswählen, wenn du derzeit im Hde co-workst."
+msgstr "Nur auswählen, wenn du derzeit im HdE co-workst."
 
-#: roomsharing/organizations/models.py:101
+#: roomsharing/organizations/models.py:97
+msgid "Organization information is publicly visible"
+msgstr "Organisationinformationen sind öffentlich sichbar."
+
+#: roomsharing/organizations/models.py:100
+msgid ""
+"If checked, we'll show the following information to others: name, "
+"description, city, website, area of activity"
+msgstr ""
+"Auch wenn du zustimmst zeigen wir ledigliche diese Informationen: Name, "
+"Beschreibung, Gemeinde, Webseite, Engagementbereich."
+
+#: roomsharing/organizations/models.py:104
+msgid "Approval of values"
+msgstr "Bestätigung der Werte"
+
+#: roomsharing/organizations/models.py:105
+msgid "Approval of entitlement"
+msgstr "Bestätigung der Berechtigung"
+
+#: roomsharing/organizations/models.py:107
+msgid "Notes"
+msgstr "Notizen"
+
+#: roomsharing/organizations/models.py:107
+msgid "Internal notes"
+msgstr "Interne Notizen"
+
+#: roomsharing/organizations/models.py:132
 msgid "Administrator"
 msgstr "Administrator"
 
-#: roomsharing/organizations/models.py:102
+#: roomsharing/organizations/models.py:133
 msgid "Booker"
 msgstr "Buchende:r"
 
-#: roomsharing/organizations/models.py:127
+#: roomsharing/organizations/models.py:158
 msgid "Role"
 msgstr "Rolle"
 
-#: roomsharing/organizations/models.py:135
-#: roomsharing/templates/organizations/show_organization.html:103
+#: roomsharing/organizations/models.py:166
+#: roomsharing/templates/organizations/show_organization.html:102
 msgid "Booking permission"
 msgstr "Buchungsberechtigung"
 
-#: roomsharing/organizations/models.py:136
+#: roomsharing/organizations/models.py:167
 msgid "Booking permissions"
 msgstr "Buchungsberechtigungen"
 
-#: roomsharing/organizations/models.py:165
+#: roomsharing/organizations/models.py:196
 msgid "Default booking status"
 msgstr "Standard Buchungsstatus"
 
-#: roomsharing/organizations/models.py:166
+#: roomsharing/organizations/models.py:197
 msgid "Default booking statuses"
 msgstr "Standard Buchungsstatuse"
 
@@ -892,6 +942,10 @@ msgstr ""
 msgid "Occurrences:"
 msgstr "Wiederholungen"
 
+#: roomsharing/templates/organizations/create_organization.html:11
+msgid "Create a new organization"
+msgstr "Neue Organisation erstellen"
+
 #: roomsharing/templates/organizations/create_organization.html:15
 #: roomsharing/templates/organizations/list_organizations.html:25
 msgid ""
@@ -906,15 +960,31 @@ msgid "New Organization"
 msgstr "Neue Organisation"
 
 #: roomsharing/templates/organizations/list_organizations.html:34
-#: roomsharing/templates/organizations/list_organizations.html:40
 msgid "Search organizations"
 msgstr "Organisationen suchen"
 
-#: roomsharing/templates/organizations/show_organization.html:98
+#: roomsharing/templates/organizations/show_organization.html:42
+msgid "This organization is visible to others."
+msgstr ""
+
+#: roomsharing/templates/organizations/show_organization.html:47
+msgid "This organization is not visible to others."
+msgstr ""
+
+#: roomsharing/templates/organizations/show_organization.html:68
+msgid "Edit Organization"
+msgstr "Organisation bearbeiten"
+
+#: roomsharing/templates/organizations/show_organization.html:71
+#| msgid "Are you sure you want to cancel this booking?"
+msgid "Are you sure you want to delete the organization?"
+msgstr "Möchest du Orghanisation wirklich stornieren?"
+
+#: roomsharing/templates/organizations/show_organization.html:97
 msgid "that's you"
 msgstr "das bist du"
 
-#: roomsharing/templates/organizations/show_organization.html:105
+#: roomsharing/templates/organizations/show_organization.html:104
 msgid "Approved"
 msgstr "Bestätigt"
 

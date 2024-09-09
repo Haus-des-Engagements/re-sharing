@@ -9,45 +9,45 @@
   <div class="row mt-5 mb-4">
     <h1>{{ organization.name }}</h1>
   </div>
-  <div class="row g-0">
-    <div class="col-md-5">
+  <div class="row">
+    <div class="card">
       <div class="card-body">
-        <p class="card-text">Description of Organization</p>
         <ul class="list-group list-group-flush">
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-geo-alt" />
-            </svg>
-            {{ organization.street_and_housenb }}, {{ organization.zip_code }} {{ organization.city }}
-          </li>
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-envelope-at" />
-            </svg>
-            {{ organization.email }}
-          </li>
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-globe2" />
-            </svg>
-            <a href="{{ organization.website }}">{{ organization.website }}</a>
-          </li>
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-telephone" />
-            </svg>
-            {{ organization.phone }}
-          </li>
           <li class="list-group-item">
             <svg class="fs-4 me-1" width="1em" height="1em">
               <use href="#bi-file-earmark-text" />
             </svg>
-            {% if other_legal_form %}
-              {{ other_legal_form }}
-            {% else %}
-              {{ organization.get_legal_form_display }}
-            {% endif %}
+            <em>{{ organization.description }}</em>
           </li>
+          <li class="list-group-item">
+            <svg class="fs-4 me-1" width="1em" height="1em">
+              <use href="#bi-geo-alt" />
+            </svg>
+            {{ organization.city }}
+          </li>
+          {% if organization.website %}
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-globe2" />
+              </svg>
+              <a href="{{ organization.website }}">{{ organization.website }}</a>
+            </li>
+          {% endif %}
+          {% if is_admin %}
+            <li class="list-group-item">
+              {% if organization.is_public %}
+                <svg class="fs-4 me-1" width="1em" height="1em">
+                  <use href="#bi-eye" />
+                </svg>
+                {% trans "This organization is visible to others." %}
+              {% else %}
+                <svg class="fs-4 me-1" width="1em" height="1em">
+                  <use href="#bi-eye-slash" />
+                </svg>
+                {% trans "This organization is not visible to others." %}
+              {% endif %}
+            </li>
+          {% endif %}
           <li class="list-group-item">
             <svg class="fs-4 me-1" width="1em" height="1em">
               <use href="#bi-clipboard-heart" />
@@ -56,15 +56,18 @@
           </li>
         </ul>
       </div>
-      <div class="col-md-5 mt-3">
-        <div class="card-body">
-          <div class="d-grid gap-2">
-            {% if is_admin %}
-              <a class="btn btn-outline-danger"
-                 href="{% url 'organizations:delete-organization' organization=organization.slug %}">{% trans "Delete Organization" %}</a>
-            {% endif %}
-          </div>
-        </div>
+    </div>
+  </div>
+  <div class="col-md-5 mt-3 row">
+    <div>
+      <div>
+        {% if is_admin %}
+          <a class="btn btn-outline-warning"
+             href="{% url 'organizations:update-organization' organization=organization.slug %}">{% trans "Edit Organization" %}</a>
+          <a class="btn btn-outline-danger"
+             href="{% url 'organizations:delete-organization' organization=organization.slug %}"
+             onclick="return confirm('{% trans "Are you sure you want to delete the organization?" %}')">{% trans "Delete Organization" %}</a>
+        {% endif %}
       </div>
     </div>
   </div>

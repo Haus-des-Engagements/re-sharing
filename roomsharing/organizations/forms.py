@@ -16,6 +16,7 @@ class OrganizationForm(forms.ModelForm):
     description = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
         required=True,
+        label=_("Description"),
     )
     values_approval = forms.BooleanField(
         label=mark_safe(  # noqa: S308
@@ -73,11 +74,18 @@ class OrganizationForm(forms.ModelForm):
             ),
             "is_charitable",
             HTML("<h3 class='mt-5 mb-3'>Address</h3>"),
+            HTML(
+                _(
+                    "We need some more information of your organization. If you don't"
+                    "have an official address yet, you can also enter your personal "
+                    "address."
+                )
+            ),
             Row(
                 Column("street_and_housenb", css_class="form-group col-md-3 mb-0"),
                 Column("zip_code", css_class="form-group col-md-2 mb-0"),
                 Column("city", css_class="form-group col-md-3 mb-0"),
-                css_class="form-row",
+                css_class="form-row mt-4",
             ),
             Row(
                 Column("email", css_class="form-group col-md-3 mb-0"),
@@ -90,5 +98,5 @@ class OrganizationForm(forms.ModelForm):
             "is_public",
             "values_approval",
             "entitled",
-            Submit("submit", _("Create organization")),
+            Submit("submit", _("Save organization")),
         )

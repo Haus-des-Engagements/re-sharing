@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
@@ -13,21 +14,15 @@ from .models import Organization
 from .services import create_organization
 from .services import filter_organizations
 from .services import show_organization
+from .services import update_organization
 from .services import user_has_admin_bookingpermission
 
 
 def list_organizations_view(request):
     organization_name = request.GET.get("organization_name")
     organizations = filter_organizations(organization_name)
-    form = OrganizationForm()
 
-    if request.method == "POST":
-        form = OrganizationForm(request.POST)
-        if form.is_valid():
-            create_organization(request.user, form)
-            return redirect("organizations:list-organizations")
-
-    context = {"organizations": organizations, "form": form}
+    context = {"organizations": organizations}
     if request.headers.get("HX-Request"):
         return render(
             request, "organizations/partials/list_organizations.html", context
@@ -189,6 +184,23 @@ def create_organization_view(request):
 
         if form.is_valid():
             organization = create_organization(request.user, form)
+            return redirect("organizations:show-organization", organization.slug)
+
+    return render(request, "organizations/create_organization.html", {"form": form})
+
+
+@login_required
+def update_organization_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
+    if user_has_admin_bookingpermission(request.user, organization):
+        form = OrganizationForm(instance=organization)
+    else:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = OrganizationForm(request.POST, instance=organization)
+        if form.is_valid():
+            organization = update_organization(request.user, form, organization)
             return redirect("organizations:show-organization", organization.slug)
 
     return render(request, "organizations/create_organization.html", {"form": form})
