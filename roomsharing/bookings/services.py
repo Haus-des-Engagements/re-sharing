@@ -324,6 +324,22 @@ def cancel_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
+def cancel_rrule_bookings(user, rrule_uuid):
+    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+
+    if not user_has_bookingpermission(user, bookings[0]):
+        raise PermissionDenied
+
+    for booking in bookings:
+        if booking.is_cancelable():
+            with set_actor(user):
+                booking.status = BookingStatus.CANCELLED
+                booking.save()
+
+    return rrule
+
+
 def get_booking_activity_stream(booking):
     activity_stream = []
     booking_logs = booking.history.filter(changes__has_key="status").exclude(
@@ -386,7 +402,9 @@ def get_occurrences(user, recurrence_uuid):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
 
-    return rrule, bookings
+    is_cancelable = rrule.is_cancelable()
+
+    return rrule, bookings, is_cancelable
 
 
 def confirm_booking(user, booking_slug):

@@ -16,6 +16,7 @@ from .forms import BookingForm
 from .forms import MessageForm
 from .services import InvalidBookingOperationError
 from .services import cancel_booking
+from .services import cancel_rrule_bookings
 from .services import create_booking_data
 from .services import create_bookingmessage
 from .services import filter_bookings_list
@@ -82,16 +83,24 @@ def list_recurrences_view(request):
 
 @login_required
 def show_recurrence_view(request, rrule):
-    rrule, bookings = get_occurrences(request.user, rrule)
+    rrule, bookings, is_cancelable = get_occurrences(request.user, rrule)
 
     return render(
         request,
         "bookings/show_recurrence.html",
-        {
-            "bookings": bookings,
-            "rrule": rrule,
-        },
+        {"bookings": bookings, "rrule": rrule, "is_cancelable": is_cancelable},
     )
+
+
+@login_required
+def cancel_rrule_bookings_view(request, rrule):
+    try:
+        rrule = cancel_rrule_bookings(request.user, rrule)
+    except (InvalidBookingOperationError, PermissionDenied) as e:
+        return HttpResponse(e.message, status=e.status_code)
+
+    messages.success(request, _("Successfully cancelled all future bookings."))
+    return redirect("bookings:show-recurrence", rrule.uuid)
 
 
 @login_required

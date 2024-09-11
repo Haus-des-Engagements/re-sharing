@@ -10,6 +10,7 @@ from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
+from roomsharing.bookings.services import cancel_rrule_bookings
 from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
@@ -19,6 +20,7 @@ from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
 from roomsharing.bookings.services import show_booking
 from roomsharing.bookings.tests.factories import BookingFactory
+from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
 from roomsharing.bookings.tests.factories import create_timespan
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
@@ -70,6 +72,48 @@ class TestCancelBooking(TestCase):
         self.booking.refresh_from_db()
 
         assert self.booking.status == BookingStatus.CANCELLED
+
+
+@pytest.mark.django_db()
+def test_cancel_recurring_bookings():
+    user = UserFactory()
+    organization = OrganizationFactory()
+    BookingPermissionFactory(
+        user=user, organization=organization, status=BookingPermission.Status.CONFIRMED
+    )
+
+    rrule = RecurrenceRuleFactory()
+    booking1 = BookingFactory(
+        user=user,
+        organization=organization,
+        recurrence_rule=rrule,
+        start_date=timezone.now().date() - timedelta(days=5),
+        status=BookingStatus.PENDING,
+    )
+    booking2 = BookingFactory(
+        user=user,
+        organization=organization,
+        recurrence_rule=rrule,
+        start_date=timezone.now().date() + timedelta(days=10),
+        status=BookingStatus.PENDING,
+    )
+    booking3 = BookingFactory(
+        user=user,
+        organization=organization,
+        recurrence_rule=rrule,
+        start_date=timezone.now().date() + timedelta(days=5),
+        status=BookingStatus.PENDING,
+    )
+
+    cancel_rrule_bookings(user, rrule.uuid)
+
+    booking1.refresh_from_db()
+    booking2.refresh_from_db()
+    booking3.refresh_from_db()
+
+    assert booking1.status == BookingStatus.PENDING
+    assert booking2.status == BookingStatus.CANCELLED
+    assert booking3.status == BookingStatus.CANCELLED
 
 
 class TestBookingActivityStream(TestCase):

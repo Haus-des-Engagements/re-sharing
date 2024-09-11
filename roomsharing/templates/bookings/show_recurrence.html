@@ -34,7 +34,18 @@
       </div>
       <div class="col-md-2">
         <div class="card-body">
-          <div class="d-grid gap-2"></div>
+          <div class="d-grid gap-2">
+            {% if is_cancelable %}
+              <button id="cancel-button"
+                      type="submit"
+                      class="btn btn-outline-danger mb-3"
+                      value="Submit"
+                      hx-confirm="{% trans 'Are you sure you want to cancel all future bookings?' %}"
+                      hx-post="{% url 'bookings:cancel-rrule-bookings' rrule.uuid %}"
+                      hx-target="body"
+                      hx-swap="innerHTML">{% trans "Cancel all future bookings" %}</button>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>

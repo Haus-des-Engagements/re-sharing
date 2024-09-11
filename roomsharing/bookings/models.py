@@ -60,6 +60,11 @@ class RecurrenceRule(TimeStampedModel):
     def get_first_booking(self):
         return self.bookings_of_recurrencerule.first()
 
+    def is_cancelable(self):
+        return any(
+            booking.is_cancelable() for booking in self.bookings_of_recurrencerule.all()
+        )
+
     def get_human_readable_frequency(self):
         rrule = rrulestr(self.rrule)
         if "DAILY" in self.rrule:

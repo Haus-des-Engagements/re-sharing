@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import cancel_booking_view
+from .views import cancel_rrule_bookings_view
 from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_bookings_view
@@ -31,6 +32,11 @@ urlpatterns = [
     path(
         "recurrences/<uuid:rrule>/", show_recurrence_view, name="show-recurrence"
     ),  # GET recurrence object
+    path(
+        "recurrences/<uuid:rrule>/cancel-rrule-bookings/",
+        cancel_rrule_bookings_view,
+        name="cancel-rrule-bookings",
+    ),
     path(
         "<slug:slug>/cancel-booking/",
         cancel_booking_view,
