@@ -63,3 +63,6 @@
   width: 100%;
   z-index: -1;
 }
+
+body, html { height: 100%; margin: 0; display: flex; flex-direction: column; }
+.content { flex: 1; }

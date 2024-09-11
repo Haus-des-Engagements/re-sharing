@@ -27,7 +27,7 @@
       <link href="{% static 'css/project.css' %}" rel="stylesheet" />
     {% endblock css %}
     <!-- Le javascript
-    ================================================== -->
+  ================================================== -->
     {# Placed at the top of the document so pages load faster with defer #}
     {% block javascript %}
       <!-- Bootstrap JS -->
@@ -36,6 +36,9 @@
               integrity="sha512-1/RvZTcCDEUjY/CypiMz+iqqtaoQfAITmNSJY17Myp4Ms5mdxPS5UV7iOfdZoxcGhzFbOm6sntTKJppjvuhg4g=="
               crossorigin="anonymous"
               referrerpolicy="no-referrer"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+              integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+              crossorigin="anonymous"></script>
       <!-- Your stuff: Third-party javascript libraries go here -->
       <!-- place project specific Javascript in this file -->
       <script defer src="{% static 'js/project.js' %}"></script>
@@ -45,10 +48,10 @@
   <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
         class="{% block bodyclass %}{% endblock bodyclass %}">
     {% block body %}
-      <div class="mb-1">
+      <div class="mb-1" id="navigation">
         <nav class="navbar navbar-expand-md navbar-light bg-light">
           <div class="container-fluid">
-            <button class="navbar-toggler navbar-toggler-right"
+            <button class="navbar-toggler"
                     type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent"
@@ -57,9 +60,11 @@
                     aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand" href="{% url 'home' %}">Roomsharing</a>
+            <a class="navbar-brand" href="{% url 'home' %}">
+              <img src="{% static "images/favicons/favicon-32x32.png" %}" alt="" width="30" height="24" class="d-inline-block align-text-top" />
+            HdE Räume</a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav mr-auto">
+              <ul class="navbar-nav me-auto">
                 <li class="nav-item active">
                   <a class="nav-link" href="{% url 'home' %}">{% trans "Home" %}<span class="visually-hidden">(current)</span></a>
                 </li>
@@ -67,28 +72,45 @@
                   <a class="nav-link" href="{% url 'rooms:list-rooms' %}">{% trans "Rooms" %}</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'bookings:list-bookings' %}">{% trans "My Bookings" %}</a>
+                  <a class="nav-link" href="{% url 'organizations:list-organizations' %}">{% trans "Organizations" %}</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'organizations:list-organizations' %}">{% trans "My Organizations" %}</a>
+                  <a class="nav-link" href="{% url 'bookings:list-bookings' %}">{% trans "My Bookings" %}</a>
                 </li>
+              </ul>
+              <ul class="navbar-nav ms-auto">
                 {% if request.user.is_authenticated %}
-                  <li class="nav-item">
-                    <a class="nav-link" href="{% url 'users:detail' request.user.slug %}">{% translate "My Profile" %}</a>
-                  </li>
-                  <li class="nav-item">
-                    {# URL provided by django-allauth/account/urls.py #}
-                    <a class="nav-link" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                      <svg class="fs-4 me-1" width="1em" height="1em">
+                        <use href="#bi-person-circle" />
+                      </svg>
+                      Profile
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <a class="dropdown-item"
+                           href="{% url 'users:detail' request.user.slug %}">{% translate "My Profile" %}</a>
+                      </li>
+                      <li>
+                        <hr class="dropdown-divider" />
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
+                      </li>
+                    </ul>
                   </li>
                 {% else %}
                   {% if ACCOUNT_ALLOW_REGISTRATION %}
                     <li class="nav-item">
-                      {# URL provided by django-allauth/account/urls.py #}
                       <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% translate "Sign Up" %}</a>
                     </li>
                   {% endif %}
                   <li class="nav-item">
-                    {# URL provided by django-allauth/account/urls.py #}
                     <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% translate "Sign In" %}</a>
                   </li>
                 {% endif %}
@@ -97,7 +119,7 @@
           </div>
         </nav>
       </div>
-      <div class="container">
+      <div class="container" id="messages">
         {% if messages %}
           {% for message in messages %}
             <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
@@ -109,11 +131,38 @@
             </div>
           {% endfor %}
         {% endif %}
-        {% block main %}
+      </div>
+      {% block main %}
+        <div class="content container">
           {% block content %}
             <p>Use this document as a way to quick start any new project.</p>
           {% endblock content %}
-        {% endblock main %}
+        </div>
+      {% endblock main %}
+      <div class="container" name="footer">
+        <footer class="py-3 my-4">
+          <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+            <li class="nav-item">
+              <a href="{% url 'home' %}" class="nav-link px-2 text-muted">{% trans "Home" %}</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'rooms:list-rooms' %}" class="nav-link px-2 text-muted">{% trans "Rooms" %}</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "organizations:list-organizations" %}"
+                 class="nav-link px-2 text-muted">{% trans "Organizations" %}</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "bookings:list-bookings" %}"
+                 class="nav-link px-2 text-muted">{% trans "My bookings" %}</a>
+            </li>
+            <li class="nav-item">
+              <a href="https://haus-des-engagements.de/impressum-datenschutz/"
+                 class="nav-link px-2 text-muted">{% trans "Imprint and Data Privacy" %}</a>
+            </li>
+          </ul>
+          <p class="text-center text-muted">© 2024 Haus des Engagements e.V.</p>
+        </footer>
       </div>
     {% endblock body %}
     <!-- /container -->
@@ -131,7 +180,7 @@
       {% endcomment %}
     {% endblock inline_javascript %}
     <!-- SVG Icons
-    ================================================== -->
+================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <!-- Learn about this on: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/use -->
     {% block icons %}
