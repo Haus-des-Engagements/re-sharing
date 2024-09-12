@@ -9,6 +9,7 @@ from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import BookingMessageFactory
 from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
+from roomsharing.utils.models import BookingStatus
 
 
 def test_booking_get_absolute_url(booking: Booking):
@@ -105,3 +106,66 @@ def test_get_first_booking():
     BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
     BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
     assert rrule.get_first_booking() == b1
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    (
+        "booking1_start",
+        "booking1_status",
+        "booking2_start",
+        "booking2_status",
+        "expected",
+    ),
+    [
+        # Test case 1: one booking in the past, one in the future --> True
+        (
+            timezone.now().date() - timedelta(days=5),
+            BookingStatus.PENDING,
+            timezone.now().date() + timedelta(days=10),
+            BookingStatus.PENDING,
+            True,
+        ),
+        # Test case 2: 2 bookings in the past --> False
+        (
+            timezone.now().date() - timedelta(days=5),
+            BookingStatus.PENDING,
+            timezone.now().date() - timedelta(days=3),
+            BookingStatus.PENDING,
+            False,
+        ),
+        # Test case 3: 2 bookings in the future, but 1 canceled --> True
+        (
+            timezone.now().date() + timedelta(days=5),
+            BookingStatus.CANCELLED,
+            timezone.now().date() + timedelta(days=10),
+            BookingStatus.PENDING,
+            True,
+        ),
+        # Test case 4: 2 Bookings in the future, but 2 canceled --> False
+        (
+            timezone.now().date() + timedelta(days=5),
+            BookingStatus.CANCELLED,
+            timezone.now().date() + timedelta(days=10),
+            BookingStatus.CANCELLED,
+            False,
+        ),
+    ],
+)
+def test_is_cancelable(
+    booking1_start, booking1_status, booking2_start, booking2_status, expected
+):
+    rrule = RecurrenceRuleFactory()
+
+    BookingFactory(
+        recurrence_rule=rrule,
+        start_date=booking1_start,
+        status=booking1_status,
+    )
+    BookingFactory(
+        recurrence_rule=rrule,
+        start_date=booking2_start,
+        status=booking2_status,
+    )
+
+    assert rrule.is_cancelable() is expected
