@@ -1,5 +1,8 @@
+from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
+from roomsharing.rooms.models import Compensation
+from roomsharing.rooms.models import Room
 from roomsharing.rooms.services import filter_rooms
 from roomsharing.rooms.services import planner_table
 from roomsharing.rooms.services import show_room
@@ -40,3 +43,18 @@ def planner_view(request):
     if request.headers.get("HX-Request"):
         return render(request, "rooms/partials/planner_table.html", context)
     return render(request, "rooms/planner.html", context)
+
+
+def get_compensations(request):
+    room_id = request.POST.get("room")
+    if not room_id:
+        return render(
+            request, "bookings/partials/compensations.html", {"compensations": []}
+        )
+    room = get_object_or_404(Room, id=room_id)
+    compensations = Compensation.objects.filter(room=room)
+    return render(
+        request,
+        "bookings/partials/compensations.html",
+        {"compensations": compensations},
+    )

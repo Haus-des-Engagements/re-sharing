@@ -128,6 +128,8 @@ def cancel_booking_view(request, slug):
 
     message = _("Successfully cancelled.")
 
+    return render(request, "bookings/partials/booking_item.html", {"booking": booking})
+
     return HttpResponse(
         f'{message} <span id="status-{booking.slug}" '
         f'hx-swap-oob="true" class="fs-6 badge text-bg-status-{booking.status}">'
@@ -218,7 +220,6 @@ def create_booking_data_form_view(request):
 
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
-
         if form.is_valid():
             booking_data, rrule_string = create_booking_data(request.user, form)
             request.session["booking_data"] = booking_data

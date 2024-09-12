@@ -17,9 +17,26 @@
       <div class="col-md-6">
         <div class="card-body">
           <h5 class="card-title">{{ booking.room }}</h5>
-          <p class="card-text">{{ booking.timespan.0|date:"d.m.Y - H:i" }} - {{ booking.timespan.1 }}</p>
           <p class="card-text">
-            {% trans "Booked by:" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
+            <svg width="1em" height="1em">
+              <use href="#bi-card-heading" />
+            </svg>
+            <em>{{ booking.title }}</em>
+            <br />
+            <svg width="1em" height="1em">
+              <use href="#bi-person-fill" />
+            </svg>
+            {% trans "booked by:" %}   {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }}) {% trans "for" %} {{ booking.organization.name }}
+            <br />
+            {% if booking.compensation %}
+              <svg width="1em" height="1em">
+                <use href="#bi-currency-euro" />
+              </svg>
+              {{ booking.compensation.name }}
+              {% if booking.total_amount %}
+                ({% trans "Gesamtbetrag " %}{{ booking.total_amount }}€)
+              {% endif %}
+            {% endif %}
           </p>
         </div>
       </div>

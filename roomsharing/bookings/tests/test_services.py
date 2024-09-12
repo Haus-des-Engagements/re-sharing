@@ -436,6 +436,8 @@ def test_create_booking():
         "start_date": timespan.lower.date(),
         "start_time": timespan.lower.time(),
         "end_time": timespan.upper.time(),
+        "compensation": None,
+        "total_amount": None,
     }
     kwargs = {"room_booked": True, "rrule": "FREQ=DAILY"}
 
@@ -455,4 +457,6 @@ def test_create_booking():
     assert booking.end_time == booking_details["end_time"]
     assert booking.room_booked == kwargs["room_booked"]
     assert booking.rrule == kwargs["rrule"]
+    assert booking.compensation is None
+    assert booking.total_amount is None
     assert not booking.pk  # Not saved in the database

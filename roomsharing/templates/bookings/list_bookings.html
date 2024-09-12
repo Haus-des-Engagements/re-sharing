@@ -50,7 +50,9 @@
              name="hide_recurring_bookings"
              class="form-check-input"
              id="id_hide_recurring_bookings" />
-      <label for="id_hide_recurring_bookings" class="form-check-label">{% trans "hide recurring bookings" %}</label>
+      <label for="id_hide_recurring_bookings" class="form-check-label">
+        {% trans "hide" %} <a href="{% url 'bookings:list-recurrences' %}">{% trans "recurring bookings" %}</a>
+      </label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

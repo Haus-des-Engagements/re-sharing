@@ -10,20 +10,40 @@
     <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title">
-          {{ booking.room }} <span id="status-{{ booking.slug }}"
+          <a href="{% url 'rooms:show-room' booking.room.slug %}">{{ booking.room }}</a> <span id="status-{{ booking.slug }}"
        class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
         </h5>
         <p class="card-text">
-          {% trans "Title" %}: <em>{{ booking.title }}</em>
+          <svg width="1em" height="1em">
+            <use href="#bi-card-heading" />
+          </svg>
+          <em>{{ booking.title }}</em>
           <br />
-          {% trans "Booked by:" %} <em>{{ booking.user }}</em> {% trans "for" %} <em>{{ booking.organization.name }}</em>
+          <svg width="1em" height="1em">
+            <use href="#bi-person-fill" />
+          </svg>
+          {% trans "booked by:" %} <em>{{ booking.user }}</em> {% trans "for" %} <em><a href="{% url 'organizations:show-organization' booking.organization.slug %}">{{ booking.organization.name }}</a></em>
+          <br />
+          {% if booking.compensation %}
+            <svg width="1em" height="1em">
+              <use href="#bi-currency-euro" />
+            </svg>
+            {{ booking.compensation.name }}
+            {% if booking.total_amount %}
+              {% if booking.status == 3 %}
+                <s>({% trans "Gesamtbetrag " %}{{ booking.total_amount }}€)</s>
+              {% else %}
+                ({% trans "Gesamtbetrag " %}{{ booking.total_amount }}€)
+              {% endif %}
+            {% endif %}
+          {% endif %}
         </p>
       </div>
     </div>
     <div class="col-md-2">
       <div class="card-body">
         <div class="d-grid gap-2">
-          {% if request.resolver_match.view_name == 'bookings:list-bookings' %}
+          {% if request.resolver_match.view_name != 'bookings:show-booking' %}
             <a class="btn btn-outline-primary"
                href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "View Details" %}</a>
           {% endif %}
@@ -34,7 +54,7 @@
                     value="Submit"
                     hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
                     hx-patch="{% url 'bookings:cancel-booking' slug=booking.slug %}"
-                    hx-target="this"
+                    hx-target="#booking-list-item-{{ booking.slug }}"
                     hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
           {% endif %}
         </div>

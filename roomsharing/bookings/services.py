@@ -27,6 +27,7 @@ from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.services import organizations_with_bookingpermission
 from roomsharing.organizations.services import user_has_bookingpermission
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.rooms.services import get_access_code
 from roomsharing.users.models import User
@@ -146,8 +147,19 @@ def generate_single_booking(booking_data):
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
     room = get_object_or_404(Room, slug=booking_data["room"])
 
+    compensation = None
+    total_amount = None
     start_datetime = timespan[0]
     end_datetime = timespan[1]
+    if booking_data["compensation"] != "":
+        compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
+        if compensation.hourly_rate is not None:
+            total_amount = (
+                (end_datetime - start_datetime).total_seconds()
+                / 3600
+                * compensation.hourly_rate
+            )
+
     booking_details = {
         "user": get_object_or_404(User, slug=booking_data["user"]),
         "title": booking_data["title"],
@@ -160,6 +172,8 @@ def generate_single_booking(booking_data):
         "start_date": booking_data["start_date"],
         "start_time": booking_data["start_time"],
         "end_time": booking_data["end_time"],
+        "compensation": compensation,
+        "total_amount": total_amount,
     }
     booking = create_booking(booking_details)
     return booking, message
@@ -242,6 +256,8 @@ def create_booking(booking_details, **kwargs):
         start_date=booking_details["start_date"],
         start_time=booking_details["start_time"],
         end_time=booking_details["end_time"],
+        compensation=booking_details["compensation"],
+        total_amount=booking_details["total_amount"],
     )
     booking.room_booked = kwargs.get("room_booked") or None
     booking.rrule = kwargs.get("rrule") or None
@@ -437,6 +453,7 @@ def create_booking_data(user, form):
         "start_time": form.cleaned_data["starttime"].isoformat(),
         "end_time": form.cleaned_data["endtime"].isoformat(),
         "user": user.slug,
+        "compensation": form.cleaned_data["compensation"].id,
     }
     rrule_string = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":

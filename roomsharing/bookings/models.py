@@ -9,8 +9,10 @@ from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import CASCADE
 from django.db.models import PROTECT
+from django.db.models import SET_NULL
 from django.db.models import CharField
 from django.db.models import DateField
+from django.db.models import DecimalField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
 from django.db.models import Q
@@ -24,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.dicts import RRULE_DAILY_INTERVAL
@@ -171,6 +174,23 @@ class Booking(TimeStampedModel):
     start_date = DateField(_("Start Date"))
     start_time = TimeField(_("Start Time"))
     end_time = TimeField(_("End Time"))
+
+    compensation = ForeignKey(
+        Compensation,
+        verbose_name=_("Compensation"),
+        on_delete=SET_NULL,
+        related_name="bookings_of_compensation",
+        related_query_name="booking_of_compensation",
+        null=True,
+        blank=True,
+    )
+    total_amount = DecimalField(
+        _("Total Amount"),
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Booking")

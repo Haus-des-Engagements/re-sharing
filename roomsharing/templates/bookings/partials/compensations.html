@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<div class="mb-3 mt-3">
+  <label for="id_compensation" class="form-label requiredField">
+    {% trans "Spende / Rechnung" %}<span class="asteriskField">*</span>
+  </label>
+  {% for compensation in compensations %}
+    <div class="form-check">
+      <input class="form-check-input"
+             type="radio"
+             name="compensation"
+             id="{{ compensation.id }}"
+             value="{{ compensation.id }}" />
+      <label class="form-check-label" for="{{ compensation.id }}">
+        {{ compensation.name }}
+        {% if compensation.hourly_rate is not None %}({{ compensation.hourly_rate }} € / Stunde){% endif %}
+        {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
+      </label>
+    </div>
+  {% empty %}
+    <p>
+      <em>{% trans "Please select a room first." %}</em>
+    </p>
+  {% endfor %}
+</div>

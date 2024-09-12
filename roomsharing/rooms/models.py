@@ -10,6 +10,7 @@ from django.db.models import CharField
 from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
+from django.db.models import IntegerField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
 from django.db.models import TextField
@@ -152,3 +153,25 @@ class RoomImage(TimeStampedModel):
         img = Image.open(self.image.path)
         img.thumbnail([1920, 1920])
         img.save(self.image.path, quality=90, optimize=True)
+
+
+class Compensation(TimeStampedModel):
+    room = ForeignKey(
+        Room,
+        verbose_name=_("Room"),
+        on_delete=CASCADE,
+        related_name="compensations_of_room",
+        related_query_name="compensation_of_room",
+    )
+    name = CharField(_("Name"), max_length=255)
+    conditions = CharField(_("Conditions"), max_length=512, blank=True)
+    hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("Compensation")
+        verbose_name_plural = _("Compensations")
+
+    def __str__(self):
+        if self.hourly_rate is None:
+            return self.room.name + " - " + self.name
+        return self.room.name + " - " + self.name + " (" + str(self.hourly_rate) + " €)"

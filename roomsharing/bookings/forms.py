@@ -9,11 +9,13 @@ from crispy_forms.layout import Field
 from crispy_forms.layout import Layout
 from crispy_forms.layout import Submit
 from django import forms
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.utils.dicts import MONTHDATES
 from roomsharing.utils.dicts import MONTHDAYS
@@ -58,6 +60,30 @@ class BookingForm(forms.Form):
     room = forms.ModelChoiceField(
         queryset=Room.objects.all(),
         label=_("Room"),
+        widget=forms.Select(
+            attrs={
+                "hx-trigger": "change",
+                "hx-post": reverse_lazy("rooms:get_compensations"),
+                "hx-target": "#compensations-container",
+                "hx-swap": "innerHTML",
+            }
+        ),
+    )
+
+    class CompensationModelChoiceField(forms.ModelChoiceField):
+        def label_from_instance(self, obj):
+            conditions = ""
+            if obj.conditions:
+                conditions = ": " + obj.conditions
+            if obj.hourly_rate is None:
+                return obj.name + conditions
+            return obj.name + " (" + str(obj.hourly_rate) + " € / Stunde)" + conditions
+
+    compensation = CompensationModelChoiceField(
+        queryset=Compensation.objects.all(),
+        label=_("Compensation"),
+        widget=forms.RadioSelect,
+        required=True,
     )
 
     FREQUENCIES = [
@@ -141,6 +167,11 @@ class BookingForm(forms.Form):
                 Field("starttime", css_class="form-control", wrapper_class="col-2"),
                 Field("endtime", css_class="form-control", wrapper_class="col-2"),
                 css_class="row g-2",
+            ),
+            Div(
+                Field("compensation", css_class="form-control", wrapper_class="col-8"),
+                css_class="row g-2",
+                id="compensations-container",
             ),
             Div(
                 Field(
@@ -287,6 +318,11 @@ class BookingForm(forms.Form):
         ]
         self.fields["endtime"].choices = self.fields["starttime"].choices
 
+        if "room" in self.initial:
+            self.fields["compensation"].queryset = Compensation.objects.filter(
+                room=self.initial["room"]
+            )
+
     def get_title_field(self):
         return Div(
             FloatingField("title", css_class="form-control", wrapper_class="col-8"),
@@ -332,7 +368,7 @@ class BookingForm(forms.Form):
 
         if end_datetime <= start_datetime:
             msg = _("The end must be after the start.")
-            for field in ["endtime", "starttime", "enddate", "startdate"]:
+            for field in ["endtime", "starttime", "startdate"]:
                 self.add_error(field, msg)
 
         if start_datetime < timezone.now():
