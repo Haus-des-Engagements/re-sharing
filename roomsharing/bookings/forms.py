@@ -55,6 +55,10 @@ class BookingForm(forms.Form):
     title = forms.CharField(label=_("Title"))
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
+        label=_(
+            "Please describe shortly what you plan to do and what else you want "
+            "us to know:"
+        ),
         required=False,
     )
     room = forms.ModelChoiceField(
@@ -65,7 +69,7 @@ class BookingForm(forms.Form):
                 "hx-trigger": "change, load",
                 "hx-post": reverse_lazy("rooms:get_compensations"),
                 "hx-target": "#compensations-container",
-                "hx-swap": "innerHTML",
+                "hx-swap": "outerHTML",
             }
         ),
     )
@@ -168,11 +172,7 @@ class BookingForm(forms.Form):
                 Field("endtime", css_class="form-control", wrapper_class="col-2"),
                 css_class="row g-2",
             ),
-            Div(
-                Field("compensation", css_class="form-control", wrapper_class="col-8"),
-                css_class="row g-2",
-                id="compensations-container",
-            ),
+            HTML("{% include 'bookings/partials/compensations.html' %}"),
             Div(
                 Field(
                     "message", css_class="form-control", wrapper_class="col-8", rows="3"
