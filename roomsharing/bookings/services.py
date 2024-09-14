@@ -25,7 +25,9 @@ from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.organizations.models import Organization
-from roomsharing.organizations.services import organizations_with_bookingpermission
+from roomsharing.organizations.services import (
+    organizations_with_confirmed_bookingpermission,
+)
 from roomsharing.organizations.services import user_has_bookingpermission
 from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
@@ -390,7 +392,7 @@ def get_booking_activity_stream(booking):
 def filter_bookings_list(
     organization, show_past_bookings, status, user, hide_recurring_bookings
 ):
-    organizations = organizations_with_bookingpermission(user)
+    organizations = organizations_with_confirmed_bookingpermission(user)
     bookings = Booking.objects.filter(organization__in=organizations)
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
@@ -405,7 +407,7 @@ def filter_bookings_list(
 
 
 def get_recurrences_list(user):
-    organizations = organizations_with_bookingpermission(user)
+    organizations = organizations_with_confirmed_bookingpermission(user)
     return RecurrenceRule.objects.filter(
         booking_of_recurrencerule__organization__in=organizations
     ).distinct()

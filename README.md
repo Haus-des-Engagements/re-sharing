@@ -40,6 +40,7 @@ Currently, we have the following apps:
 - users
 - bookings
 - rooms
+- organizations
 
 To create a new app, first create the new folder, then run: `django-admin startapp newappname ./roomsharing/newappname`.
 

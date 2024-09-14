@@ -92,7 +92,7 @@ def user_has_normal_bookingpermission(user, organization):
     )
 
 
-def organizations_with_bookingpermission(user):
+def organizations_with_confirmed_bookingpermission(user):
     return Organization.objects.filter(
         organization_of_bookingpermission__user=user,
         organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
