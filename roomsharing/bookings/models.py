@@ -185,7 +185,7 @@ class Booking(TimeStampedModel):
         blank=True,
     )
     total_amount = DecimalField(
-        _("Total Amount"),
+        _("Total amount"),
         max_digits=8,
         decimal_places=2,
         null=True,

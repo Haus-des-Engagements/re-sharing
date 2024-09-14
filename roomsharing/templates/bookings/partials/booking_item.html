@@ -31,9 +31,9 @@
             {{ booking.compensation.name }}
             {% if booking.total_amount %}
               {% if booking.status == 3 %}
-                <s>({% trans "Total amount" %}{{ booking.total_amount }}€)</s>
+                <s>({% trans "Total amount" %}: {{ booking.total_amount }}€)</s>
               {% else %}
-                ({% trans "Total amount" %}{{ booking.total_amount }}€)
+                ({% trans "Total amount" %}: {{ booking.total_amount }}€)
               {% endif %}
             {% endif %}
           {% endif %}

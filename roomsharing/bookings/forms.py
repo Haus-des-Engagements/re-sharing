@@ -62,7 +62,7 @@ class BookingForm(forms.Form):
         label=_("Room"),
         widget=forms.Select(
             attrs={
-                "hx-trigger": "change",
+                "hx-trigger": "change, load",
                 "hx-post": reverse_lazy("rooms:get_compensations"),
                 "hx-target": "#compensations-container",
                 "hx-swap": "innerHTML",

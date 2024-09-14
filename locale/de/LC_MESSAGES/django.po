@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-14 20:28+0200\n"
+"POT-Creation-Date: 2024-09-14 21:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,7 +43,7 @@ msgstr "Preisgestaltung"
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:90
 #: htmlcov/z_67616ee2c635d1d5_list_organizations_html.html:96
 #: roomsharing/organizations/apps.py:7 roomsharing/organizations/models.py:112
-#: roomsharing/templates/base.html:75 roomsharing/templates/base.html:153
+#: roomsharing/templates/base.html:79 roomsharing/templates/base.html:157
 #: roomsharing/templates/organizations/list_organizations.html:6
 #: roomsharing/templates/organizations/list_organizations.html:12
 #: roomsharing/users/models.py:39
@@ -115,7 +115,7 @@ msgid "Demote to booker"
 msgstr "Zum Buchenden herabstufen"
 
 #: htmlcov/z_864cde98194f1daa_list_bookings_html.html:94
-#: roomsharing/templates/base.html:157
+#: roomsharing/templates/base.html:161
 #: roomsharing/templates/bookings/list_bookings.html:10
 msgid "My bookings"
 msgstr "Meine Buchungen"
@@ -123,7 +123,7 @@ msgstr "Meine Buchungen"
 #: htmlcov/z_864cde98194f1daa_list_bookings_html.html:101
 #: roomsharing/templates/bookings/list_bookings.html:17
 #: roomsharing/templates/bookings/list_recurrences.html:16
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:22
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:21
 msgid "New Booking"
 msgstr "Neue Buchung"
 
@@ -256,7 +256,7 @@ msgid "No results found."
 msgstr "Keine Ergebnisse gefunden."
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:148
-#: roomsharing/templates/base.html:69 roomsharing/templates/base.html:146
+#: roomsharing/templates/base.html:69 roomsharing/templates/base.html:150
 msgid "Home"
 msgstr "Startseite"
 
@@ -264,14 +264,14 @@ msgstr "Startseite"
 #: htmlcov/z_e12b30945affa64c_list_rooms_html.html:90
 #: htmlcov/z_e12b30945affa64c_list_rooms_html.html:93
 #: roomsharing/rooms/apps.py:7 roomsharing/rooms/models.py:96
-#: roomsharing/templates/base.html:72 roomsharing/templates/base.html:149
+#: roomsharing/templates/base.html:76 roomsharing/templates/base.html:153
 #: roomsharing/templates/rooms/list_rooms.html:6
 #: roomsharing/templates/rooms/list_rooms.html:9
 msgid "Rooms"
 msgstr "Räume"
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:154
-#: roomsharing/templates/base.html:78
+#: roomsharing/templates/base.html:82
 msgid "My Bookings"
 msgstr "Meine Buchungen"
 
@@ -280,23 +280,23 @@ msgid "My Organizations"
 msgstr "Meine Organisationen"
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:161
-#: roomsharing/templates/base.html:97
+#: roomsharing/templates/base.html:101
 msgid "My Profile"
 msgstr "Mein Profil"
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:165
-#: roomsharing/templates/base.html:103
+#: roomsharing/templates/base.html:107
 msgid "Sign Out"
 msgstr "Abmelden"
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:171
-#: roomsharing/templates/base.html:110
+#: roomsharing/templates/base.html:114
 msgid "Sign Up"
 msgstr "Registrieren"
 
 #: htmlcov/z_c7122a5b2c584068_base_html.html:176
 #: roomsharing/templates/allauth/layouts/entrance.html:13
-#: roomsharing/templates/base.html:114
+#: roomsharing/templates/base.html:118
 msgid "Sign In"
 msgstr "Anmelden"
 
@@ -520,8 +520,11 @@ msgid "End Time"
 msgstr "Enduhrzeit"
 
 #: roomsharing/bookings/models.py:188
-msgid "Total Amount"
-msgstr ""
+#: roomsharing/templates/bookings/partials/booking_item.html:34
+#: roomsharing/templates/bookings/partials/booking_item.html:36
+#: roomsharing/templates/bookings/preview-booking.html:37
+msgid "Total amount"
+msgstr "Gesamtbetrag"
 
 #: roomsharing/bookings/models.py:196 roomsharing/bookings/models.py:235
 msgid "Booking"
@@ -548,7 +551,7 @@ msgstr "Nachricht zur Buchung"
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: roomsharing/bookings/services.py:59
+#: roomsharing/bookings/services.py:61
 msgid "only shown when confirmed"
 msgstr "erst nach Bestätigung sichtbar"
 
@@ -735,7 +738,7 @@ msgstr "Andere"
 
 #: roomsharing/organizations/models.py:63 roomsharing/rooms/models.py:29
 #: roomsharing/rooms/models.py:166
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:68
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:74
 msgid "Name"
 msgstr "Name"
 
@@ -935,7 +938,12 @@ msgstr "Preis pro Stunde"
 msgid "Compensations"
 msgstr "Gegenleistung"
 
-#: roomsharing/templates/base.html:161
+#: roomsharing/templates/base.html:73
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:6
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: roomsharing/templates/base.html:165
 msgid "Imprint and Data Privacy"
 msgstr "Impressum und Datenschutz"
 
@@ -1018,15 +1026,11 @@ msgstr "Möchest du diese Buchung wirklich stornieren?"
 msgid "Cancel all future bookings"
 msgstr "Ausgewählte Buchungen stornieren"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:6
-msgid "Dashboard"
-msgstr "Dashboard"
-
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:11
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:10
 msgid "Hi"
 msgstr "Hi"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:15
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:14
 msgid "Your upcoming bookings"
 msgstr "Deine nächsten Buchungen"
 
@@ -1034,28 +1038,28 @@ msgstr "Deine nächsten Buchungen"
 msgid "Timespan"
 msgstr "Zeitraun"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:47
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:51
 msgid "No upcoming bookings"
 msgstr "Keine kommenden Buchungen"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:52
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:56
 msgid "Show all bookings"
 msgstr "zeige alle Buchungen"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:55
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:60
 msgid "Your organizations"
 msgstr "Deine Organisationen"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:62
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:67
 #: roomsharing/templates/organizations/list_organizations.html:19
 msgid "New Organization"
 msgstr "Neue Organisation"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:69
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:75
 msgid "Booking permission status"
 msgstr "Status deiner Berechtigung"
 
-#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:79
+#: roomsharing/templates/dashboards/users_bookings_and_permissions.html:89
 msgid "No organizations yet. Go and add yours!"
 msgstr "Bisher keine Organisation. Füge Deine hinzu!"
 
@@ -1653,3 +1657,6 @@ msgstr "Aktualisiert"
 #: roomsharing/utils/models.py:29
 msgid "Cancelled"
 msgstr "Storniert"
+
+#~ msgid "Total Amount"
+#~ msgstr "Gesamtbetrag"

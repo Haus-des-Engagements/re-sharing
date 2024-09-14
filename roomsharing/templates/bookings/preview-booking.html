@@ -34,7 +34,7 @@
               </svg>
               {{ booking.compensation.name }}
               {% if booking.total_amount %}
-                ({% trans "Total amount" %}{{ booking.total_amount }}€)
+                ({% trans "Total amount" %}: {{ booking.total_amount }}€)
               {% endif %}
             {% endif %}
           </p>
