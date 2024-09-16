@@ -83,6 +83,7 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "auditlog",
+    "django_q",
 ]
 
 LOCAL_APPS = [

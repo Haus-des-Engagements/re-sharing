@@ -37,6 +37,10 @@ CACHES = {
     },
 }
 
+# DJANGO-Q2
+Q_CLUSTER = {"name": "DJRedis", "workers": 4, "django_redis": "default"}
+
+
 # SECURITY
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
