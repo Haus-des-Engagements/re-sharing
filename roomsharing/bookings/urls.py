@@ -6,8 +6,8 @@ from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_bookings_view
 from .views import list_recurrences_view
-from .views import preview_booking_view
-from .views import preview_recurrence_view
+from .views import preview_and_save_booking_view
+from .views import preview_and_save_recurrence_view
 from .views import show_booking_view
 from .views import show_recurrence_view
 
@@ -21,10 +21,12 @@ urlpatterns = [
         "create-booking/", create_booking_data_form_view, name="create-booking"
     ),  # GET & POST booking form data
     path(
-        "preview-booking/", preview_booking_view, name="preview-booking"
+        "preview-booking/", preview_and_save_booking_view, name="preview-booking"
     ),  # GET booking data & POST single booking
     path(
-        "preview-recurrence/", preview_recurrence_view, name="preview-recurrence"
+        "preview-recurrence/",
+        preview_and_save_recurrence_view,
+        name="preview-recurrence",
     ),  # GET recurrence & POST recurrence
     path(
         "<slug:booking>/", show_booking_view, name="show-booking"

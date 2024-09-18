@@ -1,5 +1,4 @@
 import uuid
-from datetime import timedelta
 
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
@@ -19,17 +18,12 @@ from django.db.models import IntegerField
 from django.db.models import Q
 from django.db.models import TimeField
 from django.db.models import UUIDField
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import formats
 from django.utils import timezone
 from django.utils.dates import WEEKDAYS
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from django_q.models import Schedule
-from django_q.tasks import async_task
-from django_q.tasks import schedule
 
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import Compensation
@@ -231,24 +225,6 @@ class Booking(TimeStampedModel):
 
     def is_confirmable(self):
         return not self.is_in_the_past() and self.status == BookingStatus.PENDING
-
-
-@receiver(post_save, sender=Booking)
-def send_booking_confirmation_emails(sender, instance, **kwargs):
-    if instance.status == BookingStatus.CONFIRMED:
-        async_task(
-            "roomsharing.bookings.tasks.booking_confirmation_email",
-            instance,
-            task_name="booking-confirmation-email",
-        )
-        if instance.timespan[0] - timedelta(days=3) > timezone.now():
-            schedule(
-                "roomsharing.bookings.tasks.booking_reminder_email",
-                booking_slug=instance.slug,
-                task_name="booking-reminder-email",
-                schedule_type=Schedule.ONCE,
-                next_run=instance.timespan[0] - timedelta(days=3),
-            )
 
 
 class BookingMessage(TimeStampedModel):

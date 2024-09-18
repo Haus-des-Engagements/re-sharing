@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from http import HTTPStatus
 
 from auditlog.context import set_actor
@@ -20,6 +21,9 @@ from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_q.models import Schedule
+from django_q.tasks import async_task
+from django_q.tasks import schedule
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
@@ -149,10 +153,10 @@ def generate_single_booking(booking_data):
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
     room = get_object_or_404(Room, slug=booking_data["room"])
 
-    compensation = None
-    total_amount = None
     start_datetime = timespan[0]
     end_datetime = timespan[1]
+    compensation = None
+    total_amount = None
     if booking_data["compensation"] != "":
         compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
         if compensation.hourly_rate is not None:
@@ -189,6 +193,25 @@ def save_booking(user, booking, message):
     if message:
         save_bookingmessage(booking, message, user)
 
+    # re-retrieve booking object, to be able to call timespan.lower
+    booking.refresh_from_db()
+    if booking.status == BookingStatus.CONFIRMED and not booking.recurrence_rule:
+        async_task(
+            "roomsharing.bookings.tasks.booking_confirmation_email",
+            booking,
+            task_name="booking-confirmation-email",
+        )
+    if booking.status == BookingStatus.CONFIRMED and (
+        booking.timespan.lower - timedelta(days=7) > timezone.now()
+    ):
+        schedule(
+            "roomsharing.bookings.tasks.booking_reminder_email",
+            booking_slug=booking.slug,
+            task_name="booking-reminder-email",
+            schedule_type=Schedule.ONCE,
+            next_run=booking.timespan.lower - timedelta(days=7),
+        )
+
     return booking
 
 
@@ -211,10 +234,25 @@ def generate_recurrence(booking_data):
     occurrences = list(rrulestr(rrule_string))
     starttime = timespan[0].time()
     endtime = timespan[1].time()
+    rrule_total_amount = 0
     for occurrence in occurrences:
         start_datetime = timezone.make_aware(datetime.combine(occurrence, starttime))
         end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
         timespan = (start_datetime, end_datetime)
+        compensation = None
+        total_amount = None
+        if booking_data["compensation"] != "":
+            compensation = get_object_or_404(
+                Compensation, id=booking_data["compensation"]
+            )
+            if compensation.hourly_rate is not None:
+                total_amount = (
+                    (end_datetime - start_datetime).total_seconds()
+                    / 3600
+                    * compensation.hourly_rate
+                )
+                rrule_total_amount = rrule_total_amount + total_amount
+
         booking_details = {
             "user": user,
             "title": title,
@@ -227,6 +265,8 @@ def generate_recurrence(booking_data):
             "start_date": occurrence.date(),
             "start_time": start_time,
             "end_time": end_time,
+            "compensation": compensation,
+            "total_amount": total_amount,
         }
 
         rrule = RecurrenceRule()
@@ -244,7 +284,7 @@ def generate_recurrence(booking_data):
         bookings
     )
 
-    return bookings, message, rrule, bookable
+    return bookings, message, rrule, bookable, rrule_total_amount
 
 
 def create_booking(booking_details, **kwargs):
@@ -292,21 +332,18 @@ def create_bookingmessage(booking_slug, form, user):
 def save_recurrence(user, bookings, message, rrule):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
-
     excepted_dates = []
+    # save bookings or - if room not available - add it to excepted dates
+    rrule.save()
     for booking in bookings:
         if booking.room_booked:
             excepted_dates.append(booking.start_date)
         else:
+            booking.recurrence_rule = rrule
             save_booking(user, booking, message)
 
-    if len(excepted_dates) != len(bookings):
-        rrule.excepted_dates = excepted_dates
-        rrule.save()
-        for booking in bookings:
-            if not booking.room_booked:
-                booking.recurrence_rule = rrule
-                booking.save()
+    rrule.excepted_dates = excepted_dates
+    rrule.save()
 
     return bookings, rrule
 

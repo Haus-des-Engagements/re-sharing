@@ -138,7 +138,7 @@ def cancel_booking_view(request, slug):
 
 
 @login_required
-def preview_booking_view(request):
+def preview_and_save_booking_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
         return redirect("bookings:create-booking")
@@ -170,13 +170,15 @@ def preview_booking_view(request):
 
 
 @login_required
-def preview_recurrence_view(request):
+def preview_and_save_recurrence_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
         return redirect("bookings:create-booking")
 
     try:
-        bookings, message, rrule, bookable = generate_recurrence(booking_data)
+        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+            booking_data
+        )
     except PermissionDenied as e:
         return HttpResponse(e.message, status=e.status_code)
 
@@ -189,6 +191,7 @@ def preview_recurrence_view(request):
                 "bookings": bookings,
                 "rrule": rrule,
                 "bookable": bookable,
+                "rrule_total_amount": rrule_total_amount,
             },
         )
 

@@ -22,11 +22,20 @@
         <div class="card-body">
           <h5 class="card-title">{{ bookings.0.room }}</h5>
           <p class="card-text">
-            {% trans "Title" %}: <em>{{ bookings.0 }}</em>
+            {% trans "Title" %}: <em>{{ bookings.0.title }}</em>
             <br />
             {% trans "Booked for:" %} <em>{{ bookings.0.organization }}</em>
             <br />
             {% trans "Occurrences" %}: {{ bookings|length }}
+            <br />
+            {% if rrule_total_amount != 0 %}
+              <svg width="1em" height="1em">
+                <use href="#bi-currency-euro" />
+              </svg>
+              {% if rrule_total_amount %}
+                {% trans "Total amount" %}: {{ rrule_total_amount|floatformat:2 }}€
+              {% endif %}
+            {% endif %}
           </p>
         </div>
       </div>
@@ -55,6 +64,13 @@
                     <span class="text-danger">{% trans "Room not free at this date." %}</span>
                   {% else %}
                     {{ booking.timespan.0|date:"D, d.m.Y" }}
+                    {% if booking.compensation %}
+                      -
+                      {{ booking.compensation.name }}:
+                      {% if booking.total_amount %}
+                        ({% trans "Total amount" %}: {{ booking.total_amount|floatformat:2 }}€)
+                      {% endif %}
+                    {% endif %}
                   {% endif %}
                 </div>
               </div>

@@ -1,9 +1,14 @@
 # Register your models here.
+from datetime import timedelta
+
 from auditlog.context import set_actor
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
+from django_q.models import Schedule
+from django_q.tasks import async_task
+from django_q.tasks import schedule
 
 from roomsharing.utils.models import BookingStatus
 
@@ -27,6 +32,18 @@ class BookingAdmin(admin.ModelAdmin):
             with set_actor(request.user):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
+            async_task(
+                "roomsharing.bookings.tasks.booking_confirmation_email",
+                booking,
+                task_name="booking-confirmation-email",
+            )
+            schedule(
+                "roomsharing.bookings.tasks.booking_reminder_email",
+                booking_slug=booking.slug,
+                task_name="booking-reminder-email",
+                schedule_type=Schedule.ONCE,
+                next_run=booking.timespan.lower - timedelta(days=7),
+            )
         count = queryset.count()
         self.message_user(
             request,
