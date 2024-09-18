@@ -39,9 +39,29 @@ def test_write_bookingmessage(booking: Booking):
     )
 
 
-def test_list_bookings_manager_view():
+def test_manager_list_bookings_view():
     assert reverse("bookings:manager-list-bookings") == "/bookings/manage-bookings/"
     assert (
         resolve("/bookings/manage-bookings/").view_name
         == "bookings:manager-list-bookings"
+    )
+
+
+def test_manager_cancel_booking(booking: Booking):
+    assert (
+        reverse(
+            "bookings:manager-cancel-booking",
+            kwargs={"booking_slug": booking.slug},
+        )
+        == f"/bookings/manage-bookings/{booking.slug}/cancel-booking/"
+    )
+
+
+def test_manager_confirm_booking(booking: Booking):
+    assert (
+        reverse(
+            "bookings:manager-confirm-booking",
+            kwargs={"booking_slug": booking.slug},
+        )
+        == f"/bookings/manage-bookings/{booking.slug}/confirm-booking/"
     )

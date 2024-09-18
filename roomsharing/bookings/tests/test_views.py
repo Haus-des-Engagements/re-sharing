@@ -11,9 +11,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
 
+from config.settings.base import ADMIN_URL
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import BookingMessageFactory
 from roomsharing.bookings.views import list_bookings_view
+from roomsharing.bookings.views import manager_list_bookings_view
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
@@ -120,3 +122,24 @@ class TestShowBookingView(TestCase):
         self.assertContains(response, message2.text)
 
         assert response.status_code == HTTPStatus.OK
+
+
+class TestManagerBookingsView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory(is_staff=True)
+
+    def test_authenticated(self):
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(reverse("bookings:manager-list-bookings"))
+        assert response.status_code == HTTPStatus.OK
+
+    def test_not_authenticated(self):
+        request = self.factory.get("/manage-bookings/")
+        request.user = AnonymousUser()
+        response = manager_list_bookings_view(request)
+
+        assert isinstance(response, HttpResponseRedirect)
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == f"/{ADMIN_URL}login/?next=/manage-bookings/"
