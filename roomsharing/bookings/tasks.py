@@ -25,9 +25,9 @@ def booking_reminder_email(booking_slug):
             f'Your booking "{booking.title}"is in 3 days. You can see and change it '
             f"here: {booking.get_absolute_url()} . "
             " Please cancel the booking "
-            " if you no longer need the rooms so that others can use it.",
+            " if you no longer need the rooms so that others can use it."
             " Best regards,"
-            " your friendly room bot."
+            " your friendly room bot.",
             "raum.app@haus-des-engagements.de",
             [booking.user.email],
         )

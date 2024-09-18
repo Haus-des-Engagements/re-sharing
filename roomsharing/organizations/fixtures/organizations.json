@@ -6,13 +6,21 @@
             "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
             "name": "Haus des Engagements e.V.",
+            "description": "We support others supporting.",
             "slug": "haus-des-engagements-e-v",
-            "legal_form": 2,
-            "street": "Rehlingstraße",
-            "house_number": "9",
+            "street_and_housenb": "Rehlingstraße 9",
             "zip_code": "79100",
             "city": "Freiburg im Breisgau",
-            "certificate_of_tax_exemption": true
+            "email": "hde@example.com",
+            "phone": "012345",
+            "website": "haus-des-engagements.de",
+            "legal_form": 2,
+            "is_charitable": true,
+            "area_of_activity": 3,
+            "is_coworking": false,
+            "is_public": true,
+            "values_approval": true,
+            "entitled": true
         }
     },
   {
@@ -21,14 +29,22 @@
         "fields": {
             "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "name": "RSTGH",
-            "legal_form": 1,
+            "name": "rstgh e.V.",
+            "description": "We support others supporting.",
             "slug": "rstgh",
-            "street": "Rehlingstraße",
-            "house_number": "9",
+            "street_and_housenb": "Rehlingstraße 9",
             "zip_code": "79100",
             "city": "Freiburg im Breisgau",
-            "certificate_of_tax_exemption": true
+            "email": "hde@example.com",
+            "phone": "012345",
+            "website": "haus-des-engagements.de",
+            "legal_form": 2,
+            "is_charitable": true,
+            "area_of_activity": 3,
+            "is_coworking": false,
+            "is_public": true,
+            "values_approval": true,
+            "entitled": true
         }
     },
   {
@@ -37,14 +53,22 @@
         "fields": {
             "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "name": "kaliz",
-            "legal_form": 3,
+            "name": "kaliz e.V.",
+            "description": "We support others supporting.",
             "slug": "kaliz",
-            "street": "Rehlingstraße",
-            "house_number": "9",
+            "street_and_housenb": "Rehlingstraße 9",
             "zip_code": "79100",
             "city": "Freiburg im Breisgau",
-            "certificate_of_tax_exemption": false
+            "email": "hde@example.com",
+            "phone": "012345",
+            "website": "haus-des-engagements.de",
+            "legal_form": 2,
+            "is_charitable": true,
+            "area_of_activity": 3,
+            "is_coworking": false,
+            "is_public": true,
+            "values_approval": true,
+            "entitled": true
         }
     },
   {
