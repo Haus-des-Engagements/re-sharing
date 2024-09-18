@@ -6,6 +6,9 @@ from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_bookings_view
 from .views import list_recurrences_view
+from .views import manager_cancel_booking_view
+from .views import manager_confirm_booking_view
+from .views import manager_list_bookings_view
 from .views import preview_and_save_booking_view
 from .views import preview_and_save_recurrence_view
 from .views import show_booking_view
@@ -14,6 +17,21 @@ from .views import show_recurrence_view
 app_name = "bookings"
 urlpatterns = [
     path("", list_bookings_view, name="list-bookings"),  # GET bookings list
+    path(
+        "manage-bookings/",
+        manager_list_bookings_view,
+        name="manager-list-bookings",
+    ),
+    path(
+        "manage-bookings/<slug:booking_slug>/cancel-booking/",
+        manager_cancel_booking_view,
+        name="manager-cancel-booking",
+    ),
+    path(
+        "manage-bookings/<slug:booking_slug>/confirm-booking/",
+        manager_confirm_booking_view,
+        name="manager-confirm-booking",
+    ),
     path(
         "recurrences/", list_recurrences_view, name="list-recurrences"
     ),  # GET recurrence list

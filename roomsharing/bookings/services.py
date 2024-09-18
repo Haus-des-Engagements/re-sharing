@@ -500,3 +500,59 @@ def create_booking_data(user, form):
         booking_data["rrule_string"] = rrule_string
 
     return booking_data, rrule_string
+
+
+def manager_filter_bookings_list(
+    organization, show_past_bookings, status, user, hide_recurring_bookings
+):
+    organizations = Organization.objects.all()
+    bookings = Booking.objects.all()
+    if not show_past_bookings:
+        bookings = bookings.filter(timespan__endswith__gte=timezone.now())
+    if organization != "all":
+        bookings = bookings.filter(organization__slug=organization)
+    if status != "all":
+        bookings = bookings.filter(status__in=status)
+    if hide_recurring_bookings:
+        bookings = bookings.filter(recurrence_rule__isnull=True)
+
+    bookings.order_by("created")
+
+    return bookings, organizations
+
+
+def manager_cancel_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if booking.is_cancelable():
+        with set_actor(user):
+            booking.status = BookingStatus.CANCELLED
+            booking.save()
+
+        return booking
+
+    raise InvalidBookingOperationError
+
+
+def manager_confirm_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+    if booking.is_confirmable():
+        with set_actor(user):
+            booking.status = BookingStatus.CONFIRMED
+            booking.save()
+        async_task(
+            "roomsharing.bookings.tasks.booking_confirmation_email",
+            booking,
+            task_name="booking-confirmation-email",
+        )
+        schedule(
+            "roomsharing.bookings.tasks.booking_reminder_email",
+            booking_slug=booking.slug,
+            task_name="booking-reminder-email",
+            schedule_type=Schedule.ONCE,
+            next_run=booking.timespan.lower - timedelta(days=7),
+        )
+
+        return booking
+
+    raise InvalidBookingOperationError

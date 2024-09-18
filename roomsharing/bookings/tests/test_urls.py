@@ -37,3 +37,11 @@ def test_write_bookingmessage(booking: Booking):
         reverse("bookings:create-bookingmessage", kwargs={"slug": booking.slug})
         == f"/bookings/{booking.slug}/create-bookingmessage/"
     )
+
+
+def test_list_bookings_manager_view():
+    assert reverse("bookings:manager-list-bookings") == "/bookings/manage-bookings/"
+    assert (
+        resolve("/bookings/manage-bookings/").view_name
+        == "bookings:manager-list-bookings"
+    )
