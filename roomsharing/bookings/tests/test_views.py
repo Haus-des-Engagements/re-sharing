@@ -1,5 +1,6 @@
 import datetime
 from http import HTTPStatus
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -143,3 +144,61 @@ class TestManagerBookingsView(TestCase):
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"/{ADMIN_URL}login/?next=/manage-bookings/"
+
+
+class TestManagerActionsBookingView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.staff_user = UserFactory(is_staff=True)
+        self.user = UserFactory(is_staff=False)
+        self.booking = BookingFactory()
+        self.cancel_booking_url = reverse(
+            "bookings:manager-cancel-booking",
+            kwargs={"booking_slug": self.booking.slug},
+        )
+        self.confirm_booking_url = reverse(
+            "bookings:manager-confirm-booking",
+            kwargs={"booking_slug": self.booking.slug},
+        )
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel_by_staff(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.staff_user)
+
+        response = client.get(self.cancel_booking_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel_by_non_staff(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(self.cancel_booking_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/{ADMIN_URL}login/?next=/bookings/manage-bookings/{self.booking.slug}"
+            f"/cancel-booking/"
+        )
+
+    @patch("roomsharing.bookings.models.Booking.is_confirmable", return_value=True)
+    def test_confirm_by_staff(self, mock_is_confirmable):
+        client = Client()
+        client.force_login(self.staff_user)
+
+        response = client.get(self.confirm_booking_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch("roomsharing.bookings.models.Booking.is_confirmable", return_value=True)
+    def test_confirm_by_non_staff(self, mock_is_confirmable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(self.confirm_booking_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/{ADMIN_URL}login/?next=/bookings/manage-bookings/{self.booking.slug}"
+            f"/confirm-booking/"
+        )
