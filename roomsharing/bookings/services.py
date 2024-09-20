@@ -503,7 +503,7 @@ def create_booking_data(user, form):
 
 
 def manager_filter_bookings_list(
-    organization, show_past_bookings, status, user, hide_recurring_bookings
+    organization, show_past_bookings, status, hide_recurring_bookings
 ):
     organizations = Organization.objects.all()
     bookings = Booking.objects.all()
@@ -528,6 +528,11 @@ def manager_cancel_booking(user, booking_slug):
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
+        async_task(
+            "roomsharing.bookings.tasks.cancel_booking_email",
+            booking,
+            task_name="cancel-booking-email",
+        )
 
         return booking
 

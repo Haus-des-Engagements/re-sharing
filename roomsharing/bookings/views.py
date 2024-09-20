@@ -249,7 +249,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     hide_recurring_bookings = request.GET.get("hide_recurring_bookings") or False
 
     bookings, organizations = manager_filter_bookings_list(
-        organization, show_past_bookings, status, request.user, hide_recurring_bookings
+        organization, show_past_bookings, status, hide_recurring_bookings
     )
 
     context = {

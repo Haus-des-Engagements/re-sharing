@@ -1,5 +1,7 @@
+from datetime import datetime
 from datetime import timedelta
 from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import PermissionDenied
@@ -14,8 +16,12 @@ from roomsharing.bookings.services import cancel_rrule_bookings
 from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
+from roomsharing.bookings.services import create_rrule_string
 from roomsharing.bookings.services import filter_bookings_list
 from roomsharing.bookings.services import get_booking_activity_stream
+from roomsharing.bookings.services import manager_cancel_booking
+from roomsharing.bookings.services import manager_confirm_booking
+from roomsharing.bookings.services import manager_filter_bookings_list
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
 from roomsharing.bookings.services import show_booking
@@ -353,15 +359,6 @@ class TestSaveBookingMessage(TestCase):
         assert booking_message_in_db.booking == self.booking
 
 
-class TestGetBooking(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.organization = OrganizationFactory()
-        self.booking = BookingFactory(
-            status=BookingStatus.PENDING, organization=self.organization
-        )
-
-
 @pytest.mark.django_db()
 @pytest.mark.parametrize(
     (
@@ -460,3 +457,169 @@ def test_create_booking():
     assert booking.compensation is None
     assert booking.total_amount is None
     assert not booking.pk  # Not saved in the database
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    (
+        "show_past_bookings",
+        "organization",
+        "status",
+        "hide_recurring_bookings",
+        "expected",
+    ),
+    [
+        (True, "all", "all", True, 2),
+        (True, "all", [1], True, 1),
+        (False, "all", "all", True, 1),
+        (True, "org1", "all", True, 0),
+    ],
+)
+def test_manger_filter_bookings_list(
+    show_past_bookings, organization, status, hide_recurring_bookings, expected
+):
+    """
+    Test the 'filter_bookings_list' function
+    """
+    # Arrange
+    user = UserFactory()
+    org = OrganizationFactory()
+    OrganizationFactory(name="org1")
+    BookingFactory(
+        user=user,
+        organization=org,
+        status=BookingStatus.PENDING,
+        timespan=(
+            timezone.now() + timezone.timedelta(days=1),
+            timezone.now() + timezone.timedelta(days=1, hours=1),
+        ),
+    )
+    BookingFactory(
+        user=user,
+        organization=org,
+        timespan=(
+            timezone.now() - timezone.timedelta(days=1, hours=2),
+            timezone.now() - timezone.timedelta(days=1),
+        ),
+    )
+    # Act
+    bookings, organizations = manager_filter_bookings_list(
+        organization, show_past_bookings, status, hide_recurring_bookings
+    )
+    # Assert
+    assert len(bookings) == expected
+
+
+@pytest.mark.parametrize(
+    ("rrule_data", "expected"),
+    [
+        (
+            {
+                "rrule_repetitions": "DAILY",
+                "rrule_ends": "AFTER_TIMES",
+                "rrule_ends_count": 5,
+                "rrule_ends_enddate": None,
+                "rrule_daily_interval": 1,
+                "rrule_weekly_interval": None,
+                "rrule_weekly_byday": None,
+                "rrule_monthly_interval": None,
+                "rrule_monthly_bydate": None,
+                "rrule_monthly_byday": None,
+                "startdate": datetime.date(2023, 10, 1),
+            },
+            "DTSTART:20231001T000000\nRRULE:FREQ=DAILY;COUNT=5",
+        ),
+        (
+            {
+                "rrule_repetitions": "WEEKLY",
+                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends_count": None,
+                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_daily_interval": None,
+                "rrule_weekly_interval": 1,
+                "rrule_weekly_byday": ["MO", "WE", "FR"],
+                "rrule_monthly_interval": None,
+                "rrule_monthly_bydate": None,
+                "rrule_monthly_byday": None,
+                "startdate": datetime.date(2023, 10, 1),
+            },
+            "DTSTART:20231001T000000\nRRULE:FREQ=WEEKLY;UNTIL=20231231T000000;BYDAY=MO,WE,FR",
+        ),
+        (
+            {
+                "rrule_repetitions": "MONTHLY_BY_DAY",
+                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends_count": None,
+                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_daily_interval": None,
+                "rrule_weekly_interval": 1,
+                "rrule_weekly_byday": None,
+                "rrule_monthly_interval": 2,
+                "rrule_monthly_bydate": None,
+                "rrule_monthly_byday": ["MO(1)", "WE(3)", "SU(-1)"],
+                "startdate": datetime.date(2023, 10, 1),
+            },
+            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=2;UNTIL=20231231T000000;BYDAY=+1MO,+3WE,-1SU",
+        ),
+        (
+            {
+                "rrule_repetitions": "MONTHLY_BY_DATE",
+                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends_count": None,
+                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_daily_interval": None,
+                "rrule_weekly_interval": None,
+                "rrule_weekly_byday": None,
+                "rrule_monthly_interval": 3,
+                "rrule_monthly_bydate": [1, 12, 30],
+                "rrule_monthly_byday": None,
+                "startdate": datetime.date(2023, 10, 1),
+            },
+            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=3;UNTIL=20231231T000000;BYMONTHDAY=1,12,30",
+        ),
+    ],
+)
+def test_create_rrule_string(rrule_data, expected):
+    result = create_rrule_string(rrule_data)
+    assert result == expected
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_confirmable", return_value=True)
+def test_manager_confirm_booking(mock_is_confirmable):
+    user = UserFactory()
+    booking = BookingFactory()
+
+    booking = manager_confirm_booking(user, booking.slug)
+
+    # Assertions
+    assert booking.status == BookingStatus.CONFIRMED
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_confirmable", return_value=False)
+def test_manager_confirm_booking_not_confirmable(mock_is_confirmable):
+    user = UserFactory()
+    booking = BookingFactory(status=BookingStatus.PENDING)
+    with pytest.raises(InvalidBookingOperationError):
+        manager_confirm_booking(user, booking.slug)
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_cancelable", return_value=True)
+def test_manager_cancel_booking(mock_is_cancelable):
+    user = UserFactory()
+    booking = BookingFactory()
+    booking = manager_cancel_booking(user, booking.slug)
+
+    # Assertions
+    assert booking.status == BookingStatus.CANCELLED
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_cancelable", return_value=False)
+def test_manager_cancel_booking_not_cancelable(mock_is_cancelable):
+    user = UserFactory()
+    booking = BookingFactory()
+    with pytest.raises(InvalidBookingOperationError):
+        manager_confirm_booking(user, booking.slug)

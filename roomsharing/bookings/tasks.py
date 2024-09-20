@@ -31,3 +31,16 @@ def booking_reminder_email(booking_slug):
             "raum.app@haus-des-engagements.de",
             [booking.user.email],
         )
+
+
+def cancel_booking_email(booking):
+    if booking.status == BookingStatus.CANCELLED:
+        send_mail(
+            "Booking cancelled",
+            f'Your booking "{booking.title}" has been cancelled. You can see '
+            f"and change it here: {booking.get_absolute_url()}."
+            "Best regards,"
+            "your friendly room bot.",
+            "raum.app@haus-des-engagements.de",
+            [booking.user.email],
+        )
