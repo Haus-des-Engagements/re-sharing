@@ -1,6 +1,5 @@
 import datetime
 
-from crispy_bootstrap5.bootstrap5 import FloatingField
 from crispy_forms.bootstrap import InlineCheckboxes
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML
@@ -52,7 +51,9 @@ class BookingForm(forms.Form):
         queryset=None,
         label=_("Organization"),
     )
-    title = forms.CharField(label=_("Title"))
+    title = forms.CharField(
+        label=_("Title"), help_text=_("e.g. Weekly Meetup, Workshop XY,...")
+    )
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
         label=_(
@@ -158,25 +159,19 @@ class BookingForm(forms.Form):
         self.fields["rrule_monthly_byday"].label = False
         self.fields["rrule_monthly_bydate"].label = False
         self.helper.layout = Layout(
-            self.get_title_field(),
             Div(
-                FloatingField("room", css_class="form-control", wrapper_class="col-4"),
-                FloatingField(
-                    "organization", css_class="form-control", wrapper_class="col-4"
-                ),
+                Field("title", css_class="form-control", wrapper_class="col-8"),
+                css_class="row g-2",
+            ),
+            Div(
+                Field("room", css_class="form-control", wrapper_class="col-4"),
+                Field("organization", css_class="form-control", wrapper_class="col-4"),
                 css_class="row g-2",
             ),
             Div(
                 Field("startdate", css_class="form-control", wrapper_class="col-2"),
                 Field("starttime", css_class="form-control", wrapper_class="col-2"),
                 Field("endtime", css_class="form-control", wrapper_class="col-2"),
-                css_class="row g-2",
-            ),
-            HTML("{% include 'bookings/partials/compensations.html' %}"),
-            Div(
-                Field(
-                    "message", css_class="form-control", wrapper_class="col-8", rows="3"
-                ),
                 css_class="row g-2",
             ),
             Div(
@@ -294,6 +289,13 @@ class BookingForm(forms.Form):
                 css_id="rrule_additional_fields",
                 style="display: none",  # initially hidden
             ),
+            HTML("{% include 'bookings/partials/compensations.html' %}"),
+            Div(
+                Field(
+                    "message", css_class="form-control", wrapper_class="col-8", rows="3"
+                ),
+                css_class="row g-2",
+            ),
         )
         organizations = (
             Organization.objects.filter(organization_of_bookingpermission__user=user)
@@ -322,12 +324,6 @@ class BookingForm(forms.Form):
             self.fields["compensation"].queryset = Compensation.objects.filter(
                 room=self.initial["room"]
             )
-
-    def get_title_field(self):
-        return Div(
-            FloatingField("title", css_class="form-control", wrapper_class="col-8"),
-            css_class="row g-2",
-        )
 
     def clean(self):  # noqa: C901
         cleaned_data = super().clean()
