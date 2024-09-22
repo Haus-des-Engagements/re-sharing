@@ -39,7 +39,7 @@ class MessageForm(forms.ModelForm):
         fields = ["text"]
 
 
-class BookingForm(forms.Form):
+class BookingForm(forms.ModelForm):
     startdate = forms.DateField(
         label=_("Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -52,7 +52,7 @@ class BookingForm(forms.Form):
         label=_("Organization"),
     )
     title = forms.CharField(
-        label=_("Title"), help_text=_("e.g. Weekly Meetup, Workshop XY,...")
+        label=_("Title"), help_text="e.g. Weekly Meetup, Workshop XY,..."
     )
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
@@ -416,3 +416,15 @@ class BookingForm(forms.Form):
                 self.add_error(field, _(msg))
 
         return cleaned_data
+
+    class Meta:
+        model = Booking
+        fields = [
+            "title",
+            "startdate",
+            "starttime",
+            "endtime",
+            "organization",
+            "message",
+            "room",
+        ]

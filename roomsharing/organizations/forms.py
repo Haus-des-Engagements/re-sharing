@@ -12,11 +12,39 @@ from .models import Organization
 
 
 class OrganizationForm(forms.ModelForm):
-    name = forms.CharField(label=_("Name of the organization"), required=True)
+    name = forms.CharField(
+        label=_("Name of the organization"),
+        required=True,
+        help_text=_("e.g. Accordion Club Gundelfinden e.V."),
+    )
     description = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
         required=True,
         label=_("Description"),
+        help_text=_(
+            "Describe shortly what your organization is doing and trying to achieve."
+        ),
+    )
+    is_charitable = forms.BooleanField(
+        label=_("We are a charitable organization."),
+        help_text=_(
+            "Please select only if you have a valid certificate of tax exemption. "
+            "Of course you can also book rooms if you're not officially charitable!"
+        ),
+        required=False,
+    )
+    is_coworking = forms.BooleanField(
+        label=_("We are Co-Working at the HdE."),
+        help_text=_("Please select only if you have a Co-Working contract."),
+        required=False,
+    )
+    is_public = forms.BooleanField(
+        label=_("This organization can be seen by others."),
+        help_text=_(
+            "Name, description, city, website and area of activity can be seen by "
+            "others."
+        ),
+        required=False,
     )
     values_approval = forms.BooleanField(
         label=mark_safe(  # noqa: S308
@@ -30,6 +58,10 @@ class OrganizationForm(forms.ModelForm):
             )
         ),
         required=True,
+    )
+    area_of_activity = forms.ChoiceField(
+        choices=Organization.ActivityArea,
+        label=_("In which societal area are you mainly active?"),
     )
     entitled = forms.BooleanField(
         label=_(

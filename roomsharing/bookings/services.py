@@ -516,7 +516,7 @@ def manager_filter_bookings_list(
     if hide_recurring_bookings:
         bookings = bookings.filter(recurrence_rule__isnull=True)
 
-    bookings.order_by("created")
+    bookings = bookings.order_by("created")
 
     return bookings, organizations
 
