@@ -21,12 +21,12 @@ def list_rooms_view(request):
 
 def show_room_view(request, room_slug):
     date_string = request.GET.get("date")
-    room, time_slots, weekdays, dates = show_room(room_slug, date_string)
+    room, timeslots, weekdays, dates = show_room(room_slug, date_string)
 
     context = {
         "room": room,
         "weekdays": weekdays,
-        "time_slots": time_slots,
+        "timeslots": timeslots,
         "dates": dates,
     }
     if request.headers.get("HX-Request"):

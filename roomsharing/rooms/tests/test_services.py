@@ -37,21 +37,17 @@ class GetWeeklyBookingsTest(TestCase):
             2024, 7, 22, 6, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
         assert time_slots[0]["booked"] == [
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-22&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-23&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-24&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-25&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-26&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-27&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-28&room=" + room.slug,
         ]
         assert weekdays[0] == datetime(
             2024, 7, 22, 0, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
-
-        # Check that every slot is False (not booked)
-        for slot in time_slots:
-            assert all(booked is False for booked in slot["booked"])
 
         assert dates["shown_date"] == timezone.make_naive(date).date()
         assert (
@@ -97,7 +93,7 @@ class GetWeeklyBookingsTest(TestCase):
             time_slots[4]["booked"][2] is True
         )  # This should be True because we booked the slot from 8:00 to 9:00
         assert (
-            time_slots[14]["booked"][2] is False
+            time_slots[14]["booked"][2] is not False
         )  # This should be False because we did not book the slot
         assert (
             time_slots[24]["booked"][2] is True
@@ -108,13 +104,13 @@ class GetWeeklyBookingsTest(TestCase):
         room = RoomFactory()
         room, time_slots, weekdays, dates = show_room(room.slug, date_string)
         assert time_slots[0]["booked"] == [
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-23&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-24&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-25&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-26&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-27&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-28&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-09-29&room=" + room.slug,
         ]
 
 

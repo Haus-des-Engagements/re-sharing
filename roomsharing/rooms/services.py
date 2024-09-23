@@ -40,9 +40,20 @@ def show_room(room_slug, date_string):
         {"time": start_of_day + timedelta(minutes=30) * i, "booked": [False] * 7}
         for i in range(number_of_slots)
     ]
-    weekdays = [
-        start_of_week + timedelta(days=i) for i in range(7)
-    ]  # Weekdays from Monday to Sunday
+
+    weekdays = [start_of_week + timedelta(days=i) for i in range(7)]
+
+    time_slots = []
+    for i in range(number_of_slots):
+        slot = {"time": start_of_day + timedelta(minutes=30) * i, "booked": [False] * 7}
+        for j in range(7):
+            slot["booked"][j] = (
+                f"?starttime={slot['time'].strftime('%H:%M')}&endtime="
+                f"{(slot['time'] + relativedelta(minutes=90)).strftime('%H:%M')}"
+                f"&startdate={weekdays[j].strftime('%Y-%m-%d')}&room={room.slug}"
+            )
+        time_slots.append(slot)
+
     # Filter bookings for the current week
     weekly_bookings = (
         Booking.objects.filter(room=room)

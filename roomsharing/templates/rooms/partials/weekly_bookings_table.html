@@ -43,7 +43,7 @@
        role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
-  <table class="table table-sm table-sm-little-padding table-bordered small">
+  <table class="table table-sm table-sm-little-padding table-bordered small table-crosshaired">
     <thead>
       <tr>
         <th>Time</th>
@@ -54,12 +54,19 @@
       </tr>
     </thead>
     <tbody>
-      {% for slot in time_slots %}
+      {% for slot in timeslots %}
         <tr>
           <td>{{ slot.time|date:"H:i" }}</td>
           {# Format the time variable to get the time in "Hour:Minute" format #}
           {% for booked in slot.booked %}
-            <td class=" {% if booked %}table-primary  {# your CSS class to highlight the cell #}{% endif %} "></td>
+            {% if booked == True %}
+              <td class="table-primary"></td>
+            {% else %}
+              <td>
+                <a href="{% url 'bookings:create-booking' %}{{ booked }}"
+                   class="cover-link">&nbsp</a>
+              </td>
+            {% endif %}
           {% endfor %}
         </tr>
       {% endfor %}
