@@ -39,10 +39,10 @@ class OrganizationForm(forms.ModelForm):
         required=False,
     )
     is_public = forms.BooleanField(
-        label=_("This organization can be seen by others."),
+        label=_("This organization may be listed publicly on this website."),
         help_text=_(
-            "Name, description, city, website and area of activity can be seen by "
-            "others."
+            "Only organization name, description, city, website and area of activity "
+            "will be displayed."
         ),
         required=False,
     )
@@ -95,6 +95,7 @@ class OrganizationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        address = _("Address")
         self.helper.layout = Layout(
             Column("name", css_class="form-group col-md-8 mb-0"),
             Column("description", css_class="form-group col-md-8 mb-0"),
@@ -105,7 +106,9 @@ class OrganizationForm(forms.ModelForm):
                 css_class="form-row",
             ),
             "is_charitable",
-            HTML("<h3 class='mt-5 mb-3'>Address</h3>"),
+            HTML("<h3 class='mt-5 mb-3'>"),
+            HTML(address),
+            HTML("</h3>"),
             HTML(
                 _(
                     "We need some more information of your organization. If you don't"

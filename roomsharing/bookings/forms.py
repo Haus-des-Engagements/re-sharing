@@ -52,7 +52,8 @@ class BookingForm(forms.ModelForm):
         label=_("Organization"),
     )
     title = forms.CharField(
-        label=_("Title"), help_text="e.g. Weekly Meetup, Workshop XY,..."
+        label=_("Title"),
+        help_text=_("e.g. internal meeting, workshop XY, public talk about ZY..."),
     )
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),

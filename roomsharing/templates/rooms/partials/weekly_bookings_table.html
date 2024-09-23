@@ -3,7 +3,7 @@
 <div id="planner-table" class="row g-2 d-flex">
   <button type="button"
           id="prevDay"
-          class="col-auto btn btn-secondary"
+          class="col-auto btn btn-outline-primary"
           hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.previous_week|date:'Y-m-d' }}"
           hx-target="#planner-table"
           hx-indicator="#spinner"
@@ -28,7 +28,7 @@
   </div>
   <button type="button"
           id="nextDay"
-          class="col-auto btn btn-secondary"
+          class="col-auto btn btn-outline-primary"
           hx-get="{% url 'rooms:show-room' room_slug=room.slug %}?date={{ dates.next_week|date:'Y-m-d' }}"
           hx-target="#planner-table"
           hx-swap="outerHTML"
