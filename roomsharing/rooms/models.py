@@ -11,6 +11,7 @@ from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
 from django.db.models import IntegerField
+from django.db.models import ManyToManyField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
 from django.db.models import TextField
@@ -156,10 +157,9 @@ class RoomImage(TimeStampedModel):
 
 
 class Compensation(TimeStampedModel):
-    room = ForeignKey(
+    room = ManyToManyField(
         Room,
         verbose_name=_("Room"),
-        on_delete=CASCADE,
         related_name="compensations_of_room",
         related_query_name="compensation_of_room",
     )
@@ -173,5 +173,5 @@ class Compensation(TimeStampedModel):
 
     def __str__(self):
         if self.hourly_rate is None:
-            return self.room.name + " - " + self.name
-        return self.room.name + " - " + self.name + " (" + str(self.hourly_rate) + " €)"
+            return self.name
+        return self.name + " (" + str(self.hourly_rate) + " €)"

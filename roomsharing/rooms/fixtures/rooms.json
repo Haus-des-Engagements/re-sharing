@@ -185,7 +185,7 @@
         "fields": {
            "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "room": 1,
+            "room": [1,2,3,4,5,6,8],
             "name": "auf Spendenbasis",
             "conditions": "Ihr seid gemeinnützig oder wollt es werden und habt selbst keine Einnahmen an diesem Termin."
         }
@@ -196,7 +196,7 @@
         "fields": {
            "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "room": 1,
+            "room": [1,2,3,4,5,6,8],
             "name": "auf Rechnung",
             "hourly_rate": 15
         }
@@ -207,7 +207,7 @@
         "fields": {
            "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "room": 7,
+            "room": [7],
             "name": "ermäßigt",
             "conditions": "Ihr seid gemmeinnützig und könnt euch den Normalpreis nicht leisten. Andere können das mit einem höheren Preis (hoffentlich) ausgleichen.",
             "hourly_rate": 12
@@ -219,7 +219,7 @@
         "fields": {
            "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "room": 7,
+            "room": [7],
             "name": "normal",
             "conditions": "Mit diesem Preis können wir den Raum finanzieren.",
             "hourly_rate": 25
@@ -231,7 +231,7 @@
         "fields": {
            "created": "2024-01-02 12:00+00",
             "updated": "2024-01-02 12:00+00",
-            "room": 7,
+            "room": [7],
             "name": "politisch",
             "conditions": "Mit diesem Preis könnt ihr anderen helfen, die nur den ermäßigten Preis aufbringen können.",
             "hourly_rate": 35
