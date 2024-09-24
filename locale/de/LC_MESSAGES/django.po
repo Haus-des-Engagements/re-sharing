@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-23 22:13+0200\n"
+"POT-Creation-Date: 2024-09-24 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,6 +25,17 @@ msgstr "Englisch"
 #: config/settings/base.py:33
 msgid "German"
 msgstr "Deutsch"
+
+#: htmlcov/z_8e8cb2d9a23b398b_forms_py.html:275
+msgid "Endet"
+msgstr ""
+
+#: htmlcov/z_8e8cb2d9a23b398b_forms_py.html:301
+#: htmlcov/z_8e8cb2d9a23b398b_forms_py.html:321
+#: htmlcov/z_8e8cb2d9a23b398b_forms_py.html:346
+#: roomsharing/bookings/forms.py:102
+msgid "Repeat"
+msgstr "Wiederholen"
 
 #: roomsharing/bookings/admin.py:29
 msgid "Confirm selected bookings"
@@ -48,7 +59,7 @@ msgid_plural "%d bookings were successfully cancelled."
 msgstr[0] "%d Buchung erfolgreich storniert."
 msgstr[1] "%d Buchungen erfolgreich storniert."
 
-#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:197
+#: roomsharing/bookings/apps.py:7 roomsharing/bookings/models.py:198
 msgid "Bookings"
 msgstr "Buchungen"
 
@@ -130,10 +141,6 @@ msgstr "Monatlich nach Wochentag"
 #: roomsharing/bookings/forms.py:100
 msgid "Monthly by date"
 msgstr "Monatlich nach Datum"
-
-#: roomsharing/bookings/forms.py:102
-msgid "Repeat"
-msgstr "Wiederholen"
 
 #: roomsharing/bookings/forms.py:104
 msgid "after"
@@ -276,11 +283,17 @@ msgstr "Enduhrzeit"
 msgid "Total amount"
 msgstr "Gesamtbetrag"
 
-#: roomsharing/bookings/models.py:196 roomsharing/bookings/models.py:235
+#: roomsharing/bookings/models.py:194
+#, fuzzy
+#| msgid "Number of persons"
+msgid "Number of attendees"
+msgstr "Anzahl an Personen"
+
+#: roomsharing/bookings/models.py:197 roomsharing/bookings/models.py:236
 msgid "Booking"
 msgstr "Buchung"
 
-#: roomsharing/bookings/models.py:203
+#: roomsharing/bookings/models.py:204
 msgid ""
 "The requested timespan overlaps with an existing booking for this room. "
 "Please chose another timespan."
@@ -288,23 +301,23 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diesen "
 "Raum. Bitte wähle einen anderen Zeitraum."
 
-#: roomsharing/bookings/models.py:240
+#: roomsharing/bookings/models.py:241
 #: roomsharing/templates/bookings/partials/show_bookingmessage.html:21
 #: roomsharing/templates/bookings/preview-booking.html:46
 #: roomsharing/templates/bookings/show-booking.html:93
 msgid "Message"
 msgstr "Nachricht"
 
-#: roomsharing/bookings/models.py:243 roomsharing/organizations/models.py:143
+#: roomsharing/bookings/models.py:244 roomsharing/organizations/models.py:143
 #: roomsharing/users/models.py:54
 msgid "User"
 msgstr "Nutzer:in"
 
-#: roomsharing/bookings/models.py:250
+#: roomsharing/bookings/models.py:251
 msgid "Booking Message"
 msgstr "Nachricht zur Buchung"
 
-#: roomsharing/bookings/models.py:251
+#: roomsharing/bookings/models.py:252
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
@@ -384,15 +397,16 @@ msgstr "Bitte nur bei bestehendem Co-Working-Vertrag auswählen."
 
 #: roomsharing/organizations/forms.py:42
 msgid "This organization may be listed publicly on this website."
-msgstr "Unsere Organisation darf öffentlich auf dieser Webseite angezeigt werden."
+msgstr ""
+"Unsere Organisation darf öffentlich auf dieser Webseite angezeigt werden."
 
 #: roomsharing/organizations/forms.py:44
 msgid ""
 "Only organization name, description, city, website and area of activity will "
 "be displayed."
 msgstr ""
-"Nur Name der Organisation, Beschreibung, Ort, Webseite und Engagementbereich werden "
-"angezeigt."
+"Nur Name der Organisation, Beschreibung, Ort, Webseite und Engagementbereich "
+"werden angezeigt."
 
 #: roomsharing/organizations/forms.py:52
 msgid ""
@@ -1097,11 +1111,33 @@ msgstr "Roomsharing | Startseite"
 msgid ""
 "This is the new place where you can book rooms for the 'Haus des "
 "Engagements'."
-msgstr ""
+msgstr "Hier kannst du Räume im Haus des Engagements buchen."
 
 #: roomsharing/templates/pages/home.html:16
 msgid "This is how you book a room:"
-msgstr ""
+msgstr "So buchst du einen Raum:"
+
+#: roomsharing/templates/pages/home.html:18
+msgid "Look for a free room."
+msgstr "Finde einen freien Raum."
+
+#: roomsharing/templates/pages/home.html:19
+msgid "Create an account."
+msgstr "Erstelle einen Account."
+
+#: roomsharing/templates/pages/home.html:20
+msgid "Create an organization you want to book the room for."
+msgstr "Erstelle die Organisation, für die du einen Raum buchen möchtest."
+
+#: roomsharing/templates/pages/home.html:21
+msgid "Make your booking requests."
+msgstr "Stelle deine Buchungsanfrage."
+
+#: roomsharing/templates/pages/home.html:22
+msgid ""
+"Await our confirmation with all the necessary stuff (like doorcodes and "
+"instructions) and your good to go!"
+msgstr "Warte auf unsere Bestätigung mit all den wichtigen Informationen (Türcode, Anleitungen, etc.) und los gehts!"
 
 #: roomsharing/templates/rooms/list_rooms.html:15
 #, python-format
@@ -1144,7 +1180,7 @@ msgstr "Es wurde kein passender Raum gefunden."
 msgid "Planner"
 msgstr "Planer"
 
-#: roomsharing/templates/rooms/planner.html:11
+#: roomsharing/templates/rooms/planner.html:12
 msgid ""
 "In this view, you can see the free times for all rooms. Click on a free slot "
 "to go directly to the booking page."
@@ -1152,7 +1188,7 @@ msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Räume. Klicke auf "
 "einen freien Zeitraum, um direkt zur Buchung zu gelangen."
 
-#: roomsharing/templates/rooms/show_room.html:65
+#: roomsharing/templates/rooms/show_room.html:66
 #, fuzzy
 #| msgid ""
 #| "In this view, you can see the free times for all rooms. Click on a free "
@@ -1693,9 +1729,6 @@ msgstr "Storniert"
 
 #~ msgid "hide recurring bookings"
 #~ msgstr "verstecke wiederkehrende Buchungen"
-
-#~ msgid "Cancel booking permission request"
-#~ msgstr "Anfrage für Buchungsberechtigung abbrechen"
 
 #~ msgid "My Organizations"
 #~ msgstr "Meine Organisationen"

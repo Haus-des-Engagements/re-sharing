@@ -15,11 +15,13 @@
     <hr class="my-4" />
     <p>{% trans "This is how you book a room:" %}</p>
     <ol>
-      <li>Look for a free room.</li>
-      <li>Create an account.</li>
-      <li>Create an organization you want to book the room for.</li>
-      <li>Make your booking requests.</li>
-      <li>Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!</li>
+      <li>{% trans "Look for a free room." %}</li>
+      <li>{% trans "Create an account." %}</li>
+      <li>{% trans "Create an organization you want to book the room for." %}</li>
+      <li>{% trans "Make your booking requests." %}</li>
+      <li>
+        {% trans "Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!" %}
+      </li>
     </ol>
   </div>
 {% endblock content %}
