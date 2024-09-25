@@ -15,6 +15,7 @@ from django.db.models import DateField
 from django.db.models import DecimalField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
+from django.db.models import PositiveIntegerField
 from django.db.models import Q
 from django.db.models import TimeField
 from django.db.models import UUIDField
@@ -191,6 +192,7 @@ class Booking(TimeStampedModel):
         null=True,
         blank=True,
     )
+    number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
 
     class Meta:
         verbose_name = _("Booking")

@@ -6,7 +6,9 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-  <h1>Raum buchen</h1>
+  <div class="row mt-5 mb-2">
+    <h1>Raum buchen</h1>
+  </div>
   <form method="post">
     {% crispy form form.helper %}
   </form>

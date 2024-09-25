@@ -52,9 +52,10 @@ class BookingForm(forms.ModelForm):
         label=_("Organization"),
     )
     title = forms.CharField(
-        label=_("Title"),
+        label=_("Booking title"),
         help_text=_("e.g. internal meeting, workshop XY, public talk about ZY..."),
     )
+    number_of_attendees = forms.IntegerField(label=_("Number of attendees"))
     message = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
         label=_(
@@ -161,12 +162,17 @@ class BookingForm(forms.ModelForm):
         self.fields["rrule_monthly_bydate"].label = False
         self.helper.layout = Layout(
             Div(
-                Field("title", css_class="form-control", wrapper_class="col-8"),
+                Field("title", css_class="form-control", wrapper_class="col-4"),
+                Field("organization", css_class="form-control", wrapper_class="col-4"),
                 css_class="row g-2",
             ),
             Div(
                 Field("room", css_class="form-control", wrapper_class="col-4"),
-                Field("organization", css_class="form-control", wrapper_class="col-4"),
+                Field(
+                    "number_of_attendees",
+                    css_class="form-control",
+                    wrapper_class="col-4",
+                ),
                 css_class="row g-2",
             ),
             Div(
@@ -428,4 +434,5 @@ class BookingForm(forms.ModelForm):
             "organization",
             "message",
             "room",
+            "number_of_attendees",
         ]
