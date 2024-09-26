@@ -290,6 +290,8 @@ ACCOUNT_FORMS = {"signup": "roomsharing.users.forms.UserSignupForm"}
 SOCIALACCOUNT_ADAPTER = "roomsharing.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "roomsharing.users.forms.UserSocialSignupForm"}
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 
 # Your stuff...

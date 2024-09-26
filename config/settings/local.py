@@ -32,9 +32,6 @@ CACHES = {
     },
 }
 
-# DJANGO-Q2
-Q_CLUSTER = {"name": "DJRedis", "workers": 4, "django_redis": "default"}
-
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
@@ -71,3 +68,12 @@ INSTALLED_APPS += ["django_extensions"]
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# DJANGO-Q2
+Q_CLUSTER = {
+    "name": "DJRedis",
+    "workers": 4,
+    "django_redis": "default",
+    "retry": 60,
+    "timeout": 40,
+}
