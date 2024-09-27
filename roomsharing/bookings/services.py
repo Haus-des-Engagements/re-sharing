@@ -251,7 +251,6 @@ def generate_recurrence(booking_data):
                     / 3600
                     * compensation.hourly_rate
                 )
-                rrule_total_amount = rrule_total_amount + total_amount
 
         booking_details = {
             "user": user,

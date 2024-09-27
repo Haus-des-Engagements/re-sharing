@@ -5,6 +5,16 @@
 {% load tz %}
 
 {% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "My recurring bookings" %}</li>
+      </ol>
+    </nav>
+  </div>
   <h1 class="mt-4">
     {% trans "My recurring bookings" %}
     <a class="btn btn-outline-primary"
@@ -28,7 +38,9 @@
               <br />
               {{ rrule.last_occurrence_date }}
             </p>
-            <p class="h6">{{ rrule.start_time|date:"H:i" }} - {{ rrule.end_time|date:"H:i" }}</p>
+            <p class="h6">
+              {{ rrule.get_first_booking.start_time|date:"H:i" }} - {{ rrule.get_first_booking.end_time|date:"H:i" }}
+            </p>
           </div>
           <div class="col-md-8">
             <div class="card-body">

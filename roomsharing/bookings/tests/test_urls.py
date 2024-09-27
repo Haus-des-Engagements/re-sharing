@@ -32,6 +32,16 @@ def test_cancel_booking(booking: Booking):
     )
 
 
+def test_cancel_occurrence(booking: Booking):
+    assert (
+        reverse(
+            "bookings:cancel-occurrence",
+            kwargs={"slug": booking.slug},
+        )
+        == f"/bookings/{booking.slug}/cancel-occurrence/"
+    )
+
+
 def test_write_bookingmessage(booking: Booking):
     assert (
         reverse("bookings:create-bookingmessage", kwargs={"slug": booking.slug})

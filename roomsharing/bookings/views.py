@@ -131,14 +131,18 @@ def cancel_booking_view(request, slug):
     except (InvalidBookingOperationError, PermissionDenied) as e:
         return HttpResponse(e.message, status=e.status_code)
 
-    message = _("Successfully cancelled.")
-
     return render(request, "bookings/partials/booking_item.html", {"booking": booking})
 
-    return HttpResponse(
-        f'{message} <span id="status-{booking.slug}" '
-        f'hx-swap-oob="true" class="fs-6 badge text-bg-status-{booking.status}">'
-        f"{booking.get_status_display()}</span>"
+
+@login_required
+def cancel_occurrence_view(request, slug):
+    try:
+        booking = cancel_booking(request.user, slug)
+    except (InvalidBookingOperationError, PermissionDenied) as e:
+        return HttpResponse(e.message, status=e.status_code)
+
+    return render(
+        request, "bookings/partials/occurrence_item.html", {"booking": booking}
     )
 
 

@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import cancel_booking_view
+from .views import cancel_occurrence_view
 from .views import cancel_rrule_bookings_view
 from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
@@ -61,6 +62,11 @@ urlpatterns = [
         "<slug:slug>/cancel-booking/",
         cancel_booking_view,
         name="cancel-booking",
+    ),  # PATCH booking object
+    path(
+        "<slug:slug>/cancel-occurrence/",
+        cancel_occurrence_view,
+        name="cancel-occurrence",
     ),  # PATCH booking object
     path(
         "<slug:slug>/create-bookingmessage/",

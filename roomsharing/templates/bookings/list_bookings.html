@@ -6,6 +6,16 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "My bookings" %}</li>
+      </ol>
+    </nav>
+  </div>
   <h1 class="mt-4">
     {% trans "My bookings" %}
     <a class="btn btn-outline-primary"

@@ -5,7 +5,22 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{{ booking.title }}</h1>
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url "bookings:list-bookings" %}">{% trans "My bookings" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ booking.title }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {% trans "Booking" %}: <em>{{ booking.title }}</em>
+  </h1>
   <div id="booking-detail-item">{% include "bookings/partials/booking_item.html" %}</div>
   <h2 class="font-weight-light py-3">{% trans "Access" %}</h2>
   <div class="card mb-3 mt-2" id="access">

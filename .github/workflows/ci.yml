@@ -45,6 +45,11 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
 
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
     env:
       # postgres://user:password@host:port/database
       DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/postgres'

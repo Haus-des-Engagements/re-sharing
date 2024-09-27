@@ -10,14 +10,19 @@
     <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title">
-          <a href="{% url 'rooms:show-room' booking.room.slug %}">{{ booking.room }}</a> <span id="status-{{ booking.slug }}"
-       class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+          {% if request.resolver_match.view_name != 'bookings:show-booking' and request.resolver_match.view_name != 'bookings:cancel-booking' %}
+            <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.title }}</a>
+          {% else %}
+            {{ booking.title }}
+          {% endif %}
+          <span id="status-{{ booking.slug }}"
+                class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
         </h5>
         <p class="card-text">
           <svg width="1em" height="1em">
-            <use href="#bi-card-heading" />
+            <use href="#bi-door-closed" />
           </svg>
-          <em>{{ booking.title }}</em>
+          <em>{{ booking.room }}</em>
           <br />
           <svg width="1em" height="1em">
             <use href="#bi-person-fill" />

@@ -5,8 +5,23 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{{ rrule.get_first_booking }}</h1>
-  <div class="card mb-3 mt-4">
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url "bookings:list-recurrences" %}">{% trans "My recurring bookings" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ rrule.get_first_booking.title }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {% trans "Recurring booking" %}: <em>{{ rrule.get_first_booking.title }}</em>
+  </h1>
+  <div class="card mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
@@ -26,9 +41,9 @@
           <p class="card-text">
             {% trans "Title" %}: <em>{{ rrule.get_first_booking.title }}</em>
             <br />
-            {% trans "Booked for:" %}<em>{{ rrule.get_first_booking.organization }}</em>
+            {% trans "Booked for" %}: <em>{{ rrule.get_first_booking.organization }}</em>
             <br />
-            {% trans "Occurrences:" %} {{ rrule.number_of_occurrences }}
+            {% trans "Occurrences" %}: {{ rrule.number_of_occurrences }}
           </p>
         </div>
       </div>
@@ -55,38 +70,23 @@
     </div>
   </div>
   <div class="mt-4">
-    <h5>{% trans "These bookings are part of the recurrence:" %}</h5>
-    <div id="occurrences-list">
-      {% for booking in bookings %}
-        <div class="card mb-3 mt-4">
-          <div class="row g-0">
-            <div class="col-md-10">
-              <div class="card-body">
-                <div class="card-text">
-                  <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</a> <span id="status-{{ booking.slug }}"
-       class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="card-body">
-                <div class="d-flex">
-                  {% if booking.is_cancelable %}
-                    <button id="cancel-button"
-                            type="submit"
-                            class="btn btn-outline-danger"
-                            value="Submit"
-                            hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
-                            hx-post="{% url 'bookings:cancel-booking' slug=booking.slug %}"
-                            hx-target="this"
-                            hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
+    <h5>{% trans "These bookings are part of the recurrence" %}:</h5>
+    <div class="table-responsive col-6">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Weekday" %}</th>
+            <th scope="col">{% trans "Date" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            {% include "bookings/partials/occurrence_item.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 {% endblock content %}

@@ -6,12 +6,19 @@
   {% trans "Dashboard" %}
 {% endblock title %}
 {% block content %}
-  <div class="row mt-5">
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item active" aria-current="page">{% trans "My Dashboard" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <div class="row mt-4">
     <h1>{% trans "Hi" %}, {{ user.first_name }}!</h1>
   </div>
   <div class="row mt-5">
     <h2>
-      {% trans "Your upcoming bookings" %}
+      {% trans "My upcoming bookings" %}
       <a class="btn btn-outline-primary"
          href="{% url 'bookings:create-booking' %}"
          role="button">
@@ -57,7 +64,7 @@
   </div>
   <div class="row mt-5 col-md-6">
     <h2>
-      {% trans "Your organizations" %}
+      {% trans "My organizations" %}
       <a class="btn btn-outline-primary"
          href="{% url 'organizations:create-organization' %}"
          role="button">

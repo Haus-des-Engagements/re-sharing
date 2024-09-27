@@ -202,3 +202,75 @@ class TestManagerActionsBookingView(TestCase):
             == f"/{ADMIN_URL}login/?next=/bookings/manage-bookings/{self.booking.slug}"
             f"/confirm-booking/"
         )
+
+
+class TestCancelBookingView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking = BookingFactory(organization=self.organization)
+        self.cancel_booking_url = reverse(
+            "bookings:cancel-booking",
+            kwargs={"slug": self.booking.slug},
+        )
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(self.cancel_booking_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel_by_not_logged_in_user(self, mock_is_cancelable):
+        client = Client()
+
+        response = client.get(self.cancel_booking_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/accounts/login/?next=/bookings/{self.booking.slug}/cancel-booking/"
+        )
+
+
+class TestCancelOccurrenceView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking = BookingFactory(organization=self.organization)
+        self.cancel_occurrence_url = reverse(
+            "bookings:cancel-occurrence",
+            kwargs={"slug": self.booking.slug},
+        )
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(self.cancel_occurrence_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
+    def test_cancel_by_not_logged_in_user(self, mock_is_cancelable):
+        client = Client()
+
+        response = client.get(self.cancel_occurrence_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/accounts/login/?next=/bookings/{self.booking.slug}/cancel-occurrence/"
+        )
