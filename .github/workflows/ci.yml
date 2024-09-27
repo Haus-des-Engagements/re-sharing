@@ -72,5 +72,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/local.txt
 
-      - name: Test with pytest
-        run: pytest
+      - name: Run tests
+        run: pytest --cov --cov-report=xml
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
