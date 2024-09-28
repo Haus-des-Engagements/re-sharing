@@ -4,12 +4,15 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
+from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.test import TestCase
 from django.utils import timezone
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
+from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
 from roomsharing.bookings.services import cancel_rrule_bookings
@@ -18,12 +21,15 @@ from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
 from roomsharing.bookings.services import create_rrule_string
 from roomsharing.bookings.services import filter_bookings_list
+from roomsharing.bookings.services import generate_recurrence
+from roomsharing.bookings.services import generate_single_booking
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import manager_cancel_booking
 from roomsharing.bookings.services import manager_confirm_booking
 from roomsharing.bookings.services import manager_filter_bookings_list
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
+from roomsharing.bookings.services import save_recurrence
 from roomsharing.bookings.services import show_booking
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
@@ -33,6 +39,7 @@ from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.tests.factories import AccessCodeFactory
 from roomsharing.rooms.tests.factories import AccessFactory
+from roomsharing.rooms.tests.factories import CompensationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
@@ -623,3 +630,239 @@ def test_manager_cancel_booking_not_cancelable(mock_is_cancelable):
     booking = BookingFactory()
     with pytest.raises(InvalidBookingOperationError):
         manager_confirm_booking(user, booking.slug)
+
+
+class TestGenerateSingleBooking(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.room = RoomFactory()
+        self.compensation = CompensationFactory(hourly_rate=50, room=[self.room])
+        self.start_datetime = timezone.now() + timedelta(days=1)
+        self.duration = 2
+        self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
+        self.booking_data = {
+            "user": self.user.slug,
+            "title": "Meeting",
+            "room": self.room.slug,
+            "organization": self.organization.slug,
+            "timespan": [
+                self.start_datetime.isoformat(),
+                self.end_datetime.isoformat(),
+            ],
+            "start_date": self.start_datetime.date(),
+            "start_time": self.start_datetime.time(),
+            "end_time": self.end_datetime.time(),
+            "message": "Please confirm my booking",
+            "compensation": self.compensation.id,
+        }
+
+    def test_generate_single_booking_valid_data(self):
+        booking, message = generate_single_booking(self.booking_data)
+
+        assert isinstance(booking, Booking)
+        assert booking.user == self.user
+        assert booking.title == "Meeting"
+        assert booking.room == self.room
+        assert booking.organization == self.organization
+        assert booking.timespan == (self.start_datetime, self.end_datetime)
+        assert booking.compensation == self.compensation
+        assert booking.total_amount == self.compensation.hourly_rate * self.duration
+        assert message == "Please confirm my booking"
+
+    def test_generate_single_booking_no_compensation(self):
+        self.booking_data["compensation"] = ""
+        booking, message = generate_single_booking(self.booking_data)
+
+        assert isinstance(booking, Booking)
+        assert booking.user == self.user
+        assert booking.title == "Meeting"
+        assert booking.room == self.room
+        assert booking.organization == self.organization
+        assert booking.timespan == (self.start_datetime, self.end_datetime)
+        assert booking.compensation is None
+        assert booking.total_amount is None
+        assert message == "Please confirm my booking"
+
+    def test_generate_single_booking_invalid_organization(self):
+        self.booking_data["organization"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_single_booking(self.booking_data)
+
+    def test_generate_single_booking_invalid_room(self):
+        self.booking_data["room"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_single_booking(self.booking_data)
+
+    def test_generate_single_booking_invalid_user(self):
+        self.booking_data["user"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_single_booking(self.booking_data)
+
+
+class TestGenerateRecurrence(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.room = RoomFactory()
+        self.compensation = CompensationFactory(hourly_rate=50)
+        self.duration = 2
+        self.start_datetime = timezone.now() + timedelta(days=1)
+        self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
+        self.count = 5
+        self.rrule_string = "FREQ=DAILY;COUNT=" + str(self.count)
+        self.booking_data = {
+            "user": self.user.slug,
+            "title": "Recurring Meeting",
+            "room": self.room.slug,
+            "organization": self.organization.slug,
+            "timespan": [
+                self.start_datetime.isoformat(),
+                self.end_datetime.isoformat(),
+            ],
+            "start_time": self.start_datetime.time(),
+            "end_time": self.end_datetime.time(),
+            "message": "Please confirm my recurring bookings",
+            "compensation": self.compensation.id,
+            "rrule_string": self.rrule_string,
+        }
+
+    def test_generate_recurrence_valid_data(self):
+        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+            self.booking_data
+        )
+
+        assert len(bookings) == self.count
+        for booking in bookings:
+            assert isinstance(booking, Booking)
+            assert booking.user == self.user
+            assert booking.title == "Recurring Meeting"
+            assert booking.room == self.room
+            assert booking.organization == self.organization
+            assert booking.compensation == self.compensation
+            assert booking.total_amount == self.compensation.hourly_rate * self.duration
+
+        assert message == "Please confirm my recurring bookings"
+        assert isinstance(rrule, RecurrenceRule)
+        rrule_occurrences = list(rrulestr(self.rrule_string))
+        assert rrule.rrule == self.rrule_string
+        assert rrule.start_time == self.start_datetime.time()
+        assert rrule.end_time == self.end_datetime.time()
+        assert rrule.first_occurrence_date == rrule_occurrences[0]
+        assert rrule.last_occurrence_date == rrule_occurrences[-1]
+        assert rrule.excepted_dates == []
+        assert bookable is True
+
+    def test_generate_recurrence_no_compensation(self):
+        self.booking_data["compensation"] = ""
+
+        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+            self.booking_data
+        )
+
+        assert len(bookings) == self.count
+        for booking in bookings:
+            assert isinstance(booking, Booking)
+            assert booking.user == self.user
+            assert booking.title == "Recurring Meeting"
+            assert booking.room == self.room
+            assert booking.organization == self.organization
+            assert booking.compensation is None
+            assert booking.total_amount is None
+
+        assert message == "Please confirm my recurring bookings"
+        assert isinstance(rrule, RecurrenceRule)
+        rrule_occurrences = list(rrulestr(self.rrule_string))
+        assert rrule.rrule == self.rrule_string
+        assert rrule.start_time == self.start_datetime.time()
+        assert rrule.end_time == self.end_datetime.time()
+        assert rrule.first_occurrence_date == rrule_occurrences[0]
+        assert rrule.last_occurrence_date == rrule_occurrences[-1]
+        assert rrule.excepted_dates == []
+        assert bookable is True
+        assert rrule_total_amount == 0
+
+    def test_generate_recurrence_invalid_organization(self):
+        self.booking_data["organization"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_recurrence(self.booking_data)
+
+    def test_generate_recurrence_invalid_room(self):
+        self.booking_data["room"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_recurrence(self.booking_data)
+
+    def test_generate_recurrence_invalid_user(self):
+        self.booking_data["user"] = "invalid-slug"
+
+        with pytest.raises(Http404):
+            generate_recurrence(self.booking_data)
+
+
+class TestSaveRecurrence(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.room = RoomFactory()
+        self.compensation = CompensationFactory(hourly_rate=50)
+        self.start_datetime = timezone.now() + timedelta(days=1)
+        self.end_datetime = self.start_datetime + timedelta(hours=2)
+        self.rrule_string = "FREQ=DAILY;COUNT=5"
+        self.booking_data = {
+            "user": self.user.slug,
+            "title": "Recurring Meeting",
+            "room": self.room.slug,
+            "organization": self.organization.slug,
+            "timespan": [
+                self.start_datetime.isoformat(),
+                self.end_datetime.isoformat(),
+            ],
+            "start_time": self.start_datetime.time(),
+            "end_time": self.end_datetime.time(),
+            "message": "Please confirm my recurring bookings",
+            "compensation": self.compensation.id,
+            "rrule_string": self.rrule_string,
+        }
+
+        (
+            self.bookings,
+            self.message,
+            self.rrule,
+            self.bookable,
+            self.rrule_total_amount,
+        ) = generate_recurrence(self.booking_data)
+
+    def test_save_recurrence_valid(self):
+        # Add the booking permission for the user
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        bookings, rrule = save_recurrence(
+            self.user, self.bookings, self.message, self.rrule
+        )
+
+        for booking in bookings:
+            assert booking.recurrence_rule == rrule
+            if booking.room_booked:
+                assert booking.start_date in rrule.excepted_dates
+            else:
+                assert booking.start_date not in rrule.excepted_dates
+
+        assert rrule.excepted_dates == [
+            booking.start_date for booking in bookings if booking.room_booked
+        ]
+
+    def test_save_recurrence_permission_denied(self):
+        # Do not add the booking permission for the user
+        another_user = UserFactory()
+
+        with pytest.raises(PermissionDenied):
+            save_recurrence(another_user, self.bookings, self.message, self.rrule)

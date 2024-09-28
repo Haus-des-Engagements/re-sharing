@@ -5,10 +5,12 @@ from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
 from factory import SubFactory
+from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from roomsharing.rooms.models import Access
 from roomsharing.rooms.models import AccessCode
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.users.tests.factories import UserFactory
 
@@ -59,3 +61,23 @@ class AccessCodeFactory(DjangoModelFactory):
     class Meta:
         model = AccessCode
         django_get_or_create = ["uuid"]
+
+
+class CompensationFactory(DjangoModelFactory):
+    name = Faker("word")
+    conditions = Faker("sentence", nb_words=6)
+    hourly_rate = Faker("random_int", min=1, max=1000)
+
+    @post_generation
+    def room(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing
+            return
+
+        if extracted:
+            # A list of rooms were passed in, use them
+            for room in extracted:
+                self.room.add(room)
+
+    class Meta:
+        model = Compensation
