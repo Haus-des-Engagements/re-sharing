@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
@@ -45,7 +45,7 @@ class GetWeeklyBookingsTest(TestCase):
             "?starttime=06:00&endtime=07:30&startdate=2024-07-27&room=" + room.slug,
             "?starttime=06:00&endtime=07:30&startdate=2024-07-28&room=" + room.slug,
         ]
-        assert weekdays[0] == datetime(
+        assert weekdays[0] == datetime.datetime(
             2024, 7, 22, 0, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
 
@@ -103,14 +103,24 @@ class GetWeeklyBookingsTest(TestCase):
         date_string = None
         room = RoomFactory()
         room, time_slots, weekdays, dates = show_room(room.slug, date_string)
+        today = timezone.now().date()
+        start_of_week = today - datetime.timedelta(days=today.weekday())
+
         assert time_slots[0]["booked"] == [
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-23&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-24&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-25&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-26&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-27&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-28&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-09-29&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=0)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=1)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=2)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=3)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=4)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=5)}&room=" + room.slug,
+            f"?starttime=06:00&endtime=07:30&startdate="
+            f"{start_of_week + datetime.timedelta(days=6)}&room=" + room.slug,
         ]
 
 

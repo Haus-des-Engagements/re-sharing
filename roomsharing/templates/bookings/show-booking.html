@@ -47,112 +47,96 @@
     </div>
   </div>
   <div class="container py-4">
-    <h2 class="font-weight-light py-3">{% trans "Timeline" %}</h2>
-    <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
-    <!-- timeline booking message form -->
+    <h2 class="font-weight-light py-3">{% trans "Write us a message for this booking" %}</h2>
+    <p>
+      {% trans "We will usually respond in the next 48h." %} {% trans "You will get notified by e-mail when receiving an answer." %}
+    </p>
     <div class="row" id="message-form">
-      <!-- timeline item 1 left dot -->
-      <div class="col-auto text-center flex-column d-none d-sm-flex">
-        <div class="row h-50">
-          <div class="col">&nbsp;</div>
-          <div class="col">&nbsp;</div>
+      <form hx-post="{% url 'bookings:create-bookingmessage' booking.slug %}"
+            hx-target="#timeline-heading"
+            hx-swap="afterend"
+            hx-on::after-request="if(event.detail.successful) this.reset()">
+        {% csrf_token %}
+        <div class="mb-3">
+          <textarea class="form-control" name="text" rows="3" required="true"></textarea>
         </div>
-        <h5 class="m-2">
-          <span class="badge rounded-pill bg-light border">&nbsp;</span>
-        </h5>
-        <div class="row h-50">
-          <div class="col order border-end">&nbsp;</div>
-          <div class="col">&nbsp;</div>
+        <div class="row d-flex align-items-center">
+          <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary" value="Submit">{% trans "Send new message" %}</button>
+          </div>
+          <div class="col-auto" id="confirmation"></div>
         </div>
-      </div>
-      <!-- timeline item 1 content -->
-      <div class="col py-2">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">{% trans "Write a new message" %}</h5>
-            <form hx-post="{% url 'bookings:create-bookingmessage' booking.slug %}"
-                  hx-target="#message-form"
-                  hx-swap="afterend">
-              {% csrf_token %}
-              <div class="mb-3">
-                <textarea class="form-control" name="text" rows="3" required="true"></textarea>
+      </form>
+      <div class="container py-4">
+        <h2 class="font-weight-light py-3" id="timeline-heading">{% trans "Timeline" %}</h2>
+        <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
+        {% for activity in activity_stream %}
+          <div class="row">
+            <div class="col-auto text-center flex-column d-none d-sm-flex">
+              <div class="row h-50">
+                <div class="col border-end">&nbsp;</div>
+                <div class="col">&nbsp;</div>
               </div>
-              <button type="submit" class="btn btn-outline-primary mb-3" value="Submit">{% trans "Send new message" %}</button>
-            </form>
+              <h5 class="m-2">
+                <span class="badge rounded-pill bg-light border">&nbsp;</span>
+              </h5>
+              <div class="row h-50">
+                <div class="col border-end">&nbsp;</div>
+                <div class="col">&nbsp;</div>
+              </div>
+            </div>
+            <div class="col py-2">
+              <div class="card">
+                <div class="card-body">
+                  <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
+                  {% if activity.type == "message" %}
+                    <h5 class="card-title">{% trans "Message" %}</h5>
+                    <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <p class="fst-italic">{{ activity.text }}</p>
+                  {% elif activity.type == "status_change" %}
+                    <h5 class="card-title">{% trans "Status Change" %}</h5>
+                    <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <span class="fs-6 badge text-bg-status-{{ activity.old_status.0 }}">{{ activity.old_status.1 }}</span>
+                    <svg class="fs-4 me-1" width="1em" height="1em">
+                      <use href="#bi-arrow-right" />
+                    </svg>
+                    <span class="fs-6 badge text-bg-status-{{ activity.new_status.0 }}">{{ activity.new_status.1 }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-    <!--/row-->
-    <!-- timeline item loop -->
-    {% for activity in activity_stream %}
-      <div class="row">
-        <div class="col-auto text-center flex-column d-none d-sm-flex">
-          <div class="row h-50">
-            <div class="col border-end">&nbsp;</div>
-            <div class="col">&nbsp;</div>
+        {% endfor %}
+        <!-- timeline item 1 -->
+        <div class="row">
+          <!-- timeline item 1 left dot -->
+          <div class="col-auto text-center flex-column d-none d-sm-flex">
+            <div class="row h-50">
+              <div class="col border-end order">&nbsp;</div>
+              <div class="col">&nbsp;</div>
+            </div>
+            <h5 class="m-2">
+              <span class="badge rounded-pill bg-light border">&nbsp;</span>
+            </h5>
+            <div class="row h-50">
+              <div class="col">&nbsp;</div>
+              <div class="col">&nbsp;</div>
+            </div>
           </div>
-          <h5 class="m-2">
-            <span class="badge rounded-pill bg-light border">&nbsp;</span>
-          </h5>
-          <div class="row h-50">
-            <div class="col border-end">&nbsp;</div>
-            <div class="col">&nbsp;</div>
-          </div>
-        </div>
-        <div class="col py-2">
-          <div class="card">
-            <div class="card-body">
-              <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
-              {% if activity.type == "message" %}
-                <h5 class="card-title">{% trans "Message" %}</h5>
-                <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
-                <p class="fst-italic">{{ activity.text }}</p>
-              {% elif activity.type == "status_change" %}
-                <h5 class="card-title">{% trans "Status Change" %}</h5>
-                <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
-                <span class="fs-6 badge text-bg-status-{{ activity.old_status.0 }}">{{ activity.old_status.1 }}</span>
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-arrow-right" />
-                </svg>
-                <span class="fs-6 badge text-bg-status-{{ activity.new_status.0 }}">{{ activity.new_status.1 }}</span>
-              {% endif %}
+          <!-- timeline item 1 content -->
+          <div class="col py-2">
+            <div class="card">
+              <div class="card-body">
+                <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
+                <h5 class="card-title">{% trans "Booking created" %}</h5>
+                <p class="card-text">
+                  {% trans "by" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }})
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    {% endfor %}
-    <!-- timeline item 1 -->
-    <div class="row">
-      <!-- timeline item 1 left dot -->
-      <div class="col-auto text-center flex-column d-none d-sm-flex">
-        <div class="row h-50">
-          <div class="col border-end order">&nbsp;</div>
-          <div class="col">&nbsp;</div>
-        </div>
-        <h5 class="m-2">
-          <span class="badge rounded-pill bg-light border">&nbsp;</span>
-        </h5>
-        <div class="row h-50">
-          <div class="col">&nbsp;</div>
-          <div class="col">&nbsp;</div>
-        </div>
-      </div>
-      <!-- timeline item 1 content -->
-      <div class="col py-2">
-        <div class="card">
-          <div class="card-body">
-            <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
-            <h5 class="card-title">{% trans "Booking created" %}</h5>
-            <p class="card-text">
-              {% trans "by" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }})
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
-    <!--/row-->
-    <!--/row-->
   </div>
-  <!--container-->
 {% endblock content %}
