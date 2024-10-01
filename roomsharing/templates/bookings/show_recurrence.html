@@ -21,7 +21,7 @@
   <h1 class="mt-4">
     {% trans "Recurring booking" %}: <em>{{ rrule.get_first_booking.title }}</em>
   </h1>
-  <div class="card mt-4">
+  <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
@@ -37,13 +37,27 @@
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ rrule.get_first_booking.room }}</h5>
+          <h5 class="card-title">{{ rrule.get_first_booking.title }}</h5>
           <p class="card-text">
-            {% trans "Title" %}: <em>{{ rrule.get_first_booking.title }}</em>
+            <svg width="1em" height="1em">
+              <use href="#bi-door-closed" />
+            </svg>
+            <em>{{ rrule.get_first_booking.room }}</em>
             <br />
-            {% trans "Booked for" %}: <em>{{ rrule.get_first_booking.organization }}</em>
+            <svg width="1em" height="1em">
+              <use href="#bi-person-fill" />
+            </svg>
+            <em>{{ rrule.get_first_booking.user }}</em> {% trans "for" %}
+            <em>{{ rrule.get_first_booking.organization }}</em>
             <br />
             {% trans "Occurrences" %}: {{ rrule.number_of_occurrences }}
+            {% if rrule.excepted_dates %}
+              {% blocktrans count excepted_dates_length=rrule.excepted_dates|length %}
+    ({{ excepted_dates_length }} excepted date)
+{% plural %}
+    ({{ excepted_dates_length }} excepted dates)
+{% endblocktrans %}
+            {% endif %}
           </p>
         </div>
       </div>
@@ -65,6 +79,9 @@
       </div>
     </div>
     <div class="card-footer">
+      <svg width="1em" height="1em">
+        <use href="#bi-arrow-repeat" />
+      </svg>
       {{ rrule.get_first_booking.recurrence_rule.get_human_readable_rule }}
       <br />
     </div>
