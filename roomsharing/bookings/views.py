@@ -27,8 +27,11 @@ from .services import generate_single_booking
 from .services import get_occurrences
 from .services import get_recurrences_list
 from .services import manager_cancel_booking
+from .services import manager_cancel_rrule
 from .services import manager_confirm_booking
+from .services import manager_confirm_rrule
 from .services import manager_filter_bookings_list
+from .services import manager_filter_rrules_list
 from .services import save_booking
 from .services import save_recurrence
 from .services import set_initial_booking_data
@@ -290,4 +293,48 @@ def manager_confirm_booking_view(request, booking_slug):
 
     return render(
         request, "bookings/partials/manager_booking_item.html", {"booking": booking}
+    )
+
+
+@staff_member_required
+def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
+    """
+    Shows the recurrences for a room manager so that they can be confirmed or cancelled
+    """
+    show_past_rrules = request.GET.get("show_past_rrules") or False
+    status = request.GET.get("status") or "all"
+    organization = request.GET.get("organization") or "all"
+
+    rrules, organizations = manager_filter_rrules_list(
+        organization, show_past_rrules, status
+    )
+
+    context = {
+        "rrules": rrules,
+        "current_time": timezone.now(),
+        "organizations": organizations,
+        "statuses": BookingStatus.choices,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "bookings/partials/manager_list_rrules.html", context)
+
+    return render(request, "bookings/manager_list_rrules.html", context)
+
+
+@staff_member_required
+def manager_cancel_rrule_view(request, rrule_uuid):
+    rrule = manager_cancel_rrule(request.user, rrule_uuid)
+
+    return render(
+        request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}
+    )
+
+
+@staff_member_required
+def manager_confirm_rrule_view(request, rrule_uuid):
+    rrule = manager_confirm_rrule(request.user, rrule_uuid)
+
+    return render(
+        request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}
     )

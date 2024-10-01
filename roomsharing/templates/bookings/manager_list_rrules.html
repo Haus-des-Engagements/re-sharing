@@ -7,7 +7,7 @@
 
 {% block content %}
   <h1 class="mt-4">
-    {% trans "Manage bookings" %}
+    {% trans "Manage recurring bookings" %}
     <a class="btn btn-outline-primary"
        href="{% url 'bookings:create-booking' %}"
        role="button">
@@ -18,9 +18,9 @@
     </a>
   </h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
-        action="{% url 'bookings:manager-list-bookings' %}"
+        action="{% url 'bookings:manager-list-recurrences' %}"
         method="get"
-        hx-get="{% url 'bookings:manager-list-bookings' %}"
+        hx-get="{% url 'bookings:manager-list-recurrences' %}"
         hx-target="#booking-list"
         hx-trigger="change"
         hx-indicator="#spinner">
@@ -40,19 +40,10 @@
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"
-             name="show_past_bookings"
+             name="show_past_rrules"
              class="form-check-input"
-             id="id_show_past_bookings" />
-      <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
-    </div>
-    <div class="col-auto form-check">
-      <input type="checkbox"
-             name="hide_recurring_bookings"
-             class="form-check-input"
-             id="id_hide_recurring_bookings" />
-      <label for="id_hide_recurring_bookings" class="form-check-label">
-        {% trans "hide" %} <a href="{% url 'bookings:manager-list-recurrences' %}">{% trans "recurring bookings" %}</a>
-      </label>
+             id="id_show_past_rrules" />
+      <label for="id_show_past_rrules" class="form-check-label">{% trans "show past recurrence rules" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"
@@ -60,5 +51,5 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="booking-list">{% include "bookings/partials/manager_list_bookings.html" %}</div>
+  <div id="booking-list">{% include "bookings/partials/manager_list_rrules.html" %}</div>
 {% endblock content %}

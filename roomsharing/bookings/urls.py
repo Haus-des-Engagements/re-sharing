@@ -8,8 +8,11 @@ from .views import create_bookingmessage_view
 from .views import list_bookings_view
 from .views import list_recurrences_view
 from .views import manager_cancel_booking_view
+from .views import manager_cancel_rrule_view
 from .views import manager_confirm_booking_view
+from .views import manager_confirm_rrule_view
 from .views import manager_list_bookings_view
+from .views import manager_list_rrules_view
 from .views import preview_and_save_booking_view
 from .views import preview_and_save_recurrence_view
 from .views import show_booking_view
@@ -22,6 +25,21 @@ urlpatterns = [
         "manage-bookings/",
         manager_list_bookings_view,
         name="manager-list-bookings",
+    ),
+    path(
+        "manage-recurrences/",
+        manager_list_rrules_view,
+        name="manager-list-recurrences",
+    ),
+    path(
+        "manage-bookings/<uuid:rrule_uuid>/cancel-recurrence/",
+        manager_cancel_rrule_view,
+        name="manager-cancel-recurrence",
+    ),
+    path(
+        "manage-bookings/<uuid:rrule_uuid>/confirm-recurrence/",
+        manager_confirm_rrule_view,
+        name="manager-confirm-recurrence",
     ),
     path(
         "manage-bookings/<slug:booking_slug>/cancel-booking/",

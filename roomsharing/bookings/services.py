@@ -17,6 +17,8 @@ from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
 from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
+from django.db.models import Exists
+from django.db.models import OuterRef
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -560,3 +562,67 @@ def manager_confirm_booking(user, booking_slug):
         return booking
 
     raise InvalidBookingOperationError
+
+
+def manager_filter_rrules_list(organization, show_past_rrules, status):
+    organizations = Organization.objects.all()
+    rrules = RecurrenceRule.objects.all().distinct()
+    if not show_past_rrules:
+        rrules = rrules.filter(last_occurrence_date__gte=timezone.now())
+    if organization != "all":
+        rrules = rrules.filter(
+            booking_of_recurrencerule__organization__slug=organization
+        )
+
+    if status != "all":
+        booking_exists = Booking.objects.filter(
+            recurrence_rule=OuterRef("pk"), status=status
+        )
+        rrules = rrules.filter(Exists(booking_exists))
+
+    rrules = rrules.order_by("created")
+
+    return rrules, organizations
+
+
+def manager_confirm_rrule(user, rrule_uuid):
+    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    for booking in bookings:
+        if booking.is_confirmable():
+            with set_actor(user):
+                booking.status = BookingStatus.CONFIRMED
+                booking.save()
+            schedule(
+                "roomsharing.bookings.tasks.booking_reminder_email",
+                booking_slug=booking.slug,
+                task_name="booking-reminder-email",
+                schedule_type=Schedule.ONCE,
+                next_run=booking.timespan.lower - timedelta(days=7),
+            )
+    async_task(
+        "roomsharing.bookings.tasks.recurrence_confirmation_email",
+        rrule,
+        task_name="recurrence-confirmation-email",
+    )
+
+    return rrule
+
+
+def manager_cancel_rrule(user, rrule_uuid):
+    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+
+    for booking in bookings:
+        if booking.is_cancelable():
+            with set_actor(user):
+                booking.status = BookingStatus.CANCELLED
+                booking.save()
+
+    async_task(
+        "roomsharing.bookings.tasks.recurrence_cancellation_email",
+        rrule,
+        task_name="recurrence-cancellation-email",
+    )
+
+    return rrule

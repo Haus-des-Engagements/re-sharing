@@ -55,6 +55,15 @@ class RecurrenceRule(TimeStampedModel):
     def __str__(self):
         return str(self.uuid)
 
+    def get_cancelled(self):
+        return self.bookings_of_recurrencerule.filter(status=BookingStatus.CANCELLED)
+
+    def get_confirmed(self):
+        return self.bookings_of_recurrencerule.filter(status=BookingStatus.CONFIRMED)
+
+    def get_pending(self):
+        return self.bookings_of_recurrencerule.filter(status=BookingStatus.PENDING)
+
     def get_absolute_url(self):
         return reverse("bookings:show-recurrence", kwargs={"rrule": self.uuid})
 

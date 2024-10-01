@@ -44,3 +44,14 @@ def cancel_booking_email(booking):
             "raum.app@haus-des-engagements.de",
             [booking.user.email],
         )
+
+
+def recurrence_confirmation_email(rrule):
+    send_mail(
+        "Recurrence Confirmed",
+        f"Your recurring bookings {rrule.get_first_booking.title} have "
+        f"been confirmed. You can see and change it here: {rrule.get_absolute_url()}",
+        "raum.app@haus-des-engagements.de",
+        [rrule.user.email],
+        fail_silently=False,
+    )

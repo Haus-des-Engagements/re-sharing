@@ -25,7 +25,9 @@ from roomsharing.bookings.services import generate_recurrence
 from roomsharing.bookings.services import generate_single_booking
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import manager_cancel_booking
+from roomsharing.bookings.services import manager_cancel_rrule
 from roomsharing.bookings.services import manager_confirm_booking
+from roomsharing.bookings.services import manager_confirm_rrule
 from roomsharing.bookings.services import manager_filter_bookings_list
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
@@ -866,3 +868,35 @@ class TestSaveRecurrence(TestCase):
 
         with pytest.raises(PermissionDenied):
             save_recurrence(another_user, self.bookings, self.message, self.rrule)
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_cancelable", return_value=True)
+def test_manager_cancel_rrule(mock_is_cancelable):
+    user = UserFactory(is_staff=True)
+    rrule = RecurrenceRuleFactory()
+    booking1 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+    booking2 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+
+    manager_cancel_rrule(user, rrule.uuid)
+
+    booking1.refresh_from_db()
+    assert booking1.status == BookingStatus.CANCELLED
+    booking2.refresh_from_db()
+    assert booking2.status == BookingStatus.CANCELLED
+
+
+@pytest.mark.django_db()
+@patch.object(Booking, "is_confirmable", return_value=True)
+def test_manager_confirm_rrule(mock_is_confirmable):
+    user = UserFactory(is_staff=True)
+    rrule = RecurrenceRuleFactory()
+    booking1 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+    booking2 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+
+    manager_confirm_rrule(user, rrule.uuid)
+
+    booking1.refresh_from_db()
+    assert booking1.status == BookingStatus.CONFIRMED
+    booking2.refresh_from_db()
+    assert booking2.status == BookingStatus.CONFIRMED
