@@ -57,9 +57,12 @@
         if (endsField.value === 'AFTER_TIMES') {
           endsCountFieldDiv.style.display = "block";
           endsEnddateFieldDiv.style.display = "none";
-        } else {
+        } else if (endsField.value === 'AT_DATE') {
           endsCountFieldDiv.style.display = "none";
           endsEnddateFieldDiv.style.display = "block";
+        } else {
+          endsCountFieldDiv.style.display = "none";
+          endsEnddateFieldDiv.style.display = "none";
         }
       }
 

@@ -203,7 +203,6 @@ def preview_and_save_recurrence_view(request):
                 "bookings": bookings,
                 "rrule": rrule,
                 "bookable": bookable,
-                "rrule_total_amount": rrule_total_amount,
             },
         )
 

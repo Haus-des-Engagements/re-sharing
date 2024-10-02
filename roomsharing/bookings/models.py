@@ -42,7 +42,7 @@ class RecurrenceRule(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     rrule = CharField(_("Recurrence rule"), max_length=200)
     first_occurrence_date = DateField(_("First occurrence date"))
-    last_occurrence_date = DateField(_("Last occurrence date"))
+    last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
     excepted_dates = ArrayField(
         DateField(), verbose_name=_("Excepted dates"), blank=True
     )
@@ -93,8 +93,11 @@ class RecurrenceRule(TimeStampedModel):
         if rrule._count:  # noqa: SLF001
             return _("ends after ") + str(rrule._count) + _(" times")  # noqa: SLF001
 
-        date_string = formats.date_format(rrule._until.date(), "SHORT_DATE_FORMAT")  # noqa: SLF001
-        return _("ends at the ") + date_string
+        if rrule._until:  # noqa: SLF001
+            date_string = formats.date_format(rrule._until.date(), "SHORT_DATE_FORMAT")  # noqa: SLF001
+            return _("ends at the ") + date_string
+
+        return _("never ends")
 
     def get_human_readable_weekdays(self):
         rrule = rrulestr(self.rrule)

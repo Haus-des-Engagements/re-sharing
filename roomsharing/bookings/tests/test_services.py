@@ -462,7 +462,6 @@ def test_create_booking():
     assert booking.start_time == booking_details["start_time"]
     assert booking.end_time == booking_details["end_time"]
     assert booking.room_booked == kwargs["room_booked"]
-    assert booking.rrule == kwargs["rrule"]
     assert booking.compensation is None
     assert booking.total_amount is None
     assert not booking.pk  # Not saved in the database
@@ -541,7 +540,7 @@ def test_manger_filter_bookings_list(
         (
             {
                 "rrule_repetitions": "WEEKLY",
-                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends": "AT_DATE",
                 "rrule_ends_count": None,
                 "rrule_ends_enddate": datetime.date(2023, 12, 31),
                 "rrule_daily_interval": None,
@@ -557,7 +556,7 @@ def test_manger_filter_bookings_list(
         (
             {
                 "rrule_repetitions": "MONTHLY_BY_DAY",
-                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends": "AT_DATE",
                 "rrule_ends_count": None,
                 "rrule_ends_enddate": datetime.date(2023, 12, 31),
                 "rrule_daily_interval": None,
@@ -573,7 +572,7 @@ def test_manger_filter_bookings_list(
         (
             {
                 "rrule_repetitions": "MONTHLY_BY_DATE",
-                "rrule_ends": "UNTIL_DATE",
+                "rrule_ends": "NEVER",
                 "rrule_ends_count": None,
                 "rrule_ends_enddate": datetime.date(2023, 12, 31),
                 "rrule_daily_interval": None,
@@ -584,7 +583,7 @@ def test_manger_filter_bookings_list(
                 "rrule_monthly_byday": None,
                 "startdate": datetime.date(2023, 10, 1),
             },
-            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=3;UNTIL=20231231T000000;BYMONTHDAY=1,12,30",
+            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=1,12,30",
         ),
     ],
 )

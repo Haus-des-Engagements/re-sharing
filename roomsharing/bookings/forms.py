@@ -104,6 +104,7 @@ class BookingForm(forms.ModelForm):
     RRULE_ENDS_CHOICES = [
         ("AFTER_TIMES", _("after")),
         ("AT_DATE", _("at")),
+        ("NEVER", _("never")),
     ]
     rrule_ends = forms.ChoiceField(
         choices=RRULE_ENDS_CHOICES,
@@ -377,6 +378,10 @@ class BookingForm(forms.ModelForm):
         if start_datetime < timezone.now():
             msg = _("The start must be in the future.")
             self.add_error("starttime", msg)
+
+        if startdate > timezone.now().date() + timezone.timedelta(days=730 * 2):
+            msg = _("You can only book for the next 2 years.")
+            self.add_error("startdate", msg)
 
         cleaned_data["timespan"] = (start_datetime, end_datetime)
 

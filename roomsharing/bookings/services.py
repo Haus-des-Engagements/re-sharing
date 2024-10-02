@@ -1,3 +1,4 @@
+import concurrent
 from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
@@ -88,6 +89,9 @@ def create_rrule_string(rrule_data):
 
     if rrule_ends == "AFTER_TIMES":
         count = rrule_ends_count
+        rrule_enddate = None
+    elif rrule_ends == "NEVER":
+        count = None
         rrule_enddate = None
     else:
         count = None
@@ -231,59 +235,69 @@ def generate_recurrence(booking_data):
     start_time = booking_data["start_time"]
     end_time = booking_data["end_time"]
     rrule_string = booking_data.get("rrule_string", "")
-
-    bookings = []
-    occurrences = list(rrulestr(rrule_string))
-    starttime = timespan[0].time()
-    endtime = timespan[1].time()
     rrule_total_amount = 0
-    for occurrence in occurrences:
-        start_datetime = timezone.make_aware(datetime.combine(occurrence, starttime))
-        end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime))
-        timespan = (start_datetime, end_datetime)
-        compensation = None
-        total_amount = None
-        if booking_data["compensation"] != "":
-            compensation = get_object_or_404(
-                Compensation, id=booking_data["compensation"]
-            )
-            if compensation.hourly_rate is not None:
-                total_amount = (
-                    (end_datetime - start_datetime).total_seconds()
-                    / 3600
-                    * compensation.hourly_rate
-                )
+    limited_rrule_string = rrule_string
+    # Limit the recurrence rule if needed
+    if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
+        future_date = timezone.now() + timedelta(days=730)
+        formatted_date = future_date.strftime("%Y%m%dT%H%M%S")
+        limited_rrule_string = rrule_string + f";UNTIL={formatted_date}"
 
-        booking_details = {
-            "user": user,
-            "title": title,
-            "room": room,
-            "start_datetime": start_datetime,
-            "end_datetime": end_datetime,
-            "organization": organization,
-            "status": status,
-            "timespan": timespan,
-            "start_date": occurrence.date(),
-            "start_time": start_time,
-            "end_time": end_time,
-            "compensation": compensation,
-            "total_amount": total_amount,
-        }
+    # Generate occurrences
+    occurrences = list(rrulestr(limited_rrule_string))
+    starttime_naive = timespan[0].time()
+    endtime_naive = timespan[1].time()
 
-        rrule = RecurrenceRule()
-        rrule.rrule = rrule_string
-        rrule.start_time = starttime
-        rrule.end_time = endtime
-        rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
-        rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
-        rrule.excepted_dates = []
+    # Calculate the total amount if compensation is provided
+    compensation = None
+    total_amount = None
+    if booking_data["compensation"]:
+        compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
+        if compensation.hourly_rate is not None:
+            duration_hours = (timespan[1] - timespan[0]).total_seconds() / 3600
+            total_amount = duration_hours * compensation.hourly_rate
 
-        bookings.append(
-            create_booking(booking_details, room_booked=room.is_booked(timespan))
+    # Helper function to create a booking
+    def create_booking(occurrence):
+        start_datetime = timezone.make_aware(
+            datetime.combine(occurrence, starttime_naive)
         )
-    bookable = len([booking for booking in bookings if booking.room_booked]) < len(
-        bookings
-    )
+        end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime_naive))
+        timespan = (start_datetime, end_datetime)
+        booking = Booking(
+            user=user,
+            title=title,
+            room=room,
+            timespan=timespan,
+            organization=organization,
+            status=status,
+            start_date=occurrence.date(),
+            start_time=start_time,
+            end_time=end_time,
+            compensation=compensation,
+            total_amount=total_amount,
+        )
+        booking.room_booked = room.is_booked(timespan)
+        return booking
+
+    # Create bookings in parallel
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        bookings = list(executor.map(create_booking, occurrences))
+
+    # Create recurrence rule
+    rrule = RecurrenceRule()
+    rrule.rrule = rrule_string
+    rrule.start_time = starttime_naive
+    rrule.end_time = endtime_naive
+    rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
+    if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
+        rrule.last_occurrence_date = None
+    else:
+        rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
+    rrule.excepted_dates = []
+
+    # Determine if room is bookable
+    bookable = any(not booking.room_booked for booking in bookings)
 
     return bookings, message, rrule, bookable, rrule_total_amount
 
@@ -303,7 +317,6 @@ def create_booking(booking_details, **kwargs):
         total_amount=booking_details["total_amount"],
     )
     booking.room_booked = kwargs.get("room_booked") or None
-    booking.rrule = kwargs.get("rrule") or None
     return booking
 
 
