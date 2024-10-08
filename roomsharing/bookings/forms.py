@@ -298,6 +298,11 @@ class BookingForm(forms.ModelForm):
                 style="display: none",  # initially hidden
             ),
             HTML("{% include 'bookings/partials/compensations.html' %}"),
+            HTML(
+                '{% if form.compensation.errors %}<span id="error_compensations" '
+                'class="text-danger"><strong>{% load i18n %}{% trans "Please select a '
+                'billing / donation plan" %}</strong></span>{% endif %}'
+            ),
             Div(
                 Field(
                     "message", css_class="form-control", wrapper_class="col-8", rows="3"

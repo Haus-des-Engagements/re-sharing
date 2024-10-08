@@ -10,7 +10,8 @@
              type="radio"
              name="compensation"
              id="{{ compensation.id }}"
-             value="{{ compensation.id }}" />
+             value="{{ compensation.id }}"
+             {% if forloop.first %}required{% endif %} />
       <label class="form-check-label" for="{{ compensation.id }}">
         {{ compensation.name }}
         {% if compensation.hourly_rate is not None %}({{ compensation.hourly_rate }} € / Stunde){% endif %}
