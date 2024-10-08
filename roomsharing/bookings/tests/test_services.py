@@ -1,4 +1,5 @@
 import datetime
+import zoneinfo
 from datetime import timedelta
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -21,7 +22,7 @@ from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
 from roomsharing.bookings.services import create_rrule_string
 from roomsharing.bookings.services import filter_bookings_list
-from roomsharing.bookings.services import generate_recurrence
+from roomsharing.bookings.services import generate_occurrences
 from roomsharing.bookings.services import generate_single_booking
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import manager_cancel_booking
@@ -385,7 +386,11 @@ class TestSaveBookingMessage(TestCase):
     ],
 )
 def test_filter_bookings_list(
-    show_past_bookings, organization, status, hide_recurring_bookings, expected
+    show_past_bookings,
+    organization,
+    status,
+    hide_recurring_bookings,
+    expected,
 ):
     """
     Test the 'filter_bookings_list' function
@@ -416,7 +421,12 @@ def test_filter_bookings_list(
     )
     # Act
     bookings, organizations = filter_bookings_list(
-        organization, show_past_bookings, status, user, hide_recurring_bookings
+        organization,
+        show_past_bookings,
+        status,
+        user,
+        hide_recurring_bookings,
+        page_number=1,
     )
     # Assert
     assert len(bookings) == expected
@@ -533,57 +543,69 @@ def test_manger_filter_bookings_list(
                 "rrule_monthly_interval": None,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": None,
-                "startdate": datetime.date(2023, 10, 1),
+                "start_datetime": datetime.datetime(
+                    2023, 10, 1, 20, 00, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
             },
-            "DTSTART:20231001T000000\nRRULE:FREQ=DAILY;COUNT=5",
+            "DTSTART:20231001T180000Z\nRRULE:FREQ=DAILY;COUNT=5",
         ),
         (
             {
                 "rrule_repetitions": "WEEKLY",
                 "rrule_ends": "AT_DATE",
                 "rrule_ends_count": None,
-                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_ends_enddate": datetime.datetime(
+                    2023, 12, 31, 20, 30, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
                 "rrule_daily_interval": None,
                 "rrule_weekly_interval": 1,
                 "rrule_weekly_byday": ["MO", "WE", "FR"],
                 "rrule_monthly_interval": None,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": None,
-                "startdate": datetime.date(2023, 10, 1),
+                "start_datetime": datetime.datetime(
+                    2023, 10, 1, 10, 30, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
             },
-            "DTSTART:20231001T000000\nRRULE:FREQ=WEEKLY;UNTIL=20231231T000000;BYDAY=MO,WE,FR",
+            "DTSTART:20231001T083000Z\nRRULE:FREQ=WEEKLY;UNTIL=20231231T193000Z;BYDAY=MO,WE,FR",
         ),
         (
             {
                 "rrule_repetitions": "MONTHLY_BY_DAY",
                 "rrule_ends": "AT_DATE",
                 "rrule_ends_count": None,
-                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_ends_enddate": datetime.datetime(
+                    2023, 12, 31, 20, 30, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
                 "rrule_daily_interval": None,
                 "rrule_weekly_interval": 1,
                 "rrule_weekly_byday": None,
                 "rrule_monthly_interval": 2,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": ["MO(1)", "WE(3)", "SU(-1)"],
-                "startdate": datetime.date(2023, 10, 1),
+                "start_datetime": datetime.datetime(
+                    2023, 10, 1, 6, 00, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
             },
-            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=2;UNTIL=20231231T000000;BYDAY=+1MO,+3WE,-1SU",
+            "DTSTART:20231001T040000Z\nRRULE:FREQ=MONTHLY;INTERVAL=2;UNTIL=20231231T193000Z;BYDAY=+1MO,+3WE,-1SU",
         ),
         (
             {
                 "rrule_repetitions": "MONTHLY_BY_DATE",
                 "rrule_ends": "NEVER",
                 "rrule_ends_count": None,
-                "rrule_ends_enddate": datetime.date(2023, 12, 31),
+                "rrule_ends_enddate": None,
                 "rrule_daily_interval": None,
                 "rrule_weekly_interval": None,
                 "rrule_weekly_byday": None,
                 "rrule_monthly_interval": 3,
                 "rrule_monthly_bydate": [1, 12, 30],
                 "rrule_monthly_byday": None,
-                "startdate": datetime.date(2023, 10, 1),
+                "start_datetime": datetime.datetime(
+                    2023, 10, 1, 9, 30, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
+                ),
             },
-            "DTSTART:20231001T000000\nRRULE:FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=1,12,30",
+            "DTSTART:20231001T073000Z\nRRULE:FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=1,12,30",
         ),
     ],
 )
@@ -712,9 +734,10 @@ class TestGenerateRecurrence(TestCase):
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
         self.start_datetime = timezone.now() + timedelta(days=1)
+        self.dt_start = "DTSTART:" + self.start_datetime.strftime("%Y%m%dT%H%M%S") + "Z"
         self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
         self.count = 5
-        self.rrule_string = "FREQ=DAILY;COUNT=" + str(self.count)
+        self.rrule_string = self.dt_start + "\nFREQ=DAILY;COUNT=" + str(self.count)
         self.booking_data = {
             "user": self.user.slug,
             "title": "Recurring Meeting",
@@ -729,10 +752,11 @@ class TestGenerateRecurrence(TestCase):
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
+            "start_datetime": self.start_datetime,
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
             self.booking_data
         )
 
@@ -760,7 +784,7 @@ class TestGenerateRecurrence(TestCase):
     def test_generate_recurrence_no_compensation(self):
         self.booking_data["compensation"] = ""
 
-        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
             self.booking_data
         )
 
@@ -790,19 +814,19 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["organization"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_recurrence(self.booking_data)
+            generate_occurrences(self.booking_data)
 
     def test_generate_recurrence_invalid_room(self):
         self.booking_data["room"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_recurrence(self.booking_data)
+            generate_occurrences(self.booking_data)
 
     def test_generate_recurrence_invalid_user(self):
         self.booking_data["user"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_recurrence(self.booking_data)
+            generate_occurrences(self.booking_data)
 
 
 class TestSaveRecurrence(TestCase):
@@ -828,6 +852,7 @@ class TestSaveRecurrence(TestCase):
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
+            "start_datetime": self.start_datetime,
         }
 
         (
@@ -836,7 +861,7 @@ class TestSaveRecurrence(TestCase):
             self.rrule,
             self.bookable,
             self.rrule_total_amount,
-        ) = generate_recurrence(self.booking_data)
+        ) = generate_occurrences(self.booking_data)
 
     def test_save_recurrence_valid(self):
         # Add the booking permission for the user

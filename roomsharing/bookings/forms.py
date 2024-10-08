@@ -382,6 +382,7 @@ class BookingForm(forms.ModelForm):
         if startdate > timezone.now().date() + timezone.timedelta(days=730 * 2):
             msg = _("You can only book for the next 2 years.")
             self.add_error("startdate", msg)
+        cleaned_data["start_datetime"] = start_datetime
 
         cleaned_data["timespan"] = (start_datetime, end_datetime)
 
@@ -426,6 +427,11 @@ class BookingForm(forms.ModelForm):
         for field, (msg, condition) in field_errors.items():
             if condition:
                 self.add_error(field, _(msg))
+        if rrule_ends_enddate:
+            cleaned_data["rrule_ends_enddate"] = timezone.make_aware(
+                datetime.datetime.combine(rrule_ends_enddate, endtime)
+            )
+        cleaned_data["start_datetime"] = start_datetime
 
         return cleaned_data
 

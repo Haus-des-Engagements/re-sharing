@@ -71,4 +71,27 @@
     </div>
   </form>
   <div id="booking-list">{% include "bookings/partials/list_bookings.html" %}</div>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      {% if bookings.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1">{% trans "First" %}</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ bookings.previous_page_number }}">{% trans "Previous" %}</a>
+        </li>
+      {% endif %}
+      <li class="page-item active">
+        <a class="page-link" href="#">{% trans "Page" %} {{ bookings.number }} {% trans "of" %} {{ bookings.paginator.num_pages }}</a>
+      </li>
+      {% if bookings.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ bookings.next_page_number }}">{% trans "Next" %}</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ bookings.paginator.num_pages }}">{% trans "Last" %}</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
 {% endblock content %}

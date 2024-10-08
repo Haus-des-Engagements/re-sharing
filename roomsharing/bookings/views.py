@@ -22,7 +22,7 @@ from .services import cancel_rrule_bookings
 from .services import create_booking_data
 from .services import create_bookingmessage
 from .services import filter_bookings_list
-from .services import generate_recurrence
+from .services import generate_occurrences
 from .services import generate_single_booking
 from .services import get_occurrences
 from .services import get_recurrences_list
@@ -43,10 +43,16 @@ def list_bookings_view(request):
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "all"
     organization = request.GET.get("organization") or "all"
+    page_number = request.GET.get("page", 1)
     hide_recurring_bookings = request.GET.get("hide_recurring_bookings") or False
 
     bookings, organizations = filter_bookings_list(
-        organization, show_past_bookings, status, request.user, hide_recurring_bookings
+        organization,
+        show_past_bookings,
+        status,
+        request.user,
+        hide_recurring_bookings,
+        page_number,
     )
 
     context = {
@@ -188,7 +194,7 @@ def preview_and_save_recurrence_view(request):
         return redirect("bookings:create-booking")
 
     try:
-        bookings, message, rrule, bookable, rrule_total_amount = generate_recurrence(
+        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
             booking_data
         )
     except PermissionDenied as e:

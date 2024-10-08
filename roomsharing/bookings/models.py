@@ -12,6 +12,7 @@ from django.db.models import PROTECT
 from django.db.models import SET_NULL
 from django.db.models import CharField
 from django.db.models import DateField
+from django.db.models import DateTimeField
 from django.db.models import DecimalField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
@@ -45,6 +46,11 @@ class RecurrenceRule(TimeStampedModel):
     last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
     excepted_dates = ArrayField(
         DateField(), verbose_name=_("Excepted dates"), blank=True
+    )
+    status = IntegerField(
+        verbose_name=_("Status"),
+        choices=BookingStatus.choices,
+        default=BookingStatus.PENDING,
     )
 
     class Meta:
@@ -205,6 +211,9 @@ class Booking(TimeStampedModel):
         blank=True,
     )
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
+    auto_generated_on = DateTimeField(
+        _("Automatically generated on"), blank=True, null=True
+    )
 
     class Meta:
         verbose_name = _("Booking")
@@ -247,7 +256,7 @@ class BookingMessage(TimeStampedModel):
     booking = ForeignKey(
         Booking,
         verbose_name=_("Booking"),
-        on_delete=PROTECT,
+        on_delete=CASCADE,
         related_name="bookingmessages_of_booking",
         related_query_name="bookingmessage_of_booking",
     )

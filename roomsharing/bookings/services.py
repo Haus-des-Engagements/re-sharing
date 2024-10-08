@@ -1,4 +1,6 @@
 import concurrent
+import re
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
@@ -18,11 +20,15 @@ from dateutil.rrule import WEEKLY
 from dateutil.rrule import rrule
 from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.db.models import Exists
 from django.db.models import OuterRef
+from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.timezone import make_naive
 from django.utils.translation import gettext_lazy as _
 from django_q.models import Schedule
 from django_q.tasks import async_task
@@ -85,7 +91,7 @@ def create_rrule_string(rrule_data):
     rrule_monthly_interval = rrule_data["rrule_monthly_interval"]
     rrule_monthly_bydate = rrule_data["rrule_monthly_bydate"]
     rrule_monthly_byday = rrule_data["rrule_monthly_byday"]
-    startdate = rrule_data["startdate"]
+    start_datetime = rrule_data["start_datetime"].astimezone(UTC)
 
     if rrule_ends == "AFTER_TIMES":
         count = rrule_ends_count
@@ -95,7 +101,7 @@ def create_rrule_string(rrule_data):
         rrule_enddate = None
     else:
         count = None
-        rrule_enddate = rrule_ends_enddate
+        rrule_enddate = rrule_ends_enddate.astimezone(UTC)
 
     byweekday, bymonthday = None, None
     weekdays_dict = {
@@ -142,12 +148,19 @@ def create_rrule_string(rrule_data):
         interval=interval,
         byweekday=byweekday,
         bymonthday=bymonthday,
-        dtstart=startdate,
+        dtstart=start_datetime,
         bysetpos=None,
         until=rrule_enddate,
         count=count,
     )
-    return str(recurrence_pattern)
+    # hacky way of getting the timzone ("Z") into dtstart and UNTIL
+    unmodified_str = str(recurrence_pattern)
+    # Add 'Z' before line break
+    modified_string = re.sub(r"(\n)", "Z\\1", unmodified_str)
+    if rrule_enddate:
+        # Add 'Z' after UNTIL value
+        modified_string = re.sub(r"(UNTIL=[0-9T]+)(;|$)", r"\1Z\2", modified_string)
+    return str(modified_string)
 
 
 def generate_single_booking(booking_data):
@@ -221,7 +234,7 @@ def save_booking(user, booking, message):
     return booking
 
 
-def generate_recurrence(booking_data):
+def generate_occurrences(booking_data):
     message = booking_data["message"]
     timespan = (
         isoparse(booking_data["timespan"][0]),
@@ -241,13 +254,12 @@ def generate_recurrence(booking_data):
     if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
         future_date = timezone.now() + timedelta(days=730)
         formatted_date = future_date.strftime("%Y%m%dT%H%M%S")
-        limited_rrule_string = rrule_string + f";UNTIL={formatted_date}"
+        limited_rrule_string = rrule_string + f";UNTIL={formatted_date}Z"
 
     # Generate occurrences
     occurrences = list(rrulestr(limited_rrule_string))
     starttime_naive = timespan[0].time()
     endtime_naive = timespan[1].time()
-
     # Calculate the total amount if compensation is provided
     compensation = None
     total_amount = None
@@ -287,8 +299,8 @@ def generate_recurrence(booking_data):
     # Create recurrence rule
     rrule = RecurrenceRule()
     rrule.rrule = rrule_string
-    rrule.start_time = starttime_naive
-    rrule.end_time = endtime_naive
+    rrule.start_time = start_time
+    rrule.end_time = end_time
     rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
     if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
         rrule.last_occurrence_date = None
@@ -400,6 +412,9 @@ def cancel_rrule_bookings(user, rrule_uuid):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
 
+    rrule.status = BookingStatus.CANCELLED
+    rrule.save()
+
     for booking in bookings:
         if booking.is_cancelable():
             with set_actor(user):
@@ -440,11 +455,19 @@ def get_booking_activity_stream(booking):
     return sorted(activity_stream, key=lambda x: x["date"], reverse=True)
 
 
-def filter_bookings_list(
-    organization, show_past_bookings, status, user, hide_recurring_bookings
+def filter_bookings_list(  # noqa: PLR0913
+    organization, show_past_bookings, status, user, hide_recurring_bookings, page_number
 ):
     organizations = organizations_with_confirmed_bookingpermission(user)
-    bookings = Booking.objects.filter(organization__in=organizations)
+    related_fields = [
+        "organization",
+        "room__compensations_of_room",
+        "user",
+        "recurrence_rule",
+    ]
+    bookings = Booking.objects.filter(organization__in=organizations).prefetch_related(
+        *related_fields
+    )
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":
@@ -453,6 +476,10 @@ def filter_bookings_list(
         bookings = bookings.filter(status__in=status)
     if hide_recurring_bookings:
         bookings = bookings.filter(recurrence_rule__isnull=True)
+
+    paginator = Paginator(bookings, 100)
+    page_objects = paginator.get_page(page_number)
+    bookings = page_objects
 
     return bookings, organizations
 
@@ -507,6 +534,7 @@ def create_booking_data(user, form):
         "end_time": form.cleaned_data["endtime"].isoformat(),
         "user": user.slug,
         "compensation": form.cleaned_data["compensation"].id,
+        "start_datetime": form.cleaned_data["start_datetime"].isoformat(),
     }
     rrule_string = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
@@ -601,18 +629,13 @@ def manager_filter_rrules_list(organization, show_past_rrules, status):
 def manager_confirm_rrule(user, rrule_uuid):
     rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
     bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule.status = BookingStatus.CONFIRMED
+    rrule.save()
     for booking in bookings:
         if booking.is_confirmable():
             with set_actor(user):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
-            schedule(
-                "roomsharing.bookings.tasks.booking_reminder_email",
-                booking_slug=booking.slug,
-                task_name="booking-reminder-email",
-                schedule_type=Schedule.ONCE,
-                next_run=booking.timespan.lower - timedelta(days=7),
-            )
     async_task(
         "roomsharing.bookings.tasks.recurrence_confirmation_email",
         rrule,
@@ -625,6 +648,8 @@ def manager_confirm_rrule(user, rrule_uuid):
 def manager_cancel_rrule(user, rrule_uuid):
     rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
     bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule.status = BookingStatus.CANCELLED
+    rrule.save()
 
     for booking in bookings:
         if booking.is_cancelable():
@@ -637,5 +662,55 @@ def manager_cancel_rrule(user, rrule_uuid):
         rrule,
         task_name="recurrence-cancellation-email",
     )
-
     return rrule
+
+
+def extend_recurrences():
+    max_booking_date = timezone.now() + timedelta(days=729)
+    rrules = RecurrenceRule.objects.filter(
+        Q(last_occurrence_date=None) | Q(last_occurrence_date__gt=max_booking_date)
+    ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
+    target_date = timezone.now() + timedelta(days=735)
+
+    for single_rrule in rrules:
+        # find occurrences that are after max booking date and before target date
+        occurrences = list(
+            rrulestr(single_rrule.rrule).between(
+                make_naive(max_booking_date), make_naive(target_date), inc=True
+            )
+        )
+        # get one existing booking
+        proto_booking = single_rrule.get_first_booking()
+        for occurrence in occurrences:
+            start_datetime = timezone.make_aware(
+                datetime.combine(occurrence, proto_booking.start_time)
+            )
+            end_datetime = timezone.make_aware(
+                datetime.combine(occurrence, proto_booking.end_time)
+            )
+            timespan = (start_datetime, end_datetime)
+            booking = Booking(
+                user=proto_booking.user,
+                title=proto_booking.title,
+                room=proto_booking.room,
+                timespan=timespan,
+                organization=proto_booking.organization,
+                status=single_rrule.status,
+                start_date=occurrence.date(),
+                start_time=proto_booking.start_time,
+                end_time=proto_booking.end_time,
+                compensation=proto_booking.compensation,
+                total_amount=proto_booking.total_amount,
+                recurrence_rule=single_rrule,
+                auto_generated_on=timezone.now(),
+            )
+            if not booking.room.is_booked(timespan):
+                try:
+                    booking.save()
+                except IntegrityError as e:
+                    if "exclude_overlapping_reservations" in str(e):
+                        error_message = (
+                            "Booking overlaps with existing booking. "
+                            "Please contact support."
+                        )
+                        raise IntegrityError(error_message) from e
