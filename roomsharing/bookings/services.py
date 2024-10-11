@@ -22,8 +22,6 @@ from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Exists
-from django.db.models import OuterRef
 from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
@@ -549,17 +547,23 @@ def create_booking_data(user, form):
 
 
 def manager_filter_bookings_list(
-    organization, show_past_bookings, status, hide_recurring_bookings
+    organization, show_past_bookings, status, show_recurring_bookings
 ):
     organizations = Organization.objects.all()
-    bookings = Booking.objects.all()
+    related_fields = [
+        "organization",
+        "room__compensations_of_room",
+        "user",
+        "recurrence_rule",
+    ]
+    bookings = Booking.objects.prefetch_related(*related_fields)
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":
         bookings = bookings.filter(organization__slug=organization)
     if status != "all":
         bookings = bookings.filter(status__in=status)
-    if hide_recurring_bookings:
+    if not show_recurring_bookings:
         bookings = bookings.filter(recurrence_rule__isnull=True)
 
     bookings = bookings.order_by("created")
@@ -618,13 +622,8 @@ def manager_filter_rrules_list(organization, show_past_rrules, status):
         rrules = rrules.filter(
             booking_of_recurrencerule__organization__slug=organization
         )
-
     if status != "all":
-        booking_exists = Booking.objects.filter(
-            recurrence_rule=OuterRef("pk"), status=status
-        )
-        rrules = rrules.filter(Exists(booking_exists))
-
+        rrules = rrules.filter(status=status)
     rrules = rrules.order_by("created")
 
     return rrules, organizations

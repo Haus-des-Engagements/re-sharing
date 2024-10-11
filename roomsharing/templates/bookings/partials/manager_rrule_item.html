@@ -1,8 +1,7 @@
 {% load i18n %}
 
 <td>{{ rrule.created|date:"d.m.Y H:i" }}</td>
-<td>{{ rrule.first_occurrence_date|date:"d.m.Y" }}</td>
-<td>{{ rrule.last_occurrence_date|date:"d.m.Y" }}</td>
+<td>{{ rrule.first_occurrence_date|date:"d.m.Y" }} - {{ rrule.last_occurrence_date|date:"d.m.Y" }}</td>
 <td>
   {{ rrule.get_first_booking.timespan.lower|date:"H:i" }}
   - {{ rrule.get_first_booking.timespan.upper|date:"H:i" }}
@@ -13,27 +12,34 @@
 </td>
 <td>{{ rrule.get_first_booking.organization }}</td>
 <td>
+  <span class="fs-6 badge text-bg-status-{{ rrule.status }}">{{ rrule.get_status_display }}</span>
+</td>
+<td>
   <span class="fs-6 badge text-bg-status-1">{{ rrule.get_pending|length }}</span>
   <span class="fs-6 badge text-bg-status-2">{{ rrule.get_confirmed|length }}</span>
   <span class="fs-6 badge text-bg-status-3">{{ rrule.get_cancelled|length }}</span>
 </td>
 <td>
-  <button id="confirm-button"
-          type="submit"
-          class="btn btn-sm btn-outline-success"
-          value="Submit"
-          hx-confirm="{% trans 'Are you sure you want to confirm all bookings?' %}"
-          hx-patch="{% url 'bookings:manager-confirm-recurrence' rrule_uuid=rrule.uuid %}"
-          hx-swap="innerHTML"
-          hx-target="#tr-{{ rrule.uuid }}">{% trans "Confirm" %}</button>
+  {% if rrule.status == 1 %}
+    <button id="confirm-button"
+            type="submit"
+            class="btn btn-sm btn-outline-success"
+            value="Submit"
+            hx-confirm="{% trans 'Are you sure you want to confirm all bookings?' %}"
+            hx-patch="{% url 'bookings:manager-confirm-recurrence' rrule_uuid=rrule.uuid %}"
+            hx-swap="innerHTML"
+            hx-target="#tr-{{ rrule.uuid }}">{% trans "Confirm" %}</button>
+  {% endif %}
 </td>
 <td>
-  <button id="cancel-button"
-          type="submit"
-          class="btn btn-sm btn-outline-danger"
-          value="Submit"
-          hx-confirm="{% trans 'Are you sure you want to cancel all bookings?' %}"
-          hx-patch="{% url 'bookings:manager-cancel-recurrence' rrule_uuid=rrule.uuid %}"
-          hx-swap="innerHTML"
-          hx-target="#tr-{{ rrule.uuid }}">{% trans "Cancel" %}</button>
+  {% if rrule.status == 1 or rrule.status == 2 %}
+    <button id="cancel-button"
+            type="submit"
+            class="btn btn-sm btn-outline-danger"
+            value="Submit"
+            hx-confirm="{% trans 'Are you sure you want to cancel all bookings?' %}"
+            hx-patch="{% url 'bookings:manager-cancel-recurrence' rrule_uuid=rrule.uuid %}"
+            hx-swap="innerHTML"
+            hx-target="#tr-{{ rrule.uuid }}">{% trans "Cancel" %}</button>
+  {% endif %}
 </td>

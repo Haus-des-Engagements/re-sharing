@@ -34,8 +34,10 @@
     </div>
     <div class="col-auto" id="div_id_status">
       <select name="status" class="select form-select" id="id_status">
-        <option selected value="all">{% trans "all statuses" %}</option>
-        {% for status in statuses %}<option value="{{ status.0 }}">{{ status.1 }}</option>{% endfor %}
+        <option value="all">{% trans "all statuses" %}</option>
+        {% for status in statuses %}
+          <option {% if status.0 == 1 %}selected{% endif %}value="{{ status.0 }}">{{ status.1 }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="col-auto form-check">
@@ -47,11 +49,11 @@
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"
-             name="hide_recurring_bookings"
+             name="show_recurring_bookings"
              class="form-check-input"
              id="id_hide_recurring_bookings" />
-      <label for="id_hide_recurring_bookings" class="form-check-label">
-        {% trans "hide" %} <a href="{% url 'bookings:manager-list-recurrences' %}">{% trans "recurring bookings" %}</a>
+      <label for="id_show_recurring_bookings" class="form-check-label">
+        {% trans "show" %} <a href="{% url 'bookings:manager-list-recurrences' %}">{% trans "recurring bookings" %}</a>
       </label>
     </div>
     <div id="spinner"

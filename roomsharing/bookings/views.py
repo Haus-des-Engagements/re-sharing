@@ -256,12 +256,12 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     Shows the bookings for a room manager so that they can be confirmed or cancelled
     """
     show_past_bookings = request.GET.get("show_past_bookings") or False
-    status = request.GET.get("status") or "all"
+    status = request.GET.get("status") or "1"
     organization = request.GET.get("organization") or "all"
-    hide_recurring_bookings = request.GET.get("hide_recurring_bookings") or False
+    show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
 
     bookings, organizations = manager_filter_bookings_list(
-        organization, show_past_bookings, status, hide_recurring_bookings
+        organization, show_past_bookings, status, show_recurring_bookings
     )
 
     context = {
@@ -307,7 +307,7 @@ def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
     Shows the recurrences for a room manager so that they can be confirmed or cancelled
     """
     show_past_rrules = request.GET.get("show_past_rrules") or False
-    status = request.GET.get("status") or "all"
+    status = request.GET.get("status") or 1
     organization = request.GET.get("organization") or "all"
 
     rrules, organizations = manager_filter_rrules_list(

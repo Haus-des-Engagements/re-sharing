@@ -75,6 +75,8 @@ def update_organization(user, form, organization):
 
 
 def user_has_bookingpermission(user, booking):
+    if user.is_staff:
+        return True
     return (
         BookingPermission.objects.filter(organization=booking.organization)
         .filter(user=user)

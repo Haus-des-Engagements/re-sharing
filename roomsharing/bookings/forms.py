@@ -318,13 +318,18 @@ class BookingForm(forms.ModelForm):
                 css_class="row g-2",
             ),
         )
-        organizations = (
-            Organization.objects.filter(organization_of_bookingpermission__user=user)
-            .filter(
-                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
+        if user.is_staff:
+            organizations = Organization.objects.all()
+        else:
+            organizations = (
+                Organization.objects.filter(
+                    organization_of_bookingpermission__user=user
+                )
+                .filter(
+                    organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
+                )
+                .distinct()
             )
-            .distinct()
-        )
 
         self.fields["organization"].queryset = organizations
 
