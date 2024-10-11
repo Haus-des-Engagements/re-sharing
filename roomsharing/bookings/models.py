@@ -214,6 +214,9 @@ class Booking(TimeStampedModel):
     auto_generated_on = DateTimeField(
         _("Automatically generated on"), blank=True, null=True
     )
+    differing_billing_address = CharField(
+        _("Differing billing address"), blank=True, max_length=256
+    )
 
     class Meta:
         verbose_name = _("Booking")

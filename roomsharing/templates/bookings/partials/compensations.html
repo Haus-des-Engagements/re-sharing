@@ -1,6 +1,8 @@
 {% load i18n %}
 
-<div class="mb-3 mt-3" id="compensations-container">
+<div class="mb-3 mt-3"
+     id="compensations-container"
+     x-data="{ showBilling: false }">
   <label for="id_compensation" class="form-label requiredField">
     {% trans "Donation / Billing" %}<span class="asteriskField">*</span>
   </label>
@@ -11,10 +13,13 @@
              name="compensation"
              id="{{ compensation.id }}"
              value="{{ compensation.id }}"
+             x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}"
              {% if forloop.first %}required{% endif %} />
       <label class="form-check-label" for="{{ compensation.id }}">
         {{ compensation.name }}
-        {% if compensation.hourly_rate is not None %}({{ compensation.hourly_rate }} € / Stunde){% endif %}
+        {% if compensation.hourly_rate is not None %}
+          ({{ compensation.hourly_rate }} € /{% trans "hour" %})
+        {% endif %}
         {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
       </label>
     </div>
@@ -23,4 +28,16 @@
       <em>{% trans "Please select a room first." %}</em>
     </p>
   {% endfor %}
+  {# djlint:off H021 #}
+  <div id="div_id_differing_billing_address"
+       class="mb-3 col-8 mt-2"
+       x-show="showBilling"
+       style="display: none">
+    {# djlint:on #}
+    <label for="id_differing_billing_address" class="form-label">{% trans "Differing billing address" %}</label>
+    <input type="text"
+           name="differing_billing_address"
+           class="form-control textinput"
+           id="id_differing_billing_address" />
+  </div>
 </div>

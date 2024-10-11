@@ -454,6 +454,7 @@ def test_create_booking():
         "end_time": timespan.upper.time(),
         "compensation": None,
         "total_amount": None,
+        "differing_billing_address": None,
     }
     kwargs = {"room_booked": True, "rrule": "FREQ=DAILY"}
 
@@ -663,6 +664,7 @@ class TestGenerateSingleBooking(TestCase):
         self.compensation = CompensationFactory(hourly_rate=50, room=[self.room])
         self.start_datetime = timezone.now() + timedelta(days=1)
         self.duration = 2
+        self.differing_billing_address = "Fast lane 2, 929 Free-City"
         self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
         self.booking_data = {
             "user": self.user.slug,
@@ -678,6 +680,7 @@ class TestGenerateSingleBooking(TestCase):
             "end_time": self.end_datetime.time(),
             "message": "Please confirm my booking",
             "compensation": self.compensation.id,
+            "differing_billing_address": self.differing_billing_address,
         }
 
     def test_generate_single_booking_valid_data(self):
@@ -692,9 +695,11 @@ class TestGenerateSingleBooking(TestCase):
         assert booking.compensation == self.compensation
         assert booking.total_amount == self.compensation.hourly_rate * self.duration
         assert message == "Please confirm my booking"
+        assert booking.differing_billing_address == self.differing_billing_address
 
     def test_generate_single_booking_no_compensation(self):
         self.booking_data["compensation"] = ""
+        self.booking_data["different_billing_address"] = ""
         booking, message = generate_single_booking(self.booking_data)
 
         assert isinstance(booking, Booking)

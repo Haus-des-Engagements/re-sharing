@@ -199,6 +199,7 @@ def generate_single_booking(booking_data):
         "end_time": booking_data["end_time"],
         "compensation": compensation,
         "total_amount": total_amount,
+        "differing_billing_address": booking_data["differing_billing_address"],
     }
     booking = create_booking(booking_details)
     return booking, message
@@ -327,6 +328,7 @@ def create_booking(booking_details, **kwargs):
         end_time=booking_details["end_time"],
         compensation=booking_details["compensation"],
         total_amount=booking_details["total_amount"],
+        differing_billing_address=booking_details["differing_billing_address"],
     )
     booking.room_booked = kwargs.get("room_booked") or None
     return booking
@@ -535,6 +537,7 @@ def create_booking_data(user, form):
         "user": user.slug,
         "compensation": form.cleaned_data["compensation"].id,
         "start_datetime": form.cleaned_data["start_datetime"].isoformat(),
+        "differing_billing_address": form.cleaned_data["differing_billing_address"],
     }
     rrule_string = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":

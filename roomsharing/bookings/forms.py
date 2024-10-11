@@ -84,13 +84,21 @@ class BookingForm(forms.ModelForm):
                 conditions = ": " + obj.conditions
             if obj.hourly_rate is None:
                 return obj.name + conditions
-            return obj.name + " (" + str(obj.hourly_rate) + " € / Stunde)" + conditions
+                hour = _("hour")
+            return obj.name + " (" + str(obj.hourly_rate) + " € / " + hour + conditions
 
     compensation = CompensationModelChoiceField(
         queryset=Compensation.objects.all(),
         label=_("Compensation"),
         widget=forms.RadioSelect,
         required=True,
+    )
+
+    differing_billing_address = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"id": "id_billing_address", "class": "form-control textinput"}
+        ),
     )
 
     FREQUENCIES = [
@@ -387,6 +395,7 @@ class BookingForm(forms.ModelForm):
         if startdate > timezone.now().date() + timezone.timedelta(days=730 * 2):
             msg = _("You can only book for the next 2 years.")
             self.add_error("startdate", msg)
+
         cleaned_data["start_datetime"] = start_datetime
 
         cleaned_data["timespan"] = (start_datetime, end_datetime)
@@ -451,4 +460,5 @@ class BookingForm(forms.ModelForm):
             "message",
             "room",
             "number_of_attendees",
+            "differing_billing_address",
         ]
