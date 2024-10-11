@@ -23,21 +23,22 @@
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ bookings.0.room }}</h5>
+          <h5 class="card-title">{{ bookings.0.title }}</h5>
           <p class="card-text">
-            {% trans "Title" %}: <em>{{ bookings.0.title }}</em>
+            <svg width="1em" height="1em">
+              <use href="#bi-door-closed" />
+            </svg>
+            <em>{{ bookings.0.room }}</em>
             <br />
-            {% trans "Booked for" %}: <em>{{ bookings.0.organization }}</em>
+            <svg width="1em" height="1em">
+              <use href="#bi-person-fill" />
+            </svg>
+            {% trans "booked by:" %}   {{ bookings.0.user.first_name }} {{ bookings.0.user.last_name }} ({{ bookings.0.user.email }}) {% trans "for" %} {{ bookings.0.organization.name }}
             <br />
             {% trans "Occurrences" %}: {{ bookings|length }}
             <br />
-            {% if rrule_total_amount != 0 %}
-              <svg width="1em" height="1em">
-                <use href="#bi-currency-euro" />
-              </svg>
-              {% if rrule_total_amount %}
-                {% trans "Total amount" %}: {{ rrule_total_amount|floatformat:2 }}€
-              {% endif %}
+            {% if bookings.0.differing_billing_address %}
+              {% trans "Differing billing address" %}: {{ bookings.0.differing_billing_address }}
             {% endif %}
           </p>
         </div>
@@ -49,6 +50,9 @@
       </div>
     </div>
     <div class="card-footer">
+      <svg width="1em" height="1em">
+        <use href="#bi-arrow-repeat" />
+      </svg>
       {{ rrule.get_human_readable_rule }}
       <br />
     </div>

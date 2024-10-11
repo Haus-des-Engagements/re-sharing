@@ -289,6 +289,7 @@ def generate_occurrences(booking_data):
             end_time=end_time,
             compensation=compensation,
             total_amount=total_amount,
+            differing_billing_address=booking_data["differing_billing_address"],
         )
         booking.room_booked = room.is_booked(timespan)
         return booking

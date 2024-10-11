@@ -742,6 +742,7 @@ class TestGenerateRecurrence(TestCase):
         self.dt_start = "DTSTART:" + self.start_datetime.strftime("%Y%m%dT%H%M%S") + "Z"
         self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
         self.count = 5
+        self.differing_billing_address = "Fast lane 2, 929 Free-City"
         self.rrule_string = self.dt_start + "\nFREQ=DAILY;COUNT=" + str(self.count)
         self.booking_data = {
             "user": self.user.slug,
@@ -758,6 +759,7 @@ class TestGenerateRecurrence(TestCase):
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
             "start_datetime": self.start_datetime,
+            "differing_billing_address": self.differing_billing_address,
         }
 
     def test_generate_recurrence_valid_data(self):
@@ -774,6 +776,7 @@ class TestGenerateRecurrence(TestCase):
             assert booking.organization == self.organization
             assert booking.compensation == self.compensation
             assert booking.total_amount == self.compensation.hourly_rate * self.duration
+            assert booking.differing_billing_address == self.differing_billing_address
 
         assert message == "Please confirm my recurring bookings"
         assert isinstance(rrule, RecurrenceRule)
@@ -788,6 +791,7 @@ class TestGenerateRecurrence(TestCase):
 
     def test_generate_recurrence_no_compensation(self):
         self.booking_data["compensation"] = ""
+        self.booking_data["differing_billing_address"] = ""
 
         bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
             self.booking_data
@@ -802,6 +806,7 @@ class TestGenerateRecurrence(TestCase):
             assert booking.organization == self.organization
             assert booking.compensation is None
             assert booking.total_amount is None
+            assert booking.differing_billing_address == ""
 
         assert message == "Please confirm my recurring bookings"
         assert isinstance(rrule, RecurrenceRule)
@@ -858,6 +863,7 @@ class TestSaveRecurrence(TestCase):
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
             "start_datetime": self.start_datetime,
+            "differing_billing_address": "",
         }
 
         (
