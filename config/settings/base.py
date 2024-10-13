@@ -84,6 +84,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     "auditlog",
     "django_q",
+    "tinymce",
 ]
 
 LOCAL_APPS = [

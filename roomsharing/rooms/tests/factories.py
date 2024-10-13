@@ -36,7 +36,7 @@ class RoomFactory(DjangoModelFactory):
     bookable_times = Faker("sentence", nb_words=6)
     pricing = Faker("sentence", nb_words=6)
     included_equipment = Faker("sentence", nb_words=6)
-    bookable_equipment = Faker("sentence", nb_words=6)
+    accessibility = Faker("sentence", nb_words=6)
     manager = SubFactory(UserFactory)
     access = SubFactory(AccessFactory)
 

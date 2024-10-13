@@ -11,6 +11,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_http_methods
 
 from roomsharing.utils.models import BookingStatus
 
@@ -38,6 +39,7 @@ from .services import set_initial_booking_data
 from .services import show_booking
 
 
+@require_http_methods(["GET"])
 @login_required
 def list_bookings_view(request):
     show_past_bookings = request.GET.get("show_past_bookings") or False
@@ -155,6 +157,7 @@ def cancel_occurrence_view(request, slug):
     )
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_view(request):
     booking_data = request.session["booking_data"]
@@ -187,6 +190,7 @@ def preview_and_save_booking_view(request):
     return redirect("bookings:create-booking")
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_recurrence_view(request):
     booking_data = request.session["booking_data"]
@@ -226,6 +230,7 @@ def preview_and_save_recurrence_view(request):
     return redirect("bookings:create-booking")
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def create_booking_data_form_view(request):
     if request.method == "GET":
@@ -250,6 +255,7 @@ def create_booking_data_form_view(request):
     return render(request, "bookings/create-booking.html", {"form": form})
 
 
+@require_http_methods(["GET"])
 @staff_member_required
 def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     """
@@ -301,6 +307,7 @@ def manager_confirm_booking_view(request, booking_slug):
     )
 
 
+@require_http_methods(["GET"])
 @staff_member_required
 def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
     """

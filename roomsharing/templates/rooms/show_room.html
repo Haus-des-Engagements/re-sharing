@@ -60,6 +60,25 @@
       </div>
     </div>
   </div>
+  <h2>{% trans "Description" %}</h2>
+  {{ room.description|safe }}
+  <h2>{% trans "Compensations" %}</h2>
+  {% trans "We try to do our best but have very little funding. A lot of work is carried out by volunteers." %}
+  <ul>
+    {% for compensation in compensations %}
+      <li>
+        {{ compensation.name }}
+        {% if compensation.hourly_rate is not None %}
+          ({{ compensation.hourly_rate }} € /{% trans "hour" %})
+        {% endif %}
+        {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  <h2>{% trans "Access" %}</h2>
+  {{ room.access.instructions }}
+  <h2>{% trans "Accessibility" %}</h2>
+  {{ room.accessibility|safe }}
   <h2 class="mt-4">Bookings</h2>
   <div class="mt-3 mb-4">
     <p>

@@ -24,7 +24,9 @@ class GetWeeklyBookingsTest(TestCase):
 
         room = RoomFactory()
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates, compensations = show_room(
+            room.slug, date_string
+        )
 
         # Check the length of returned lists
         number_of_timeslots = 36
@@ -82,7 +84,9 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates, compensations = show_room(
+            room.slug, date_string
+        )
 
         number_of_timeslots = 36
         assert len(time_slots) == number_of_timeslots
@@ -102,7 +106,9 @@ class GetWeeklyBookingsTest(TestCase):
     def test_without_date(self):
         date_string = None
         room = RoomFactory()
-        room, time_slots, weekdays, dates = show_room(room.slug, date_string)
+        room, time_slots, weekdays, dates, compensations = show_room(
+            room.slug, date_string
+        )
         today = timezone.now().date()
         start_of_week = today - datetime.timedelta(days=today.weekday())
 

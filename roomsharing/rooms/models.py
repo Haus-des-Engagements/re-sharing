@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 from PIL import Image
+from tinymce.models import HTMLField
 
 from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
@@ -83,13 +84,13 @@ class Room(Model):
         related_name="rooms_of_access",
         related_query_name="room_of_access",
     )
-    description = TextField(_("Description"), max_length=512)
+    description = HTMLField(_("Description"), max_length=5000, blank=True)
+    accessibility = HTMLField(_("Accessibility"), max_length=5000, blank=True)
     square_meters = PositiveIntegerField(_("Square Meters"), null=True, blank=True)
     max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
     pricing = TextField(_("Pricing conditions"), max_length=512, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
-    bookable_equipment = TextField(_("Bookable Equipment"), max_length=512, blank=True)
     manager = ForeignKey("users.User", on_delete=PROTECT, verbose_name=_("Manager"))
 
     class Meta:

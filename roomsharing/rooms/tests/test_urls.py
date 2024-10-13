@@ -20,3 +20,8 @@ def test_list_rooms():
 def test_room_planner():
     assert reverse("rooms:planner") == "/rooms/planner/"
     assert resolve("/rooms/planner/").view_name == "rooms:planner"
+
+
+def test_get_compensations():
+    assert reverse("rooms:get-compensations") == "/rooms/get-compensations/"
+    assert resolve("/rooms/get-compensations/").view_name == "rooms:get-compensations"

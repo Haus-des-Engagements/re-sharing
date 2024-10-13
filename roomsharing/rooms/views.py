@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 
 from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
@@ -8,6 +9,7 @@ from roomsharing.rooms.services import planner_table
 from roomsharing.rooms.services import show_room
 
 
+@require_http_methods(["GET"])
 def list_rooms_view(request):
     persons_count = request.GET.get("persons_count")
     start_datetime = request.GET.get("start_datetime")
@@ -19,15 +21,17 @@ def list_rooms_view(request):
     return render(request, "rooms/list_rooms.html", context)
 
 
+@require_http_methods(["GET"])
 def show_room_view(request, room_slug):
     date_string = request.GET.get("date")
-    room, timeslots, weekdays, dates = show_room(room_slug, date_string)
+    room, timeslots, weekdays, dates, compensations = show_room(room_slug, date_string)
 
     context = {
         "room": room,
         "weekdays": weekdays,
         "timeslots": timeslots,
         "dates": dates,
+        "compensations": compensations,
     }
     if request.headers.get("HX-Request"):
         return render(request, "rooms/partials/weekly_bookings_table.html", context)
@@ -35,6 +39,7 @@ def show_room_view(request, room_slug):
     return render(request, "rooms/show_room.html", context)
 
 
+@require_http_methods(["GET"])
 def planner_view(request):
     date_string = request.GET.get("date")
     rooms, timeslots, dates = planner_table(date_string)
@@ -45,6 +50,7 @@ def planner_view(request):
     return render(request, "rooms/planner.html", context)
 
 
+@require_http_methods(["POST"])
 def get_compensations(request):
     room_id = request.POST.get("room")
     if not room_id:

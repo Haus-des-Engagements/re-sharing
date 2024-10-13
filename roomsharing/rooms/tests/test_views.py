@@ -5,7 +5,9 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
+from roomsharing.rooms.tests.factories import CompensationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
+from roomsharing.rooms.views import get_compensations
 from roomsharing.rooms.views import list_rooms_view
 from roomsharing.rooms.views import planner_view
 from roomsharing.rooms.views import show_room_view
@@ -77,3 +79,26 @@ class PlannerViewTest(TestCase):
 
         # Check status code of the response
         assert response.status_code == HTTPStatus.OK
+
+
+class GetCompensationsViewTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.room = RoomFactory(name="Test Room")
+        self.compensation_name = "For Free"
+        self.compensation = CompensationFactory(name=self.compensation_name)
+        self.compensation.room.add(self.room)
+
+    def test_get_compensations_empty_room(self):
+        request = self.factory.post(reverse("rooms:get-compensations"))
+        response = get_compensations(request)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Please select a room first.", html=True)
+
+    def test_get_compensations_with_room(self):
+        request = self.factory.post(
+            reverse("rooms:get-compensations"), {"room": self.room.id}
+        )
+        response = get_compensations(request)
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, self.compensation_name)

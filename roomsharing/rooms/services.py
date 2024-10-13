@@ -11,6 +11,7 @@ from django.utils import timezone
 from roomsharing.bookings.models import Booking
 from roomsharing.organizations.models import Organization
 from roomsharing.rooms.models import AccessCode
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 
@@ -85,7 +86,8 @@ def show_room(room_slug, date_string):
         "shown_date": shown_date,
         "next_week": shown_date + timedelta(days=7),
     }
-    return room, time_slots, weekdays, dates
+    compensations = Compensation.objects.filter(room=room)
+    return room, time_slots, weekdays, dates, compensations
 
 
 def filter_rooms(persons_count, start_datetime):
