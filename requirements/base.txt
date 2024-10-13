@@ -18,3 +18,4 @@ django-redis==5.4.0  # https://github.com/jazzband/django-redis
 django-extensions==3.2.3  # https://github.com/django-extensions/django-extensions
 django-auditlog==3.0.0  # https://github.com/jazzband/django-auditlog
 django-q2==1.7.2  # https://github.com/django-q2/django-q2
+django-tinymce==4.1.0  # https://github.com/jazzband/django-tinymce
