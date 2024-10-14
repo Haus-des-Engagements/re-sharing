@@ -28,9 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import make_naive
 from django.utils.translation import gettext_lazy as _
-from django_q.models import Schedule
 from django_q.tasks import async_task
-from django_q.tasks import schedule
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
@@ -219,16 +217,6 @@ def save_booking(user, booking, message):
             booking,
             task_name="booking-confirmation-email",
         )
-    if booking.status == BookingStatus.CONFIRMED and (
-        booking.timespan.lower - timedelta(days=7) > timezone.now()
-    ):
-        schedule(
-            "roomsharing.bookings.tasks.booking_reminder_email",
-            booking_slug=booking.slug,
-            task_name="booking-reminder-email",
-            schedule_type=Schedule.ONCE,
-            next_run=booking.timespan.lower - timedelta(days=7),
-        )
 
     return booking
 
@@ -247,7 +235,6 @@ def generate_occurrences(booking_data):
     start_time = booking_data["start_time"]
     end_time = booking_data["end_time"]
     rrule_string = booking_data.get("rrule_string", "")
-    rrule_total_amount = 0
     limited_rrule_string = rrule_string
     # Limit the recurrence rule if needed
     if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
@@ -311,7 +298,7 @@ def generate_occurrences(booking_data):
     # Determine if room is bookable
     bookable = any(not booking.room_booked for booking in bookings)
 
-    return bookings, message, rrule, bookable, rrule_total_amount
+    return bookings, message, rrule, bookable
 
 
 def create_booking(booking_details, **kwargs):
@@ -600,13 +587,6 @@ def manager_confirm_booking(user, booking_slug):
             booking,
             task_name="booking-confirmation-email",
         )
-        schedule(
-            "roomsharing.bookings.tasks.booking_reminder_email",
-            booking_slug=booking.slug,
-            task_name="booking-reminder-email",
-            schedule_type=Schedule.ONCE,
-            next_run=booking.timespan.lower - timedelta(days=7),
-        )
 
         return booking
 
@@ -717,3 +697,22 @@ def extend_recurrences():
                             "Please contact support."
                         )
                         raise IntegrityError(error_message) from e
+
+
+def collect_booking_reminder_mails():
+    bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
+    dt_in_5_days = timezone.now() + timedelta(days=5)
+    dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
+    dt_in_6_days = dt_in_5_days + timedelta(days=1)
+    bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
+    bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
+    processed_slugs = []
+
+    for booking in bookings:
+        async_task(
+            "roomsharing.bookings.tasks.booking_reminder_email",
+            booking_slug=booking.slug,
+            task_name="booking-reminder-email",
+        )
+        processed_slugs.append(booking.slug)
+    return processed_slugs

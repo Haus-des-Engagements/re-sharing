@@ -198,9 +198,7 @@ def preview_and_save_recurrence_view(request):
         return redirect("bookings:create-booking")
 
     try:
-        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
-            booking_data
-        )
+        bookings, message, rrule, bookable = generate_occurrences(booking_data)
     except PermissionDenied as e:
         return HttpResponse(e.message, status=e.status_code)
 

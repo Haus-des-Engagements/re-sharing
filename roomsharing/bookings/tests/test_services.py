@@ -17,6 +17,7 @@ from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
 from roomsharing.bookings.services import cancel_rrule_bookings
+from roomsharing.bookings.services import collect_booking_reminder_mails
 from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
@@ -763,9 +764,7 @@ class TestGenerateRecurrence(TestCase):
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
-            self.booking_data
-        )
+        bookings, message, rrule, bookable = generate_occurrences(self.booking_data)
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -793,9 +792,7 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["compensation"] = ""
         self.booking_data["differing_billing_address"] = ""
 
-        bookings, message, rrule, bookable, rrule_total_amount = generate_occurrences(
-            self.booking_data
-        )
+        bookings, message, rrule, bookable = generate_occurrences(self.booking_data)
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -818,7 +815,6 @@ class TestGenerateRecurrence(TestCase):
         assert rrule.last_occurrence_date == rrule_occurrences[-1]
         assert rrule.excepted_dates == []
         assert bookable is True
-        assert rrule_total_amount == 0
 
     def test_generate_recurrence_invalid_organization(self):
         self.booking_data["organization"] = "invalid-slug"
@@ -871,7 +867,6 @@ class TestSaveRecurrence(TestCase):
             self.message,
             self.rrule,
             self.bookable,
-            self.rrule_total_amount,
         ) = generate_occurrences(self.booking_data)
 
     def test_save_recurrence_valid(self):
@@ -935,3 +930,39 @@ def test_manager_confirm_rrule(mock_is_confirmable):
     assert booking1.status == BookingStatus.CONFIRMED
     booking2.refresh_from_db()
     assert booking2.status == BookingStatus.CONFIRMED
+
+
+class CollectBookingReminderMailsTest(TestCase):
+    def setUp(self):
+        self.now = timezone.now()
+        self.in_5_days = self.now + timedelta(days=5)
+        self.in_5_days = self.in_5_days.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        self.in_6_days = self.in_5_days + timedelta(days=1)
+
+        # Creating a booking within the 5-6 days timespan
+        self.booking = BookingFactory(
+            slug="test-booking",
+            status=BookingStatus.CONFIRMED,
+            timespan=[self.in_5_days, self.in_6_days - timedelta(seconds=1)],
+        )
+        self.booking2 = BookingFactory(
+            slug="test-booking_2",
+            status=BookingStatus.CONFIRMED,
+            timespan=[self.now, self.now + timedelta(hours=1)],
+        )
+
+    @patch("roomsharing.bookings.services.async_task")  # Mocking the async_task
+    def test_collect_booking_reminder_mails(self, mock_async_task):
+        collect_booking_reminder_mails()
+
+        # Ensure the async_task was called exactly once
+        assert mock_async_task.call_count == 1
+
+        # Verify async_task was called with the correct arguments
+        mock_async_task.assert_called_with(
+            "roomsharing.bookings.tasks.booking_reminder_email",
+            booking_slug=self.booking.slug,
+            task_name="booking-reminder-email",
+        )
