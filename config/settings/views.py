@@ -1,8 +1,4 @@
-from urllib.parse import quote
-
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.views.static import serve
@@ -28,16 +24,6 @@ def protected_media(request, path):
             access_granted = True
 
     if access_granted:
-        # Serve file directly in development mode
-        if settings.DEBUG:
-            response = serve(
-                request, path, document_root=MEDIA_ROOT, show_indexes=False
-            )
-        else:
-            # Content-type will be detected by nginx
-            response = HttpResponse(status=200)
-            del response["Content-Type"]
-            response["X-Accel-Redirect"] = "/media/" + quote(path)
-        return response
+        return serve(request, path, document_root=MEDIA_ROOT, show_indexes=False)
 
     return HttpResponseForbidden("Not authorized to access this media.")
