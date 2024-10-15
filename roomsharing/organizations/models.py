@@ -1,11 +1,15 @@
 import uuid
+from pathlib import Path
 
+import magic
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
+from django.core.exceptions import ValidationError
 from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import EmailField
+from django.db.models import FileField
 from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
@@ -17,6 +21,21 @@ from django_extensions.db.fields import AutoSlugField
 from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
+
+
+def validate_is_pdf(file):
+    valid_mime_types = ["application/pdf"]
+    invalid_mime_type_message = "Unsupported file type."
+    invalid_file_extension_message = "Unacceptable file extension."
+
+    file_mime_type = magic.from_buffer(file.read(1024), mime=True)
+    if file_mime_type not in valid_mime_types:
+        raise ValidationError(invalid_mime_type_message)
+
+    valid_file_extensions = [".pdf"]
+    ext = Path(file.name).suffix
+    if ext.lower() not in valid_file_extensions:
+        raise ValidationError(invalid_file_extension_message)
 
 
 class Organization(TimeStampedModel):
@@ -105,6 +124,12 @@ class Organization(TimeStampedModel):
     entitled = BooleanField(_("Approval of entitlement"))
     notes = CharField(
         _("Notes"), max_length=512, blank=True, help_text=_("Internal notes")
+    )
+    usage_agreement = FileField(
+        upload_to="protected/usage_agreements/",
+        validators=[validate_is_pdf],
+        blank=True,
+        null=True,
     )
 
     class Meta:

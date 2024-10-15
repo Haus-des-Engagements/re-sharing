@@ -180,7 +180,7 @@ def create_organization_view(request):
     form = OrganizationForm()
 
     if request.method == "POST":
-        form = OrganizationForm(data=request.POST)
+        form = OrganizationForm(request.POST, request.FILES)
 
         if form.is_valid():
             organization = create_organization(request.user, form)
@@ -198,9 +198,10 @@ def update_organization_view(request, organization):
         raise PermissionDenied
 
     if request.method == "POST":
-        form = OrganizationForm(request.POST, instance=organization)
+        form = OrganizationForm(request.POST, request.FILES, instance=organization)
         if form.is_valid():
             organization = update_organization(request.user, form, organization)
+            messages.success(request, "Organization updated successfully.")
             return redirect("organizations:show-organization", organization.slug)
 
     return render(request, "organizations/create_organization.html", {"form": form})

@@ -298,3 +298,13 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 # Your stuff...
 # ------------------------------------------------------------------------------
 AUDITLOG_DISABLE_REMOTE_ADDR = True
+
+
+# Protect user uploaded media files https://github.com/cobusc/django-protected-media/
+PROTECTED_MEDIA_ROOT = "%s/protected/" % BASE_DIR
+PROTECTED_MEDIA_URL = "/protected"
+PROTECTED_MEDIA_SERVER = "nginx"
+PROTECTED_MEDIA_LOCATION_PREFIX = "/internal"  # Prefix used in nginx config
+PROTECTED_MEDIA_AS_DOWNLOADS = (
+    False  # Controls inclusion of a Content-Disposition header
+)

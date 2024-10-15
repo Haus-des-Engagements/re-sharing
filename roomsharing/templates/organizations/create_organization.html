@@ -15,7 +15,7 @@
       {% trans "Only registered organizations can book rooms. If your organization is not registered yet, you can add it here." %}
     </p>
   </div>
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {% crispy form %}
   </form>

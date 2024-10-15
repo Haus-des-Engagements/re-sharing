@@ -1,12 +1,11 @@
 # ruff: noqa
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, re_path
 from django.urls import path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
-from django.views.static import serve
+from config.settings.views import protected_media
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -30,10 +29,8 @@ urlpatterns = [
     path("tinymce/", include("tinymce.urls")),
     path("dashboard/", include("roomsharing.dashboards.urls", namespace="dashboards")),
     # Media files
-    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
-    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    re_path(r"^media/(?P<path>.*)", protected_media, name="protected_media"),
 ]
-
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit

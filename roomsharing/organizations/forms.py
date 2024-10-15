@@ -1,6 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML
 from crispy_forms.layout import Column
+from crispy_forms.layout import Field
 from crispy_forms.layout import Layout
 from crispy_forms.layout import Row
 from crispy_forms.layout import Submit
@@ -70,6 +71,11 @@ class OrganizationForm(forms.ModelForm):
         ),
         required=True,
     )
+    usage_agreement = forms.FileField(
+        label=_("Upload the signed usage agreement here."),
+        required=True,
+        help_text=_("Please upload a single PDF file."),
+    )
 
     class Meta:
         model = Organization
@@ -90,6 +96,7 @@ class OrganizationForm(forms.ModelForm):
             "website",
             "entitled",
             "values_approval",
+            "usage_agreement",
         )
 
     def __init__(self, *args, **kwargs):
@@ -128,6 +135,7 @@ class OrganizationForm(forms.ModelForm):
                 Column("website", css_class="form-group col-md-3 mb-0"),
                 css_class="form-row",
             ),
+            Field("usage_agreement", css_class="custom-file-input"),
             HTML("<h3 class='mt-5 mb-3'>Weiteres</h3>"),
             "is_coworking",
             "is_public",
