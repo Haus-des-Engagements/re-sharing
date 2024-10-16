@@ -72,8 +72,15 @@ class OrganizationForm(forms.ModelForm):
         required=True,
     )
     usage_agreement = forms.FileField(
-        label=_("Upload the signed usage agreement here."),
-        required=True,
+        label=mark_safe(  # noqa: S308
+            _(
+                "Upload the signed <a href='https://haus-des-engagements.de/wp"
+                "-content/uploads/2024/04/Vereinbarung_Raumnutzung_HdE_Formular_2024"
+                ".pdf' target='_blank'>usage agreement</a> or your signed co-working "
+                "contract here."
+            )
+        ),
+        required=False,
         help_text=_("Please upload a single PDF file."),
     )
 
