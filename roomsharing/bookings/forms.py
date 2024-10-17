@@ -351,7 +351,7 @@ class BookingForm(forms.ModelForm):
                 room=self.initial["room"]
             )
 
-    def clean(self):  # noqa: C901
+    def clean(self):  # noqa: C901, PLR0912
         cleaned_data = super().clean()
         room = cleaned_data.get("room")
         startdate = cleaned_data.get("startdate")
@@ -390,29 +390,25 @@ class BookingForm(forms.ModelForm):
 
         if end_datetime <= start_datetime:
             msg = _("The end must be after the start.")
-            for field in ["endtime", "starttime", "startdate"]:
+            for field in ["endtime", "starttime"]:
                 self.add_error(field, msg)
 
         if start_datetime < timezone.now():
             msg = _("The start must be in the future.")
-            self.add_error("starttime", msg)
+            for field in ["starttime", "startdate"]:
+                self.add_error(field, msg)
 
         if startdate > timezone.now().date() + timezone.timedelta(days=730 * 2):
             msg = _("You can only book for the next 2 years.")
             self.add_error("startdate", msg)
 
+        if rrule_ends_enddate:
+            cleaned_data["rrule_ends_enddate"] = timezone.make_aware(
+                datetime.datetime.combine(rrule_ends_enddate, endtime)
+            )
+
         cleaned_data["start_datetime"] = start_datetime
-
         cleaned_data["timespan"] = (start_datetime, end_datetime)
-
-        booking_overlap = Booking.objects.filter(
-            status=BookingStatus.CONFIRMED,
-            room=room,
-            timespan__overlap=(start_datetime, end_datetime),
-        )
-        if rrule_repetitions == "NO_REPETITIONS" and booking_overlap.exists():
-            msg = _("The room is already booked during your selected timeslot.")
-            self.add_error("room", msg)
 
         field_errors = {
             "rrule_ends_count": (
@@ -446,11 +442,15 @@ class BookingForm(forms.ModelForm):
         for field, (msg, condition) in field_errors.items():
             if condition:
                 self.add_error(field, _(msg))
-        if rrule_ends_enddate:
-            cleaned_data["rrule_ends_enddate"] = timezone.make_aware(
-                datetime.datetime.combine(rrule_ends_enddate, endtime)
-            )
-        cleaned_data["start_datetime"] = start_datetime
+
+        if rrule_repetitions == "NO_REPETITIONS" and end_datetime > start_datetime:
+            if Booking.objects.filter(
+                status=BookingStatus.CONFIRMED,
+                room=room,
+                timespan__overlap=(start_datetime, end_datetime),
+            ).exists():
+                msg = _("The room is already booked during your selected timeslot.")
+                self.add_error("room", msg)
 
         return cleaned_data
 

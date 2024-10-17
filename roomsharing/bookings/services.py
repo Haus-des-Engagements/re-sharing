@@ -370,8 +370,17 @@ def set_initial_booking_data(endtime, startdate, starttime, room):
         initial_data["startdate"] = datetime.strftime(timezone.now().date(), "%Y-%m-%d")
     if starttime:
         initial_data["starttime"] = starttime
+        starttime = datetime.strptime(starttime, "%H:%M").astimezone(
+            timezone.get_current_timezone()
+        )
+    else:
+        starttime = timezone.localtime(timezone.now()) + timedelta(hours=1)
+        initial_data["starttime"] = datetime.strftime(starttime, "%H:00")
     if endtime:
         initial_data["endtime"] = endtime
+    else:
+        endtime = starttime + timedelta(hours=1)
+        initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
     if room:
         initial_data["room"] = get_object_or_404(Room, slug=room)
     return initial_data

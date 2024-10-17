@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
@@ -34,6 +35,7 @@ from roomsharing.bookings.services import manager_filter_bookings_list
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
 from roomsharing.bookings.services import save_recurrence
+from roomsharing.bookings.services import set_initial_booking_data
 from roomsharing.bookings.services import show_booking
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
@@ -966,3 +968,68 @@ class CollectBookingReminderMailsTest(TestCase):
             booking_slug=self.booking.slug,
             task_name="booking-reminder-email",
         )
+
+
+@pytest.mark.parametrize(
+    ("startdate", "starttime", "endtime", "expected_data"),
+    [
+        (
+            "2023-10-10",
+            "11:00",
+            "12:00",
+            {
+                "startdate": "2023-10-10",
+                "starttime": "11:00",
+                "endtime": "12:00",
+            },
+        ),
+        (
+            "2023-10-10",
+            None,
+            "12:00",
+            {
+                "startdate": "2023-10-10",
+                "starttime": "11:00",
+                "endtime": "12:00",
+            },
+        ),
+        (
+            "2023-10-10",
+            "11:00",
+            None,
+            {
+                "startdate": "2023-10-10",
+                "starttime": "11:00",
+                "endtime": "12:00",
+            },
+        ),
+        (
+            None,
+            "11:00",
+            "12:00",
+            {
+                "startdate": "2023-10-10",
+                "starttime": "11:00",
+                "endtime": "12:00",
+            },
+        ),
+        (
+            None,
+            None,
+            None,
+            {
+                "startdate": "2023-10-10",
+                "starttime": "11:00",
+                "endtime": "12:00",
+            },
+        ),
+    ],
+)
+@freeze_time(
+    datetime.datetime(2023, 10, 10, 10, 0, 0).astimezone(
+        tz=timezone.get_current_timezone()
+    )
+)
+def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
+    result = set_initial_booking_data(endtime, startdate, starttime, room=None)
+    assert result == expected_data

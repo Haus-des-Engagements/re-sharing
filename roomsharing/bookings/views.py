@@ -157,7 +157,6 @@ def cancel_occurrence_view(request, slug):
     )
 
 
-@require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_view(request):
     booking_data = request.session["booking_data"]
@@ -228,7 +227,6 @@ def preview_and_save_recurrence_view(request):
     return redirect("bookings:create-booking")
 
 
-@require_http_methods(["GET", "POST"])
 @login_required
 def create_booking_data_form_view(request):
     if request.method == "GET":
