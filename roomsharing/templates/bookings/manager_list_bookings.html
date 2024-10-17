@@ -36,7 +36,7 @@
       <select name="status" class="select form-select" id="id_status">
         <option value="all">{% trans "all statuses" %}</option>
         {% for status in statuses %}
-          <option {% if status.0 == 1 %}selected{% endif %}value="{{ status.0 }}">{{ status.1 }}</option>
+          <option value="{{ status.0 }}" {% if status.0 == 1 %}selected{% endif %}>{{ status.1 }}</option>
         {% endfor %}
       </select>
     </div>
