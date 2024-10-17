@@ -8,9 +8,11 @@ from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.rooms.models import Access
 from roomsharing.rooms.models import AccessCode
+from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.rooms.tests.factories import AccessCodeFactory
 from roomsharing.rooms.tests.factories import AccessFactory
+from roomsharing.rooms.tests.factories import CompensationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.models import User
 from roomsharing.users.tests.factories import UserFactory
@@ -39,6 +41,11 @@ def booking(db) -> Booking:
 @pytest.fixture()
 def organization(db) -> Organization:
     return OrganizationFactory()
+
+
+@pytest.fixture()
+def compensation(db) -> Compensation:
+    return CompensationFactory()
 
 
 @pytest.fixture()

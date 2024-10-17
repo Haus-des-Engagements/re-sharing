@@ -89,7 +89,7 @@
                 <a href="{% url "organizations:show-organization" bp.organization.slug %}">{{ bp.organization }}</a>
               </td>
               <td>
-                <span class="fs-6 badge text-bg-status-{{ bp.status }}">{{ bp.get_status_display }}</span>
+                <span class="fs-6 badge text-bg-status-{{ bp.organization.status }}">{{ bp.organization.get_status_display }}</span>
               </td>
             </tr>
           {% empty %}

@@ -118,6 +118,7 @@ class BookingForm(forms.ModelForm):
         choices=RRULE_ENDS_CHOICES,
         initial="none",
         label=_("ends"),
+        required=False,
     )
     rrule_ends_enddate = forms.DateField(
         label=_("End Date"),
@@ -128,10 +129,10 @@ class BookingForm(forms.ModelForm):
         required=False, max_value=100, min_value=1, initial=5
     )
     rrule_daily_interval = forms.ChoiceField(
-        choices=RRULE_DAILY_INTERVAL, label=_("Repetition frequency")
+        choices=RRULE_DAILY_INTERVAL, label=_("Repetition frequency"), required=False
     )
     rrule_weekly_interval = forms.ChoiceField(
-        choices=RRULE_WEEKLY_INTERVAL, label=_("Repetition frequency")
+        choices=RRULE_WEEKLY_INTERVAL, label=_("Repetition frequency"), required=False
     )
     rrule_weekly_byday = forms.MultipleChoiceField(
         choices=WEEKDAYS,
@@ -140,7 +141,7 @@ class BookingForm(forms.ModelForm):
         label=_("Repeat on these days"),
     )
     rrule_monthly_interval = forms.ChoiceField(
-        choices=RRULE_MONTHLY_INTERVAL, label=_("Repetition frequency")
+        choices=RRULE_MONTHLY_INTERVAL, label=_("Repetition frequency"), required=False
     )
     rrule_monthly_byday = forms.MultipleChoiceField(
         choices=MONTHDAYS,
@@ -351,7 +352,7 @@ class BookingForm(forms.ModelForm):
                 room=self.initial["room"]
             )
 
-    def clean(self):  # noqa: C901, PLR0912
+    def clean(self):  # noqa: C901
         cleaned_data = super().clean()
         room = cleaned_data.get("room")
         startdate = cleaned_data.get("startdate")
@@ -373,32 +374,30 @@ class BookingForm(forms.ModelForm):
                 )
             return time_as_datetime.time()
 
-        if all([startdate, starttime, endtime]):
-            try:
-                starttime = convert_time(starttime)
-                cleaned_data["starttime"] = starttime
-                start_datetime = timezone.make_aware(
-                    datetime.datetime.combine(startdate, starttime)
-                )
-                endtime = convert_time(endtime)
-                cleaned_data["endtime"] = endtime
-                end_datetime = timezone.make_aware(
-                    datetime.datetime.combine(startdate, endtime)
-                )
-            except ValueError as e:
-                self.add_error("starttime", str(e))
+        try:
+            starttime = convert_time(starttime)
+            cleaned_data["starttime"] = starttime
+            start_datetime = timezone.make_aware(
+                datetime.datetime.combine(startdate, starttime)
+            )
+            endtime = convert_time(endtime)
+            cleaned_data["endtime"] = endtime
+            end_datetime = timezone.make_aware(
+                datetime.datetime.combine(startdate, endtime)
+            )
+            if start_datetime < timezone.now():
+                msg = _("The start must be in the future.")
+                for field in ["starttime", "startdate"]:
+                    self.add_error(field, msg)
+            if end_datetime <= start_datetime:
+                msg = _("The end must be after the start.")
+                for field in ["endtime", "starttime"]:
+                    self.add_error(field, msg)
 
-        if end_datetime <= start_datetime:
-            msg = _("The end must be after the start.")
-            for field in ["endtime", "starttime"]:
-                self.add_error(field, msg)
+        except ValueError as e:
+            self.add_error("starttime", str(e))
 
-        if start_datetime < timezone.now():
-            msg = _("The start must be in the future.")
-            for field in ["starttime", "startdate"]:
-                self.add_error(field, msg)
-
-        if startdate > timezone.now().date() + timezone.timedelta(days=730 * 2):
+        if startdate > (timezone.now().date() + timezone.timedelta(days=730 * 2)):
             msg = _("You can only book for the next 2 years.")
             self.add_error("startdate", msg)
 
