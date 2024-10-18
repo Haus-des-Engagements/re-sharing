@@ -13,6 +13,7 @@ from django.db.models import FileField
 from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
+from django.db.models import ManyToManyField
 from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -82,7 +83,7 @@ class Organization(TimeStampedModel):
     name = CharField(_("Name"), max_length=160)
     description = CharField(
         _("Description"),
-        max_length=512,
+        max_length=2048,
         help_text=_("Describe shortly what your organization does."),
     )
     slug = AutoSlugField(populate_from="name", unique=True, editable=False)
@@ -206,10 +207,9 @@ class DefaultBookingStatus(TimeStampedModel):
         blank=True,
         on_delete=CASCADE,
     )
-    room = ForeignKey(
+    room = ManyToManyField(
         Room,
-        verbose_name=_("Room"),
-        on_delete=CASCADE,
+        verbose_name=_("Rooms"),
         related_name="defaultbookingstatuses_of_room",
         related_query_name="defaultbookingstatus_of_room",
     )
@@ -217,19 +217,12 @@ class DefaultBookingStatus(TimeStampedModel):
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
 
     class Meta:
-        unique_together = ("room", "organization")
         verbose_name = _("Default booking status")
         verbose_name_plural = _("Default booking statuses")
         ordering = ["id"]
 
     def __str__(self):
-        return (
-            self.organization.name
-            + " - "
-            + self.room.name
-            + ": "
-            + self.get_status_display()
-        )
+        return self.organization.name + ": " + self.get_status_display()
 
 
 auditlog.register(DefaultBookingStatus, exclude_fields=["created, updated"])

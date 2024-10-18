@@ -18,9 +18,10 @@ class TestOrganizationDefaultBookingStatus(TestCase):
 
     def test_default_booking_status_exists(self):
         default_status = BookingStatus.CONFIRMED
-        DefaultBookingStatusFactory(
-            organization=self.organization, room=self.room, status=default_status
+        dbs = DefaultBookingStatusFactory(
+            organization=self.organization, status=default_status
         )
+        dbs.room.add(self.room)
 
         status = self.organization.default_booking_status(self.room)
         assert status == default_status

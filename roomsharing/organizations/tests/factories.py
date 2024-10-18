@@ -2,6 +2,7 @@ from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
 from factory import SubFactory
+from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from roomsharing.organizations.models import BookingPermission
@@ -43,8 +44,18 @@ class BookingPermissionFactory(DjangoModelFactory):
 
 class DefaultBookingStatusFactory(DjangoModelFactory):
     organization = SubFactory(OrganizationFactory)
-    room = SubFactory("roomsharing.rooms.tests.factories.RoomFactory")
     status = BookingPermission.Status.CONFIRMED
+
+    @post_generation
+    def room(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing
+            return
+
+        if extracted:
+            # A list of rooms were passed in, use them
+            for room in extracted:
+                self.room.add(room)
 
     class Meta:
         model = DefaultBookingStatus
