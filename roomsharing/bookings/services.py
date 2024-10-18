@@ -205,6 +205,9 @@ def save_booking(user, booking, message):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
+    if user.is_staff:
+        booking.status = BookingStatus.CONFIRMED
+
     booking.save()
     if message:
         save_bookingmessage(booking, message, user)
@@ -348,6 +351,8 @@ def save_recurrence(user, bookings, message, rrule):
         raise PermissionDenied
     excepted_dates = []
     # save bookings or - if room not available - add it to excepted dates
+    if user.is_staff:
+        rrule.status = BookingStatus.CONFIRMED
     rrule.save()
     for booking in bookings:
         if booking.room_booked:
