@@ -68,6 +68,16 @@ def booking_db(room):
             timezone.now().date() - timedelta(days=1),
             ["rrule_ends_enddate"],
         ),
+        (
+            timezone.now().date() + timedelta(days=731),
+            "09:00",
+            "11:00",
+            "NO_REPETITIONS",
+            "NEVER",
+            None,
+            None,
+            ["startdate"],
+        ),
     ],
 )
 def test_clean_method(  # noqa: PLR0913

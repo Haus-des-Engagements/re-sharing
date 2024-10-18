@@ -397,7 +397,7 @@ class BookingForm(forms.ModelForm):
         except ValueError as e:
             self.add_error("starttime", str(e))
 
-        if startdate > (timezone.now().date() + timezone.timedelta(days=730 * 2)):
+        if startdate > (timezone.now().date() + timezone.timedelta(days=730)):
             msg = _("You can only book for the next 2 years.")
             self.add_error("startdate", msg)
 
