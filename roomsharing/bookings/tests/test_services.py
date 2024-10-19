@@ -23,6 +23,7 @@ from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
 from roomsharing.bookings.services import create_rrule_string
+from roomsharing.bookings.services import extend_recurrences
 from roomsharing.bookings.services import filter_bookings_list
 from roomsharing.bookings.services import generate_occurrences
 from roomsharing.bookings.services import generate_single_booking
@@ -1033,3 +1034,53 @@ class CollectBookingReminderMailsTest(TestCase):
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
     result = set_initial_booking_data(endtime, startdate, starttime, room=None)
     assert result == expected_data
+
+
+class ExtendRecurrencesTest(TestCase):
+    @pytest.mark.django_db()
+    def test_extend_recurrences(self):
+        user = UserFactory()
+        organization = OrganizationFactory()
+        room = RoomFactory()
+
+        start_date = timezone.now().date() + timedelta(days=1)
+        start_time = datetime.time(10, 30, 0)
+        end_time = datetime.time(12, 30, 0)
+
+        recurrence_rule = RecurrenceRuleFactory(
+            rrule="DTSTART:20241001T040000Z\nRRULE:FREQ=DAILY;INTERVAL=1",
+            # A rule generating daily repetitions
+            status=BookingStatus.CONFIRMED,
+        )
+
+        existing_booking = BookingFactory(
+            user=user,
+            organization=organization,
+            room=room,
+            start_date=start_date,
+            start_time=start_time,
+            end_time=end_time,
+            status=BookingStatus.CONFIRMED,
+            recurrence_rule=recurrence_rule,
+        )
+
+        extend_recurrences()
+
+        max_booking_date = timezone.now() + timedelta(days=729)
+        target_date = timezone.now() + timedelta(days=732)
+
+        new_bookings = Booking.objects.filter(
+            user=user,
+            organization=organization,
+            room=room,
+            start_date__gt=max_booking_date.date(),
+            start_date__lte=target_date.date(),
+            recurrence_rule=recurrence_rule,
+        )
+        expected_bookings = 3
+        assert len(new_bookings) == expected_bookings
+
+        for booking in new_bookings:
+            assert booking.room == existing_booking.room
+            assert booking.recurrence_rule == existing_booking.recurrence_rule
+            assert booking.status == existing_booking.status

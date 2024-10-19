@@ -49,11 +49,7 @@ class AccessCodeFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     access = SubFactory(AccessFactory)
     code = Faker("random_letters", length=6)
-    validity_start = Faker(
-        "date_between_dates",
-        date_start=(timezone.now() - timedelta(days=500)),
-        date_end=timezone.now() + timedelta(days=500),
-    )
+    validity_start = timezone.now() - timedelta(days=10)
     organization = SubFactory(
         "roomsharing.organizations.tests.factories.OrganizationFactory"
     )
@@ -81,3 +77,4 @@ class CompensationFactory(DjangoModelFactory):
 
     class Meta:
         model = Compensation
+        skip_postgeneration_save = True

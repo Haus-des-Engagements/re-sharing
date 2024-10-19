@@ -21,12 +21,10 @@ from dateutil.rrule import rrule
 from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.timezone import make_naive
 from django.utils.translation import gettext_lazy as _
 from django_q.tasks import async_task
 
@@ -667,13 +665,14 @@ def extend_recurrences():
     rrules = RecurrenceRule.objects.filter(
         Q(last_occurrence_date=None) | Q(last_occurrence_date__gt=max_booking_date)
     ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
-    target_date = timezone.now() + timedelta(days=735)
+    rrules = rrules.order_by("created")
+    target_date = timezone.now() + timedelta(days=732)
 
     for single_rrule in rrules:
         # find occurrences that are after max booking date and before target date
         occurrences = list(
             rrulestr(single_rrule.rrule).between(
-                make_naive(max_booking_date), make_naive(target_date), inc=True
+                max_booking_date, target_date, inc=True
             )
         )
         # get one existing booking
@@ -702,15 +701,7 @@ def extend_recurrences():
                 auto_generated_on=timezone.now(),
             )
             if not booking.room.is_booked(timespan):
-                try:
-                    booking.save()
-                except IntegrityError as e:
-                    if "exclude_overlapping_reservations" in str(e):
-                        error_message = (
-                            "Booking overlaps with existing booking. "
-                            "Please contact support."
-                        )
-                        raise IntegrityError(error_message) from e
+                booking.save()
 
 
 def collect_booking_reminder_mails():

@@ -59,3 +59,4 @@ class DefaultBookingStatusFactory(DjangoModelFactory):
 
     class Meta:
         model = DefaultBookingStatus
+        skip_postgeneration_save = True
