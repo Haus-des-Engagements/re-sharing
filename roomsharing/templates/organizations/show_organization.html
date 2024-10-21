@@ -10,53 +10,122 @@
     <h1>{{ organization.name }}</h1>
   </div>
   <div class="row">
-    <div class="card">
-      <div class="card-body">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-file-earmark-text" />
-            </svg>
-            <em>{{ organization.description }}</em>
-          </li>
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-geo-alt" />
-            </svg>
-            {{ organization.city }}
-          </li>
-          {% if organization.website %}
-            <li class="list-group-item">
-              <svg class="fs-4 me-1" width="1em" height="1em">
-                <use href="#bi-globe2" />
-              </svg>
-              <a href="{{ organization.website }}">{{ organization.website }}</a>
-            </li>
+    <table class="table table-hover">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="first-column">{% trans "Status" %}</td>
+          <td>
+            {{ organization.get_status_display }}.
+            {% if organization.status == 1 %}
+              {% trans "We are currently checking your organization. You can already make booking requests." %}
+            {% elif organization.status == 2 %}
+              {% trans "Your organization is confirmed and you are good to go." %}
+            {% else %}
+              {% trans "Your organization has been cancelled." %}
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Name" %}</td>
+          <td>{{ organization.name }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Description" %}</td>
+          <td>{{ organization.description }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Area of activity" %}</td>
+          <td>{{ organization.get_area_of_activity_display }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Legal form" %}</td>
+          <td>{{ organization.get_legal_form_display }}</td>
+        </tr>
+        {% if organization.other_legal_form %}
+          <tr>
+            <td class="first-column">{% trans "Other legal form" %}</td>
+            <td>{{ organization.get_area_of_activity_display }}</td>
+          </tr>
+        {% endif %}
+        <tr>
+          <td class="first-column">{% trans "We are a charitable organization." %}</td>
+          <td>{{ organization.is_charitable|yesno:_("Yes, No") }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Address" %}</td>
+          <td>{{ organization.street_and_housenb }},{{ organization.zip_code }} {{ organization.city }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "E-Mail" %}</td>
+          <td>{{ organization.email }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Phone number" %}</td>
+          <td>{{ organization.phone }}</td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Website" %}</td>
+          <td>
+            <a href="https://{{ organization.website }}">{{ organization.website }}</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Usage agreement" %}</td>
+          <td>
+            {% if organization.usage_agreement %}
+              <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement.url }}</a>
+            </td>
+          {% else %}
+            {% trans "Please upload the usage agreement." %}
           {% endif %}
-          {% if is_admin %}
-            <li class="list-group-item">
-              {% if organization.is_public %}
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-eye" />
-                </svg>
-                {% trans "This organization is visible to others." %}
-              {% else %}
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-eye-slash" />
-                </svg>
-                {% trans "This organization is not visible to others." %}
-              {% endif %}
-            </li>
-          {% endif %}
-          <li class="list-group-item">
-            <svg class="fs-4 me-1" width="1em" height="1em">
-              <use href="#bi-clipboard-heart" />
-            </svg>
-            {{ organization.get_area_of_activity_display }}
-          </li>
-        </ul>
+        </tr>
+        <tr>
+          <td class="first-column">{% trans "Organization information is publicly visible" %}</td>
+          <td>{{ organization.is_public|yesno:_("Yes, No") }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% if organization.is_public %}
+      {% trans "This is what others can see" %}:
+      <div class="row">
+        <div class="col-6">
+          <div class="card">
+            <div class="card-body">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-file-earmark-text" />
+                  </svg>
+                  <em>{{ organization.description }}</em>
+                </li>
+                <li class="list-group-item">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-geo-alt" />
+                  </svg>
+                  {{ organization.city }}
+                </li>
+                {% if organization.website %}
+                  <li class="list-group-item">
+                    <svg class="fs-4 me-1" width="1em" height="1em">
+                      <use href="#bi-globe2" />
+                    </svg>
+                    <a href="https://{{ organization.website }}">{{ organization.website }}</a>
+                  </li>
+                {% endif %}
+                <li class="list-group-item">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-clipboard-heart" />
+                  </svg>
+                  {{ organization.get_area_of_activity_display }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    {% endif %}
   </div>
   <div class="col-md-5 mt-3 row">
     <div>
@@ -125,7 +194,7 @@
                     </button>
                   </div>
                 {% endif %}
-                {% if request.user == user and user.permission_status == 2 %}
+                {% if request.user == user and user.permission_status == 2 and user != request.user %}
                   <div id="{{ user.slug }}-cancel-bookingpermission">
                     <button class="btn btn-outline-danger"
                             hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
@@ -141,7 +210,7 @@
                             hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
                   </div>
                 {% endif %}
-                {% if is_admin and user.permission_role == 1 %}
+                {% if is_admin and user.permission_role == 1 and user != request.user %}
                   <div id="{{ user.slug }}-demote-to-booker">
                     <button class="btn btn-outline-warning"
                             hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"

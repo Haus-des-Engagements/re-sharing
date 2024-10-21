@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<td>{{ organization.created|date:"d.m.Y H:i" }}</td>
+<td>
+  <a href="{% url "organizations:show-organization" organization.slug %}">{{ organization.name }}</a>
+</td>
+<td>
+  <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
+</td>
+<td>
+  {% if organization.is_confirmable %}
+    <button id="confirm-button"
+            type="submit"
+            class="btn btn-sm btn-outline-success"
+            value="Submit"
+            hx-patch="{% url 'organizations:manager-confirm-organization' organization_slug=organization.slug %}"
+            hx-target="#tr-{{ organization.slug }}"
+            hx-swap="innerHTML">{% trans "Confirm" %}</button>
+  {% endif %}
+</td>
+<td>
+  {% if organization.is_cancelable %}
+    <button id="cancel-button"
+            type="submit"
+            class="btn btn-sm btn-outline-danger"
+            value="Submit"
+            hx-confirm="{% trans 'Are you sure you want to cancel this organization?' %}"
+            hx-patch="{% url 'organizations:manager-cancel-organization' organization_slug=organization.slug %}"
+            hx-target="#tr-{{ organization.slug }}"
+            hx-swap="innerHTML">{% trans "Cancel" %}</button>
+  {% endif %}
+</td>

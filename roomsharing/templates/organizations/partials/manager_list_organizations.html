@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<div class="table-responsive mt-5">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th scope="col">{% trans "Created" %}</th>
+        <th scope="col">{% trans "Name" %}</th>
+        <th scope="col">{% trans "Status" %}</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for organization in organizations %}
+        <tr id="tr-{{ organization.slug }}">{% include "organizations/partials/manager_organization_item.html" %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

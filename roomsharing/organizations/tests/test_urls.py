@@ -84,3 +84,36 @@ def test_show_organization(organization: Organization):
         resolve(f"/organizations/{organization.slug}/").view_name
         == "organizations:show-organization"
     )
+
+
+def test_manager_list_organizations_view():
+    assert (
+        reverse("organizations:manager-list-organizations")
+        == "/organizations/manage-organizations/"
+    )
+    assert (
+        resolve("/organizations/manage-organizations/").view_name
+        == "organizations:manager-list-organizations"
+    )
+
+
+def test_manager_cancel_organization(organization: Organization):
+    assert (
+        reverse(
+            "organizations:manager-cancel-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+        == f"/organizations/manage-organizations/{organization.slug}/cancel"
+        f"-organization/"
+    )
+
+
+def test_manager_confirm_organization(organization: Organization):
+    assert (
+        reverse(
+            "organizations:manager-confirm-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+        == f"/organizations/manage-organizations/{organization.slug}/confirm"
+        f"-organization/"
+    )

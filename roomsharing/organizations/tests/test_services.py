@@ -8,11 +8,15 @@ from django.urls import reverse
 from roomsharing.organizations.forms import OrganizationForm
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
+from roomsharing.organizations.services import InvalidOrganizationOperationError
 from roomsharing.organizations.services import create_organization
+from roomsharing.organizations.services import manager_cancel_organization
+from roomsharing.organizations.services import manager_confirm_organization
 from roomsharing.organizations.services import show_organization
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
+from roomsharing.utils.models import BookingStatus
 
 
 class ShowOrganizationTest(TestCase):
@@ -121,3 +125,43 @@ def test_create_organization():
     )
     assert booking_permission.status == BookingPermission.Status.CONFIRMED
     assert booking_permission.role == BookingPermission.Role.ADMIN
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_confirmable", return_value=True)
+def test_manager_confirm_organization(mock_is_confirmable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+    organization = manager_confirm_organization(user, organization.slug)
+
+    assert organization.status == BookingStatus.CONFIRMED
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_confirmable", return_value=False)
+def test_manager_confirm_organization_not_confirmable(mock_is_confirmable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+
+    with pytest.raises(InvalidOrganizationOperationError):
+        manager_confirm_organization(user, organization.slug)
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_cancelable", return_value=True)
+def test_manager_cancel_organization(mock_is_cancelable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+    organization = manager_cancel_organization(user, organization.slug)
+
+    assert organization.status == BookingStatus.CANCELLED
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_cancelable", return_value=False)
+def test_manager_cancel_organization_not_cancelable(mock_is_cancelable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+
+    with pytest.raises(InvalidOrganizationOperationError):
+        manager_cancel_organization(user, organization.slug)

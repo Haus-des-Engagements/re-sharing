@@ -127,6 +127,7 @@ class Organization(TimeStampedModel):
         _("Notes"), max_length=512, blank=True, help_text=_("Internal notes")
     )
     usage_agreement = FileField(
+        _("Usage agreement"),
         upload_to="protected/usage_agreements/",
         validators=[validate_is_pdf],
         blank=True,
@@ -140,6 +141,12 @@ class Organization(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def is_cancelable(self):
+        return self.status != BookingStatus.CANCELLED
+
+    def is_confirmable(self):
+        return self.status == BookingStatus.PENDING
 
     def get_absolute_url(self):
         return reverse("organizations:show-organization", args=[str(self.slug)])
@@ -225,6 +232,6 @@ class DefaultBookingStatus(TimeStampedModel):
         return self.organization.name + ": " + self.get_status_display()
 
 
-auditlog.register(DefaultBookingStatus, exclude_fields=["created, updated"])
-auditlog.register(Organization, exclude_fields=["created, updated"])
-auditlog.register(BookingPermission, exclude_fields=["created, updated"])
+auditlog.register(DefaultBookingStatus, exclude_fields=["updated"])
+auditlog.register(Organization, exclude_fields=["updated"])
+auditlog.register(BookingPermission, exclude_fields=["updated"])

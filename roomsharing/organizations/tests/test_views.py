@@ -1,15 +1,21 @@
 from http import HTTPStatus
+from unittest.mock import patch
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
+from django.http import HttpResponseRedirect
+from django.test import Client
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
+from config.settings.base import ADMIN_URL
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.organizations.views import list_organizations_view
+from roomsharing.organizations.views import manager_list_organizations_view
 from roomsharing.users.tests.factories import UserFactory
 
 
@@ -459,4 +465,96 @@ class DeleteOrganizationView(TestCase):
             response,
             "You are not allowed to delete this organization.",
             status_code=HTTPStatus.UNAUTHORIZED,
+        )
+
+
+class TestManagerOrganizationsView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory(is_staff=True)
+
+    def test_authenticated(self):
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(reverse("organizations:manager-list-organizations"))
+        assert response.status_code == HTTPStatus.OK
+
+    def test_not_authenticated(self):
+        request = self.factory.get("/organizations/manage-organizations/")
+        request.user = AnonymousUser()
+        response = manager_list_organizations_view(request)
+
+        assert isinstance(response, HttpResponseRedirect)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/{ADMIN_URL}login/?next=/organizations/manage-organizations/"
+        )
+
+
+class TestManagerActionsOrganizationView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.staff_user = UserFactory(is_staff=True)
+        self.user = UserFactory(is_staff=False)
+        self.organization = OrganizationFactory()
+        self.cancel_organization_url = reverse(
+            "organizations:manager-cancel-organization",
+            kwargs={"organization_slug": self.organization.slug},
+        )
+        self.confirm_organization_url = reverse(
+            "organizations:manager-confirm-organization",
+            kwargs={"organization_slug": self.organization.slug},
+        )
+
+    @patch(
+        "roomsharing.organizations.models.Organization.is_cancelable", return_value=True
+    )
+    def test_cancel_by_staff(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.staff_user)
+
+        response = client.patch(self.cancel_organization_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch(
+        "roomsharing.organizations.models.Organization.is_cancelable", return_value=True
+    )
+    def test_cancel_by_non_staff(self, mock_is_cancelable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.patch(self.cancel_organization_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/{ADMIN_URL}login/?next=/organizations/manage-organizations/"
+            f"{self.organization.slug}/cancel-organization/"
+        )
+
+    @patch(
+        "roomsharing.organizations.models.Organization.is_confirmable",
+        return_value=True,
+    )
+    def test_confirm_by_staff(self, mock_is_confirmable):
+        client = Client()
+        client.force_login(self.staff_user)
+
+        response = client.patch(self.confirm_organization_url)
+        assert response.status_code == HTTPStatus.OK
+
+    @patch(
+        "roomsharing.organizations.models.Organization.is_confirmable",
+        return_value=True,
+    )
+    def test_confirm_by_non_staff(self, mock_is_confirmable):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.patch(self.confirm_organization_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert (
+            response.url
+            == f"/{ADMIN_URL}login/?next=/organizations/manage-organizations/"
+            f"{self.organization.slug}/confirm-organization/"
         )

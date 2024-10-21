@@ -203,9 +203,6 @@ def save_booking(user, booking, message):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
-    if user.is_staff:
-        booking.status = BookingStatus.CONFIRMED
-
     booking.save()
     if message:
         save_bookingmessage(booking, message, user)

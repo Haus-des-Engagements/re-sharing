@@ -1,18 +1,26 @@
 from http import HTTPStatus
 
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+
+from roomsharing.utils.models import BookingStatus
 
 from .forms import OrganizationForm
 from .models import BookingPermission
 from .models import Organization
 from .services import create_organization
 from .services import filter_organizations
+from .services import manager_cancel_organization
+from .services import manager_confirm_organization
+from .services import manager_filter_organizations_list
 from .services import show_organization
 from .services import update_organization
 from .services import user_has_admin_bookingpermission
@@ -205,3 +213,49 @@ def update_organization_view(request, organization):
             return redirect("organizations:show-organization", organization.slug)
 
     return render(request, "organizations/create_organization.html", {"form": form})
+
+
+@require_http_methods(["GET"])
+@staff_member_required
+def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
+    """
+    Shows the organizations for a manager so that they can be confirmed or cancelled
+    """
+    status = request.GET.get("status") or "1"
+
+    organizations = manager_filter_organizations_list(status)
+
+    context = {
+        "organizations": organizations,
+        "statuses": BookingStatus.choices,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request, "organizations/partials/manager_list_organizations.html", context
+        )
+
+    return render(request, "organizations/manager_list_organizations.html", context)
+
+
+@require_http_methods(["PATCH"])
+@staff_member_required
+def manager_cancel_organization_view(request, organization_slug):
+    organization = manager_cancel_organization(request.user, organization_slug)
+
+    return render(
+        request,
+        "organizations/partials/manager_organization_item.html",
+        {"organization": organization},
+    )
+
+
+@require_http_methods(["PATCH"])
+@staff_member_required
+def manager_confirm_organization_view(request, organization_slug):
+    organization = manager_confirm_organization(request.user, organization_slug)
+    return render(
+        request,
+        "organizations/partials/manager_organization_item.html",
+        {"organization": organization},
+    )
