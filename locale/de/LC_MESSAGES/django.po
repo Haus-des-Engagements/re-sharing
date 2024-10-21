@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-21 14:46+0200\n"
+"POT-Creation-Date: 2024-10-21 15:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -232,7 +232,7 @@ msgstr "Ausgeschlossene Daten"
 #: roomsharing/templates/dashboards/users_bookings_and_permissions.html:40
 #: roomsharing/templates/dashboards/users_bookings_and_permissions.html:82
 #: roomsharing/templates/organizations/partials/manager_list_organizations.html:9
-#: roomsharing/templates/organizations/show_organization.html:18
+#: roomsharing/templates/organizations/show_organization.html:28
 msgid "Status"
 msgstr "Status"
 
@@ -400,7 +400,7 @@ msgstr "z.B. Akkordeon Club Gundelfingen e.V."
 
 #: roomsharing/organizations/forms.py:24 roomsharing/organizations/models.py:85
 #: roomsharing/rooms/models.py:87 roomsharing/rooms/models.py:137
-#: roomsharing/templates/organizations/show_organization.html:34
+#: roomsharing/templates/organizations/show_organization.html:45
 #: roomsharing/templates/rooms/show_room.html:63
 msgid "Description"
 msgstr "Beschreibung"
@@ -410,7 +410,7 @@ msgid "Describe shortly what your organization is doing and trying to achieve."
 msgstr "Beschreibe kurz was deine Organisation macht und erreichen möchte."
 
 #: roomsharing/organizations/forms.py:30 roomsharing/organizations/models.py:99
-#: roomsharing/templates/organizations/show_organization.html:52
+#: roomsharing/templates/organizations/show_organization.html:63
 msgid "We are a charitable organization."
 msgstr "Wir sind eine gemeinützige Organisation."
 
@@ -476,19 +476,22 @@ msgstr ""
 msgid ""
 "Upload the signed <a href='https://haus-des-engagements.de/wp-content/"
 "uploads/2024/04/Vereinbarung_Raumnutzung_HdE_Formular_2024.pdf' "
-"target='_blank'>usage agreement</a> or your signed co-working contract here."
+"target='_blank'>usage agreement</a>."
 msgstr ""
+"Lade hier die unterschriebene <a href='https://haus-des-engagements.de/wp-"
+"content/uploads/2024/04/Vereinbarung_Raumnutzung_HdE_Formular_2024.pdf' "
+"target='_blank'>Nutzungsvereinbarung</a> hoch."
 
-#: roomsharing/organizations/forms.py:84
+#: roomsharing/organizations/forms.py:83
 msgid "Please upload a single PDF file."
-msgstr ""
+msgstr "Lade bitte eine einzelne PDF-Datei hoch."
 
-#: roomsharing/organizations/forms.py:112
-#: roomsharing/templates/organizations/show_organization.html:56
+#: roomsharing/organizations/forms.py:111
+#: roomsharing/templates/organizations/show_organization.html:67
 msgid "Address"
 msgstr "Adresse"
 
-#: roomsharing/organizations/forms.py:128
+#: roomsharing/organizations/forms.py:127
 msgid ""
 "We need some more information of your organization. If you don'thave an "
 "official address yet, you can also enter your personal address."
@@ -497,13 +500,13 @@ msgstr ""
 "Organisation noch keine Adresse u.ä. hat, kannst du auch deine private "
 "Adresse angeben."
 
-#: roomsharing/organizations/forms.py:151
+#: roomsharing/organizations/forms.py:150
 msgid "Save organization"
 msgstr "Organisation speichern"
 
 #: roomsharing/organizations/models.py:44
 #: roomsharing/organizations/models.py:169
-#: roomsharing/templates/organizations/show_organization.html:169
+#: roomsharing/templates/organizations/show_organization.html:184
 #: roomsharing/utils/models.py:27
 msgid "Pending"
 msgstr "Ausstehend"
@@ -614,7 +617,7 @@ msgstr "Andere"
 #: roomsharing/rooms/models.py:167
 #: roomsharing/templates/dashboards/users_bookings_and_permissions.html:81
 #: roomsharing/templates/organizations/partials/manager_list_organizations.html:8
-#: roomsharing/templates/organizations/show_organization.html:30
+#: roomsharing/templates/organizations/show_organization.html:41
 msgid "Name"
 msgstr "Name"
 
@@ -635,27 +638,27 @@ msgid "City"
 msgstr "Ort"
 
 #: roomsharing/organizations/models.py:93
-#: roomsharing/templates/organizations/show_organization.html:60
+#: roomsharing/templates/organizations/show_organization.html:71
 msgid "E-Mail"
 msgstr "E-Mail"
 
 #: roomsharing/organizations/models.py:94
-#: roomsharing/templates/organizations/show_organization.html:64
+#: roomsharing/templates/organizations/show_organization.html:75
 msgid "Phone number"
 msgstr "Telefonnummer"
 
 #: roomsharing/organizations/models.py:95
-#: roomsharing/templates/organizations/show_organization.html:68
+#: roomsharing/templates/organizations/show_organization.html:79
 msgid "Website"
 msgstr "Webseite"
 
 #: roomsharing/organizations/models.py:96
-#: roomsharing/templates/organizations/show_organization.html:42
+#: roomsharing/templates/organizations/show_organization.html:53
 msgid "Legal form"
 msgstr "Rechtsform"
 
 #: roomsharing/organizations/models.py:97
-#: roomsharing/templates/organizations/show_organization.html:47
+#: roomsharing/templates/organizations/show_organization.html:58
 msgid "Other legal form"
 msgstr "andere Rechtsform"
 
@@ -676,7 +679,7 @@ msgid "Only applicable if you are currently co-working in the HdE"
 msgstr "Nur auswählen, wenn du derzeit im HdE co-workst."
 
 #: roomsharing/organizations/models.py:117
-#: roomsharing/templates/organizations/show_organization.html:79
+#: roomsharing/templates/organizations/show_organization.html:95
 msgid "Organization information is publicly visible"
 msgstr "Organisationinformationen sind öffentlich sichbar."
 
@@ -705,7 +708,7 @@ msgid "Internal notes"
 msgstr "Interne Notizen"
 
 #: roomsharing/organizations/models.py:130
-#: roomsharing/templates/organizations/show_organization.html:72
+#: roomsharing/templates/organizations/show_organization.html:85
 msgid "Usage agreement"
 msgstr ""
 
@@ -722,7 +725,7 @@ msgid "Role"
 msgstr "Rolle"
 
 #: roomsharing/organizations/models.py:199
-#: roomsharing/templates/organizations/show_organization.html:164
+#: roomsharing/templates/organizations/show_organization.html:179
 msgid "Booking permission"
 msgstr "Buchungsberechtigung"
 
@@ -808,7 +811,7 @@ msgstr "Vorhandene Ausstattung"
 
 #: roomsharing/rooms/models.py:94
 msgid "Manager"
-msgstr ""
+msgstr "Manager"
 
 #: roomsharing/rooms/models.py:143
 msgid "Room Image"
@@ -846,6 +849,7 @@ msgstr "Startseite"
 #: roomsharing/templates/bookings/show-booking.html:12
 #: roomsharing/templates/bookings/show_recurrence.html:12
 #: roomsharing/templates/dashboards/users_bookings_and_permissions.html:12
+#: roomsharing/templates/organizations/show_organization.html:13
 msgid "My Dashboard"
 msgstr "Meine Übersicht"
 
@@ -978,7 +982,7 @@ msgstr "Buchungen verwalten"
 
 #: roomsharing/templates/bookings/manager_list_bookings.html:56
 msgid "show"
-msgstr ""
+msgstr "zeige"
 
 #: roomsharing/templates/bookings/manager_list_rrules.html:10
 msgid "Manage recurring bookings"
@@ -1195,6 +1199,8 @@ msgid ""
 msgstr ""
 
 #: roomsharing/templates/emails/email_confirm_organization_subject.txt:3
+#, fuzzy, python-format
+#| msgid "[HdE] %(organization.name)s has been confirmed"
 msgid "[HdE] %(organization.name)s has been confirmed"
 msgstr "[HdE] %(organization.name) wurde bestätigt"
 
@@ -1223,7 +1229,7 @@ msgstr "Organisationen verwalten"
 msgid "Are you sure you want to cancel this organization?"
 msgstr "Möchest du die Organisation wirklich stornieren?"
 
-#: roomsharing/templates/organizations/show_organization.html:21
+#: roomsharing/templates/organizations/show_organization.html:32
 msgid ""
 "We are currently checking your organization. You can already make booking "
 "requests."
@@ -1231,76 +1237,76 @@ msgstr ""
 "Wie überprüfen gerade deine Organisation. Du kannst schon Buchungsanfragen "
 "stellen."
 
-#: roomsharing/templates/organizations/show_organization.html:23
+#: roomsharing/templates/organizations/show_organization.html:34
 msgid "Your organization is confirmed and you are good to go."
 msgstr "Deine Organisation ist bestätigt und du kannst für sie buchen."
 
-#: roomsharing/templates/organizations/show_organization.html:25
+#: roomsharing/templates/organizations/show_organization.html:36
 msgid "Your organization has been cancelled."
 msgstr "Deine Organisation wurde nicht bestätigt."
 
-#: roomsharing/templates/organizations/show_organization.html:38
+#: roomsharing/templates/organizations/show_organization.html:49
 msgid "Area of activity"
 msgstr "Haupt-Engagementbereich"
 
-#: roomsharing/templates/organizations/show_organization.html:53
-#: roomsharing/templates/organizations/show_organization.html:80
+#: roomsharing/templates/organizations/show_organization.html:64
+#: roomsharing/templates/organizations/show_organization.html:96
 msgid "Yes, No"
 msgstr "Ja, Neun"
 
-#: roomsharing/templates/organizations/show_organization.html:75
+#: roomsharing/templates/organizations/show_organization.html:91
 msgid "Please upload the usage agreement."
 msgstr "Bitte lade die Nutzungsvereinbarung hoch."
 
-#: roomsharing/templates/organizations/show_organization.html:86
+#: roomsharing/templates/organizations/show_organization.html:101
 msgid "This is what others can see"
 msgstr "Das können andere sehen"
 
-#: roomsharing/templates/organizations/show_organization.html:130
+#: roomsharing/templates/organizations/show_organization.html:145
 msgid "Edit Organization"
 msgstr "Organisation bearbeiten"
 
-#: roomsharing/templates/organizations/show_organization.html:133
+#: roomsharing/templates/organizations/show_organization.html:148
 msgid "Are you sure you want to delete the organization?"
 msgstr "Möchest du Orghanisation wirklich stornieren?"
 
-#: roomsharing/templates/organizations/show_organization.html:133
+#: roomsharing/templates/organizations/show_organization.html:148
 msgid "Delete Organization"
 msgstr "Organisation löschen"
 
-#: roomsharing/templates/organizations/show_organization.html:139
+#: roomsharing/templates/organizations/show_organization.html:154
 msgid "Persons authorised to make bookings"
 msgstr "Buchungsberechtigte"
 
-#: roomsharing/templates/organizations/show_organization.html:142
+#: roomsharing/templates/organizations/show_organization.html:157
 msgid "Only visible for other authorised persons."
 msgstr "Buchungsberechtigte sind nur für andere Buchungsberechtigte sichtbar."
 
-#: roomsharing/templates/organizations/show_organization.html:147
+#: roomsharing/templates/organizations/show_organization.html:162
 msgid "Request booking permission"
 msgstr "Buchungsberechtigung anfragen"
 
-#: roomsharing/templates/organizations/show_organization.html:159
+#: roomsharing/templates/organizations/show_organization.html:174
 msgid "that's you"
 msgstr "das bist du"
 
-#: roomsharing/templates/organizations/show_organization.html:166
+#: roomsharing/templates/organizations/show_organization.html:181
 msgid "Approved"
 msgstr "Bestätigt"
 
-#: roomsharing/templates/organizations/show_organization.html:188
+#: roomsharing/templates/organizations/show_organization.html:203
 msgid "Confirm booking permission"
 msgstr "Buchungsberechtigung bestätigen"
 
-#: roomsharing/templates/organizations/show_organization.html:197
+#: roomsharing/templates/organizations/show_organization.html:212
 msgid "Cancel booking permission"
 msgstr "Buchungsberechtigung beenden"
 
-#: roomsharing/templates/organizations/show_organization.html:205
+#: roomsharing/templates/organizations/show_organization.html:220
 msgid "Promote to admin"
 msgstr "Zum Admin machen"
 
-#: roomsharing/templates/organizations/show_organization.html:212
+#: roomsharing/templates/organizations/show_organization.html:227
 msgid "Demote to booker"
 msgstr "Zum Buchenden herabstufen"
 

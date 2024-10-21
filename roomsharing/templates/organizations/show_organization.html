@@ -6,6 +6,16 @@
   {{ organization.name }}
 {% endblock title %}
 {% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ organization.name }}</li>
+      </ol>
+    </nav>
+  </div>
   <div class="row mt-5 mb-4">
     <h1>{{ organization.name }}</h1>
   </div>

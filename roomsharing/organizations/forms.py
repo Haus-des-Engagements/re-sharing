@@ -76,8 +76,7 @@ class OrganizationForm(forms.ModelForm):
             _(
                 "Upload the signed <a href='https://haus-des-engagements.de/wp"
                 "-content/uploads/2024/04/Vereinbarung_Raumnutzung_HdE_Formular_2024"
-                ".pdf' target='_blank'>usage agreement</a> or your signed co-working "
-                "contract here."
+                ".pdf' target='_blank'>usage agreement</a>."
             )
         ),
         required=False,
