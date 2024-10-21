@@ -956,7 +956,7 @@ class CollectBookingReminderMailsTest(TestCase):
             timespan=[self.now, self.now + timedelta(hours=1)],
         )
 
-    @patch("roomsharing.bookings.services.async_task")  # Mocking the async_task
+    @patch("roomsharing.bookings.services.async_task")
     def test_collect_booking_reminder_mails(self, mock_async_task):
         collect_booking_reminder_mails()
 
@@ -1049,8 +1049,9 @@ class ExtendRecurrencesTest(TestCase):
 
         recurrence_rule = RecurrenceRuleFactory(
             rrule="DTSTART:20241001T040000Z\nRRULE:FREQ=DAILY;INTERVAL=1",
-            # A rule generating daily repetitions
             status=BookingStatus.CONFIRMED,
+            first_occurrence_date=timezone.now() + timedelta(days=1),
+            last_occurrence_date=None,
         )
 
         existing_booking = BookingFactory(

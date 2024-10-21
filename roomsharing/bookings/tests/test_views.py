@@ -15,6 +15,7 @@ from django.utils.timezone import make_aware
 from config.settings.base import ADMIN_URL
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import BookingMessageFactory
+from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
 from roomsharing.bookings.views import list_bookings_view
 from roomsharing.bookings.views import manager_list_bookings_view
 from roomsharing.organizations.models import BookingPermission
@@ -274,3 +275,35 @@ class TestCancelOccurrenceView(TestCase):
             response.url
             == f"/accounts/login/?next=/bookings/{self.booking.slug}/cancel-occurrence/"
         )
+
+
+class ListRecurrencesViewTest(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+
+    def test_list_recurrences_view(self):
+        response = self.client.get(reverse("bookings:list-recurrences"))
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(response, "bookings/list_recurrences.html")
+        assert "recurrences" in response.context
+
+
+class ShowRecurrenceView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+        self.rrule = RecurrenceRuleFactory()
+        self.booking = BookingFactory(recurrence_rule=self.rrule)
+
+    @patch("roomsharing.bookings.views.get_occurrences")
+    def test_show_recurrence_view(self, mock_get_occurrences):
+        mock_get_occurrences.return_value = (self.rrule, [self.booking], False)
+        response = self.client.get(
+            reverse("bookings:show-recurrence", kwargs={"rrule": self.rrule.uuid})
+        )
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(response, "bookings/show_recurrence.html")
+        assert "bookings" in response.context
+        assert "rrule" in response.context
+        assert "is_cancelable" in response.context
