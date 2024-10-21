@@ -609,7 +609,10 @@ def manager_filter_rrules_list(organization, show_past_rrules, status):
     organizations = Organization.objects.all()
     rrules = RecurrenceRule.objects.all().distinct()
     if not show_past_rrules:
-        rrules = rrules.filter(last_occurrence_date__gte=timezone.now())
+        rrules = rrules.filter(
+            Q(last_occurrence_date__gte=timezone.now())
+            | Q(last_occurrence_date__isnull=True)
+        )
     if organization != "all":
         rrules = rrules.filter(
             booking_of_recurrencerule__organization__slug=organization

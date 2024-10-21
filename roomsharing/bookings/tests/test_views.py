@@ -167,7 +167,7 @@ class TestManagerActionsBookingView(TestCase):
         client = Client()
         client.force_login(self.staff_user)
 
-        response = client.get(self.cancel_booking_url)
+        response = client.patch(self.cancel_booking_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
@@ -175,7 +175,7 @@ class TestManagerActionsBookingView(TestCase):
         client = Client()
         client.force_login(self.user)
 
-        response = client.get(self.cancel_booking_url)
+        response = client.patch(self.cancel_booking_url)
         assert response.status_code == HTTPStatus.FOUND
         assert (
             response.url
@@ -188,7 +188,7 @@ class TestManagerActionsBookingView(TestCase):
         client = Client()
         client.force_login(self.staff_user)
 
-        response = client.get(self.confirm_booking_url)
+        response = client.patch(self.confirm_booking_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("roomsharing.bookings.models.Booking.is_confirmable", return_value=True)
@@ -196,7 +196,7 @@ class TestManagerActionsBookingView(TestCase):
         client = Client()
         client.force_login(self.user)
 
-        response = client.get(self.confirm_booking_url)
+        response = client.patch(self.confirm_booking_url)
         assert response.status_code == HTTPStatus.FOUND
         assert (
             response.url
@@ -226,14 +226,14 @@ class TestCancelBookingView(TestCase):
         client = Client()
         client.force_login(self.user)
 
-        response = client.get(self.cancel_booking_url)
+        response = client.patch(self.cancel_booking_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
     def test_cancel_by_not_logged_in_user(self, mock_is_cancelable):
         client = Client()
 
-        response = client.get(self.cancel_booking_url)
+        response = client.patch(self.cancel_booking_url)
         assert response.status_code == HTTPStatus.FOUND
         assert (
             response.url
@@ -262,14 +262,14 @@ class TestCancelOccurrenceView(TestCase):
         client = Client()
         client.force_login(self.user)
 
-        response = client.get(self.cancel_occurrence_url)
+        response = client.patch(self.cancel_occurrence_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("roomsharing.bookings.models.Booking.is_cancelable", return_value=True)
     def test_cancel_by_not_logged_in_user(self, mock_is_cancelable):
         client = Client()
 
-        response = client.get(self.cancel_occurrence_url)
+        response = client.patch(self.cancel_occurrence_url)
         assert response.status_code == HTTPStatus.FOUND
         assert (
             response.url

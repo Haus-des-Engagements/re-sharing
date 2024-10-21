@@ -1,9 +1,6 @@
-from http import HTTPStatus
-
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -17,7 +14,6 @@ from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
 from .forms import MessageForm
-from .services import InvalidBookingOperationError
 from .services import cancel_booking
 from .services import cancel_rrule_bookings
 from .services import create_booking_data
@@ -70,12 +66,10 @@ def list_bookings_view(request):
     return render(request, "bookings/list_bookings.html", context)
 
 
+@require_http_methods(["GET"])
 @login_required
 def show_booking_view(request, booking):
-    try:
-        booking, activity_stream, access_code = show_booking(request.user, booking)
-    except PermissionDenied as e:
-        return HttpResponse(str(e), status=HTTPStatus.FORBIDDEN)
+    booking, activity_stream, access_code = show_booking(request.user, booking)
 
     return render(
         request,
@@ -88,6 +82,7 @@ def show_booking_view(request, booking):
     )
 
 
+@require_http_methods(["GET"])
 @login_required
 def list_recurrences_view(request):
     recurrences = get_recurrences_list(request.user)
@@ -97,6 +92,7 @@ def list_recurrences_view(request):
     )
 
 
+@require_http_methods(["GET"])
 @login_required
 def show_recurrence_view(request, rrule):
     rrule, bookings, is_cancelable = get_occurrences(request.user, rrule)
@@ -108,25 +104,20 @@ def show_recurrence_view(request, rrule):
     )
 
 
+@require_http_methods(["PATCH"])
 @login_required
 def cancel_rrule_bookings_view(request, rrule):
-    try:
-        rrule = cancel_rrule_bookings(request.user, rrule)
-    except (InvalidBookingOperationError, PermissionDenied) as e:
-        return HttpResponse(e.message, status=e.status_code)
-
+    rrule = cancel_rrule_bookings(request.user, rrule)
     messages.success(request, _("Successfully cancelled all future bookings."))
+
     return redirect("bookings:show-recurrence", rrule.uuid)
 
 
+@require_http_methods(["POST"])
 @login_required
 def create_bookingmessage_view(request, slug):
-    try:
-        form = MessageForm(data=request.POST)
-        bookingmessage = create_bookingmessage(slug, form, request.user)
-
-    except (InvalidBookingOperationError, PermissionDenied) as e:
-        return HttpResponse(e.message, status=e.status_code)
+    form = MessageForm(data=request.POST)
+    bookingmessage = create_bookingmessage(slug, form, request.user)
 
     return render(
         request,
@@ -135,28 +126,25 @@ def create_bookingmessage_view(request, slug):
     )
 
 
+@require_http_methods(["PATCH"])
 @login_required
 def cancel_booking_view(request, slug):
-    try:
-        booking = cancel_booking(request.user, slug)
-    except (InvalidBookingOperationError, PermissionDenied) as e:
-        return HttpResponse(e.message, status=e.status_code)
+    booking = cancel_booking(request.user, slug)
 
     return render(request, "bookings/partials/booking_item.html", {"booking": booking})
 
 
+@require_http_methods(["PATCH"])
 @login_required
 def cancel_occurrence_view(request, slug):
-    try:
-        booking = cancel_booking(request.user, slug)
-    except (InvalidBookingOperationError, PermissionDenied) as e:
-        return HttpResponse(e.message, status=e.status_code)
+    booking = cancel_booking(request.user, slug)
 
     return render(
         request, "bookings/partials/occurrence_item.html", {"booking": booking}
     )
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_view(request):
     booking_data = request.session["booking_data"]
@@ -174,8 +162,6 @@ def preview_and_save_booking_view(request):
     if request.method == "POST":
         try:
             booking = save_booking(request.user, booking, message)
-        except PermissionDenied as e:
-            return HttpResponse(e.message, status=e.status_code)
         except IntegrityError:
             return HttpResponse(
                 "Booking not possbile at the given date(s).", status=400
@@ -196,10 +182,7 @@ def preview_and_save_recurrence_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    try:
-        bookings, message, rrule, bookable = generate_occurrences(booking_data)
-    except PermissionDenied as e:
-        return HttpResponse(e.message, status=e.status_code)
+    bookings, message, rrule, bookable = generate_occurrences(booking_data)
 
     if request.method == "GET":
         return render(
@@ -214,11 +197,7 @@ def preview_and_save_recurrence_view(request):
         )
 
     if request.method == "POST":
-        try:
-            bookings, rrule = save_recurrence(request.user, bookings, message, rrule)
-        except PermissionDenied as e:
-            return HttpResponse(e.message, status=e.status_code)
-
+        bookings, rrule = save_recurrence(request.user, bookings, message, rrule)
         request.session.pop("booking_data", None)
         messages.success(request, _("Recurrence created successfully!"))
         return redirect("bookings:show-recurrence", rrule.uuid)
@@ -227,6 +206,7 @@ def preview_and_save_recurrence_view(request):
     return redirect("bookings:create-booking")
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def create_booking_data_form_view(request):
     if request.method == "GET":
@@ -279,25 +259,20 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     return render(request, "bookings/manager_list_bookings.html", context)
 
 
+@require_http_methods(["PATCH"])
 @staff_member_required
 def manager_cancel_booking_view(request, booking_slug):
-    try:
-        booking = manager_cancel_booking(request.user, booking_slug)
-    except InvalidBookingOperationError as e:
-        return HttpResponse(e.message, status=e.status_code)
+    booking = manager_cancel_booking(request.user, booking_slug)
 
     return render(
         request, "bookings/partials/manager_booking_item.html", {"booking": booking}
     )
 
 
+@require_http_methods(["PATCH"])
 @staff_member_required
 def manager_confirm_booking_view(request, booking_slug):
-    try:
-        booking = manager_confirm_booking(request.user, booking_slug)
-    except InvalidBookingOperationError as e:
-        return HttpResponse(e.message, status=e.status_code)
-
+    booking = manager_confirm_booking(request.user, booking_slug)
     return render(
         request, "bookings/partials/manager_booking_item.html", {"booking": booking}
     )
@@ -330,6 +305,7 @@ def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
     return render(request, "bookings/manager_list_rrules.html", context)
 
 
+@require_http_methods(["PATCH"])
 @staff_member_required
 def manager_cancel_rrule_view(request, rrule_uuid):
     rrule = manager_cancel_rrule(request.user, rrule_uuid)
@@ -339,6 +315,7 @@ def manager_cancel_rrule_view(request, rrule_uuid):
     )
 
 
+@require_http_methods(["PATCH"])
 @staff_member_required
 def manager_confirm_rrule_view(request, rrule_uuid):
     rrule = manager_confirm_rrule(request.user, rrule_uuid)
