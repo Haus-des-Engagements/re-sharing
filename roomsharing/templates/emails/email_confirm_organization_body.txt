@@ -1,0 +1,10 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with  site_domain=current_site.domain %}Hello,
+your organization "{{organization}}" has been confirmed. From the first of January on, you can book rooms here:
+{{site_domain}}
+
+All the best
+from the "Haus des Engagements"-Team
+
+PS: You are not yet a member of the House of Engagement e.V.? Support our work in promoting civic engagement with your membership! More information: https://haus-des-engagements.de/ueber-uns/der-verein/
+{% endblocktrans %}
+{% endautoescape %}

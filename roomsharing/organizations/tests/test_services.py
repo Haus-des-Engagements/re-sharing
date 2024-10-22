@@ -128,13 +128,23 @@ def test_create_organization():
 
 
 @pytest.mark.django_db()
+@patch("roomsharing.organizations.services.async_task")
 @patch.object(Organization, "is_confirmable", return_value=True)
-def test_manager_confirm_organization(mock_is_confirmable):
+def test_manager_confirm_organization(mock_is_confirmable, mock_async_task):
     user = UserFactory()
     organization = OrganizationFactory()
     organization = manager_confirm_organization(user, organization.slug)
 
     assert organization.status == BookingStatus.CONFIRMED
+
+    assert mock_async_task.call_count == 1
+
+    # Verify async_task was called with the correct arguments
+    mock_async_task.assert_called_with(
+        "roomsharing.organizations.tasks.organization_confirmation_email",
+        organization,
+        task_name="organization-confirmation-email",
+    )
 
 
 @pytest.mark.django_db()

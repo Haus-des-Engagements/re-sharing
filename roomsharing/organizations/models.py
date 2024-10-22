@@ -159,6 +159,18 @@ class Organization(TimeStampedModel):
             return default_booking_status.first().status
         return BookingStatus.PENDING
 
+    def get_confirmed_admins(self):
+        """
+        Fetch all users who are confirmed admins of this organization.
+        """
+        from roomsharing.users.models import User
+
+        return User.objects.filter(
+            user_of_bookingpermission__organization=self,
+            user_of_bookingpermission__role=BookingPermission.Role.ADMIN,
+            user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        )
+
 
 class BookingPermission(TimeStampedModel):
     class Role(IntegerChoices):
