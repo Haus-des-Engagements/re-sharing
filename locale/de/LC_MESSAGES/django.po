@@ -1072,7 +1072,7 @@ msgstr "Buchung erstellt"
 #: roomsharing/templates/bookings/partials/manager_list_rrules.html:9
 #: roomsharing/templates/dashboards/users_bookings_and_permissions.html:36
 msgid "Timespan"
-msgstr "Zeitraun"
+msgstr "Zeitraum"
 
 #: roomsharing/templates/bookings/partials/manager_list_rrules.html:8
 msgid "Start - End"
