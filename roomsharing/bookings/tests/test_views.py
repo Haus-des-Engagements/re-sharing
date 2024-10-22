@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 
 from config.settings.base import ADMIN_URL
+from roomsharing.bookings.forms import BookingForm
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import BookingMessageFactory
 from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
@@ -307,3 +308,29 @@ class ShowRecurrenceView(TestCase):
         assert "bookings" in response.context
         assert "rrule" in response.context
         assert "is_cancelable" in response.context
+
+
+class CreateBookingDataFormViewTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+
+    @patch("roomsharing.bookings.views.set_initial_booking_data")
+    def test_get_request(self, mock_set_initial_booking_data):
+        mock_set_initial_booking_data.return_value = {}
+
+        response = self.client.get(
+            reverse("bookings:create-booking"),
+            {
+                "startdate": "2023-10-01",
+                "starttime": "08:00",
+                "endtime": "17:00",
+                "room": "101",
+            },
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(response, "bookings/create-booking.html")
+        form_instance = response.context["form"]
+        assert isinstance(form_instance, BookingForm)
