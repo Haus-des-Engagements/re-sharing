@@ -47,6 +47,7 @@ class OrganizationForm(forms.ModelForm):
         ),
         required=False,
     )
+    email = forms.EmailField(label=_("E-mail address of the organization"))
     values_approval = forms.BooleanField(
         label=mark_safe(  # noqa: S308
             _(

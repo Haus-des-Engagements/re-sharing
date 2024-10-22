@@ -10,6 +10,7 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from roomsharing.organizations.models import BookingPermission
@@ -170,6 +171,12 @@ class BookingForm(forms.ModelForm):
         self.fields["rrule_monthly_interval"].label = False
         self.fields["rrule_monthly_byday"].label = False
         self.fields["rrule_monthly_bydate"].label = False
+        planner_url = reverse_lazy("rooms:planner")
+        self.fields["room"].help_text = mark_safe(  # noqa: S308
+            _("Have a look at the <a href='{url}'>planner</a> for free slots.").format(
+                url=planner_url
+            )
+        )
         self.helper.layout = Layout(
             Div(
                 Field("title", css_class="form-control", wrapper_class="col-4"),

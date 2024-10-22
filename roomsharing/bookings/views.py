@@ -168,7 +168,16 @@ def preview_and_save_booking_view(request):
             )
 
         request.session.pop("booking_data", None)
-        messages.success(request, _("Booking created successfully!"))
+        if booking.status == BookingStatus.CONFIRMED:
+            messages.success(request, _("Booking created successfully!"))
+        if booking.status == BookingStatus.PENDING:
+            messages.info(
+                request,
+                _(
+                    "Booking request created successfully! Please await our "
+                    "confirmation. You will be notified by mail."
+                ),
+            )
         return redirect("bookings:show-booking", booking.slug)
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))

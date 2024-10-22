@@ -18,14 +18,14 @@
   </div>
   <div class="row mt-5">
     <h2>
-      {% trans "My upcoming bookings" %}
+      {% trans "My upcoming bookings and requests" %}
       <a class="btn btn-outline-primary"
          href="{% url 'bookings:create-booking' %}"
          role="button">
         <svg width="1em" height="1em">
           <use href="#bi-plus-lg" />
         </svg>
-        {% trans "New Booking" %}
+        {% trans "New Booking Request" %}
       </a>
     </h2>
     <div class="table-responsive">
@@ -38,6 +38,7 @@
             <th scope="col">{% trans "Title" %}</th>
             <th scope="col">{% trans "Organization" %}</th>
             <th scope="col">{% trans "Status" %}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -52,6 +53,10 @@
               <td>{{ booking.organization }}</td>
               <td>
                 <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+              </td>
+              <td>
+                <a class="btn btn-outline-primary btn-sm"
+                   href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "Details" %}</a>
               </td>
             </tr>
           {% empty %}
