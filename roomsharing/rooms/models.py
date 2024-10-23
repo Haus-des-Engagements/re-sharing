@@ -92,6 +92,7 @@ class Room(Model):
     pricing = TextField(_("Pricing conditions"), max_length=512, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
     manager = ForeignKey("users.User", on_delete=PROTECT, verbose_name=_("Manager"))
+    address = CharField(_("Address"), max_length=256)
 
     class Meta:
         verbose_name = _("Room")

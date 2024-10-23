@@ -39,6 +39,7 @@ class RoomFactory(DjangoModelFactory):
     accessibility = Faker("sentence", nb_words=6)
     manager = SubFactory(UserFactory)
     access = SubFactory(AccessFactory)
+    address = Faker("address")
 
     class Meta:
         model = Room

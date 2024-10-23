@@ -22,7 +22,6 @@
       </div>
       <div class="col-md-5">
         <div class="card-body">
-          <h5 class="card-title">&nbsp</h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
@@ -36,12 +35,17 @@
               </svg>
               {{ room.bookable_times }}
             </li>
+            <li class="list-group-item">
+              <svg class="fs-4 me-1" width="1em" height="1em">
+                <use href="#bi-geo-alt" />
+              </svg>
+              {{ room.address }}
+            </li>
           </ul>
         </div>
       </div>
       <div class="col-md-5">
         <div class="card-body">
-          <h5 class="card-title">&nbsp</h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
@@ -60,10 +64,9 @@
       </div>
     </div>
   </div>
-  <h2>{% trans "Description" %}</h2>
+  <h2 class="mt-5">{% trans "Description" %}</h2>
   {{ room.description|safe }}
-  <h2>{% trans "Compensations" %}</h2>
-  {% trans "We try to do our best but have very little funding. A lot of work is carried out by volunteers." %}
+  <h2 class="mt-5">{% trans "Compensations" %}</h2>
   <ul>
     {% for compensation in compensations %}
       <li>
@@ -75,11 +78,11 @@
       </li>
     {% endfor %}
   </ul>
-  <h2>{% trans "Access" %}</h2>
+  <h2 class="mt-5">{% trans "Access" %}</h2>
   {{ room.access.instructions }}
-  <h2>{% trans "Accessibility" %}</h2>
+  <h2 class="mt-5">{% trans "Accessibility" %}</h2>
   {{ room.accessibility|safe }}
-  <h2 class="mt-4">Bookings</h2>
+  <h2 class="mt-5">Bookings</h2>
   <div class="mt-3 mb-4">
     <p>
       {% trans "In this view, you can see the free times for this room. Click on a free slot to go directly to the booking page." %}
