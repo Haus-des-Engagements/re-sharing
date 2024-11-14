@@ -141,7 +141,7 @@ def test_manager_confirm_organization(mock_is_confirmable, mock_async_task):
 
     # Verify async_task was called with the correct arguments
     mock_async_task.assert_called_with(
-        "roomsharing.organizations.tasks.organization_confirmation_email",
+        "roomsharing.organizations.mails.organization_confirmation_email",
         organization,
         task_name="organization-confirmation-email",
     )

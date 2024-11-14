@@ -66,11 +66,11 @@ def test_human_readable_rule():
     )
 
     rrule6 = RecurrenceRuleFactory(
-        rrule="FREQ=MONTHLY;INTERVAL=2;UNTIL=20241204T000000;BYDAY=+4FR"
+        rrule="FREQ=MONTHLY;INTERVAL=2;UNTIL=20251204T000000;BYDAY=+4FR"
     )
     assert (
         rrule6.get_human_readable_rule()
-        == "every 2nd month at the 4. Friday, ends at the 12/04/2024"
+        == "every 2nd month at the 4. Friday, ends at the 12/04/2025"
     )
 
     # MONTHLY (by date)

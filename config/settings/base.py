@@ -235,6 +235,11 @@ EMAIL_BACKEND = env(
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
 
+DEFAULT_MANAGER_EMAIL = env(
+    "DJANGO_DEFAULT_MANAGER_EMAIL", default="Roomsharing <noreply@roomsharing.info>"
+)
+
+
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.

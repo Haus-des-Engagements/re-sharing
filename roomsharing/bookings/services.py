@@ -211,9 +211,15 @@ def save_booking(user, booking, message):
     booking.refresh_from_db()
     if booking.status == BookingStatus.CONFIRMED and not booking.recurrence_rule:
         async_task(
-            "roomsharing.bookings.tasks.booking_confirmation_email",
+            "roomsharing.organizations.mails.booking_confirmation_email",
             booking,
             task_name="booking-confirmation-email",
+        )
+    if booking.status == BookingStatus.PENDING and not booking.recurrence_rule:
+        async_task(
+            "roomsharing.organizations.mails.manager_new_booking",
+            booking,
+            task_name="manager-new-booking",
         )
 
     return booking
@@ -345,10 +351,10 @@ def save_recurrence(user, bookings, message, rrule):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
     excepted_dates = []
-    # save bookings or - if room not available - add it to excepted dates
     if user.is_staff:
         rrule.status = BookingStatus.CONFIRMED
     rrule.save()
+    # save bookings or - if room not available - add it to excepted dates
     for booking in bookings:
         if booking.room_booked:
             excepted_dates.append(booking.start_date)
@@ -358,6 +364,12 @@ def save_recurrence(user, bookings, message, rrule):
 
     rrule.excepted_dates = excepted_dates
     rrule.save()
+
+    async_task(
+        "roomsharing.organizations.mails.manager_new_recurrence",
+        booking,
+        task_name="manager-new-booking",
+    )
 
     return bookings, rrule
 
@@ -575,7 +587,7 @@ def manager_cancel_booking(user, booking_slug):
             booking.status = BookingStatus.CANCELLED
             booking.save()
         async_task(
-            "roomsharing.bookings.tasks.cancel_booking_email",
+            "roomsharing.organizations.mails.booking_cancellation_email",
             booking,
             task_name="cancel-booking-email",
         )
@@ -592,7 +604,7 @@ def manager_confirm_booking(user, booking_slug):
             booking.status = BookingStatus.CONFIRMED
             booking.save()
         async_task(
-            "roomsharing.bookings.tasks.booking_confirmation_email",
+            "roomsharing.organizations.mails.booking_confirmation_email",
             booking,
             task_name="booking-confirmation-email",
         )
@@ -632,7 +644,7 @@ def manager_confirm_rrule(user, rrule_uuid):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
     async_task(
-        "roomsharing.bookings.tasks.recurrence_confirmation_email",
+        "roomsharing.organizations.mails.recurrence_confirmation_email",
         rrule,
         task_name="recurrence-confirmation-email",
     )
@@ -653,7 +665,7 @@ def manager_cancel_rrule(user, rrule_uuid):
                 booking.save()
 
     async_task(
-        "roomsharing.bookings.tasks.recurrence_cancellation_email",
+        "roomsharing.organizations.mails.recurrence_cancellation_email",
         rrule,
         task_name="recurrence-cancellation-email",
     )
@@ -711,12 +723,15 @@ def collect_booking_reminder_mails():
     dt_in_6_days = dt_in_5_days + timedelta(days=1)
     bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
     bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
+    bookings = bookings.filter(
+        Q(recurrence_rule__isnull=True) | Q(recurrence_rule__reminder_emails=True)
+    )
     processed_slugs = []
 
     for booking in bookings:
         async_task(
-            "roomsharing.bookings.tasks.booking_reminder_email",
-            booking_slug=booking.slug,
+            "roomsharing.organizations.mails.booking_reminder_email",
+            booking,
             task_name="booking-reminder-email",
         )
         processed_slugs.append(booking.slug)

@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import BookingPermission
 from .models import DefaultBookingStatus
+from .models import EmailTemplate
 from .models import Organization
 
 
@@ -12,3 +13,4 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 admin.site.register(BookingPermission)
 admin.site.register(DefaultBookingStatus)
+admin.site.register(EmailTemplate)

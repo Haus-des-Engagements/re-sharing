@@ -10,6 +10,7 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import SET_NULL
+from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateField
 from django.db.models import DateTimeField
@@ -52,6 +53,7 @@ class RecurrenceRule(TimeStampedModel):
         choices=BookingStatus.choices,
         default=BookingStatus.PENDING,
     )
+    reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
 
     class Meta:
         verbose_name = _("Recurrence rule")

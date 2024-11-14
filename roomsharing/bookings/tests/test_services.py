@@ -965,8 +965,8 @@ class CollectBookingReminderMailsTest(TestCase):
 
         # Verify async_task was called with the correct arguments
         mock_async_task.assert_called_with(
-            "roomsharing.bookings.tasks.booking_reminder_email",
-            booking_slug=self.booking.slug,
+            "roomsharing.organizations.mails.booking_reminder_email",
+            self.booking,
             task_name="booking-reminder-email",
         )
 

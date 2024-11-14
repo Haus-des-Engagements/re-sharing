@@ -14,6 +14,8 @@ from django.db.models import ForeignKey
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
 from django.db.models import ManyToManyField
+from django.db.models import TextChoices
+from django.db.models import TextField
 from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -244,6 +246,55 @@ class DefaultBookingStatus(TimeStampedModel):
         return self.organization.name + ": " + self.get_status_display()
 
 
+class EmailTemplate(TimeStampedModel):
+    class EmailTypeChoices(TextChoices):
+        BOOKING_CONFIRMATION = (
+            "booking_confirmation",
+            _("Booking confirmation"),
+        )
+        BOOKING_CANCELLATION = (
+            "booking_cancellation",
+            _("Booking cancellation"),
+        )
+        BOOKING_REMINDER = (
+            "booking_reminder",
+            _("Booking reminder"),
+        )
+        RECURRENCE_CONFIRMATION = (
+            "recurrence_confirmation",
+            _("Recurrence confirmation"),
+        )
+        RECURRENCE_CANCELLATION = (
+            "recurrence_cancellation",
+            _("Recurrence cancellation"),
+        )
+        ORGANIZATION_CONFIRMATION = (
+            "organization_confirmation",
+            _("Organization confirmation"),
+        )
+        ORGANIZATION_CANCELLATION = (
+            "organization_cancellation",
+            _("Organization cancellation"),
+        )
+        MANAGER_NEW_ORGANIZATION = (
+            "manager_new_organization",
+            _("Manager new organization"),
+        )
+        MANAGER_NEW_RECURRENCE = (
+            "manager_new_recurrence",
+            _("Manager new recurrence"),
+        )
+        MANAGER_NEW_BOOKING = "manager_new_booking", _("Manager new booking")
+
+    email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
+    subject = CharField(max_length=255)
+    body = TextField()
+
+    def __str__(self):
+        return f"{self.get_email_type_display()} - {self.subject}"
+
+
 auditlog.register(DefaultBookingStatus, exclude_fields=["updated"])
 auditlog.register(Organization, exclude_fields=["updated"])
 auditlog.register(BookingPermission, exclude_fields=["updated"])
+auditlog.register(EmailTemplate, exclude_fields=["updated"])
