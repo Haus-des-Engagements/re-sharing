@@ -59,31 +59,5 @@ class BookingAdmin(admin.ModelAdmin):
         )
 
 
-@admin.register(RecurrenceRule)
-class RecurrenceRuleAdmin(admin.ModelAdmin):
-    model = RecurrenceRule
-    list_display = [
-        "created",
-        "id",
-        "uuid",
-        "organization",
-        "first_occurrence_date",
-        "last_occurrence_date",
-        "status",
-    ]
-    list_filter = ["status", "organization"]
-
-    def save_model(self, request, obj, form, change):
-        if change:  # This ensures we're modifying an existing record
-            previous = RecurrenceRule.objects.get(pk=obj.pk)
-            if previous.organization != obj.organization:
-                # Organization has changed. Update related bookings.
-                bookings = Booking.objects.filter(recurrence_rule=obj)
-                for booking in bookings:
-                    booking.organization = obj.organization
-                Booking.objects.bulk_update(bookings, ["organization"])
-
-        super().save_model(request, obj, form, change)
-
-
 admin.site.register(BookingMessage)
+admin.site.register(RecurrenceRule)
