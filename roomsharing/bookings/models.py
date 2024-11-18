@@ -19,6 +19,7 @@ from django.db.models import ForeignKey
 from django.db.models import IntegerField
 from django.db.models import PositiveIntegerField
 from django.db.models import Q
+from django.db.models import TextField
 from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.urls import reverse
@@ -42,7 +43,8 @@ from roomsharing.utils.models import TimeStampedModel
 class RecurrenceRule(TimeStampedModel):
     history = AuditlogHistoryField()
     uuid = UUIDField(default=uuid.uuid4, editable=False)
-    rrule = CharField(_("Recurrence rule"), max_length=200)
+    organization = ForeignKey(Organization, on_delete=CASCADE)
+    rrule = TextField(_("Recurrence rule"))
     first_occurrence_date = DateField(_("First occurrence date"))
     last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
     excepted_dates = ArrayField(
@@ -54,6 +56,15 @@ class RecurrenceRule(TimeStampedModel):
         default=BookingStatus.PENDING,
     )
     reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
+    import_id = CharField(
+        _("Import ID"),
+        help_text=_(
+            "The ID of the record in the old system. This is used for referencing "
+            "records even after migration."
+        ),
+        max_length=256,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Recurrence rule")
@@ -218,6 +229,15 @@ class Booking(TimeStampedModel):
     )
     differing_billing_address = CharField(
         _("Differing billing address"), blank=True, max_length=256
+    )
+    import_id = CharField(
+        _("Import ID"),
+        help_text=_(
+            "The ID of the record in the old system. This is used for referencing "
+            "records even after migration."
+        ),
+        max_length=256,
+        blank=True,
     )
 
     class Meta:
