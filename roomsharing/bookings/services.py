@@ -293,6 +293,7 @@ def generate_occurrences(booking_data):
     rrule.start_time = start_time
     rrule.end_time = end_time
     rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
+    rrule.organization = organization
     if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
         rrule.last_occurrence_date = None
     else:
