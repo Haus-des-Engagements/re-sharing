@@ -67,6 +67,31 @@
                   <a class="nav-link"
                      href="{% url 'dashboards:users_bookings_and_permissions' %}">{% trans "My Dashboard" %}<span class="visually-hidden">(current)</span></a>
                 </li>
+                <ul class="navbar-nav ms-auto">
+                  {% if request.user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle"
+                         href="#"
+                         role="button"
+                         data-bs-toggle="dropdown"
+                         aria-expanded="false">{% trans "Management" %}</a>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <a class="dropdown-item"
+                             href="{% url 'bookings:manager-list-bookings' %}">{% translate "Bookings" %}</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item"
+                             href="{% url 'bookings:manager-list-recurrences' %}">{% translate "Recurrences" %}</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item"
+                             href="{% url 'organizations:manager-list-organizations' %}">{% translate "Organizations" %}</a>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                {% endif %}
                 <li class="nav-item">
                   <a class="btn btn-outline-primary"
                      href="{% url 'bookings:create-booking' %}"

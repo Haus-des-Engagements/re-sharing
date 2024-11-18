@@ -70,6 +70,7 @@ class RecurrenceRuleAdmin(admin.ModelAdmin):
         "first_occurrence_date",
         "last_occurrence_date",
         "status",
+        "get_first_booking",
     ]
     list_filter = ["status", "organization"]
 

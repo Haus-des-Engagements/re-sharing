@@ -138,7 +138,7 @@ def manager_cancel_organization(user, organization_slug):
             organization.status = BookingStatus.CANCELLED
             organization.save()
         async_task(
-            "roomsharing.organizations.mails.cancel_organization_email",
+            "roomsharing.organizations.mails.organization_cancellation_email",
             organization,
             task_name="cancel-organization-email",
         )

@@ -203,6 +203,9 @@ def save_booking(user, booking, message):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
+    if user.is_staff:
+        booking.status = BookingStatus.CONFIRMED
+
     booking.save()
     if message:
         save_bookingmessage(booking, message, user)
@@ -368,8 +371,8 @@ def save_recurrence(user, bookings, message, rrule):
 
     async_task(
         "roomsharing.organizations.mails.manager_new_recurrence",
-        booking,
-        task_name="manager-new-booking",
+        rrule,
+        task_name="manager-new-recurrence",
     )
 
     return bookings, rrule

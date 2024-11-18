@@ -116,7 +116,7 @@ def manager_new_booking(booking):
 def recurrence_confirmation_email(rrule):
     domain = Site.objects.get_current().domain
     first_booking = rrule.get_first_booking()
-    context = {"rrule": rrule, "domain": domain, "booking": first_booking}
+    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.RECURRENCE_CONFIRMATION,
@@ -128,7 +128,7 @@ def recurrence_confirmation_email(rrule):
 def recurrence_cancellation_email(rrule):
     domain = Site.objects.get_current().domain
     first_booking = rrule.get_first_booking()
-    context = {"rrule": rrule, "domain": domain, "booking": first_booking}
+    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.RECURRENCE_CANCELLATION,
@@ -140,7 +140,7 @@ def recurrence_cancellation_email(rrule):
 def manager_new_recurrence(rrule):
     domain = Site.objects.get_current().domain
     first_booking = rrule.get_first_booking
-    context = {"rrule": rrule, "domain": domain, "booking": first_booking}
+    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.MANAGER_NEW_RECURRENCE,
