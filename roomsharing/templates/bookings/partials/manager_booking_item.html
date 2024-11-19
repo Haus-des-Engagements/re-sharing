@@ -1,6 +1,5 @@
 {% load i18n %}
 
-<td>{{ booking.created|date:"d.m.Y H:i" }}</td>
 <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
 <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
 <td>{{ booking.room }}</td>
@@ -11,6 +10,7 @@
 <td>
   <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
 </td>
+<td>{{ booking.created|date:"d.m.Y H:i" }}</td>
 <td>
   {% if booking.is_confirmable %}
     <button id="confirm-button"

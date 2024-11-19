@@ -32,6 +32,12 @@
         {% endfor %}
       </select>
     </div>
+    <div id="div_id_room" class="col-auto">
+      <select name="room" class="form-select" id="id_room">
+        <option selected value="all">{% trans "all rooms" %}</option>
+        {% for room in rooms %}<option value="{{ room.slug }}">{{ room }}</option>{% endfor %}
+      </select>
+    </div>
     <div class="col-auto" id="div_id_status">
       <select name="status" class="select form-select" id="id_status">
         <option value="all">{% trans "all statuses" %}</option>
@@ -39,6 +45,9 @@
           <option value="{{ status.0 }}" {% if status.0 == 1 %}selected{% endif %}>{{ status.1 }}</option>
         {% endfor %}
       </select>
+    </div>
+    <div class="col-auto">
+      <input type="date" name="date" class="form-control textinput" id="id_date" />
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"

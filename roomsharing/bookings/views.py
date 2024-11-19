@@ -249,10 +249,17 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "1"
     organization = request.GET.get("organization") or "all"
+    room = request.GET.get("room") or "all"
+    date_string = request.GET.get("date") or None
     show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
 
-    bookings, organizations = manager_filter_bookings_list(
-        organization, show_past_bookings, status, show_recurring_bookings
+    bookings, organizations, rooms = manager_filter_bookings_list(
+        organization,
+        show_past_bookings,
+        status,
+        show_recurring_bookings,
+        room,
+        date_string,
     )
 
     context = {
@@ -260,6 +267,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         "current_time": timezone.now(),
         "organizations": organizations,
         "statuses": BookingStatus.choices,
+        "rooms": rooms,
     }
 
     if request.headers.get("HX-Request"):

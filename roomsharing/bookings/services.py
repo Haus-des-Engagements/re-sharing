@@ -2,10 +2,12 @@ import concurrent
 import re
 from datetime import UTC
 from datetime import datetime
+from datetime import time
 from datetime import timedelta
 from http import HTTPStatus
 
 from auditlog.context import set_actor
+from dateutil import parser
 from dateutil.parser import isoparse
 from dateutil.rrule import DAILY
 from dateutil.rrule import FR
@@ -558,10 +560,11 @@ def create_booking_data(user, form):
     return booking_data, rrule_string
 
 
-def manager_filter_bookings_list(
-    organization, show_past_bookings, status, show_recurring_bookings
+def manager_filter_bookings_list(  # noqa: PLR0913
+    organization, show_past_bookings, status, show_recurring_bookings, room, date_string
 ):
     organizations = Organization.objects.all()
+    rooms = Room.objects.all()
     related_fields = [
         "organization",
         "room__compensations_of_room",
@@ -573,14 +576,25 @@ def manager_filter_bookings_list(
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":
         bookings = bookings.filter(organization__slug=organization)
+    if room != "all":
+        bookings = bookings.filter(room__slug=room)
     if status != "all":
         bookings = bookings.filter(status__in=status)
     if not show_recurring_bookings:
         bookings = bookings.filter(recurrence_rule__isnull=True)
+    if date_string:
+        shown_date = parser.parse(date_string).date()
+        start_of_day = timezone.make_aware(
+            datetime.combine(shown_date, time(hour=0)),
+        )
+        end_of_day = timezone.make_aware(
+            datetime.combine(shown_date, time(hour=23, minute=59)),
+        )
+        bookings = bookings.filter(timespan__overlap=(start_of_day, end_of_day))
 
-    bookings = bookings.order_by("created")
+    bookings = bookings.order_by("timespan")
 
-    return bookings, organizations
+    return bookings, organizations, rooms
 
 
 def manager_cancel_booking(user, booking_slug):

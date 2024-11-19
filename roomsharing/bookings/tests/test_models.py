@@ -81,11 +81,11 @@ def test_human_readable_rule():
     )
 
     rrule8 = RecurrenceRuleFactory(
-        rrule="FREQ=MONTHLY;INTERVAL=1;UNTIL=20241204T000000;BYMONTHDAY=18"
+        rrule="FREQ=MONTHLY;INTERVAL=1;UNTIL=20251204T000000;BYMONTHDAY=18"
     )
     assert (
         rrule8.get_human_readable_rule()
-        == "every month (only at the 18. day), ends at the 12/04/2024"
+        == "every month (only at the 18. day), ends at the 12/04/2025"
     )
 
 

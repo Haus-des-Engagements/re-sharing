@@ -489,17 +489,25 @@ def test_create_booking():
         "organization",
         "status",
         "hide_recurring_bookings",
+        "room",
+        "date_string",
         "expected",
     ),
     [
-        (True, "all", "all", True, 2),
-        (True, "all", [1], True, 1),
-        (False, "all", "all", True, 1),
-        (True, "org1", "all", True, 0),
+        (True, "all", "all", True, "all", None, 2),
+        (True, "all", [1], True, "all", None, 1),
+        (False, "all", "all", True, "all", None, 1),
+        (True, "org1", "all", True, "all", None, 0),
     ],
 )
-def test_manger_filter_bookings_list(
-    show_past_bookings, organization, status, hide_recurring_bookings, expected
+def test_manger_filter_bookings_list(  # noqa: PLR0913
+    show_past_bookings,
+    organization,
+    status,
+    hide_recurring_bookings,
+    room,
+    date_string,
+    expected,
 ):
     """
     Test the 'filter_bookings_list' function
@@ -526,8 +534,13 @@ def test_manger_filter_bookings_list(
         ),
     )
     # Act
-    bookings, organizations = manager_filter_bookings_list(
-        organization, show_past_bookings, status, hide_recurring_bookings
+    bookings, organizations, rooms = manager_filter_bookings_list(
+        organization,
+        show_past_bookings,
+        status,
+        hide_recurring_bookings,
+        room,
+        date_string,
     )
     # Assert
     assert len(bookings) == expected
