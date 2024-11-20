@@ -3,9 +3,11 @@ import datetime
 from crispy_forms.bootstrap import InlineCheckboxes
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML
+from crispy_forms.layout import Column
 from crispy_forms.layout import Div
 from crispy_forms.layout import Field
 from crispy_forms.layout import Layout
+from crispy_forms.layout import Row
 from crispy_forms.layout import Submit
 from django import forms
 from django.urls import reverse_lazy
@@ -178,33 +180,21 @@ class BookingForm(forms.ModelForm):
             )
         )
         self.helper.layout = Layout(
-            Div(
-                Field("title", css_class="form-control", wrapper_class="col-4"),
-                Field("organization", css_class="form-control", wrapper_class="col-4"),
-                css_class="row g-2",
+            Row(
+                Column("title"),
+                Column("organization"),
             ),
-            Div(
-                Field("room", css_class="form-control", wrapper_class="col-4"),
-                Field(
-                    "number_of_attendees",
-                    css_class="form-control",
-                    wrapper_class="col-4",
-                ),
-                css_class="row g-2",
+            Row(Column("room"), Column("number_of_attendees")),
+            Row(
+                Column("startdate"),
+                Column("starttime"),
+                Column("endtime"),
             ),
-            Div(
-                Field("startdate", css_class="form-control", wrapper_class="col-2"),
-                Field("starttime", css_class="form-control", wrapper_class="col-2"),
-                Field("endtime", css_class="form-control", wrapper_class="col-2"),
-                css_class="row g-2",
-            ),
-            Div(
-                Field(
+            Row(
+                Column(
                     "rrule_repetitions",
-                    css_class="form-control",
-                    wrapper_class="col-2",
+                    css_class="col-md-4",
                 ),
-                css_class="row g-2",
             ),
             Div(
                 Div(
@@ -213,22 +203,22 @@ class BookingForm(forms.ModelForm):
                             '{% load i18n %}<label class="control-label">'
                             '{% trans "Endet" %}</label>'
                         ),
-                        css_class="col-1",
+                        css_class="col-md-1",
                     ),
                     Field(
                         "rrule_ends",
                         css_class="form-control",
-                        wrapper_class="col-2",
+                        wrapper_class="col-md-2",
                     ),
                     Field(
                         "rrule_ends_enddate",
                         css_class="form-control",
-                        wrapper_class="col-2",
+                        wrapper_class="col-md-2",
                     ),
                     Field(
                         "rrule_ends_count",
                         css_class="form-control",
-                        wrapper_class="col-1",
+                        wrapper_class="col-md-2",
                     ),
                     css_class="row g-2",
                 ),
@@ -239,12 +229,12 @@ class BookingForm(forms.ModelForm):
                                 '{% load i18n %}<label class="control-label">'
                                 '{% trans "Repeat" %}</label>'
                             ),
-                            css_class="col-1",
+                            css_class="col-md-1",
                         ),
                         Field(
                             "rrule_daily_interval",
                             css_class="form-control",
-                            wrapper_class="col-2",
+                            wrapper_class="col-md-2",
                         ),
                         css_class="row g-2",
                     ),
@@ -259,17 +249,17 @@ class BookingForm(forms.ModelForm):
                                 '{% load i18n %}<label class="control-label">'
                                 '{% trans "Repeat" %}</label>'
                             ),
-                            css_class="col-1",
+                            css_class="col-md-1",
                         ),
                         Field(
                             "rrule_weekly_interval",
                             css_class="form-control",
-                            wrapper_class="col-2",
+                            wrapper_class="col-md-2",
                         ),
                         InlineCheckboxes(
                             "rrule_weekly_byday",
                             css_class="form-control",
-                            wrapper_class="col-8",
+                            wrapper_class="col-md-8",
                         ),
                         css_class="row g-2",
                     ),
@@ -278,34 +268,32 @@ class BookingForm(forms.ModelForm):
                     style="display: none",  # initially hidden
                 ),
                 Div(
-                    Div(
-                        Div(
+                    Row(
+                        Column(
                             HTML(
                                 '{% load i18n %}<label class="control-label">'
                                 '{% trans "Repeat" %}</label>'
                             ),
-                            css_class="col-1",
+                            css_class="col-md-1",
                         ),
-                        Field(
+                        Column(
                             "rrule_monthly_interval",
-                            css_class="form-control",
-                            wrapper_class="col-2",
+                            css_class="col-md-2",
                         ),
                         InlineCheckboxes(
                             "rrule_monthly_byday",
                             css_class="form-control",
-                            wrapper_class="col-10",
+                            wrapper_class="col-md-11",
                             css_id="rrule_monthly_bydate",
                         ),
                         InlineCheckboxes(
                             "rrule_monthly_bydate",
                             css_class="form-control",
                             css_id="rrule_monthly_bydate",
-                            wrapper_class="col-10",
+                            wrapper_class="col-md-11",
                         ),
                         css_class="row g-2",
                     ),
-                    css_class="row g-2",
                     css_id="rrule_monthly",
                     style="display: none",  # initially hidden
                 ),
@@ -320,9 +308,7 @@ class BookingForm(forms.ModelForm):
                 'billing / donation plan" %}</strong></span>{% endif %}'
             ),
             Div(
-                Field(
-                    "message", css_class="form-control", wrapper_class="col-8", rows="3"
-                ),
+                Field("message", css_class="form-control", rows="3"),
                 css_class="row g-2",
             ),
         )

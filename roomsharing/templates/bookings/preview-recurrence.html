@@ -10,15 +10,19 @@
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
-          {{ rrule.first_occurrence_date|date:"SHORT_DATE_FORMAT" }}
+          {{ rrule.first_occurrence_date|date:"d.m.Y" }}
           <br />
           -
           <br />
-          {{ rrule.last_occurrence_date|date:"SHORT_DATE_FORMAT" }}
+          {% if rrule.last_occurrence_date %}
+            {{ rrule.last_occurrence_date|date:"d.m.Y" }}
+          {% else %}
+            {% trans "(without end)" %}
+          {% endif %}
         </p>
         <p class="h6">
-          {{ rrule.start_time|time:"H:i" }}
-          - {{ rrule.end_time|time:"H:i" }}
+          {{ bookings.0.timespan.0|time:"H:i" }}
+          - {{ bookings.0.timespan.1|time:"H:i" }}
         </p>
       </div>
       <div class="col-md-8">

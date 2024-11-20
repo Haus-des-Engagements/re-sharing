@@ -29,13 +29,17 @@
           <br />
           -
           <br />
-          {{ rrule.last_occurrence_date }}
+          {% if rrule.last_occurrence_date %}
+            {{ rrule.last_occurrence_date|date:"d.m.Y" }}
+          {% else %}
+            {% trans "(without end)" %}
+          {% endif %}
         </p>
         <p class="h6">
           {{ rrule.get_first_booking.start_time|date:"H:i" }} - {{ rrule.get_first_booking.end_time|date:"H:i" }}
         </p>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-7">
         <div class="card-body">
           <h5 class="card-title">{{ rrule.get_first_booking.title }}</h5>
           <p class="card-text">
@@ -61,7 +65,7 @@
           </p>
         </div>
       </div>
-      <div class="col-md-2">
+      <div class="col-md-3">
         <div class="card-body">
           <div class="d-grid gap-2">
             {% if is_cancelable %}
@@ -88,7 +92,7 @@
   </div>
   <div class="mt-4">
     <h5>{% trans "These bookings are part of the recurrence" %}:</h5>
-    <div class="table-responsive col-6">
+    <div class="table-responsive">
       <table class="table table-hover">
         <thead>
           <tr>
@@ -104,6 +108,9 @@
           {% endfor %}
         </tbody>
       </table>
+      {% if not rrule.last_occurrence_date %}
+        {% trans "We will automatically generate the next occurrences two years in advance." %}
+      {% endif %}
     </div>
   </div>
 {% endblock content %}
