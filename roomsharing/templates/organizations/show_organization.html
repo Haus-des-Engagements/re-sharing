@@ -20,85 +20,89 @@
     <h1>{{ organization.name }}</h1>
   </div>
   <div class="row">
-    <table class="table table-hover">
-      <thead>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="first-column">{% trans "Status" %}</td>
-          <td>
-            {{ organization.get_status_display }}.
-            {% if organization.status == 1 %}
-              {% trans "We are currently checking your organization. You can already make booking requests." %}
-            {% elif organization.status == 2 %}
-              {% trans "Your organization is confirmed and you are good to go." %}
-            {% else %}
-              {% trans "Your organization has been cancelled." %}
-            {% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Name" %}</td>
-          <td>{{ organization.name }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Description" %}</td>
-          <td>{{ organization.description }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Area of activity" %}</td>
-          <td>{{ organization.get_area_of_activity_display }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Legal form" %}</td>
-          <td>{{ organization.get_legal_form_display }}</td>
-        </tr>
-        {% if organization.other_legal_form %}
+    {% if is_admin %}
+      <table class="table table-hover">
+        <thead>
+        </thead>
+        <tbody>
           <tr>
-            <td class="first-column">{% trans "Other legal form" %}</td>
+            <td class="first-column">{% trans "Status" %}</td>
+            <td>
+              {{ organization.get_status_display }}.
+              {% if organization.status == 1 %}
+                {% trans "We are currently checking your organization. You can already make booking requests." %}
+              {% elif organization.status == 2 %}
+                {% trans "Your organization is confirmed and you are good to go." %}
+              {% else %}
+                {% trans "Your organization has been cancelled." %}
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Name" %}</td>
+            <td>{{ organization.name }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Description" %}</td>
+            <td>{{ organization.description }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Area of activity" %}</td>
             <td>{{ organization.get_area_of_activity_display }}</td>
           </tr>
-        {% endif %}
-        <tr>
-          <td class="first-column">{% trans "We are a charitable organization." %}</td>
-          <td>{{ organization.is_charitable|yesno:_("Yes, No") }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Address" %}</td>
-          <td>{{ organization.street_and_housenb }},{{ organization.zip_code }} {{ organization.city }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "E-Mail" %}</td>
-          <td>{{ organization.email }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Phone number" %}</td>
-          <td>{{ organization.phone }}</td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Website" %}</td>
-          <td>
-            <a href="https://{{ organization.website }}">{{ organization.website }}</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Usage agreement" %}</td>
-          <td>
-            {% if organization.usage_agreement %}
-              <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement.url }}</a>
-            </td>
-          {% else %}
-            {% trans "Please upload the usage agreement." %}
+          <tr>
+            <td class="first-column">{% trans "Legal form" %}</td>
+            <td>{{ organization.get_legal_form_display }}</td>
+          </tr>
+          {% if organization.other_legal_form %}
+            <tr>
+              <td class="first-column">{% trans "Other legal form" %}</td>
+              <td>{{ organization.get_area_of_activity_display }}</td>
+            </tr>
           {% endif %}
-        </tr>
-        <tr>
-          <td class="first-column">{% trans "Organization information is publicly visible" %}</td>
-          <td>{{ organization.is_public|yesno:_("Yes, No") }}</td>
-        </tr>
-      </tbody>
-    </table>
-    {% if organization.is_public %}
+          <tr>
+            <td class="first-column">{% trans "We are a charitable organization." %}</td>
+            <td>{{ organization.is_charitable|yesno:_("Yes, No") }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Address" %}</td>
+            <td>{{ organization.street_and_housenb }},{{ organization.zip_code }} {{ organization.city }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "E-Mail" %}</td>
+            <td>{{ organization.email }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Phone number" %}</td>
+            <td>{{ organization.phone }}</td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Website" %}</td>
+            <td>
+              <a href="https://{{ organization.website }}">{{ organization.website }}</a>
+            </td>
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Usage agreement" %}</td>
+            <td>
+              {% if organization.usage_agreement %}
+                <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement.url }}</a>
+              </td>
+            {% else %}
+              {% trans "Please upload the usage agreement." %}
+            {% endif %}
+          </tr>
+          <tr>
+            <td class="first-column">{% trans "Organization information is publicly visible" %}</td>
+            <td>{{ organization.is_public|yesno:_("Yes, No") }}</td>
+          </tr>
+        </tbody>
+      </table>
+    {% endif %}
+    {% if organization.is_public and is_admin %}
       {% trans "This is what others can see" %}:
+    {% endif %}
+    {% if organization.is_public %}
       <div class="row">
         <div class="col-6">
           <div class="card">

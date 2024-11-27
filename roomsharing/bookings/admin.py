@@ -3,6 +3,9 @@
 from auditlog.context import set_actor
 from django.contrib import admin
 from django.contrib import messages
+from django.db.models import Count
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
@@ -71,8 +74,22 @@ class RecurrenceRuleAdmin(admin.ModelAdmin):
         "last_occurrence_date",
         "status",
         "get_first_booking",
+        "booking_count_link",
     ]
     list_filter = ["status", "organization"]
+    readonly_fields = ["booking_count_link"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.annotate(booking_count=Count("booking_of_recurrencerule"))
+
+    @admin.display(description=_("Bookings"))
+    def booking_count_link(self, obj):
+        url = (
+            reverse("admin:bookings_booking_changelist")
+            + f"?recurrence_rule__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, obj.booking_count)
 
     def save_model(self, request, obj, form, change):
         if change:  # This ensures we're modifying an existing record
