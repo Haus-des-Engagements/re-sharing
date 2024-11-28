@@ -801,7 +801,6 @@ class TestGenerateRecurrence(TestCase):
         assert rrule.end_time == self.end_datetime.time()
         assert rrule.first_occurrence_date == rrule_occurrences[0]
         assert rrule.last_occurrence_date == rrule_occurrences[-1]
-        assert rrule.excepted_dates == []
         assert bookable is True
 
     def test_generate_recurrence_no_compensation(self):
@@ -829,7 +828,6 @@ class TestGenerateRecurrence(TestCase):
         assert rrule.end_time == self.end_datetime.time()
         assert rrule.first_occurrence_date == rrule_occurrences[0]
         assert rrule.last_occurrence_date == rrule_occurrences[-1]
-        assert rrule.excepted_dates == []
         assert bookable is True
 
     def test_generate_recurrence_invalid_organization(self):
@@ -899,14 +897,6 @@ class TestSaveRecurrence(TestCase):
 
         for booking in bookings:
             assert booking.recurrence_rule == rrule
-            if booking.room_booked:
-                assert booking.start_date in rrule.excepted_dates
-            else:
-                assert booking.start_date not in rrule.excepted_dates
-
-        assert rrule.excepted_dates == [
-            booking.start_date for booking in bookings if booking.room_booked
-        ]
 
     def test_save_recurrence_permission_denied(self):
         # Do not add the booking permission for the user

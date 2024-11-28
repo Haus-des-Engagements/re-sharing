@@ -4,7 +4,6 @@ from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from dateutil.rrule import rrulestr
 from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import CASCADE
@@ -47,9 +46,6 @@ class RecurrenceRule(TimeStampedModel):
     rrule = TextField(_("Recurrence rule"))
     first_occurrence_date = DateField(_("First occurrence date"))
     last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
-    excepted_dates = ArrayField(
-        DateField(), verbose_name=_("Excepted dates"), blank=True
-    )
     status = IntegerField(
         verbose_name=_("Status"),
         choices=BookingStatus.choices,
@@ -269,7 +265,10 @@ class Booking(TimeStampedModel):
         return self.timespan.lower < timezone.now()
 
     def is_cancelable(self):
-        return not self.is_in_the_past() and self.status != BookingStatus.CANCELLED
+        return not self.is_in_the_past() and self.status not in [
+            BookingStatus.CANCELLED,
+            BookingStatus.UNAVAILABLE,
+        ]
 
     def is_confirmable(self):
         return not self.is_in_the_past() and self.status == BookingStatus.PENDING

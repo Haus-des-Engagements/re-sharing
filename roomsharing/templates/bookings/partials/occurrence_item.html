@@ -5,8 +5,9 @@
   <td>
     <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.timespan.lower|date:"d.m.Y" }}</a>
   </td>
+  <td>{{ booking.room }}</td>
   <td>
-    <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+    <span class="fs-6 badge fw-medium text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
   </td>
   <td>
     {% if booking.is_cancelable %}

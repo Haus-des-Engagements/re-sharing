@@ -87,7 +87,6 @@ class BookingMessageFactory(DjangoModelFactory):
 class RecurrenceRuleFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     rrule = "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=5;BYDAY=MO,TU"
-    excepted_dates = []
     reminder_emails = True
     organization = SubFactory(OrganizationFactory)
 

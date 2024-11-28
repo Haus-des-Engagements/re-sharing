@@ -27,3 +27,4 @@ class BookingStatus(IntegerChoices):
     PENDING = 1, _("Pending")
     CONFIRMED = 2, _("Confirmed")
     CANCELLED = 3, _("Cancelled")
+    UNAVAILABLE = 4, _("Unavailable")

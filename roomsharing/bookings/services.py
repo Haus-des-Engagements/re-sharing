@@ -205,9 +205,6 @@ def save_booking(user, booking, message):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
-    if user.is_staff:
-        booking.status = BookingStatus.CONFIRMED
-
     booking.save()
     if message:
         save_bookingmessage(booking, message, user)
@@ -285,7 +282,8 @@ def generate_occurrences(booking_data):
             total_amount=total_amount,
             differing_billing_address=booking_data["differing_billing_address"],
         )
-        booking.room_booked = room.is_booked(timespan)
+        if room.is_booked(timespan):
+            booking.status = BookingStatus.UNAVAILABLE
         return booking
 
     # Create bookings in parallel
@@ -306,7 +304,7 @@ def generate_occurrences(booking_data):
     rrule.excepted_dates = []
 
     # Determine if room is bookable
-    bookable = any(not booking.room_booked for booking in bookings)
+    bookable = any(booking.status != BookingStatus.UNAVAILABLE for booking in bookings)
 
     return bookings, message, rrule, bookable
 
@@ -356,19 +354,12 @@ def create_bookingmessage(booking_slug, form, user):
 def save_recurrence(user, bookings, message, rrule):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
-    excepted_dates = []
     if user.is_staff:
         rrule.status = BookingStatus.CONFIRMED
     rrule.save()
-    # save bookings or - if room not available - add it to excepted dates
     for booking in bookings:
-        if booking.room_booked:
-            excepted_dates.append(booking.start_date)
-        else:
-            booking.recurrence_rule = rrule
-            save_booking(user, booking, message)
-
-    rrule.excepted_dates = excepted_dates
+        booking.recurrence_rule = rrule
+        save_booking(user, booking, message)
     rrule.save()
 
     async_task(
