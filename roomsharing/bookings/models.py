@@ -42,16 +42,55 @@ from roomsharing.utils.models import TimeStampedModel
 class RecurrenceRule(TimeStampedModel):
     history = AuditlogHistoryField()
     uuid = UUIDField(default=uuid.uuid4, editable=False)
-    organization = ForeignKey(Organization, on_delete=CASCADE)
-    rrule = TextField(_("Recurrence rule"))
-    first_occurrence_date = DateField(_("First occurrence date"))
-    last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
-    status = IntegerField(
-        verbose_name=_("Status"),
-        choices=BookingStatus.choices,
-        default=BookingStatus.PENDING,
+    title = CharField(_("Title"), max_length=160)
+    slug = AutoSlugField(
+        populate_from=["get_human_readable_rule", "title"], editable=False
     )
-    reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Recurrence Organization"),
+        on_delete=PROTECT,
+        related_name="rrules_of_organization",
+        related_query_name="rrule_of_organization",
+    )
+    user = ForeignKey(
+        User,
+        verbose_name=_("Initial Booking User"),
+        on_delete=PROTECT,
+        related_name="rrules_of_user",
+        related_query_name="rrule_of_user",
+    )
+    room = ForeignKey(
+        Room,
+        verbose_name=_("Room"),
+        on_delete=PROTECT,
+        related_name="rrules_of_room",
+        related_query_name="rrule_of_room",
+    )
+    status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
+    # These fields are only stored for potential DST (Dailight Saving Time) problems.
+    start_time = TimeField(_("Start Time"))
+    end_time = TimeField(_("End Time"))
+    compensation = ForeignKey(
+        Compensation,
+        verbose_name=_("Compensation"),
+        on_delete=SET_NULL,
+        related_name="rrules_of_compensation",
+        related_query_name="rrule_of_compensation",
+        null=True,
+        blank=True,
+    )
+    total_amount_per_occurrence = DecimalField(
+        _("Total amount"),
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
+    differing_billing_address = CharField(
+        _("Differing billing address"), blank=True, max_length=256
+    )
     import_id = CharField(
         _("Import ID"),
         help_text=_(
@@ -61,6 +100,10 @@ class RecurrenceRule(TimeStampedModel):
         max_length=256,
         blank=True,
     )
+    rrule = TextField(_("Recurrence rule"))
+    first_occurrence_date = DateField(_("First occurrence date"))
+    last_occurrence_date = DateField(_("Last occurrence date"), blank=True, null=True)
+    reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
 
     class Meta:
         verbose_name = _("Recurrence rule")
@@ -68,7 +111,7 @@ class RecurrenceRule(TimeStampedModel):
         ordering = ["created"]
 
     def __str__(self):
-        return str(self.uuid)
+        return str(self.title)
 
     def get_cancelled(self):
         return self.bookings_of_recurrencerule.filter(status=BookingStatus.CANCELLED)
@@ -80,7 +123,7 @@ class RecurrenceRule(TimeStampedModel):
         return self.bookings_of_recurrencerule.filter(status=BookingStatus.PENDING)
 
     def get_absolute_url(self):
-        return reverse("bookings:show-recurrence", kwargs={"rrule": self.uuid})
+        return reverse("bookings:show-recurrence", kwargs={"rrule": self.slug})
 
     def number_of_occurrences(self):
         return self.bookings_of_recurrencerule.count()

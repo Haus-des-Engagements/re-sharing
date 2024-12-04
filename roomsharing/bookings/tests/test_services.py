@@ -17,27 +17,26 @@ from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
 from roomsharing.bookings.services import InvalidBookingOperationError
 from roomsharing.bookings.services import cancel_booking
-from roomsharing.bookings.services import cancel_rrule_bookings
 from roomsharing.bookings.services import collect_booking_reminder_mails
 from roomsharing.bookings.services import confirm_booking
 from roomsharing.bookings.services import create_booking
 from roomsharing.bookings.services import create_bookingmessage
-from roomsharing.bookings.services import create_rrule_string
-from roomsharing.bookings.services import extend_recurrences
 from roomsharing.bookings.services import filter_bookings_list
-from roomsharing.bookings.services import generate_occurrences
 from roomsharing.bookings.services import generate_single_booking
 from roomsharing.bookings.services import get_booking_activity_stream
 from roomsharing.bookings.services import manager_cancel_booking
-from roomsharing.bookings.services import manager_cancel_rrule
 from roomsharing.bookings.services import manager_confirm_booking
 from roomsharing.bookings.services import manager_confirm_rrule
 from roomsharing.bookings.services import manager_filter_bookings_list
 from roomsharing.bookings.services import save_booking
 from roomsharing.bookings.services import save_bookingmessage
-from roomsharing.bookings.services import save_recurrence
 from roomsharing.bookings.services import set_initial_booking_data
 from roomsharing.bookings.services import show_booking
+from roomsharing.bookings.services_recurrences import cancel_rrule_bookings
+from roomsharing.bookings.services_recurrences import create_rrule_and_occurrences
+from roomsharing.bookings.services_recurrences import create_rrule_string
+from roomsharing.bookings.services_recurrences import manager_cancel_rrule
+from roomsharing.bookings.services_recurrences import save_rrule
 from roomsharing.bookings.tests.factories import BookingFactory
 from roomsharing.bookings.tests.factories import RecurrenceRuleFactory
 from roomsharing.bookings.tests.factories import create_timespan
@@ -755,9 +754,13 @@ class TestGenerateRecurrence(TestCase):
         self.room = RoomFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
-        self.start_datetime = timezone.now() + timedelta(days=1)
+        self.start_datetime = (timezone.now() + timedelta(days=1)).replace(
+            microsecond=0
+        )
         self.dt_start = "DTSTART:" + self.start_datetime.strftime("%Y%m%dT%H%M%S") + "Z"
-        self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
+        self.end_datetime = (
+            self.start_datetime + timedelta(hours=self.duration)
+        ).replace(microsecond=0)
         self.count = 5
         self.differing_billing_address = "Fast lane 2, 929 Free-City"
         self.rrule_string = self.dt_start + "\nFREQ=DAILY;COUNT=" + str(self.count)
@@ -770,8 +773,8 @@ class TestGenerateRecurrence(TestCase):
                 self.start_datetime.isoformat(),
                 self.end_datetime.isoformat(),
             ],
-            "start_time": self.start_datetime.time(),
-            "end_time": self.end_datetime.time(),
+            "start_time": self.start_datetime.time().strftime("%H:%M:%S"),
+            "end_time": self.end_datetime.time().strftime("%H:%M:%S"),
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
@@ -780,7 +783,9 @@ class TestGenerateRecurrence(TestCase):
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, message, rrule, bookable = generate_occurrences(self.booking_data)
+        bookings, message, rrule, bookable = create_rrule_and_occurrences(
+            self.booking_data
+        )
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -797,8 +802,6 @@ class TestGenerateRecurrence(TestCase):
         assert isinstance(rrule, RecurrenceRule)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
-        assert rrule.start_time == self.start_datetime.time()
-        assert rrule.end_time == self.end_datetime.time()
         assert rrule.first_occurrence_date == rrule_occurrences[0]
         assert rrule.last_occurrence_date == rrule_occurrences[-1]
         assert bookable is True
@@ -807,7 +810,9 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["compensation"] = ""
         self.booking_data["differing_billing_address"] = ""
 
-        bookings, message, rrule, bookable = generate_occurrences(self.booking_data)
+        bookings, message, rrule, bookable = create_rrule_and_occurrences(
+            self.booking_data
+        )
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -834,19 +839,19 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["organization"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_occurrences(self.booking_data)
+            create_rrule_and_occurrences(self.booking_data)
 
     def test_generate_recurrence_invalid_room(self):
         self.booking_data["room"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_occurrences(self.booking_data)
+            create_rrule_and_occurrences(self.booking_data)
 
     def test_generate_recurrence_invalid_user(self):
         self.booking_data["user"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_occurrences(self.booking_data)
+            create_rrule_and_occurrences(self.booking_data)
 
 
 class TestSaveRecurrence(TestCase):
@@ -857,7 +862,8 @@ class TestSaveRecurrence(TestCase):
         self.compensation = CompensationFactory(hourly_rate=50)
         self.start_datetime = timezone.now() + timedelta(days=1)
         self.end_datetime = self.start_datetime + timedelta(hours=2)
-        self.rrule_string = "FREQ=DAILY;COUNT=5"
+        dtstart_string = self.start_datetime.strftime("%Y%m%dT%H%M00Z")
+        self.rrule_string = f"DTSTART:{dtstart_string}\nFREQ=DAILY;COUNT=5"
         self.booking_data = {
             "user": self.user.slug,
             "title": "Recurring Meeting",
@@ -867,8 +873,8 @@ class TestSaveRecurrence(TestCase):
                 self.start_datetime.isoformat(),
                 self.end_datetime.isoformat(),
             ],
-            "start_time": self.start_datetime.time(),
-            "end_time": self.end_datetime.time(),
+            "start_time": self.start_datetime.time().strftime("%H:%M:%S"),
+            "end_time": self.end_datetime.time().strftime("%H:%M:%S"),
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
@@ -881,7 +887,7 @@ class TestSaveRecurrence(TestCase):
             self.message,
             self.rrule,
             self.bookable,
-        ) = generate_occurrences(self.booking_data)
+        ) = create_rrule_and_occurrences(self.booking_data)
 
     def test_save_recurrence_valid(self):
         # Add the booking permission for the user
@@ -891,9 +897,7 @@ class TestSaveRecurrence(TestCase):
             status=BookingPermission.Status.CONFIRMED,
         )
 
-        bookings, rrule = save_recurrence(
-            self.user, self.bookings, self.message, self.rrule
-        )
+        bookings, rrule = save_rrule(self.user, self.bookings, self.rrule)
 
         for booking in bookings:
             assert booking.recurrence_rule == rrule
@@ -903,7 +907,7 @@ class TestSaveRecurrence(TestCase):
         another_user = UserFactory()
 
         with pytest.raises(PermissionDenied):
-            save_recurrence(another_user, self.bookings, self.message, self.rrule)
+            save_rrule(another_user, self.bookings, self.rrule)
 
 
 @pytest.mark.django_db()
@@ -1037,54 +1041,3 @@ class CollectBookingReminderMailsTest(TestCase):
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
     result = set_initial_booking_data(endtime, startdate, starttime, room=None)
     assert result == expected_data
-
-
-class ExtendRecurrencesTest(TestCase):
-    @pytest.mark.django_db()
-    def test_extend_recurrences(self):
-        user = UserFactory()
-        organization = OrganizationFactory()
-        room = RoomFactory()
-
-        start_date = timezone.now().date() + timedelta(days=1)
-        start_time = datetime.time(10, 30, 0)
-        end_time = datetime.time(12, 30, 0)
-
-        recurrence_rule = RecurrenceRuleFactory(
-            rrule="DTSTART:20241001T040000Z\nRRULE:FREQ=DAILY;INTERVAL=1",
-            status=BookingStatus.CONFIRMED,
-            first_occurrence_date=timezone.now() + timedelta(days=1),
-            last_occurrence_date=None,
-        )
-
-        existing_booking = BookingFactory(
-            user=user,
-            organization=organization,
-            room=room,
-            start_date=start_date,
-            start_time=start_time,
-            end_time=end_time,
-            status=BookingStatus.CONFIRMED,
-            recurrence_rule=recurrence_rule,
-        )
-
-        extend_recurrences()
-
-        max_booking_date = timezone.now() + timedelta(days=729)
-        target_date = timezone.now() + timedelta(days=732)
-
-        new_bookings = Booking.objects.filter(
-            user=user,
-            organization=organization,
-            room=room,
-            start_date__gt=max_booking_date.date(),
-            start_date__lte=target_date.date(),
-            recurrence_rule=recurrence_rule,
-        )
-        expected_bookings = 3
-        assert len(new_bookings) == expected_bookings
-
-        for booking in new_bookings:
-            assert booking.room == existing_booking.room
-            assert booking.recurrence_rule == existing_booking.recurrence_rule
-            assert booking.status == existing_booking.status

@@ -15,7 +15,6 @@ from psycopg.types.range import Range
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
-from roomsharing.organizations.tests.factories import OrganizationFactory
 from roomsharing.users.tests.factories import UserFactory
 from roomsharing.utils.models import BookingStatus
 
@@ -88,7 +87,27 @@ class RecurrenceRuleFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     rrule = "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=5;BYDAY=MO,TU"
     reminder_emails = True
-    organization = SubFactory(OrganizationFactory)
+    title = Faker("word")
+    slug = LazyAttribute(lambda o: slugify(o.title))
+    organization = SubFactory(
+        "roomsharing.organizations.tests.factories.OrganizationFactory"
+    )
+    user = SubFactory(UserFactory)
+    room = SubFactory("roomsharing.rooms.tests.factories.RoomFactory")
+    status = BookingStatus.CONFIRMED
+
+    @LazyAttribute
+    def start_time(self):
+        hour = random.randint(0, 20)  # noqa: S311
+        minute = random.choice([0, 30])  # Minute should be either 0 or 30 # noqa: S311
+        return time(hour, minute)
+
+    @LazyAttribute
+    def end_time(self):
+        return (
+            datetime.combine(timezone.now(), self.start_time)
+            + timedelta(minutes=random.choice([30, 60, 90, 120, 150]))  # noqa: S311
+        ).time()
 
     @LazyAttribute
     def first_occurrence_date(self):
@@ -100,4 +119,4 @@ class RecurrenceRuleFactory(DjangoModelFactory):
 
     class Meta:
         model = RecurrenceRule
-        django_get_or_create = ["uuid"]
+        django_get_or_create = ["slug"]

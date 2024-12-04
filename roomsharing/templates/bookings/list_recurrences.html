@@ -45,7 +45,7 @@
           <div class="col-md-8">
             <div class="card-body">
               <h5 class="card-title">
-                <a href="{% url 'bookings:show-recurrence' rrule=rrule.uuid %}">{{ rrule.get_first_booking.title }}</a>
+                <a href="{% url 'bookings:show-recurrence' rrule.slug %}">{{ rrule.get_first_booking.title }}</a>
               </h5>
               <p class="card-text">
                 <svg width="1em" height="1em">
@@ -74,7 +74,7 @@
             <div class="card-body">
               <div class="d-grid gap-2">
                 <a class="btn btn-outline-primary"
-                   href="{% url 'bookings:show-recurrence' rrule=rrule.uuid %}">{% trans "View Details" %}</a>
+                   href="{% url 'bookings:show-recurrence' rrule.slug %}">{% trans "View Details" %}</a>
               </div>
             </div>
           </div>

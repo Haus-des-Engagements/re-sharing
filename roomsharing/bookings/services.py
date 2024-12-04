@@ -1,6 +1,3 @@
-import concurrent
-import re
-from datetime import UTC
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
@@ -9,18 +6,6 @@ from http import HTTPStatus
 from auditlog.context import set_actor
 from dateutil import parser
 from dateutil.parser import isoparse
-from dateutil.rrule import DAILY
-from dateutil.rrule import FR
-from dateutil.rrule import MO
-from dateutil.rrule import MONTHLY
-from dateutil.rrule import SA
-from dateutil.rrule import SU
-from dateutil.rrule import TH
-from dateutil.rrule import TU
-from dateutil.rrule import WE
-from dateutil.rrule import WEEKLY
-from dateutil.rrule import rrule
-from dateutil.rrule import rrulestr
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -33,6 +18,7 @@ from django_q.tasks import async_task
 from roomsharing.bookings.models import Booking
 from roomsharing.bookings.models import BookingMessage
 from roomsharing.bookings.models import RecurrenceRule
+from roomsharing.bookings.services_recurrences import create_rrule_string
 from roomsharing.organizations.models import Organization
 from roomsharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
@@ -74,89 +60,6 @@ def show_booking(user, booking_slug):
         access_code = "not necessary"
 
     return booking, activity_stream, access_code
-
-
-def create_rrule_string(rrule_data):
-    rrule_repetitions = rrule_data["rrule_repetitions"]
-    rrule_ends = rrule_data["rrule_ends"]
-    rrule_ends_count = rrule_data.get("rrule_ends_count")
-    rrule_ends_enddate = rrule_data.get("rrule_ends_enddate")
-    rrule_daily_interval = rrule_data["rrule_daily_interval"]
-    rrule_weekly_interval = rrule_data["rrule_weekly_interval"]
-    rrule_weekly_byday = rrule_data["rrule_weekly_byday"]
-    rrule_monthly_interval = rrule_data["rrule_monthly_interval"]
-    rrule_monthly_bydate = rrule_data["rrule_monthly_bydate"]
-    rrule_monthly_byday = rrule_data["rrule_monthly_byday"]
-    start_datetime = rrule_data["start_datetime"].astimezone(UTC)
-
-    if rrule_ends == "AFTER_TIMES":
-        count = rrule_ends_count
-        rrule_enddate = None
-    elif rrule_ends == "NEVER":
-        count = None
-        rrule_enddate = None
-    else:
-        count = None
-        rrule_enddate = rrule_ends_enddate.astimezone(UTC)
-
-    byweekday, bymonthday = None, None
-    weekdays_dict = {
-        "MO": MO,
-        "TU": TU,
-        "WE": WE,
-        "TH": TH,
-        "FR": FR,
-        "SA": SA,
-        "SU": SU,
-    }
-
-    if rrule_repetitions == "DAILY":
-        interval = rrule_daily_interval
-
-    if rrule_repetitions == "WEEKLY":
-        interval = rrule_weekly_interval
-        byweekday = rrule_weekly_byday
-        byweekday = [weekdays_dict.get(day) for day in byweekday]
-
-    if rrule_repetitions == "MONTHLY_BY_DAY":
-        interval = rrule_monthly_interval
-        byweekday_str = rrule_monthly_byday
-        byweekday = []
-        for day in byweekday_str:
-            weekday, week_number = day.split("(")
-            week_number = int(week_number.strip(")"))
-            byweekday.append(weekdays_dict[weekday](week_number))
-
-    if rrule_repetitions == "MONTHLY_BY_DATE":
-        interval = rrule_monthly_interval
-        bymonthday_str = rrule_monthly_bydate
-        bymonthday = [int(x) for x in bymonthday_str]
-
-    frequency_dict = {
-        "DAILY": DAILY,
-        "WEEKLY": WEEKLY,
-        "MONTHLY_BY_DAY": MONTHLY,
-        "MONTHLY_BY_DATE": MONTHLY,
-    }
-
-    recurrence_pattern = rrule(
-        frequency_dict[rrule_repetitions],
-        interval=interval,
-        byweekday=byweekday,
-        bymonthday=bymonthday,
-        dtstart=start_datetime,
-        bysetpos=None,
-        until=rrule_enddate,
-        count=count,
-    )
-    # hacky way of getting the timzone ("Z") into dtstart and UNTIL
-    unmodified_str = str(recurrence_pattern)
-    # Add 'Z' before line break
-    modified_string = re.sub(r"(\n)", "Z\\1", unmodified_str)
-    if rrule_enddate:
-        # Add 'Z' after UNTIL value
-        modified_string = re.sub(r"(UNTIL=[0-9T]+)(;|$)", r"\1Z\2", modified_string)
-    return str(modified_string)
 
 
 def generate_single_booking(booking_data):
@@ -211,13 +114,13 @@ def save_booking(user, booking, message):
 
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
-    if booking.status == BookingStatus.CONFIRMED and not booking.recurrence_rule:
+    if booking.status == BookingStatus.CONFIRMED:
         async_task(
             "roomsharing.organizations.mails.booking_confirmation_email",
             booking,
             task_name="booking-confirmation-email",
         )
-    if booking.status == BookingStatus.PENDING and not booking.recurrence_rule:
+    if booking.status == BookingStatus.PENDING:
         async_task(
             "roomsharing.organizations.mails.manager_new_booking",
             booking,
@@ -225,88 +128,6 @@ def save_booking(user, booking, message):
         )
 
     return booking
-
-
-def generate_occurrences(booking_data):
-    message = booking_data["message"]
-    timespan = (
-        isoparse(booking_data["timespan"][0]),
-        isoparse(booking_data["timespan"][1]),
-    )
-    user = get_object_or_404(User, slug=booking_data["user"])
-    title = booking_data["title"]
-    room = get_object_or_404(Room, slug=booking_data["room"])
-    organization = get_object_or_404(Organization, slug=booking_data["organization"])
-    status = organization.default_booking_status(room)
-    start_time = booking_data["start_time"]
-    end_time = booking_data["end_time"]
-    rrule_string = booking_data.get("rrule_string", "")
-    limited_rrule_string = rrule_string
-    # Limit the recurrence rule if needed
-    if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
-        future_date = timezone.now() + timedelta(days=730)
-        formatted_date = future_date.strftime("%Y%m%dT%H%M%S")
-        limited_rrule_string = rrule_string + f";UNTIL={formatted_date}Z"
-
-    # Generate occurrences
-    occurrences = list(rrulestr(limited_rrule_string))
-    starttime_naive = timespan[0].time()
-    endtime_naive = timespan[1].time()
-    # Calculate the total amount if compensation is provided
-    compensation = None
-    total_amount = None
-    if booking_data["compensation"]:
-        compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
-        if compensation.hourly_rate is not None:
-            duration_hours = (timespan[1] - timespan[0]).total_seconds() / 3600
-            total_amount = duration_hours * compensation.hourly_rate
-
-    # Helper function to create a booking
-    def create_booking(occurrence):
-        start_datetime = timezone.make_aware(
-            datetime.combine(occurrence, starttime_naive)
-        )
-        end_datetime = timezone.make_aware(datetime.combine(occurrence, endtime_naive))
-        timespan = (start_datetime, end_datetime)
-        booking = Booking(
-            user=user,
-            title=title,
-            room=room,
-            timespan=timespan,
-            organization=organization,
-            status=status,
-            start_date=occurrence.date(),
-            start_time=start_time,
-            end_time=end_time,
-            compensation=compensation,
-            total_amount=total_amount,
-            differing_billing_address=booking_data["differing_billing_address"],
-        )
-        if room.is_booked(timespan):
-            booking.status = BookingStatus.UNAVAILABLE
-        return booking
-
-    # Create bookings in parallel
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        bookings = list(executor.map(create_booking, occurrences))
-
-    # Create recurrence rule
-    rrule = RecurrenceRule()
-    rrule.rrule = rrule_string
-    rrule.start_time = start_time
-    rrule.end_time = end_time
-    rrule.first_occurrence_date = next(iter(rrulestr(rrule_string)))
-    rrule.organization = organization
-    if "COUNT" not in rrule_string and "UNTIL" not in rrule_string:
-        rrule.last_occurrence_date = None
-    else:
-        rrule.last_occurrence_date = list(rrulestr(rrule_string))[-1]
-    rrule.excepted_dates = []
-
-    # Determine if room is bookable
-    bookable = any(booking.status != BookingStatus.UNAVAILABLE for booking in bookings)
-
-    return bookings, message, rrule, bookable
 
 
 def create_booking(booking_details, **kwargs):
@@ -351,26 +172,6 @@ def create_bookingmessage(booking_slug, form, user):
     raise InvalidBookingOperationError
 
 
-def save_recurrence(user, bookings, message, rrule):
-    if not user_has_bookingpermission(user, bookings[0]):
-        raise PermissionDenied
-    if user.is_staff:
-        rrule.status = BookingStatus.CONFIRMED
-    rrule.save()
-    for booking in bookings:
-        booking.recurrence_rule = rrule
-        save_booking(user, booking, message)
-    rrule.save()
-
-    async_task(
-        "roomsharing.organizations.mails.manager_new_recurrence",
-        rrule,
-        task_name="manager-new-recurrence",
-    )
-
-    return bookings, rrule
-
-
 def set_initial_booking_data(endtime, startdate, starttime, room):
     initial_data = {}
     if startdate:
@@ -409,25 +210,6 @@ def cancel_booking(user, booking_slug):
         return booking
 
     raise InvalidBookingOperationError
-
-
-def cancel_rrule_bookings(user, rrule_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
-
-    if not user_has_bookingpermission(user, bookings[0]):
-        raise PermissionDenied
-
-    rrule.status = BookingStatus.CANCELLED
-    rrule.save()
-
-    for booking in bookings:
-        if booking.is_cancelable():
-            with set_actor(user):
-                booking.status = BookingStatus.CANCELLED
-                booking.save()
-
-    return rrule
 
 
 def get_booking_activity_stream(booking):
@@ -488,25 +270,6 @@ def filter_bookings_list(  # noqa: PLR0913
     bookings = page_objects
 
     return bookings, organizations
-
-
-def get_recurrences_list(user):
-    organizations = organizations_with_confirmed_bookingpermission(user)
-    return RecurrenceRule.objects.filter(
-        booking_of_recurrencerule__organization__in=organizations
-    ).distinct()
-
-
-def get_occurrences(user, recurrence_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=recurrence_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
-
-    if not user_has_bookingpermission(user, bookings[0]):
-        raise PermissionDenied
-
-    is_cancelable = rrule.is_cancelable()
-
-    return rrule, bookings, is_cancelable
 
 
 def confirm_booking(user, booking_slug):
@@ -623,25 +386,6 @@ def manager_confirm_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
-def manager_filter_rrules_list(organization, show_past_rrules, status):
-    organizations = Organization.objects.all()
-    rrules = RecurrenceRule.objects.all().distinct()
-    if not show_past_rrules:
-        rrules = rrules.filter(
-            Q(last_occurrence_date__gte=timezone.now())
-            | Q(last_occurrence_date__isnull=True)
-        )
-    if organization != "all":
-        rrules = rrules.filter(
-            booking_of_recurrencerule__organization__slug=organization
-        )
-    if status != "all":
-        rrules = rrules.filter(status=status)
-    rrules = rrules.order_by("created")
-
-    return rrules, organizations
-
-
 def manager_confirm_rrule(user, rrule_uuid):
     rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
     bookings = get_list_or_404(Booking, recurrence_rule=rrule)
@@ -659,70 +403,6 @@ def manager_confirm_rrule(user, rrule_uuid):
     )
 
     return rrule
-
-
-def manager_cancel_rrule(user, rrule_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
-    rrule.status = BookingStatus.CANCELLED
-    rrule.save()
-
-    for booking in bookings:
-        if booking.is_cancelable():
-            with set_actor(user):
-                booking.status = BookingStatus.CANCELLED
-                booking.save()
-
-    async_task(
-        "roomsharing.organizations.mails.recurrence_cancellation_email",
-        rrule,
-        task_name="recurrence-cancellation-email",
-    )
-    return rrule
-
-
-def extend_recurrences():
-    max_booking_date = timezone.now() + timedelta(days=729)
-    rrules = RecurrenceRule.objects.filter(
-        Q(last_occurrence_date=None) | Q(last_occurrence_date__gt=max_booking_date)
-    ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
-    rrules = rrules.order_by("created")
-    target_date = timezone.now() + timedelta(days=732)
-
-    for single_rrule in rrules:
-        # find occurrences that are after max booking date and before target date
-        occurrences = list(
-            rrulestr(single_rrule.rrule).between(
-                max_booking_date, target_date, inc=True
-            )
-        )
-        # get one existing booking
-        proto_booking = single_rrule.get_first_booking()
-        for occurrence in occurrences:
-            start_datetime = timezone.make_aware(
-                datetime.combine(occurrence, proto_booking.start_time)
-            )
-            end_datetime = timezone.make_aware(
-                datetime.combine(occurrence, proto_booking.end_time)
-            )
-            timespan = (start_datetime, end_datetime)
-            booking = Booking(
-                user=proto_booking.user,
-                title=proto_booking.title,
-                room=proto_booking.room,
-                timespan=timespan,
-                organization=proto_booking.organization,
-                status=single_rrule.status,
-                start_date=occurrence.date(),
-                start_time=proto_booking.start_time,
-                end_time=proto_booking.end_time,
-                compensation=proto_booking.compensation,
-                total_amount=proto_booking.total_amount,
-                recurrence_rule=single_rrule,
-                auto_generated_on=timezone.now(),
-            )
-            if not booking.room.is_booked(timespan):
-                booking.save()
 
 
 def collect_booking_reminder_mails():

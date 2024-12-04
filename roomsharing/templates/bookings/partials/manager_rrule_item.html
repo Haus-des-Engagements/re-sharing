@@ -8,7 +8,7 @@
 </td>
 <td>{{ rrule.get_first_booking.room }}</td>
 <td>
-  <a href="{% url "bookings:show-recurrence" rrule.uuid %}">{{ rrule.get_first_booking.title }}</a>
+  <a href="{% url "bookings:show-recurrence" rrule.slug %}">{{ rrule.get_first_booking.title }}</a>
 </td>
 <td>{{ rrule.get_first_booking.organization }}</td>
 <td>

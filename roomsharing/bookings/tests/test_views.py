@@ -297,11 +297,11 @@ class ShowRecurrenceView(TestCase):
         self.rrule = RecurrenceRuleFactory()
         self.booking = BookingFactory(recurrence_rule=self.rrule)
 
-    @patch("roomsharing.bookings.views.get_occurrences")
+    @patch("roomsharing.bookings.views.get_rrule_bookings")
     def test_show_recurrence_view(self, mock_get_occurrences):
         mock_get_occurrences.return_value = (self.rrule, [self.booking], False)
         response = self.client.get(
-            reverse("bookings:show-recurrence", kwargs={"rrule": self.rrule.uuid})
+            reverse("bookings:show-recurrence", kwargs={"rrule": self.rrule.slug})
         )
         assert response.status_code == HTTPStatus.OK
         self.assertTemplateUsed(response, "bookings/show_recurrence.html")

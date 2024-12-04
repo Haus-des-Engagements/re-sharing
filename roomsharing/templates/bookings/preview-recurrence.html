@@ -5,7 +5,7 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{{ bookings.0 }}</h1>
+  <h1 class="mt-4">{{ rrule.title }}</h1>
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
@@ -21,28 +21,28 @@
           {% endif %}
         </p>
         <p class="h6">
-          {{ bookings.0.timespan.0|time:"H:i" }}
-          - {{ bookings.0.timespan.1|time:"H:i" }}
+          {{ rrule.start_time|time:"H:i" }}
+          - {{ rrule.end_time|time:"H:i" }}
         </p>
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ bookings.0.title }}</h5>
+          <h5 class="card-title">{{ rrule.title }}</h5>
           <p class="card-text">
             <svg width="1em" height="1em">
               <use href="#bi-door-closed" />
             </svg>
-            <em>{{ bookings.0.room }}</em>
+            <em>{{ rrule.room }}</em>
             <br />
             <svg width="1em" height="1em">
               <use href="#bi-person-fill" />
             </svg>
-            {% trans "booked by:" %}   {{ bookings.0.user.first_name }} {{ bookings.0.user.last_name }} ({{ bookings.0.user.email }}) {% trans "for" %} {{ bookings.0.organization.name }}
+            {% trans "booked by:" %}   {{ rrule.user.first_name }} {{ rrule.user.last_name }} ({{ rrule.user.email }}) {% trans "for" %} {{ rrule.organization.name }}
             <br />
             {% trans "Occurrences" %}: {{ bookings|length }}
             <br />
-            {% if bookings.0.differing_billing_address %}
-              {% trans "Differing billing address" %}: {{ bookings.0.differing_billing_address }}
+            {% if rrule.differing_billing_address %}
+              {% trans "Differing billing address" %}: {{ rrule.differing_billing_address }}
             {% endif %}
           </p>
         </div>

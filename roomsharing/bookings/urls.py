@@ -69,7 +69,7 @@ urlpatterns = [
         "<slug:booking>/", show_booking_view, name="show-booking"
     ),  # GET booking object
     path(
-        "recurrences/<uuid:rrule>/", show_recurrence_view, name="show-recurrence"
+        "recurrences/<slug:rrule>/", show_recurrence_view, name="show-recurrence"
     ),  # GET recurrence object
     path(
         "recurrences/<uuid:rrule>/cancel-rrule-bookings/",
