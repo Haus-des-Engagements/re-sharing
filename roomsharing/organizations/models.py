@@ -5,6 +5,7 @@ import magic
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
+from django.core.files.storage import storages
 from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
@@ -24,6 +25,10 @@ from django_extensions.db.fields import AutoSlugField
 from roomsharing.rooms.models import Room
 from roomsharing.utils.models import BookingStatus
 from roomsharing.utils.models import TimeStampedModel
+
+
+def select_private_storage():
+    return storages["private"]
 
 
 def validate_is_pdf(file):
@@ -130,10 +135,11 @@ class Organization(TimeStampedModel):
     )
     usage_agreement = FileField(
         _("Usage agreement"),
-        upload_to="protected/usage_agreements/",
+        upload_to="usage_agreements/",
         validators=[validate_is_pdf],
         blank=True,
         null=True,
+        storage=select_private_storage,
     )
 
     class Meta:

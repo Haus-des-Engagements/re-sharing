@@ -119,7 +119,7 @@ class Room(Model):
 def create_roomimage_path(instance, filename):
     room_slug = instance.room.slug
 
-    return f"rooms/{room_slug}/room_images/{filename}"
+    return f"rooms/{room_slug}-{filename}"
 
 
 class RoomImage(TimeStampedModel):

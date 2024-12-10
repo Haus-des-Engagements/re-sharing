@@ -66,11 +66,35 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
 
 # STATIC & MEDIA
 # ------------------------
+AWS_S3_MAX_MEMORY_SIZE = env.int(
+    "DJANGO_AWS_S3_MAX_MEMORY_SIZE",
+    default=100_000_000,  # 100MB
+)
+AWS_S3_REGION_NAME = env("DJANGO_AWS_S3_REGION_NAME", default="eu-central")
 
 
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": env("DJANGO_AWS_ACCESS_KEY_ID"),
+            "secret_key": env("DJANGO_AWS_SECRET_ACCESS_KEY"),
+            "bucket_name": env("DJANGO_AWS_STORAGE_BUCKET_NAME_PUBLIC"),
+            "endpoint_url": env("DJANGO_AWS_S3_ENDPOINT_URL_PUBLIC"),
+            "querystring_auth": False,
+            "file_overwrite": False,
+        },
+    },
+    "private": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": env("DJANGO_AWS_ACCESS_KEY_ID"),
+            "secret_key": env("DJANGO_AWS_SECRET_ACCESS_KEY"),
+            "bucket_name": env("DJANGO_AWS_STORAGE_BUCKET_NAME_PRIVATE"),
+            "endpoint_url": env("DJANGO_AWS_S3_ENDPOINT_URL_PRIVATE"),
+            "querystring_auth": True,
+            "file_overwrite": False,
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",

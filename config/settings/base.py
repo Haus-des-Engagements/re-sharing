@@ -85,7 +85,7 @@ THIRD_PARTY_APPS = [
     "auditlog",
     "django_q",
     "tinymce",
-    "dbbackup",
+    "storages",
 ]
 
 LOCAL_APPS = [
@@ -304,6 +304,3 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 # Your stuff...
 # ------------------------------------------------------------------------------
 AUDITLOG_DISABLE_REMOTE_ADDR = True
-
-DBBACKUP_STORAGE = "django.core.files.storage.FileSystemStorage"
-DBBACKUP_STORAGE_OPTIONS = {"location": str(APPS_DIR / "backups")}
