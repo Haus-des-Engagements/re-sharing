@@ -131,7 +131,7 @@ class RoomImage(TimeStampedModel):
         related_query_name="roomimage_of_room",
     )
     image = ImageField(
-        upload_to=create_roomimage_path,
+        upload_to="rooms",
         validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg"])],
     )
     description = CharField(
@@ -155,7 +155,7 @@ class RoomImage(TimeStampedModel):
         super().save(*args, **kwargs)
         img = Image.open(self.image.path)
         img.thumbnail([1920, 1920])
-        img.save(self.image.path, quality=90, optimize=True)
+        img.save(self.image.name, quality=90, optimize=True)
 
 
 class Compensation(TimeStampedModel):
