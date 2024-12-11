@@ -94,6 +94,7 @@ STORAGES = {
             "endpoint_url": env("DJANGO_AWS_S3_ENDPOINT_URL"),
             "querystring_auth": True,
             "file_overwrite": False,
+            "querystring_expire": env("DJANGO_AWS_S3_QUERYSTRING_EXPIRE", default=600),
         },
     },
     "staticfiles": {
