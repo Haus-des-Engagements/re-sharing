@@ -1,6 +1,5 @@
 import uuid
 from datetime import timedelta
-from pathlib import Path
 
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
@@ -19,7 +18,6 @@ from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from PIL import Image
 from tinymce.models import HTMLField
 
 from roomsharing.utils.models import BookingStatus
@@ -131,7 +129,7 @@ class RoomImage(TimeStampedModel):
         related_query_name="roomimage_of_room",
     )
     image = ImageField(
-        upload_to="rooms",
+        upload_to="room_images/",
         validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg"])],
     )
     description = CharField(
@@ -144,18 +142,8 @@ class RoomImage(TimeStampedModel):
         verbose_name = _("Room Image")
         verbose_name_plural = _("Room Images")
 
-    def image_name(self):
-        return Path(self.image.name).name
-
     def get_absolute_url(self):
         return reverse("rooms:show-room", kwargs={"slug": self.room.slug})
-
-    def save(self, *args, **kwargs):
-        #  shrink image to max-width/height of 1920px, change quality and optimize
-        super().save(*args, **kwargs)
-        img = Image.open(self.image.path)
-        img.thumbnail([1920, 1920])
-        img.save(self.image.name, quality=90, optimize=True)
 
 
 class Compensation(TimeStampedModel):

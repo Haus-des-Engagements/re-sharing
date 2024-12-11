@@ -32,21 +32,6 @@ CACHES = {
     },
 }
 
-# STATIC & MEDIA
-# ------------------------
-
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "private": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
 
 # EMAIL
 # ------------------------------------------------------------------------------

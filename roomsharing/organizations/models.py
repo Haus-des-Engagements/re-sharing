@@ -139,6 +139,7 @@ class Organization(TimeStampedModel):
         validators=[validate_is_pdf],
         blank=True,
         null=True,
+        storage=select_private_storage,
     )
 
     class Meta:
