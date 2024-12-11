@@ -86,6 +86,7 @@ THIRD_PARTY_APPS = [
     "django_q",
     "tinymce",
     "storages",
+    "import_export",
 ]
 
 LOCAL_APPS = [

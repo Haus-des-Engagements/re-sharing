@@ -23,7 +23,7 @@ django-q2==1.7.2  # https://github.com/django-q2/django-q2
 django-tinymce==4.1.0  # https://github.com/jazzband/django-tinymce
 django-dbbackup==4.2.1  # https://github.com/jazzband/django-dbbackup
 django-storages[s3]==1.14.4  # https://github.com/jschneier/django-storages
-
+django-import-export==4.3.3  # https://github.com/django-import-export/django-import-export
 
 django-debug-toolbar==4.4.6
 sentry-sdk==2.13.0

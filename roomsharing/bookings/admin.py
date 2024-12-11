@@ -1,5 +1,3 @@
-# Register your models here.
-
 from auditlog.context import set_actor
 from django.contrib import admin
 from django.contrib import messages
@@ -8,6 +6,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
+from import_export.admin import ImportExportMixin
 
 from roomsharing.utils.models import BookingStatus
 
@@ -17,8 +16,7 @@ from .models import RecurrenceRule
 
 
 @admin.register(Booking)
-class BookingAdmin(admin.ModelAdmin):
-    model = Booking
+class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "room", "timespan", "status", "organization", "title", "user"]
     search_fields = ["id", "title"]
     list_filter = ["status", "organization", "room", "recurrence_rule"]
@@ -63,8 +61,7 @@ class BookingAdmin(admin.ModelAdmin):
 
 
 @admin.register(RecurrenceRule)
-class RecurrenceRuleAdmin(admin.ModelAdmin):
-    model = RecurrenceRule
+class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = [
         "created",
         "id",
@@ -104,4 +101,8 @@ class RecurrenceRuleAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-admin.site.register(BookingMessage)
+@admin.register(BookingMessage)
+class BookingMessageAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ["id", "user", "booking"]
+    search_fields = ["id", "user", "booking"]
+    ordering = ["id"]
