@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
+from roomsharing.organizations.models import BookingPermission
 from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -224,9 +225,18 @@ def create_booking_data_form_view(request):
         endtime = request.GET.get("endtime")
         room = request.GET.get("room")
         initial_data = set_initial_booking_data(endtime, startdate, starttime, room)
+        user_has_bookingspermission = (
+            BookingPermission.objects.filter(user=request.user)
+            .filter(status=BookingPermission.Status.CONFIRMED)
+            .exists()
+        )
 
         form = BookingForm(user=request.user, initial=initial_data)
-        return render(request, "bookings/create-booking.html", {"form": form})
+        return render(
+            request,
+            "bookings/create-booking.html",
+            {"form": form, "user_has_bookingspermission": user_has_bookingspermission},
+        )
 
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)

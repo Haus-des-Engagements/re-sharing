@@ -9,72 +9,79 @@
   <div class="row mt-5 mb-2">
     <h1>{% trans "New booking request" %}</h1>
   </div>
-  <form method="post">
-    {% crispy form form.helper %}
-  </form>
-  <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', (event) => {
-      let repetitionsField = document.querySelector('select[name="rrule_repetitions"]');
-      let endsField = document.querySelector('select[name="rrule_ends"]');
-      let additionalFieldsDiv = document.querySelector('#rrule_additional_fields');
-      let endsCountFieldDiv = document.querySelector('#div_id_rrule_ends_count');
-      let endsEnddateFieldDiv = document.querySelector('#div_id_rrule_ends_enddate');
-      let rruleDailyDiv = document.querySelector('#rrule_daily');
-      let rruleWeeklyDiv = document.querySelector('#rrule_weekly');
-      let rruleMonthlyDiv = document.querySelector('#rrule_monthly');
-      let rruleMonthlyByDayDiv = document.querySelector('#div_id_rrule_monthly_byday');
-      let rruleMonthlyByDateDiv = document.querySelector('#div_id_rrule_monthly_bydate');
-      let billingAddressDiv = document.querySelector('#billing-address');
-      let compensationOptions = document.querySelectorAll('input[name="compensation"]');
+  {% if not user_has_bookingspermission %}
+    <div class="alert alert-warning" role="alert">
+      {% trans "You first need to create an organization you want to book for." %}
+      <a href="{% url 'organizations:create-organization' %}">{% trans "Create a new organization." %}</a>
+    </div>
+  {% else %}
+    <form method="post">
+      {% crispy form form.helper %}
+    </form>
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', (event) => {
+        let repetitionsField = document.querySelector('select[name="rrule_repetitions"]');
+        let endsField = document.querySelector('select[name="rrule_ends"]');
+        let additionalFieldsDiv = document.querySelector('#rrule_additional_fields');
+        let endsCountFieldDiv = document.querySelector('#div_id_rrule_ends_count');
+        let endsEnddateFieldDiv = document.querySelector('#div_id_rrule_ends_enddate');
+        let rruleDailyDiv = document.querySelector('#rrule_daily');
+        let rruleWeeklyDiv = document.querySelector('#rrule_weekly');
+        let rruleMonthlyDiv = document.querySelector('#rrule_monthly');
+        let rruleMonthlyByDayDiv = document.querySelector('#div_id_rrule_monthly_byday');
+        let rruleMonthlyByDateDiv = document.querySelector('#div_id_rrule_monthly_bydate');
+        let billingAddressDiv = document.querySelector('#billing-address');
+        let compensationOptions = document.querySelectorAll('input[name="compensation"]');
 
 
-      function handleRepetitionsChange() {
-        // initially hide specific end fields
-        endsEnddateFieldDiv.style.display = "none";
-        rruleDailyDiv.style.display = "none";
-        rruleWeeklyDiv.style.display = "none";
-        rruleMonthlyDiv.style.display = "none";
-        additionalFieldsDiv.style.display = "none";
+        function handleRepetitionsChange() {
+          // initially hide specific end fields
+          endsEnddateFieldDiv.style.display = "none";
+          rruleDailyDiv.style.display = "none";
+          rruleWeeklyDiv.style.display = "none";
+          rruleMonthlyDiv.style.display = "none";
+          additionalFieldsDiv.style.display = "none";
 
-        if (repetitionsField.value !== "NO_REPETITIONS") {
-          additionalFieldsDiv.style.display = "block";
+          if (repetitionsField.value !== "NO_REPETITIONS") {
+            additionalFieldsDiv.style.display = "block";
 
-          if (repetitionsField.value === "DAILY") {
-            rruleDailyDiv.style.display = "block";
-          } else if (repetitionsField.value === "WEEKLY") {
-            rruleWeeklyDiv.style.display = "block";
-          } else if (repetitionsField.value === "MONTHLY_BY_DAY") {
-            rruleMonthlyDiv.style.display = "block";
-            rruleMonthlyByDayDiv.style.display = "block";
-            rruleMonthlyByDateDiv.style.display = "none";
-          } else if (repetitionsField.value === "MONTHLY_BY_DATE") {
-            rruleMonthlyByDayDiv.style.display = "none";
-            rruleMonthlyByDateDiv.style.display = "block";
-            rruleMonthlyDiv.style.display = "block";
+            if (repetitionsField.value === "DAILY") {
+              rruleDailyDiv.style.display = "block";
+            } else if (repetitionsField.value === "WEEKLY") {
+              rruleWeeklyDiv.style.display = "block";
+            } else if (repetitionsField.value === "MONTHLY_BY_DAY") {
+              rruleMonthlyDiv.style.display = "block";
+              rruleMonthlyByDayDiv.style.display = "block";
+              rruleMonthlyByDateDiv.style.display = "none";
+            } else if (repetitionsField.value === "MONTHLY_BY_DATE") {
+              rruleMonthlyByDayDiv.style.display = "none";
+              rruleMonthlyByDateDiv.style.display = "block";
+              rruleMonthlyDiv.style.display = "block";
+            }
           }
         }
-      }
 
-      function handleEndsChange() {
-        if (endsField.value === 'AFTER_TIMES') {
-          endsCountFieldDiv.style.display = "block";
-          endsEnddateFieldDiv.style.display = "none";
-        } else if (endsField.value === 'AT_DATE') {
-          endsCountFieldDiv.style.display = "none";
-          endsEnddateFieldDiv.style.display = "block";
-        } else {
-          endsCountFieldDiv.style.display = "none";
-          endsEnddateFieldDiv.style.display = "none";
+        function handleEndsChange() {
+          if (endsField.value === 'AFTER_TIMES') {
+            endsCountFieldDiv.style.display = "block";
+            endsEnddateFieldDiv.style.display = "none";
+          } else if (endsField.value === 'AT_DATE') {
+            endsCountFieldDiv.style.display = "none";
+            endsEnddateFieldDiv.style.display = "block";
+          } else {
+            endsCountFieldDiv.style.display = "none";
+            endsEnddateFieldDiv.style.display = "none";
+          }
         }
-      }
 
-      //Listen to changes
-      repetitionsField.addEventListener('change', handleRepetitionsChange);
-      endsField.addEventListener('change', handleEndsChange);
+        //Listen to changes
+        repetitionsField.addEventListener('change', handleRepetitionsChange);
+        endsField.addEventListener('change', handleEndsChange);
 
-      //Call once at start
-      handleRepetitionsChange();
-      handleEndsChange();
-    });
-  </script>
+        //Call once at start
+        handleRepetitionsChange();
+        handleEndsChange();
+      });
+    </script>
+  {% endif %}
 {% endblock content %}
