@@ -4,6 +4,7 @@ from typing import ClassVar
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.contrib.auth.models import AbstractUser
+from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import EmailField
 from django.db.models import ManyToManyField
@@ -14,6 +15,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.models import Organization
+from roomsharing.rooms.models import Room
 from roomsharing.users.managers import UserManager
 from roomsharing.utils.models import TimeStampedModel
 
@@ -69,6 +71,7 @@ class User(AbstractUser, TimeStampedModel):
 
 
 class UserGroup(TimeStampedModel):
+    history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
     description = CharField(_("Description"), max_length=2048)
     slug = AutoSlugField(populate_from="name", unique=True, editable=False)
@@ -78,11 +81,25 @@ class UserGroup(TimeStampedModel):
         related_name="usergroups_of_user",
         related_query_name="usergroup_of_user",
     )
+    auto_confirmed_rooms = ManyToManyField(
+        Room,
+        verbose_name=_("Auto confirmed rooms"),
+        related_name="autoconfirmedrooms_of_usergroup",
+        related_query_name="autoconfirmedroom_of_usergroup",
+        blank=True,
+    )
+    auto_confirm_organizations = BooleanField(
+        _("Auto confirm organizations on creation"), default=False
+    )
 
     class Meta:
         verbose_name = _("User group")
         verbose_name_plural = _("User groups")
         ordering = ["id"]
 
+    def __str__(self):
+        return self.name
 
-auditlog.register(Organization, exclude_fields=["created, updated"])
+
+auditlog.register(User, exclude_fields=["updated"])
+auditlog.register(UserGroup, exclude_fields=["updated"])

@@ -439,30 +439,20 @@ def manager_filter_invoice_bookings_list(
         "recurrence_rule",
     ]
 
-    # Start filtering the bookings queryset
     bookings = (
         Booking.objects.filter(total_amount__gt=0)
         .filter(status=BookingStatus.CONFIRMED)
         .prefetch_related(*related_fields)
     )
-
-    # Apply organization filter
     if organization != "all":
         bookings = bookings.filter(organization__slug=organization)
-
-    # Apply invoice number filter (if provided)
     if invoice_number:
         bookings = bookings.filter(invoice_number=invoice_number)
-
-    # Apply room filter
     if room != "all":
         bookings = bookings.filter(room__slug=room)
-
-    # Apply "only with invoice number" filter
     if only_with_invoice_number:
         bookings = bookings.exclude(invoice_number="")
 
-    # Order the results by timespan
     bookings = bookings.order_by("timespan")
 
     return bookings, organizations, rooms

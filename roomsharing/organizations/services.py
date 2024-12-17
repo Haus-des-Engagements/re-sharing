@@ -65,6 +65,8 @@ def show_organization(user, organization_slug):
 
 def create_organization(user, form):
     new_org = form.save(commit=False)
+    if user.usergroups_of_user.filter(auto_confirm_organizations=True).exists():
+        new_org.status = BookingStatus.CONFIRMED
     new_org.save()
     bookingpermission = BookingPermission(
         user=user,

@@ -360,13 +360,10 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     Shows the bookings with an invoice for a room manager so that they can be
     confirmed or cancelled
     """
-    # Convert "with_invoice_number" from string ('true', 'false', etc.) to a boolean.
     only_with_invoice_number = request.GET.get("only_with_invoice_number") or False
     organization = request.GET.get("organization", "all")
     invoice_number = request.GET.get("invoice_number") or None
     room = request.GET.get("room") or "all"
-
-    # Call the service with properly converted arguments.
     bookings, organizations, rooms = manager_filter_invoice_bookings_list(
         organization, only_with_invoice_number, invoice_number, room
     )
