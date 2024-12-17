@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <h1 class="mt-4">
+    {% trans "Manage bookings" %}
+    <a class="btn btn-outline-primary"
+       href="{% url 'bookings:create-booking' %}"
+       role="button">
+      <svg width="1em" height="1em">
+        <use href="#bi-plus-lg" />
+      </svg>
+      {% trans "New Booking" %}
+    </a>
+  </h1>
+  <form class="row gx-3 gy-2 align-items-center mt-3"
+        action="{% url 'bookings:manager-list-bookings' %}"
+        method="get"
+        hx-get="{% url 'bookings:manager-list-invoices' %}"
+        hx-target="#booking-list"
+        hx-trigger="change"
+        hx-indicator="#spinner">
+    <div id="div_id_organization" class="col-auto">
+      <select name="organization" class="form-select" id="id_organization">
+        <option selected value="all">{% trans "all organizations" %}</option>
+        {% for organization in organizations %}
+          <option value="{{ organization.slug }}">{{ organization }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="div_id_room" class="col-auto">
+      <select name="room" class="form-select" id="id_room">
+        <option selected value="all">{% trans "all rooms" %}</option>
+        {% for room in rooms %}<option value="{{ room.slug }}">{{ room }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto form-check">
+      <input type="checkbox"
+             name="only_with_invoice_number"
+             class="form-check-input"
+             id="id_only_with_invoice_number" />
+      <label for="id_show_past_bookings" class="form-check-label">{% trans "only with invoice number" %}</label>
+    </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </form>
+  <div id="booking-list">{% include "bookings/partials/manager_list_invoices.html" %}</div>
+{% endblock content %}

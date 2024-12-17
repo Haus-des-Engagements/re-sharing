@@ -14,7 +14,7 @@
 <td>
   <span class="fs-6 badge text-bg-status-{{ rrule.status }}">{{ rrule.get_status_display }}</span>
 </td>
-<td>
+<td class="text-nowrap">
   <span class="fs-6 badge text-bg-status-1">{{ rrule.get_pending|length }}</span>
   <span class="fs-6 badge text-bg-status-2">{{ rrule.get_confirmed|length }}</span>
   <span class="fs-6 badge text-bg-status-3">{{ rrule.get_cancelled|length }}</span>

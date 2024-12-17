@@ -27,7 +27,7 @@ from .services_recurrences import max_future_booking_date
 @admin.register(Booking)
 class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "room", "timespan", "status", "organization", "title", "user"]
-    search_fields = ["id", "title"]
+    search_fields = ["id", "title", "slug"]
     list_filter = ["status", "organization", "room", "recurrence_rule"]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]

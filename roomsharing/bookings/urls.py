@@ -11,6 +11,7 @@ from .views import manager_cancel_booking_view
 from .views import manager_cancel_rrule_view
 from .views import manager_confirm_booking_view
 from .views import manager_confirm_rrule_view
+from .views import manager_filter_invoice_bookings_list_view
 from .views import manager_list_bookings_view
 from .views import manager_list_rrules_view
 from .views import preview_and_save_booking_view
@@ -25,6 +26,11 @@ urlpatterns = [
         "manage-bookings/",
         manager_list_bookings_view,
         name="manager-list-bookings",
+    ),
+    path(
+        "manage-invoices/",
+        manager_filter_invoice_bookings_list_view,
+        name="manager-list-invoices",
     ),
     path(
         "manage-recurrences/",

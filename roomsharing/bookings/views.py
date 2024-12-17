@@ -24,6 +24,7 @@ from .services import manager_cancel_booking
 from .services import manager_confirm_booking
 from .services import manager_confirm_rrule
 from .services import manager_filter_bookings_list
+from .services import manager_filter_invoice_bookings_list
 from .services import save_booking
 from .services import set_initial_booking_data
 from .services import show_booking
@@ -350,3 +351,33 @@ def manager_confirm_rrule_view(request, rrule_uuid):
     return render(
         request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}
     )
+
+
+@require_http_methods(["GET"])
+@staff_member_required
+def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpResponse:
+    """
+    Shows the bookings with an invoice for a room manager so that they can be
+    confirmed or cancelled
+    """
+    # Convert "with_invoice_number" from string ('true', 'false', etc.) to a boolean.
+    only_with_invoice_number = request.GET.get("only_with_invoice_number") or False
+    organization = request.GET.get("organization", "all")
+    invoice_number = request.GET.get("invoice_number") or None
+    room = request.GET.get("room") or "all"
+
+    # Call the service with properly converted arguments.
+    bookings, organizations, rooms = manager_filter_invoice_bookings_list(
+        organization, only_with_invoice_number, invoice_number, room
+    )
+
+    context = {
+        "bookings": bookings,
+        "organizations": organizations,
+        "rooms": rooms,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "bookings/partials/manager_list_invoices.html", context)
+
+    return render(request, "bookings/manager_list_invoices.html", context)

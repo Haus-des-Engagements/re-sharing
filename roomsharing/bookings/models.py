@@ -262,6 +262,7 @@ class Booking(TimeStampedModel):
         null=True,
         blank=True,
     )
+    invoice_number = CharField(_("Invoice number"), max_length=160, blank=True)
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
     auto_generated_on = DateTimeField(
         _("Automatically generated on"), blank=True, null=True

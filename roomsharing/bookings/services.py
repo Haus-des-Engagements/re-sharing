@@ -425,3 +425,44 @@ def collect_booking_reminder_mails():
         )
         processed_slugs.append(booking.slug)
     return processed_slugs
+
+
+def manager_filter_invoice_bookings_list(
+    organization, only_with_invoice_number, invoice_number, room
+):
+    organizations = Organization.objects.all()
+    rooms = Room.objects.all()
+    related_fields = [
+        "organization",
+        "room__compensations_of_room",
+        "user",
+        "recurrence_rule",
+    ]
+
+    # Start filtering the bookings queryset
+    bookings = (
+        Booking.objects.filter(total_amount__gt=0)
+        .filter(status=BookingStatus.CONFIRMED)
+        .prefetch_related(*related_fields)
+    )
+
+    # Apply organization filter
+    if organization != "all":
+        bookings = bookings.filter(organization__slug=organization)
+
+    # Apply invoice number filter (if provided)
+    if invoice_number:
+        bookings = bookings.filter(invoice_number=invoice_number)
+
+    # Apply room filter
+    if room != "all":
+        bookings = bookings.filter(room__slug=room)
+
+    # Apply "only with invoice number" filter
+    if only_with_invoice_number:
+        bookings = bookings.exclude(invoice_number="")
+
+    # Order the results by timespan
+    bookings = bookings.order_by("timespan")
+
+    return bookings, organizations, rooms
