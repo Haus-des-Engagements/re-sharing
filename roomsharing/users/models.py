@@ -68,4 +68,21 @@ class User(AbstractUser, TimeStampedModel):
         return reverse("users:detail", kwargs={"slug": self.slug})
 
 
+class UserGroup(TimeStampedModel):
+    name = CharField(_("Name"), max_length=160)
+    description = CharField(_("Description"), max_length=2048)
+    slug = AutoSlugField(populate_from="name", unique=True, editable=False)
+    users = ManyToManyField(
+        User,
+        verbose_name=_("Users"),
+        related_name="usergroups_of_user",
+        related_query_name="usergroup_of_user",
+    )
+
+    class Meta:
+        verbose_name = _("User group")
+        verbose_name_plural = _("User groups")
+        ordering = ["id"]
+
+
 auditlog.register(Organization, exclude_fields=["created, updated"])

@@ -46,6 +46,34 @@ def validate_is_pdf(file):
         raise ValidationError(invalid_file_extension_message)
 
 
+class OrganizationGroup(TimeStampedModel):
+    history = AuditlogHistoryField()
+    name = CharField(_("Name"), max_length=160)
+    description = CharField(_("Description"), max_length=2048)
+    slug = AutoSlugField(populate_from="name", unique=True, editable=False)
+    auto_confirmed_rooms = ManyToManyField(
+        Room,
+        verbose_name=_("Auto confirmed rooms"),
+        related_name="autoconfirmedrooms_of_organizationgroup",
+        related_query_name="autoconfirmedroom_of_organizationgroup",
+        blank=True,
+    )
+    show_on_organization_creation = BooleanField(
+        _("Show on organization creation"), default=False
+    )
+    show_on_organization_creation_wording = CharField(
+        _("This will be displayed in the form"), max_length=256, blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Organization group")
+        verbose_name_plural = _("Organization groups")
+        ordering = ["id"]
+
+    def __str__(self):
+        return self.name
+
+
 class Organization(TimeStampedModel):
     class Status(IntegerChoices):
         PENDING = 1, _("Pending")
@@ -141,6 +169,13 @@ class Organization(TimeStampedModel):
         null=True,
         storage=select_private_storage,
     )
+    organization_groups = ManyToManyField(
+        OrganizationGroup,
+        verbose_name=_("Organization group"),
+        related_name="organizations_of_organizationgroups",
+        related_query_name="organization_of_organizationgroups",
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Organization")
@@ -159,12 +194,22 @@ class Organization(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("organizations:show-organization", args=[str(self.slug)])
 
-    def default_booking_status(self, room):
-        default_booking_status = self.defaultbookingstatuses_of_organization.filter(
-            room=room
-        )
-        if default_booking_status:
-            return default_booking_status.first().status
+    def get_booking_status(self, room) -> BookingStatus:
+        """
+        Determine the default booking status for a given room.
+
+        The function evaluates whether a room should have an automatic confirmation
+        status based on its inclusion in the 'auto_confirmed_rooms' of the
+        organization group. If a match is found, the status of the first matched
+        entry is returned. Otherwise, the default status is set to 'PENDING'.
+
+        :param room: The room object to determine the booking status for.
+        :type room: object
+        :return: The evaluated default booking status for the specified room.
+        :rtype: BookingStatus
+        """
+        if self.organization_groups.filter(auto_confirmed_rooms=room).exists():
+            return BookingStatus.CONFIRMED
         return BookingStatus.PENDING
 
     def get_confirmed_admins(self):
@@ -224,34 +269,6 @@ class BookingPermission(TimeStampedModel):
         return self.user.__str__() + " - " + self.organization.name
 
 
-class DefaultBookingStatus(TimeStampedModel):
-    history = AuditlogHistoryField()
-    organization = ForeignKey(
-        Organization,
-        verbose_name=_("Organization"),
-        related_name="defaultbookingstatuses_of_organization",
-        related_query_name="defaultbookingstatus_of_organization",
-        blank=True,
-        on_delete=CASCADE,
-    )
-    room = ManyToManyField(
-        Room,
-        verbose_name=_("Rooms"),
-        related_name="defaultbookingstatuses_of_room",
-        related_query_name="defaultbookingstatus_of_room",
-    )
-
-    status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
-
-    class Meta:
-        verbose_name = _("Default booking status")
-        verbose_name_plural = _("Default booking statuses")
-        ordering = ["id"]
-
-    def __str__(self):
-        return self.organization.name + ": " + self.get_status_display()
-
-
 class EmailTemplate(TimeStampedModel):
     class EmailTypeChoices(TextChoices):
         BOOKING_CONFIRMATION = (
@@ -300,7 +317,7 @@ class EmailTemplate(TimeStampedModel):
         return f"{self.get_email_type_display()} - {self.subject}"
 
 
-auditlog.register(DefaultBookingStatus, exclude_fields=["updated"])
 auditlog.register(Organization, exclude_fields=["updated"])
 auditlog.register(BookingPermission, exclude_fields=["updated"])
 auditlog.register(EmailTemplate, exclude_fields=["updated"])
+auditlog.register(OrganizationGroup, exclude_fields=["updated"])

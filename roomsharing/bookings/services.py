@@ -91,7 +91,7 @@ def generate_single_booking(booking_data):
         "start_datetime": start_datetime,
         "end_datetime": end_datetime,
         "organization": organization,
-        "status": organization.default_booking_status(room),
+        "status": organization.get_booking_status(room),
         "timespan": timespan,
         "start_date": booking_data["start_date"],
         "start_time": booking_data["start_time"],

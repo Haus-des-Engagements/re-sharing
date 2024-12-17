@@ -2,9 +2,9 @@ from django.contrib import admin
 from import_export.admin import ImportExportMixin
 
 from .models import BookingPermission
-from .models import DefaultBookingStatus
 from .models import EmailTemplate
 from .models import Organization
+from .models import OrganizationGroup
 
 
 @admin.register(Organization)
@@ -25,9 +25,9 @@ class BookingPermissionAdmin(ImportExportMixin, admin.ModelAdmin):
     ordering = ["id"]
 
 
-@admin.register(DefaultBookingStatus)
-class DefaultBookingStatusAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "organization", "status"]
-    search_fields = ["id", "organization", "room", "status"]
-    list_filter = ["organization", "room", "status"]
+@admin.register(OrganizationGroup)
+class OrganizationGroupAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ["id", "name"]
+    search_fields = ["id", "name"]
+    list_filter = ["name"]
     ordering = ["id"]
