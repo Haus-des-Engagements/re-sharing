@@ -24,6 +24,18 @@ def get_email_template(email_type):
         return None
 
 
+def get_recipient_booking(booking):
+    if booking.organization.send_booking_emails_only_to_organization:
+        return [booking.organization.email]
+    return [booking.user.email]
+
+
+def get_recipient_rrule(rrule):
+    if rrule.organization.send_booking_emails_only_to_organization:
+        return [rrule.organization.email]
+    return [rrule.user.email]
+
+
 def booking_ics(booking):
     domain = Site.objects.get_current().domain
     cal = Calendar()
@@ -70,7 +82,7 @@ def booking_confirmation_email(booking):
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_CONFIRMATION,
         context,
-        [booking.user.email],
+        get_recipient_booking(booking),
         ical_content,
     )
 
@@ -86,7 +98,7 @@ def booking_reminder_email(booking):
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
         context,
-        [booking.user.email],
+        get_recipient_booking(booking),
         ical_content,
     )
 
@@ -98,7 +110,7 @@ def booking_cancellation_email(booking):
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_CANCELLATION,
         context,
-        [booking.user.email],
+        get_recipient_booking(booking),
     )
 
 
@@ -121,7 +133,7 @@ def recurrence_confirmation_email(rrule):
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.RECURRENCE_CONFIRMATION,
         context,
-        [first_booking.user.email],
+        get_recipient_rrule(rrule),
     )
 
 
@@ -133,7 +145,7 @@ def recurrence_cancellation_email(rrule):
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.RECURRENCE_CANCELLATION,
         context,
-        [first_booking.user.email],
+        get_recipient_rrule(rrule),
     )
 
 

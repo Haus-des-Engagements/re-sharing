@@ -8,6 +8,8 @@ from django.utils import timezone
 from roomsharing.organizations.mails import booking_cancellation_email
 from roomsharing.organizations.mails import booking_confirmation_email
 from roomsharing.organizations.mails import booking_reminder_email
+from roomsharing.organizations.mails import get_recipient_booking
+from roomsharing.organizations.mails import get_recipient_rrule
 from roomsharing.organizations.mails import manager_new_booking
 from roomsharing.organizations.mails import manager_new_recurrence
 from roomsharing.organizations.mails import organization_cancellation_email
@@ -70,7 +72,7 @@ class BookingConfirmationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["user@example.com"],
+            get_recipient_booking(mock_booking),
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.attach.assert_called_once_with(
@@ -116,7 +118,7 @@ class BookingCancellationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["user@example.com"],
+            get_recipient_booking(mock_booking),
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -167,7 +169,7 @@ class BookingReminderEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["user@example.com"],
+            get_recipient_booking(mock_booking),
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.attach.assert_called_once_with(
@@ -225,7 +227,6 @@ class RecurrenceConfirmationEmailTestCase(TestCase):
         mock_email_template.objects.get.return_value = email_template_instance
 
         mock_rrule = MagicMock()
-        mock_rrule.get_first_booking.return_value.user.email = "user@example.com"
 
         recurrence_confirmation_email(mock_rrule)
 
@@ -237,7 +238,7 @@ class RecurrenceConfirmationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["user@example.com"],
+            get_recipient_rrule(mock_rrule),
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -260,7 +261,6 @@ class RecurrenceCancellationEmailTestCase(TestCase):
         mock_email_template.objects.get.return_value = email_template_instance
 
         mock_rrule = MagicMock()
-        mock_rrule.get_first_booking.return_value.user.email = "user@example.com"
 
         recurrence_cancellation_email(mock_rrule)
 
@@ -272,7 +272,7 @@ class RecurrenceCancellationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["user@example.com"],
+            get_recipient_rrule(mock_rrule),
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)

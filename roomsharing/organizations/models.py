@@ -126,6 +126,13 @@ class Organization(TimeStampedModel):
     zip_code = CharField(_("Zip Code"), max_length=12)
     city = CharField(_("City"), max_length=24)
     email = EmailField(_("E-Mail"), max_length=64)
+    send_booking_emails_only_to_organization = BooleanField(
+        _(
+            "All mails for bookings will be send to the organization and not to the "
+            "booking user."
+        ),
+        default=False,
+    )
     phone = CharField(_("Phone number"), max_length=32)
     website = CharField(_("Website"), max_length=128, blank=True)
     legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
