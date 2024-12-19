@@ -201,24 +201,6 @@ class Organization(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("organizations:show-organization", args=[str(self.slug)])
 
-    def get_booking_status(self, room) -> BookingStatus:
-        """
-        Determine the default booking status for a given room.
-
-        The function evaluates whether a room should have an automatic confirmation
-        status based on its inclusion in the 'auto_confirmed_rooms' of the
-        organization group. If a match is found, the status of the first matched
-        entry is returned. Otherwise, the default status is set to 'PENDING'.
-
-        :param room: The room object to determine the booking status for.
-        :type room: object
-        :return: The evaluated default booking status for the specified room.
-        :rtype: BookingStatus
-        """
-        if self.organization_groups.filter(auto_confirmed_rooms=room).exists():
-            return BookingStatus.CONFIRMED
-        return BookingStatus.PENDING
-
     def get_confirmed_admins(self):
         """
         Fetch all users who are confirmed admins of this organization.
@@ -315,10 +297,12 @@ class EmailTemplate(TimeStampedModel):
             _("Manager new recurrence"),
         )
         MANAGER_NEW_BOOKING = "manager_new_booking", _("Manager new booking")
+        NEW_BOOKING_MESSAGE = "new_booking_message", _("New booking message")
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)
     body = TextField()
+    active = BooleanField(_("Send this email out."), default=False)
 
     def __str__(self):
         return f"{self.get_email_type_display()} - {self.subject}"

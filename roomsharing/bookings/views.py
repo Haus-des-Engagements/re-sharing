@@ -226,6 +226,7 @@ def create_booking_data_form_view(request):
         endtime = request.GET.get("endtime")
         room = request.GET.get("room")
         initial_data = set_initial_booking_data(endtime, startdate, starttime, room)
+        # user needs at least to be confirmed for one organization
         user_has_bookingspermission = (
             BookingPermission.objects.filter(user=request.user)
             .filter(status=BookingPermission.Status.CONFIRMED)

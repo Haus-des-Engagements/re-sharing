@@ -29,6 +29,7 @@ from roomsharing.rooms.models import Room
 from roomsharing.rooms.services import get_access_code
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
+from roomsharing.utils.models import get_booking_status
 
 
 class InvalidBookingOperationError(Exception):
@@ -84,14 +85,16 @@ def generate_single_booking(booking_data):
                 * compensation.hourly_rate
             )
 
+    user = get_object_or_404(User, slug=booking_data["user"])
+
     booking_details = {
-        "user": get_object_or_404(User, slug=booking_data["user"]),
+        "user": user,
         "title": booking_data["title"],
         "room": room,
         "start_datetime": start_datetime,
         "end_datetime": end_datetime,
         "organization": organization,
-        "status": organization.get_booking_status(room),
+        "status": get_booking_status(user, organization, room),
         "timespan": timespan,
         "start_date": booking_data["start_date"],
         "start_time": booking_data["start_time"],
@@ -156,6 +159,11 @@ def save_bookingmessage(booking, message, user):
         user=user,
     )
     booking_message.save()
+    async_task(
+        "roomsharing.organizations.mails.new_booking_message_email",
+        booking_message,
+        task_name="new-booking-message-email",
+    )
     return booking_message
 
 

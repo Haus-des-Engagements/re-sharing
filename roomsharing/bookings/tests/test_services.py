@@ -43,12 +43,15 @@ from roomsharing.bookings.tests.factories import create_timespan
 from roomsharing.organizations.models import BookingPermission
 from roomsharing.organizations.tests.factories import BookingPermissionFactory
 from roomsharing.organizations.tests.factories import OrganizationFactory
+from roomsharing.organizations.tests.factories import OrganizationGroupFactory
 from roomsharing.rooms.tests.factories import AccessCodeFactory
 from roomsharing.rooms.tests.factories import AccessFactory
 from roomsharing.rooms.tests.factories import CompensationFactory
 from roomsharing.rooms.tests.factories import RoomFactory
 from roomsharing.users.tests.factories import UserFactory
+from roomsharing.users.tests.factories import UserGroupFactory
 from roomsharing.utils.models import BookingStatus
+from roomsharing.utils.models import get_booking_status
 
 
 class TestCancelBooking(TestCase):
@@ -1041,3 +1044,35 @@ class CollectBookingReminderMailsTest(TestCase):
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
     result = set_initial_booking_data(endtime, startdate, starttime, room=None)
     assert result == expected_data
+
+
+class TestGetBookingStatus(TestCase):
+    def setUp(self):
+        self.room = RoomFactory()
+
+        self.organization_group = OrganizationGroupFactory()
+        self.organization_group.auto_confirmed_rooms.add(self.room)
+        self.organization = OrganizationFactory()
+
+        self.user = UserFactory()
+        self.user_group = UserGroupFactory()
+        self.user_group.auto_confirmed_rooms.add(self.room)
+
+    def test_confirmed_by_organization(self):
+        self.organization.organization_groups.add(self.organization_group)
+        status = get_booking_status(self.user, self.organization, self.room)
+        assert status == BookingStatus.CONFIRMED
+
+    def test_pending_by_organization(self):
+        status = get_booking_status(self.user, self.organization, self.room)
+        assert status == BookingStatus.PENDING
+
+    def test_confirmed_by_is_staff(self):
+        self.user.is_staff = True
+        status = get_booking_status(self.user, self.organization, self.room)
+        assert status == BookingStatus.CONFIRMED
+
+    def test_confirmed_by_usergroup(self):
+        self.user_group.users.add(self.user)
+        status = get_booking_status(self.user, self.organization, self.room)
+        assert status == BookingStatus.CONFIRMED

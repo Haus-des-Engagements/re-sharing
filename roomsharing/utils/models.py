@@ -28,3 +28,13 @@ class BookingStatus(IntegerChoices):
     CONFIRMED = 2, _("Confirmed")
     CANCELLED = 3, _("Cancelled")
     UNAVAILABLE = 4, _("Unavailable")
+
+
+def get_booking_status(user, organization, room):
+    if user.is_staff or user.is_superuser:
+        return BookingStatus.CONFIRMED
+    if organization.organization_groups.filter(auto_confirmed_rooms=room).exists():
+        return BookingStatus.CONFIRMED
+    if user.usergroups_of_user.filter(auto_confirmed_rooms=room).exists():
+        return BookingStatus.CONFIRMED
+    return BookingStatus.PENDING

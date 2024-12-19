@@ -11,6 +11,7 @@ from icalendar import Calendar
 from icalendar import Event
 
 from roomsharing.organizations.models import EmailTemplate
+from roomsharing.organizations.services import user_has_bookingpermission
 from roomsharing.rooms.services import get_access_code
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,9 @@ def booking_ics(booking):
 def send_email_with_template(email_type, context, recipient_list, ical_content=None):
     email_template = get_email_template(email_type)
     if not email_template:
+        return
+
+    if email_template.active is False:
         return
 
     subject = Template(email_template.subject).render(Context(context))
@@ -206,4 +210,17 @@ def manager_new_organization_email(organization):
         EmailTemplate.EmailTypeChoices.ORGANIZATION_CONFIRMATION,
         context,
         [settings.DEFAULT_MANAGER_EMAIL],
+    )
+
+
+def new_booking_message_email(booking_message):
+    domain = Site.objects.get_current().domain
+    context = {"booking": booking_message.booking, "domain": domain}
+    if not user_has_bookingpermission(booking_message.user, booking_message.booking):
+        recipient = [settings.DEFAULT_MANAGER_EMAIL]
+    else:
+        recipient = get_recipient_booking(booking_message.booking)
+
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.NEW_BOOKING_MESSAGE, context, recipient
     )

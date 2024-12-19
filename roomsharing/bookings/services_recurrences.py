@@ -38,6 +38,7 @@ from roomsharing.rooms.models import Compensation
 from roomsharing.rooms.models import Room
 from roomsharing.users.models import User
 from roomsharing.utils.models import BookingStatus
+from roomsharing.utils.models import get_booking_status
 
 max_future_booking_date = 730
 
@@ -139,7 +140,7 @@ def create_rrule_and_occurrences(booking_data):
     rrule.organization = get_object_or_404(
         Organization, slug=booking_data["organization"]
     )
-    rrule.status = rrule.organization.get_booking_status(rrule.room)
+    rrule.status = get_booking_status(rrule.user, rrule.organization, rrule.room)
     rrule.start_time = datetime.strptime(booking_data["start_time"], "%H:%M:%S").time()  # noqa: DTZ007
     rrule.end_time = datetime.strptime(booking_data["end_time"], "%H:%M:%S").time()  # noqa: DTZ007
     rrule.rrule = booking_data.get("rrule_string", "")
