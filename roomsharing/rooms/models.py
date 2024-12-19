@@ -142,6 +142,9 @@ class RoomImage(TimeStampedModel):
         verbose_name = _("Room Image")
         verbose_name_plural = _("Room Images")
 
+    def __str__(self):
+        return self.room.name + ": " + self.description
+
     def get_absolute_url(self):
         return reverse("rooms:show-room", kwargs={"slug": self.room.slug})
 

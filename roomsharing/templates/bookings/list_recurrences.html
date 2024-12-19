@@ -60,13 +60,6 @@
                 <em>{{ rrule.get_first_booking.organization }}</em>
                 <br />
                 {% trans "Occurrences" %}: {{ rrule.number_of_occurrences }}
-                {% if rrule.excepted_dates %}
-                  {% blocktrans count excepted_dates_length=rrule.excepted_dates|length %}
-    ({{ excepted_dates_length }} excepted date)
-{% plural %}
-    ({{ excepted_dates_length }} excepted dates)
-{% endblocktrans %}
-                {% endif %}
               </p>
             </div>
           </div>

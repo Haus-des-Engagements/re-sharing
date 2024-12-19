@@ -48,7 +48,7 @@ class RecurrenceRule(TimeStampedModel):
     )
     organization = ForeignKey(
         Organization,
-        verbose_name=_("Recurrence Organization"),
+        verbose_name=_("Organization"),
         on_delete=PROTECT,
         related_name="rrules_of_organization",
         related_query_name="rrule_of_organization",
