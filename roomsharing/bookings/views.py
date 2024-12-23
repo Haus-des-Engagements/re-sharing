@@ -10,7 +10,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
-from roomsharing.organizations.models import BookingPermission
 from roomsharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -153,17 +152,17 @@ def preview_and_save_booking_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    booking, message = generate_single_booking(booking_data)
+    booking = generate_single_booking(booking_data)
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
-            {"message": message, "booking": booking},
+            {"booking": booking},
         )
 
     if request.method == "POST":
         try:
-            booking = save_booking(request.user, booking, message)
+            booking = save_booking(request.user, booking)
         except IntegrityError:
             return HttpResponse(
                 "Booking not possbile at the given date(s).", status=400
@@ -193,14 +192,13 @@ def preview_and_save_recurrence_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    bookings, message, rrule, bookable = create_rrule_and_occurrences(booking_data)
+    bookings, rrule, bookable = create_rrule_and_occurrences(booking_data)
 
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-recurrence.html",
             {
-                "message": message,
                 "bookings": bookings,
                 "rrule": rrule,
                 "bookable": bookable,
@@ -227,11 +225,7 @@ def create_booking_data_form_view(request):
         room = request.GET.get("room")
         initial_data = set_initial_booking_data(endtime, startdate, starttime, room)
         # user needs at least to be confirmed for one organization
-        user_has_bookingspermission = (
-            BookingPermission.objects.filter(user=request.user)
-            .filter(status=BookingPermission.Status.CONFIRMED)
-            .exists()
-        )
+        user_has_bookingspermission = True
 
         form = BookingForm(user=request.user, initial=initial_data)
         return render(

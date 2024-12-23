@@ -127,7 +127,6 @@ def create_rrule_string(rrule_data):
 
 
 def create_rrule_and_occurrences(booking_data):
-    message = booking_data["message"]
     timespan = (
         isoparse(booking_data["timespan"][0]),
         isoparse(booking_data["timespan"][1]),
@@ -148,6 +147,7 @@ def create_rrule_and_occurrences(booking_data):
     rrule.differing_billing_address = booking_data["differing_billing_address"]
     rrule.compensation = None
     rrule.total_amount_per_occurrence = None
+    rrule.activity_description = booking_data["activity_description"]
     if booking_data["compensation"]:
         rrule.compensation = get_object_or_404(
             Compensation, id=booking_data["compensation"]
@@ -174,7 +174,7 @@ def create_rrule_and_occurrences(booking_data):
 
     # Determine if room is at least once bookable
     bookable = any(booking.status != BookingStatus.UNAVAILABLE for booking in bookings)
-    return bookings, message, rrule, bookable
+    return bookings, rrule, bookable
 
 
 def save_rrule(user, bookings, rrule):
@@ -347,6 +347,7 @@ def generate_bookings(rrule, start_datetime, end_datetime):
             recurrence_rule=rrule,
             auto_generated_on=timezone.now(),
             differing_billing_address=rrule.differing_billing_address,
+            activity_description=rrule.activity_description,
         )
         if booking.room.is_booked(booking.timespan):
             booking.status = BookingStatus.UNAVAILABLE

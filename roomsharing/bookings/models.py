@@ -87,6 +87,11 @@ class RecurrenceRule(TimeStampedModel):
         null=True,
         blank=True,
     )
+    activity_description = CharField(
+        _("Activity description"),
+        help_text=_("Please describe shortly what you are planning to do."),
+        max_length=2048,
+    )
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
     differing_billing_address = CharField(
         _("Differing billing address"), blank=True, max_length=256
@@ -278,6 +283,11 @@ class Booking(TimeStampedModel):
         ),
         max_length=256,
         blank=True,
+    )
+    activity_description = CharField(
+        _("Activity description"),
+        help_text=_("Please describe shortly what you are planning to do."),
+        max_length=2048,
     )
 
     class Meta:

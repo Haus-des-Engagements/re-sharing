@@ -254,14 +254,14 @@ class TestSaveBooking(TestCase):
             status=BookingStatus.PENDING, organization=self.organization
         )
 
-    def test_save_booking_without_message(self):
+    def test_save_booking(self):
         BookingPermissionFactory(
             organization=self.organization,
             user=self.user,
             status=BookingPermission.Status.CONFIRMED,
         )
         self.booking.status = BookingStatus(BookingStatus.CONFIRMED)
-        save_booking(self.user, self.booking, message=None)
+        save_booking(self.user, self.booking)
         self.booking.refresh_from_db()
 
         assert self.booking.status == BookingStatus.CONFIRMED
@@ -270,24 +270,6 @@ class TestSaveBooking(TestCase):
             == 0
         )
 
-    def test_save_booking_with_message(self):
-        BookingPermissionFactory(
-            organization=self.organization,
-            user=self.user,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        message = "I need a room!"
-        self.booking.status = BookingStatus(BookingStatus.CONFIRMED)
-        save_booking(self.user, self.booking, message)
-        self.booking.refresh_from_db()
-
-        assert self.booking.status == BookingStatus.CONFIRMED
-        booking_message = BookingMessage.objects.filter(
-            user=self.user, booking=self.booking
-        ).first()
-        assert booking_message.text == message
-        assert booking_message.user == self.user
-
     def test_no_booking_permission(self):
         BookingPermissionFactory(
             organization=self.organization,
@@ -295,7 +277,7 @@ class TestSaveBooking(TestCase):
             status=BookingPermission.Status.PENDING,
         )
         with pytest.raises(PermissionDenied):
-            save_booking(self.user, self.booking, message=None)
+            save_booking(self.user, self.booking)
 
 
 class TestCreateBookingMessage(TestCase):
@@ -461,6 +443,7 @@ def test_create_booking():
         "compensation": None,
         "total_amount": None,
         "differing_billing_address": None,
+        "activity_description": "Just a meeting",
     }
     kwargs = {"room_booked": True, "rrule": "FREQ=DAILY"}
 
@@ -700,10 +683,11 @@ class TestGenerateSingleBooking(TestCase):
             "message": "Please confirm my booking",
             "compensation": self.compensation.id,
             "differing_billing_address": self.differing_billing_address,
+            "activity_description": "Simple Meeting",
         }
 
     def test_generate_single_booking_valid_data(self):
-        booking, message = generate_single_booking(self.booking_data)
+        booking = generate_single_booking(self.booking_data)
 
         assert isinstance(booking, Booking)
         assert booking.user == self.user
@@ -713,13 +697,13 @@ class TestGenerateSingleBooking(TestCase):
         assert booking.timespan == (self.start_datetime, self.end_datetime)
         assert booking.compensation == self.compensation
         assert booking.total_amount == self.compensation.hourly_rate * self.duration
-        assert message == "Please confirm my booking"
+        assert booking.activity_description == "Simple Meeting"
         assert booking.differing_billing_address == self.differing_billing_address
 
     def test_generate_single_booking_no_compensation(self):
         self.booking_data["compensation"] = ""
         self.booking_data["different_billing_address"] = ""
-        booking, message = generate_single_booking(self.booking_data)
+        booking = generate_single_booking(self.booking_data)
 
         assert isinstance(booking, Booking)
         assert booking.user == self.user
@@ -729,7 +713,6 @@ class TestGenerateSingleBooking(TestCase):
         assert booking.timespan == (self.start_datetime, self.end_datetime)
         assert booking.compensation is None
         assert booking.total_amount is None
-        assert message == "Please confirm my booking"
 
     def test_generate_single_booking_invalid_organization(self):
         self.booking_data["organization"] = "invalid-slug"
@@ -783,12 +766,11 @@ class TestGenerateRecurrence(TestCase):
             "rrule_string": self.rrule_string,
             "start_datetime": self.start_datetime,
             "differing_billing_address": self.differing_billing_address,
+            "activity_description": "Simple Meeting",
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, message, rrule, bookable = create_rrule_and_occurrences(
-            self.booking_data
-        )
+        bookings, rrule, bookable = create_rrule_and_occurrences(self.booking_data)
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -800,8 +782,8 @@ class TestGenerateRecurrence(TestCase):
             assert booking.compensation == self.compensation
             assert booking.total_amount == self.compensation.hourly_rate * self.duration
             assert booking.differing_billing_address == self.differing_billing_address
+            assert booking.activity_description == "Simple Meeting"
 
-        assert message == "Please confirm my recurring bookings"
         assert isinstance(rrule, RecurrenceRule)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
@@ -813,9 +795,7 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["compensation"] = ""
         self.booking_data["differing_billing_address"] = ""
 
-        bookings, message, rrule, bookable = create_rrule_and_occurrences(
-            self.booking_data
-        )
+        bookings, rrule, bookable = create_rrule_and_occurrences(self.booking_data)
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -828,7 +808,6 @@ class TestGenerateRecurrence(TestCase):
             assert booking.total_amount is None
             assert booking.differing_billing_address == ""
 
-        assert message == "Please confirm my recurring bookings"
         assert isinstance(rrule, RecurrenceRule)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
@@ -883,11 +862,11 @@ class TestSaveRecurrence(TestCase):
             "rrule_string": self.rrule_string,
             "start_datetime": self.start_datetime,
             "differing_billing_address": "",
+            "activity_description": "Meeting with team members",
         }
 
         (
             self.bookings,
-            self.message,
             self.rrule,
             self.bookable,
         ) = create_rrule_and_occurrences(self.booking_data)

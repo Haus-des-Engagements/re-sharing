@@ -59,13 +59,10 @@ class BookingForm(forms.ModelForm):
         help_text=_("e.g. internal meeting, workshop XY, public talk about ZY..."),
     )
     number_of_attendees = forms.IntegerField(label=_("Number of attendees"))
-    message = forms.CharField(
+    activity_description = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
-        label=_(
-            "Please describe shortly what you plan to do and what else you want "
-            "us to know:"
-        ),
-        required=False,
+        label=_("Please describe shortly what you are planning to do."),
+        required=True,
     )
     room = forms.ModelChoiceField(
         queryset=Room.objects.all(),
@@ -308,7 +305,7 @@ class BookingForm(forms.ModelForm):
                 'billing / donation plan" %}</strong></span>{% endif %}'
             ),
             Div(
-                Field("message", css_class="form-control", rows="3"),
+                Field("activity_description", css_class="form-control", rows="3"),
                 css_class="row g-2",
             ),
         )
@@ -454,8 +451,8 @@ class BookingForm(forms.ModelForm):
             "starttime",
             "endtime",
             "organization",
-            "message",
             "room",
             "number_of_attendees",
             "differing_billing_address",
+            "activity_description",
         ]

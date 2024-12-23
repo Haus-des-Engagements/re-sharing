@@ -64,7 +64,6 @@ def show_booking(user, booking_slug):
 
 
 def generate_single_booking(booking_data):
-    message = booking_data["message"]
     timespan = (
         isoparse(booking_data["timespan"][0]),
         isoparse(booking_data["timespan"][1]),
@@ -102,18 +101,16 @@ def generate_single_booking(booking_data):
         "compensation": compensation,
         "total_amount": total_amount,
         "differing_billing_address": booking_data["differing_billing_address"],
+        "activity_description": booking_data["activity_description"],
     }
-    booking = create_booking(booking_details)
-    return booking, message
+    return create_booking(booking_details)
 
 
-def save_booking(user, booking, message):
+def save_booking(user, booking):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
     booking.save()
-    if message:
-        save_bookingmessage(booking, message, user)
 
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
@@ -147,6 +144,7 @@ def create_booking(booking_details, **kwargs):
         compensation=booking_details["compensation"],
         total_amount=booking_details["total_amount"],
         differing_billing_address=booking_details["differing_billing_address"],
+        activity_description=booking_details["activity_description"],
     )
     booking.room_booked = kwargs.get("room_booked") or None
     return booking
@@ -305,7 +303,6 @@ def create_booking_data(user, form):
         "room": form.cleaned_data["room"].slug,
         "timespan": timespan,
         "organization": form.cleaned_data["organization"].slug,
-        "message": form.cleaned_data["message"],
         "start_date": form.cleaned_data["startdate"].isoformat(),
         "start_time": form.cleaned_data["starttime"].isoformat(),
         "end_time": form.cleaned_data["endtime"].isoformat(),
@@ -313,6 +310,7 @@ def create_booking_data(user, form):
         "compensation": form.cleaned_data["compensation"].id,
         "start_datetime": form.cleaned_data["start_datetime"].isoformat(),
         "differing_billing_address": form.cleaned_data["differing_billing_address"],
+        "activity_description": form.cleaned_data["activity_description"],
     }
     rrule_string = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
