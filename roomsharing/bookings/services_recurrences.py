@@ -54,7 +54,7 @@ def create_rrule_string(rrule_data):
     rrule_monthly_interval = rrule_data["rrule_monthly_interval"]
     rrule_monthly_bydate = rrule_data["rrule_monthly_bydate"]
     rrule_monthly_byday = rrule_data["rrule_monthly_byday"]
-    start_datetime = rrule_data["start_datetime"].astimezone(UTC)
+    start = rrule_data["start"].astimezone(UTC)
 
     if rrule_ends == "AFTER_TIMES":
         count = rrule_ends_count
@@ -111,7 +111,7 @@ def create_rrule_string(rrule_data):
         interval=interval,
         byweekday=byweekday,
         bymonthday=bymonthday,
-        dtstart=start_datetime,
+        dtstart=start,
         bysetpos=None,
         until=rrule_enddate,
         count=count,
@@ -313,25 +313,17 @@ def extend_recurrences():
     return new_bookings
 
 
-def generate_bookings(rrule, start_datetime, end_datetime):
-    last_occurrence_before_end_datetime = rrulestr(rrule.rrule).before(
-        end_datetime, inc=True
-    )
+def generate_bookings(rrule, start, end):
+    last_occurrence_before_end = rrulestr(rrule.rrule).before(end, inc=True)
     occurrences = list(
-        rrulestr(rrule.rrule).between(
-            start_datetime, last_occurrence_before_end_datetime, inc=True
-        )
+        rrulestr(rrule.rrule).between(start, last_occurrence_before_end, inc=True)
     )
 
     # Helper function to create a booking
     def create_rrule_booking(occurrence):
-        b_start_datetime = timezone.make_aware(
-            datetime.combine(occurrence, rrule.start_time)
-        )
-        b_end_datetime = timezone.make_aware(
-            datetime.combine(occurrence, rrule.end_time)
-        )
-        timespan = (b_start_datetime, b_end_datetime)
+        b_start = timezone.make_aware(datetime.combine(occurrence, rrule.start_time))
+        b_end = timezone.make_aware(datetime.combine(occurrence, rrule.end_time))
+        timespan = (b_start, b_end)
         booking = Booking(
             title=rrule.title,
             user=rrule.user,
@@ -341,6 +333,7 @@ def generate_bookings(rrule, start_datetime, end_datetime):
             status=rrule.status,
             start_date=occurrence.date(),
             start_time=rrule.start_time,
+            end_date=occurrence.date(),
             end_time=rrule.end_time,
             compensation=rrule.compensation,
             total_amount=rrule.total_amount_per_occurrence,

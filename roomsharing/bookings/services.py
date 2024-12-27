@@ -71,17 +71,15 @@ def generate_single_booking(booking_data):
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
     room = get_object_or_404(Room, slug=booking_data["room"])
 
-    start_datetime = timespan[0]
-    end_datetime = timespan[1]
+    start = timespan[0]
+    end = timespan[1]
     compensation = None
     total_amount = None
     if booking_data["compensation"] != "":
         compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
         if compensation.hourly_rate is not None:
             total_amount = (
-                (end_datetime - start_datetime).total_seconds()
-                / 3600
-                * compensation.hourly_rate
+                (end - start).total_seconds() / 3600 * compensation.hourly_rate
             )
 
     user = get_object_or_404(User, slug=booking_data["user"])
@@ -90,12 +88,11 @@ def generate_single_booking(booking_data):
         "user": user,
         "title": booking_data["title"],
         "room": room,
-        "start_datetime": start_datetime,
-        "end_datetime": end_datetime,
         "organization": organization,
         "status": get_booking_status(user, organization, room),
         "timespan": timespan,
         "start_date": booking_data["start_date"],
+        "end_date": booking_data["end_date"],
         "start_time": booking_data["start_time"],
         "end_time": booking_data["end_time"],
         "compensation": compensation,
@@ -136,11 +133,12 @@ def create_booking(booking_details, **kwargs):
         title=booking_details["title"],
         room=booking_details["room"],
         timespan=booking_details["timespan"],
-        organization=booking_details["organization"],
-        status=booking_details["status"],
+        end_date=booking_details["end_date"],
         start_date=booking_details["start_date"],
         start_time=booking_details["start_time"],
         end_time=booking_details["end_time"],
+        organization=booking_details["organization"],
+        status=booking_details["status"],
         compensation=booking_details["compensation"],
         total_amount=booking_details["total_amount"],
         differing_billing_address=booking_details["differing_billing_address"],
@@ -295,8 +293,8 @@ def confirm_booking(user, booking_slug):
 
 def create_booking_data(user, form):
     if isinstance(form.cleaned_data["timespan"], tuple):
-        timespan_start, timespan_end = form.cleaned_data["timespan"]
-        timespan = (timespan_start.isoformat(), timespan_end.isoformat())
+        start, end = form.cleaned_data["timespan"]
+        timespan = (start.isoformat(), end.isoformat())
 
     booking_data = {
         "title": form.cleaned_data["title"],
@@ -304,11 +302,11 @@ def create_booking_data(user, form):
         "timespan": timespan,
         "organization": form.cleaned_data["organization"].slug,
         "start_date": form.cleaned_data["startdate"].isoformat(),
+        "end_date": form.cleaned_data["enddate"].isoformat(),
         "start_time": form.cleaned_data["starttime"].isoformat(),
         "end_time": form.cleaned_data["endtime"].isoformat(),
         "user": user.slug,
         "compensation": form.cleaned_data["compensation"].id,
-        "start_datetime": form.cleaned_data["start_datetime"].isoformat(),
         "differing_billing_address": form.cleaned_data["differing_billing_address"],
         "activity_description": form.cleaned_data["activity_description"],
     }

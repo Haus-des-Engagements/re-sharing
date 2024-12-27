@@ -9,7 +9,7 @@
   <div class="row mt-5 mb-2">
     <h1>{% trans "New booking request" %}</h1>
   </div>
-  {% if not user_has_bookingspermission %}
+  {% if not user_has_bookingpermission %}
     <div class="alert alert-warning" role="alert">
       {% trans "You first need to create an organization you want to book for." %}
       <a href="{% url 'organizations:create-organization' %}">{% trans "Create a new organization." %}</a>

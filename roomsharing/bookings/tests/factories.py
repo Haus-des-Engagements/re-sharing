@@ -43,6 +43,7 @@ class BookingFactory(DjangoModelFactory):
         date_start=datetime(2020, 1, 1).date(),  # noqa: DTZ001
         date_end=timezone.now().date() + timedelta(days=300),
     )
+    end_date = start_date
 
     @LazyAttribute
     def start_time(self):

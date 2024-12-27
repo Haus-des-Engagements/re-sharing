@@ -367,19 +367,15 @@ class BookingForm(forms.ModelForm):
         try:
             starttime = convert_time(starttime)
             cleaned_data["starttime"] = starttime
-            start_datetime = timezone.make_aware(
-                datetime.datetime.combine(startdate, starttime)
-            )
+            start = timezone.make_aware(datetime.datetime.combine(startdate, starttime))
             endtime = convert_time(endtime)
             cleaned_data["endtime"] = endtime
-            end_datetime = timezone.make_aware(
-                datetime.datetime.combine(startdate, endtime)
-            )
-            if start_datetime < timezone.now():
+            end = timezone.make_aware(datetime.datetime.combine(startdate, endtime))
+            if start < timezone.now():
                 msg = _("The start must be in the future.")
                 for field in ["starttime", "startdate"]:
                     self.add_error(field, msg)
-            if end_datetime <= start_datetime:
+            if end <= start:
                 msg = _("The end must be after the start.")
                 for field in ["endtime", "starttime"]:
                     self.add_error(field, msg)
@@ -396,8 +392,10 @@ class BookingForm(forms.ModelForm):
                 datetime.datetime.combine(rrule_ends_enddate, endtime)
             )
 
-        cleaned_data["start_datetime"] = start_datetime
-        cleaned_data["timespan"] = (start_datetime, end_datetime)
+        cleaned_data["startdate"] = startdate
+        cleaned_data["enddate"] = startdate
+        cleaned_data["timespan"] = (start, end)
+        cleaned_data["start"] = start
 
         field_errors = {
             "rrule_ends_count": (
@@ -432,11 +430,11 @@ class BookingForm(forms.ModelForm):
             if condition:
                 self.add_error(field, _(msg))
 
-        if rrule_repetitions == "NO_REPETITIONS" and end_datetime > start_datetime:
+        if rrule_repetitions == "NO_REPETITIONS" and end > start:
             if Booking.objects.filter(
                 status=BookingStatus.CONFIRMED,
                 room=room,
-                timespan__overlap=(start_datetime, end_datetime),
+                timespan__overlap=(start, end),
             ).exists():
                 msg = _("The room is already booked during your selected timeslot.")
                 self.add_error("room", msg)

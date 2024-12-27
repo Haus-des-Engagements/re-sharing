@@ -6,6 +6,7 @@ from dateutil.rrule import rrulestr
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields import RangeOperators
+from django.contrib.postgres.indexes import GistIndex
 from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import SET_NULL
@@ -248,6 +249,7 @@ class Booking(TimeStampedModel):
     )
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
     start_date = DateField(_("Start Date"))
+    end_date = DateField(_("End Date"))
     start_time = TimeField(_("Start Time"))
     end_time = TimeField(_("End Time"))
 
@@ -294,6 +296,8 @@ class Booking(TimeStampedModel):
         verbose_name = _("Booking")
         verbose_name_plural = _("Bookings")
         ordering = ["timespan"]
+        indexes = [GistIndex(fields=["timespan"])]
+
         constraints = [
             ExclusionConstraint(
                 name="exclude_overlapping_reservations",

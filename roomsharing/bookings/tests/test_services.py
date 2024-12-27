@@ -438,6 +438,7 @@ def test_create_booking():
         "organization": organization,
         "status": BookingStatus.PENDING,
         "start_date": timespan.lower.date(),
+        "end_date": timespan.lower.date(),
         "start_time": timespan.lower.time(),
         "end_time": timespan.upper.time(),
         "compensation": None,
@@ -459,6 +460,7 @@ def test_create_booking():
     assert booking.organization == booking_details["organization"]
     assert booking.status == booking_details["status"]
     assert booking.start_date == booking_details["start_date"]
+    assert booking.end_date == booking_details["end_date"]
     assert booking.start_time == booking_details["start_time"]
     assert booking.end_time == booking_details["end_time"]
     assert booking.room_booked == kwargs["room_booked"]
@@ -546,7 +548,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
                 "rrule_monthly_interval": None,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": None,
-                "start_datetime": datetime.datetime(
+                "start": datetime.datetime(
                     2023, 10, 1, 20, 00, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
                 ),
             },
@@ -566,7 +568,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
                 "rrule_monthly_interval": None,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": None,
-                "start_datetime": datetime.datetime(
+                "start": datetime.datetime(
                     2023, 10, 1, 10, 30, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
                 ),
             },
@@ -586,7 +588,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
                 "rrule_monthly_interval": 2,
                 "rrule_monthly_bydate": None,
                 "rrule_monthly_byday": ["MO(1)", "WE(3)", "SU(-1)"],
-                "start_datetime": datetime.datetime(
+                "start": datetime.datetime(
                     2023, 10, 1, 6, 00, 00, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
                 ),
             },
@@ -604,7 +606,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
                 "rrule_monthly_interval": 3,
                 "rrule_monthly_bydate": [1, 12, 30],
                 "rrule_monthly_byday": None,
-                "start_datetime": datetime.datetime(
+                "start": datetime.datetime(
                     2023, 10, 1, 9, 30, tzinfo=zoneinfo.ZoneInfo("Europe/Berlin")
                 ),
             },
@@ -678,6 +680,7 @@ class TestGenerateSingleBooking(TestCase):
                 self.end_datetime.isoformat(),
             ],
             "start_date": self.start_datetime.date(),
+            "end_date": self.start_datetime.date(),
             "start_time": self.start_datetime.time(),
             "end_time": self.end_datetime.time(),
             "message": "Please confirm my booking",
@@ -740,13 +743,11 @@ class TestGenerateRecurrence(TestCase):
         self.room = RoomFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
-        self.start_datetime = (timezone.now() + timedelta(days=1)).replace(
+        self.start = (timezone.now() + timedelta(days=1)).replace(microsecond=0)
+        self.dt_start = "DTSTART:" + self.start.strftime("%Y%m%dT%H%M%S") + "Z"
+        self.end_datetime = (self.start + timedelta(hours=self.duration)).replace(
             microsecond=0
         )
-        self.dt_start = "DTSTART:" + self.start_datetime.strftime("%Y%m%dT%H%M%S") + "Z"
-        self.end_datetime = (
-            self.start_datetime + timedelta(hours=self.duration)
-        ).replace(microsecond=0)
         self.count = 5
         self.differing_billing_address = "Fast lane 2, 929 Free-City"
         self.rrule_string = self.dt_start + "\nFREQ=DAILY;COUNT=" + str(self.count)
@@ -756,15 +757,17 @@ class TestGenerateRecurrence(TestCase):
             "room": self.room.slug,
             "organization": self.organization.slug,
             "timespan": [
-                self.start_datetime.isoformat(),
+                self.start.isoformat(),
                 self.end_datetime.isoformat(),
             ],
-            "start_time": self.start_datetime.time().strftime("%H:%M:%S"),
+            "start_date": self.start.date(),
+            "end_date": self.start.date(),
+            "start_time": self.start.time().strftime("%H:%M:%S"),
             "end_time": self.end_datetime.time().strftime("%H:%M:%S"),
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
-            "start_datetime": self.start_datetime,
+            "start": self.start,
             "differing_billing_address": self.differing_billing_address,
             "activity_description": "Simple Meeting",
         }
@@ -811,7 +814,7 @@ class TestGenerateRecurrence(TestCase):
         assert isinstance(rrule, RecurrenceRule)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
-        assert rrule.start_time == self.start_datetime.time()
+        assert rrule.start_time == self.start.time()
         assert rrule.end_time == self.end_datetime.time()
         assert rrule.first_occurrence_date == rrule_occurrences[0]
         assert rrule.last_occurrence_date == rrule_occurrences[-1]
@@ -842,9 +845,9 @@ class TestSaveRecurrence(TestCase):
         self.organization = OrganizationFactory()
         self.room = RoomFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
-        self.start_datetime = timezone.now() + timedelta(days=1)
-        self.end_datetime = self.start_datetime + timedelta(hours=2)
-        dtstart_string = self.start_datetime.strftime("%Y%m%dT%H%M00Z")
+        self.start = timezone.now() + timedelta(days=1)
+        self.end = self.start + timedelta(hours=2)
+        dtstart_string = self.start.strftime("%Y%m%dT%H%M00Z")
         self.rrule_string = f"DTSTART:{dtstart_string}\nFREQ=DAILY;COUNT=5"
         self.booking_data = {
             "user": self.user.slug,
@@ -852,15 +855,15 @@ class TestSaveRecurrence(TestCase):
             "room": self.room.slug,
             "organization": self.organization.slug,
             "timespan": [
-                self.start_datetime.isoformat(),
-                self.end_datetime.isoformat(),
+                self.start.isoformat(),
+                self.end.isoformat(),
             ],
-            "start_time": self.start_datetime.time().strftime("%H:%M:%S"),
-            "end_time": self.end_datetime.time().strftime("%H:%M:%S"),
+            "start_time": self.start.time().strftime("%H:%M:%S"),
+            "end_time": self.end.time().strftime("%H:%M:%S"),
             "message": "Please confirm my recurring bookings",
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
-            "start_datetime": self.start_datetime,
+            "start": self.start,
             "differing_billing_address": "",
             "activity_description": "Meeting with team members",
         }
