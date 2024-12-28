@@ -25,8 +25,8 @@ if __name__ == "__main__":
         raise
 
     # This allows easy placement of apps within the interior
-    # roomsharing directory.
+    # re_sharing directory.
     current_path = Path(__file__).parent.resolve()
-    sys.path.append(str(current_path / "roomsharing"))
+    sys.path.append(str(current_path / "re_sharing"))
 
     execute_from_command_line(sys.argv)

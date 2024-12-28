@@ -7,8 +7,8 @@ import environ
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# roomsharing/
-APPS_DIR = BASE_DIR / "roomsharing"
+# re_sharing/
+APPS_DIR = BASE_DIR / "re_sharing"
 env = environ.Env()
 
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
@@ -90,11 +90,11 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "roomsharing.users",
-    "roomsharing.rooms",
-    "roomsharing.bookings",
-    "roomsharing.organizations",
-    "roomsharing.dashboards",
+    "re_sharing.users",
+    "re_sharing.rooms",
+    "re_sharing.bookings",
+    "re_sharing.organizations",
+    "re_sharing.dashboards",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -103,7 +103,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # MIGRATIONS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
-MIGRATION_MODULES = {"sites": "roomsharing.contrib.sites.migrations"}
+MIGRATION_MODULES = {"sites": "re_sharing.contrib.sites.migrations"}
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
-                "roomsharing.users.context_processors.allauth_settings",
+                "re_sharing.users.context_processors.allauth_settings",
             ],
         },
     },
@@ -254,7 +254,7 @@ EMAIL_BACKEND = env(
 EMAIL_TIMEOUT = 5
 
 DEFAULT_MANAGER_EMAIL = env(
-    "DJANGO_DEFAULT_MANAGER_EMAIL", default="Roomsharing <noreply@roomsharing.info>"
+    "DJANGO_DEFAULT_MANAGER_EMAIL", default="Re-Sharing <noreply@re-sharing.info>"
 )
 
 
@@ -308,13 +308,13 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_ADAPTER = "roomsharing.users.adapters.AccountAdapter"
+ACCOUNT_ADAPTER = "re_sharing.users.adapters.AccountAdapter"
 # https://docs.allauth.org/en/latest/account/forms.html
-ACCOUNT_FORMS = {"signup": "roomsharing.users.forms.UserSignupForm"}
+ACCOUNT_FORMS = {"signup": "re_sharing.users.forms.UserSignupForm"}
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "roomsharing.users.adapters.SocialAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "re_sharing.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "roomsharing.users.forms.UserSocialSignupForm"}
+SOCIALACCOUNT_FORMS = {"signup": "re_sharing.users.forms.UserSocialSignupForm"}
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 

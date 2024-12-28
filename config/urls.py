@@ -17,17 +17,17 @@ urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
-    path("users/", include("roomsharing.users.urls", namespace="users")),
-    path("rooms/", include("roomsharing.rooms.urls", namespace="rooms")),
+    path("users/", include("re_sharing.users.urls", namespace="users")),
+    path("rooms/", include("re_sharing.rooms.urls", namespace="rooms")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    path("bookings/", include("roomsharing.bookings.urls", namespace="bookings")),
+    path("bookings/", include("re_sharing.bookings.urls", namespace="bookings")),
     path(
         "organizations/",
-        include("roomsharing.organizations.urls", namespace="organizations"),
+        include("re_sharing.organizations.urls", namespace="organizations"),
     ),
     path("tinymce/", include("tinymce.urls")),
-    path("dashboard/", include("roomsharing.dashboards.urls", namespace="dashboards")),
+    path("dashboard/", include("re_sharing.dashboards.urls", namespace="dashboards")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
