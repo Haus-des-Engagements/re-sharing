@@ -41,7 +41,7 @@ def update_site_forward(apps, schema_editor):
         Site,
         schema_editor.connection,
         "re_sharing.info",
-        "Roomsharing",
+        "Re-Sharing",
     )
 
 

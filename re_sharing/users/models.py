@@ -22,7 +22,7 @@ from re_sharing.utils.models import TimeStampedModel
 
 class User(AbstractUser, TimeStampedModel):
     """
-    Default custom user model for Roomsharing.
+    Default custom user model for Re-Sharing.
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
     """
