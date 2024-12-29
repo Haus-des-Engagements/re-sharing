@@ -22,7 +22,7 @@ from re_sharing.bookings.views import manager_list_bookings_view
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -57,8 +57,8 @@ class TestListBookingsView(TestCase):
             organization=o1, user=self.user, status=BookingPermission.Status.CONFIRMED
         )
         total_bookings_for_o1 = 2
-        r1 = RoomFactory()
-        r2 = RoomFactory()
+        r1 = ResourceFactory()
+        r2 = ResourceFactory()
 
         tomorrow = timezone.now() + datetime.timedelta(days=1)
         start_time = make_aware(

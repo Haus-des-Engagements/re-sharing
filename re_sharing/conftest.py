@@ -13,7 +13,7 @@ from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.models import User
 from re_sharing.users.tests.factories import UserFactory
 
@@ -30,7 +30,7 @@ def user(db) -> User:
 
 @pytest.fixture()
 def resource(db) -> Resource:
-    return RoomFactory()
+    return ResourceFactory()
 
 
 @pytest.fixture()

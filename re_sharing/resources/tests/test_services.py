@@ -14,7 +14,7 @@ from re_sharing.resources.services import planner_table
 from re_sharing.resources.services import show_resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.utils.models import BookingStatus
 
 
@@ -22,7 +22,7 @@ class GetWeeklyBookingsTest(TestCase):
     def test_empty_weekly_bookings(self):
         date = timezone.make_aware(timezone.datetime(2024, 7, 23))
 
-        resource = RoomFactory()
+        resource = ResourceFactory()
         date_string = date.strftime("%Y-%m-%d")
         resource, time_slots, weekdays, dates, compensations = show_resource(
             resource.slug, date_string
@@ -68,7 +68,7 @@ class GetWeeklyBookingsTest(TestCase):
         )
 
     def test_some_bookings_exist(self):
-        resource = RoomFactory()
+        resource = ResourceFactory()
         booking1 = BookingFactory(
             resource=resource,
             status=BookingStatus.CONFIRMED,
@@ -112,7 +112,7 @@ class GetWeeklyBookingsTest(TestCase):
 
     def test_without_date(self):
         date_string = None
-        resource = RoomFactory()
+        resource = ResourceFactory()
         resource, time_slots, weekdays, dates, compensations = show_resource(
             resource.slug, date_string
         )
@@ -141,16 +141,16 @@ class GetWeeklyBookingsTest(TestCase):
 @pytest.mark.parametrize(
     ("persons_count", "start_datetime", "expected"),
     [
-        ("2", None, ["Room1", "Room2"]),
-        ("1", "2024-07-25T12:30", ["Room1", "Room2", "Small Resource"]),
-        ("3", None, ["Room2"]),
-        (None, None, ["Room1", "Room2", "Small Resource"]),
+        ("2", None, ["Resource1", "Resource2"]),
+        ("1", "2024-07-25T12:30", ["Resource1", "Resource2", "Small Resource"]),
+        ("3", None, ["Resource2"]),
+        (None, None, ["Resource1", "Resource2", "Small Resource"]),
     ],
 )
 def test_filter_resources(persons_count, start_datetime, expected):
-    RoomFactory.create(name="Room1", max_persons=2)
-    RoomFactory.create(name="Room2", max_persons=3)
-    RoomFactory.create(name="Small Resource", max_persons=1)
+    ResourceFactory.create(name="Resource1", max_persons=2)
+    ResourceFactory.create(name="Resource2", max_persons=3)
+    ResourceFactory.create(name="Small Resource", max_persons=1)
 
     resources = filter_resources(persons_count, start_datetime)
     assert {resource.name for resource in resources} == set(expected)
@@ -167,8 +167,8 @@ class TestGetAccessCode(TestCase):
         self.timestamp = timezone.make_aware(timezone.datetime(2024, 7, 23, 13, 30))
         self.access1 = AccessFactory()
         self.access2 = AccessFactory()
-        self.resource1 = RoomFactory(access=self.access1)
-        self.resource2 = RoomFactory(access=self.access2)
+        self.resource1 = ResourceFactory(access=self.access1)
+        self.resource2 = ResourceFactory(access=self.access2)
         self.organization1 = OrganizationFactory()
         self.organization2 = OrganizationFactory()
         self.access_code1 = AccessCodeFactory(
@@ -228,13 +228,13 @@ class TestGetAccessCode(TestCase):
         )
 
 
-class TestRoomPlanner(TestCase):
+class TestResourcePlanner(TestCase):
     def test_empty_planner_table(self):
         date = timezone.make_aware(timezone.datetime(2024, 7, 23))
         date_string = date.strftime("%Y-%m-%d")
 
-        resource1 = RoomFactory()
-        resource2 = RoomFactory()
+        resource1 = ResourceFactory()
+        resource2 = ResourceFactory()
         resources, timeslots, dates = planner_table(date_string)
 
         number_of_timeslots = 48
@@ -270,8 +270,8 @@ class TestRoomPlanner(TestCase):
             assert all(resource["booked"] is False for resource in item["slot"])
 
     def test_some_bookings_exist(self):
-        resource1 = RoomFactory()
-        resource2 = RoomFactory()
+        resource1 = ResourceFactory()
+        resource2 = ResourceFactory()
         booking1 = BookingFactory(
             resource=resource1,
             status=BookingStatus.CONFIRMED,

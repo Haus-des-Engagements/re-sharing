@@ -47,7 +47,7 @@ from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.users.tests.factories import UserGroupFactory
 from re_sharing.utils.models import BookingStatus
@@ -182,7 +182,7 @@ class TestBookingActivityStream(TestCase):
 class TestShowBooking(TestCase):
     def setUp(self):
         self.access = AccessFactory()
-        self.resource = RoomFactory(access=self.access)
+        self.resource = ResourceFactory(access=self.access)
         self.user = UserFactory()
         self.organization = OrganizationFactory()
         self.start_datetime = timezone.now() + timedelta(days=10)
@@ -249,7 +249,7 @@ class TestSaveBooking(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization
         )
@@ -284,7 +284,7 @@ class TestCreateBookingMessage(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization
         )
@@ -427,7 +427,7 @@ def test_create_booking():
     # Arrange
     user = UserFactory()
     organization = OrganizationFactory()
-    resource = RoomFactory()
+    resource = ResourceFactory()
     timespan = create_timespan(None, None)
 
     booking_details = {
@@ -664,7 +664,7 @@ class TestGenerateSingleBooking(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.compensation = CompensationFactory(
             hourly_rate=50, resource=[self.resource]
         )
@@ -742,7 +742,7 @@ class TestGenerateRecurrence(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
         self.start = (timezone.now() + timedelta(days=1)).replace(microsecond=0)
@@ -845,7 +845,7 @@ class TestSaveRecurrence(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.start = timezone.now() + timedelta(days=1)
         self.end = self.start + timedelta(hours=2)
@@ -1032,7 +1032,7 @@ def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
 
 class TestGetBookingStatus(TestCase):
     def setUp(self):
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
 
         self.organization_group = OrganizationGroupFactory()
         self.organization_group.auto_confirmed_resources.add(self.resource)

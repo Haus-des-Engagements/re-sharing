@@ -27,7 +27,7 @@ django.setup()
 
 # -- Project information -----------------------------------------------------
 
-project = "Roomsharing"
+project = "Re-Sharing"
 copyright = """2024, Finn Hees"""
 author = "Finn Hees"
 

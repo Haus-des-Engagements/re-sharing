@@ -6,17 +6,17 @@ from django.test import TestCase
 from django.urls import reverse
 
 from re_sharing.resources.tests.factories import CompensationFactory
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.resources.views import get_compensations
 from re_sharing.resources.views import list_resources_view
 from re_sharing.resources.views import planner_view
 from re_sharing.resources.views import show_resource_view
 
 
-class ShowRoomViewTest(TestCase):
+class ShowResourceViewTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
 
     def test_show_resource_view(self):
         request = self.factory.get(
@@ -43,10 +43,10 @@ class ShowRoomViewTest(TestCase):
         assert response.status_code == HTTPStatus.OK
 
 
-class RoomListViewTest(TestCase):
+class ResourceListViewTest(TestCase):
     def setUp(self):
-        self.resource1 = RoomFactory(slug="green")
-        self.resource2 = RoomFactory(slug="blue")
+        self.resource1 = ResourceFactory(slug="green")
+        self.resource2 = ResourceFactory(slug="blue")
         self.factory = RequestFactory()
 
     def test_resource_list_view(self):
@@ -68,8 +68,8 @@ class RoomListViewTest(TestCase):
 
 class PlannerViewTest(TestCase):
     def setUp(self):
-        self.resource1 = RoomFactory(slug="green")
-        self.resource2 = RoomFactory(slug="blue")
+        self.resource1 = ResourceFactory(slug="green")
+        self.resource2 = ResourceFactory(slug="blue")
         self.factory = RequestFactory()
 
     def test_planner_view(self):
@@ -90,7 +90,7 @@ class PlannerViewTest(TestCase):
 class GetCompensationsViewTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.resource = RoomFactory(name="Test Resource")
+        self.resource = ResourceFactory(name="Test Resource")
         self.compensation_name = "For Free"
         self.compensation = CompensationFactory(name=self.compensation_name)
         self.compensation.resource.add(self.resource)
