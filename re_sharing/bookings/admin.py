@@ -19,7 +19,7 @@ from re_sharing.utils.models import BookingStatus
 
 from .models import Booking
 from .models import BookingMessage
-from .models import RecurrenceRule
+from .models import BookingSeries
 from .services_recurrences import generate_bookings
 from .services_recurrences import max_future_booking_date
 
@@ -36,7 +36,7 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
         "user",
     ]
     search_fields = ["id", "title", "slug"]
-    list_filter = ["status", "organization", "resource", "recurrence_rule"]
+    list_filter = ["status", "organization", "resource", "booking_series"]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
 
@@ -77,15 +77,15 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
         )
 
 
-@admin.register(RecurrenceRule)
+@admin.register(BookingSeries)
 class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = [
         "created",
         "id",
         "uuid",
         "organization",
-        "first_occurrence_date",
-        "last_occurrence_date",
+        "first_booking_date",
+        "last_booking_date",
         "status",
         "get_first_booking",
         "booking_count_link",
@@ -96,21 +96,21 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.annotate(booking_count=Count("booking_of_recurrencerule"))
+        return queryset.annotate(booking_count=Count("booking_of_bookingseries"))
 
     @admin.display(description=_("Bookings"))
     def booking_count_link(self, obj):
         url = (
             reverse("admin:bookings_booking_changelist")
-            + f"?recurrence_rule__id__exact={obj.id}"
+            + f"?booking_series__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, obj.booking_count)
 
     def save_model(self, request, obj, form, change):
         if change:  # This ensures we're modifying an existing record
             # Organization has changed. Update related bookings.
-            previous = RecurrenceRule.objects.get(pk=obj.pk)
-            bookings = Booking.objects.filter(recurrence_rule=obj)
+            previous = BookingSeries.objects.get(pk=obj.pk)
+            bookings = Booking.objects.filter(booking_series=obj)
 
             for booking in bookings:
                 booking.organization = obj.organization
@@ -118,7 +118,7 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
 
             if previous.rrule != obj.rrule:
                 if "COUNT" not in obj.rrule and "UNTIL" not in obj.rrule:
-                    obj.last_occurrence_date = None
+                    obj.last_booking_date = None
                 else:
                     obj.last_occurrence_date = list(rrulestr(obj.rrule))[-1]
 
@@ -147,7 +147,7 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
                         current_booking.status == BookingStatus.UNAVAILABLE
                         and Booking.objects.filter(resource=rrule.resource)
                         .filter(timespan__overlap=current_booking.timespan)
-                        .filter(recurrence_rule=rrule)
+                        .filter(booking_series=rrule)
                         .exists()
                     )
                     if not is_same_rrule_booking:
@@ -157,7 +157,7 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
     def delete_bookings(self, request, queryset):
         for rrule in queryset:
             with set_actor(request.user):
-                Booking.objects.filter(recurrence_rule=rrule).delete()
+                Booking.objects.filter(booking_series=rrule).delete()
 
 
 @admin.register(BookingMessage)

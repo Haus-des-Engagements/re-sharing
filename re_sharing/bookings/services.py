@@ -17,8 +17,8 @@ from django_q.tasks import async_task
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
-from re_sharing.bookings.models import RecurrenceRule
-from re_sharing.bookings.services_recurrences import create_rrule_string
+from re_sharing.bookings.models import BookingSeries
+from re_sharing.bookings.services_recurrences import create_rrule
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
@@ -255,7 +255,7 @@ def filter_bookings_list(  # noqa: PLR0913
         "organization",
         "resource__compensations_of_resource",
         "user",
-        "recurrence_rule",
+        "booking_series",
     ]
     bookings = Booking.objects.filter(organization__in=organizations).prefetch_related(
         *related_fields
@@ -267,7 +267,7 @@ def filter_bookings_list(  # noqa: PLR0913
     if status != "all":
         bookings = bookings.filter(status__in=status)
     if hide_recurring_bookings:
-        bookings = bookings.filter(recurrence_rule__isnull=True)
+        bookings = bookings.filter(booking_series__isnull=True)
 
     paginator = Paginator(bookings, 100)
     page_objects = paginator.get_page(page_number)
@@ -310,12 +310,12 @@ def create_booking_data(user, form):
         "differing_billing_address": form.cleaned_data["differing_billing_address"],
         "activity_description": form.cleaned_data["activity_description"],
     }
-    rrule_string = None
+    rrule = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
-        rrule_string = create_rrule_string(form.cleaned_data)
-        booking_data["rrule_string"] = rrule_string
+        rrule = create_rrule(form.cleaned_data)
+        booking_data["rrule_string"] = rrule
 
-    return booking_data, rrule_string
+    return booking_data, rrule
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913
@@ -332,7 +332,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         "organization",
         "resource__compensations_of_resource",
         "user",
-        "recurrence_rule",
+        "booking_series",
     ]
     bookings = Booking.objects.prefetch_related(*related_fields)
     if not show_past_bookings:
@@ -344,7 +344,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     if status != "all":
         bookings = bookings.filter(status__in=status)
     if not show_recurring_bookings:
-        bookings = bookings.filter(recurrence_rule__isnull=True)
+        bookings = bookings.filter(booking_series__isnull=True)
     if date_string:
         shown_date = parser.parse(date_string).date()
         start_of_day = timezone.make_aware(
@@ -396,8 +396,8 @@ def manager_confirm_booking(user, booking_slug):
 
 
 def manager_confirm_rrule(user, rrule_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, booking_series=rrule)
     rrule.status = BookingStatus.CONFIRMED
     rrule.save()
     for booking in bookings:
@@ -422,7 +422,7 @@ def collect_booking_reminder_mails():
     bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
     bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
     bookings = bookings.filter(
-        Q(recurrence_rule__isnull=True) | Q(recurrence_rule__reminder_emails=True)
+        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
     )
     processed_slugs = []
 
@@ -445,7 +445,7 @@ def manager_filter_invoice_bookings_list(
         "organization",
         "resource__compensations_of_resource",
         "user",
-        "recurrence_rule",
+        "booking_series",
     ]
 
     bookings = (

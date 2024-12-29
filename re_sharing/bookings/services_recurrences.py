@@ -28,7 +28,7 @@ from django.utils.timezone import make_aware
 from django_q.tasks import async_task
 
 from re_sharing.bookings.models import Booking
-from re_sharing.bookings.models import RecurrenceRule
+from re_sharing.bookings.models import BookingSeries
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
@@ -43,7 +43,7 @@ from re_sharing.utils.models import get_booking_status
 max_future_booking_date = 730
 
 
-def create_rrule_string(rrule_data):
+def create_rrule(rrule_data):
     rrule_repetitions = rrule_data["rrule_repetitions"]
     rrule_ends = rrule_data["rrule_ends"]
     rrule_ends_count = rrule_data.get("rrule_ends_count")
@@ -132,49 +132,45 @@ def create_rrule_and_occurrences(booking_data):
         isoparse(booking_data["timespan"][1]),
     )
 
-    rrule = RecurrenceRule()
-    rrule.user = get_object_or_404(User, slug=booking_data["user"])
-    rrule.title = booking_data["title"]
-    rrule.resource = get_object_or_404(Resource, slug=booking_data["resource"])
-    rrule.organization = get_object_or_404(
-        Organization, slug=booking_data["organization"]
-    )
-    rrule.status = get_booking_status(rrule.user, rrule.organization, rrule.resource)
-    rrule.start_time = datetime.strptime(booking_data["start_time"], "%H:%M:%S").time()  # noqa: DTZ007
-    rrule.end_time = datetime.strptime(booking_data["end_time"], "%H:%M:%S").time()  # noqa: DTZ007
-    rrule.rrule = booking_data.get("rrule_string", "")
-    rrule.first_occurrence_date = next(iter(rrulestr(rrule.rrule)))
-    rrule.differing_billing_address = booking_data["differing_billing_address"]
-    rrule.compensation = None
-    rrule.total_amount_per_occurrence = None
-    rrule.activity_description = booking_data["activity_description"]
+    bs = BookingSeries()
+    bs.user = get_object_or_404(User, slug=booking_data["user"])
+    bs.title = booking_data["title"]
+    bs.resource = get_object_or_404(Resource, slug=booking_data["resource"])
+    bs.organization = get_object_or_404(Organization, slug=booking_data["organization"])
+    bs.status = get_booking_status(bs.user, bs.organization, bs.resource)
+    bs.start_time = datetime.strptime(booking_data["start_time"], "%H:%M:%S").time()  # noqa: DTZ007
+    bs.end_time = datetime.strptime(booking_data["end_time"], "%H:%M:%S").time()  # noqa: DTZ007
+    bs.rrule = booking_data.get("rrule_string", "")
+    bs.first_booking_date = next(iter(rrulestr(bs.rrule)))
+    bs.differing_billing_address = booking_data["differing_billing_address"]
+    bs.compensation = None
+    bs.total_amount_per_occurrence = None
+    bs.activity_description = booking_data["activity_description"]
     if booking_data["compensation"]:
-        rrule.compensation = get_object_or_404(
+        bs.compensation = get_object_or_404(
             Compensation, id=booking_data["compensation"]
         )
-        if rrule.compensation.hourly_rate is not None:
+        if bs.compensation.hourly_rate is not None:
             duration_hours = (timespan[1] - timespan[0]).total_seconds() / 3600
-            rrule.total_amount_per_occurrence = (
-                duration_hours * rrule.compensation.hourly_rate
+            bs.total_amount_per_occurrence = (
+                duration_hours * bs.compensation.hourly_rate
             )
 
-    if "COUNT" not in rrule.rrule and "UNTIL" not in rrule.rrule:
-        rrule.last_occurrence_date = None
+    if "COUNT" not in bs.rrule and "UNTIL" not in bs.rrule:
+        bs.last_booking_date = None
     else:
-        rrule.last_occurrence_date = list(rrulestr(rrule.rrule))[-1]
+        bs.last_booking_date = list(rrulestr(bs.rrule))[-1]
 
     # Generate occurrences
     max_booking_date = timezone.now().date() + timedelta(days=max_future_booking_date)
     max_booking_datetime = make_aware(
-        datetime.combine(max_booking_date, rrule.end_time)
+        datetime.combine(max_booking_date, bs.end_time)
     ).astimezone(UTC)
-    bookings = generate_bookings(
-        rrule, rrule.first_occurrence_date, max_booking_datetime
-    )
+    bookings = generate_bookings(bs, bs.first_booking_date, max_booking_datetime)
 
     # Determine if resource is at least once bookable
     bookable = any(booking.status != BookingStatus.UNAVAILABLE for booking in bookings)
-    return bookings, rrule, bookable
+    return bookings, bs, bookable
 
 
 def save_rrule(user, bookings, rrule):
@@ -196,8 +192,8 @@ def save_rrule(user, bookings, rrule):
 
 
 def cancel_rrule_bookings(user, rrule_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, booking_series=rrule)
 
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
@@ -216,14 +212,14 @@ def cancel_rrule_bookings(user, rrule_uuid):
 
 def get_rrules_list(user):
     organizations = organizations_with_confirmed_bookingpermission(user)
-    return RecurrenceRule.objects.filter(
-        booking_of_recurrencerule__organization__in=organizations
+    return BookingSeries.objects.filter(
+        booking_of_bookingseries__organization__in=organizations
     ).distinct()
 
 
 def get_rrule_bookings(user, rrule_slug):
-    rrule = get_object_or_404(RecurrenceRule, slug=rrule_slug)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule = get_object_or_404(BookingSeries, slug=rrule_slug)
+    bookings = get_list_or_404(Booking, booking_series=rrule)
 
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
@@ -234,7 +230,7 @@ def get_rrule_bookings(user, rrule_slug):
 
 def manager_filter_rrules_list(organization, show_past_rrules, status):
     organizations = Organization.objects.all()
-    rrules = RecurrenceRule.objects.all().distinct()
+    rrules = BookingSeries.objects.all().distinct()
     if not show_past_rrules:
         rrules = rrules.filter(
             Q(last_occurrence_date__gte=timezone.now())
@@ -242,7 +238,7 @@ def manager_filter_rrules_list(organization, show_past_rrules, status):
         )
     if organization != "all":
         rrules = rrules.filter(
-            booking_of_recurrencerule__organization__slug=organization
+            booking_of_bookingseries__organization__slug=organization
         )
     if status != "all":
         rrules = rrules.filter(status=status)
@@ -252,8 +248,8 @@ def manager_filter_rrules_list(organization, show_past_rrules, status):
 
 
 def manager_cancel_rrule(user, rrule_uuid):
-    rrule = get_object_or_404(RecurrenceRule, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, recurrence_rule=rrule)
+    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
+    bookings = get_list_or_404(Booking, booking_series=rrule)
     rrule.status = BookingStatus.CANCELLED
     rrule.save()
 
@@ -285,7 +281,7 @@ def extend_recurrences():
         UTC
     )
 
-    rrules = RecurrenceRule.objects.filter(
+    rrules = BookingSeries.objects.filter(
         Q(last_occurrence_date=None)
         | Q(last_occurrence_date__gte=start_new_bookings_at)
     ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
@@ -303,7 +299,7 @@ def extend_recurrences():
                 current_booking.status == BookingStatus.UNAVAILABLE
                 and Booking.objects.filter(resource=current_rrule.resource)
                 .filter(timespan__overlap=current_booking.timespan)
-                .filter(recurrence_rule=current_rrule)
+                .filter(booking_series=current_rrule)
                 .exists()
             )
             if not is_same_rrule_booking:
@@ -337,7 +333,7 @@ def generate_bookings(rrule, start, end):
             end_time=rrule.end_time,
             compensation=rrule.compensation,
             total_amount=rrule.total_amount_per_occurrence,
-            recurrence_rule=rrule,
+            booking_series=rrule,
             auto_generated_on=timezone.now(),
             differing_billing_address=rrule.differing_billing_address,
             activity_description=rrule.activity_description,

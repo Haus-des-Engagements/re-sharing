@@ -73,12 +73,12 @@
         </div>
       </div>
     </div>
-    {% if booking.recurrence_rule %}
+    {% if booking.booking_series %}
       <div class="card-footer">
         <svg width="1em" height="1em">
           <use href="#bi-arrow-repeat" />
         </svg>
-        {{ booking.recurrence_rule.get_human_readable_rule }} <a href="{% url 'bookings:show-recurrence' booking.recurrence_rule.slug %}">({% trans "show all occurrences" %})</a>
+        {{ booking.booking_series.get_human_readable_rule }} <a href="{% url 'bookings:show-recurrence' booking.booking_series.slug %}">({% trans "show all occurrences" %})</a>
       </div>
     {% endif %}
   </div>

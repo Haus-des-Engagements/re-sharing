@@ -1,9 +1,9 @@
 import pytest
 
 from re_sharing.bookings.models import Booking
-from re_sharing.bookings.models import RecurrenceRule
+from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.tests.factories import BookingFactory
-from re_sharing.bookings.tests.factories import RecurrenceRuleFactory
+from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.resources.models import Access
@@ -59,5 +59,5 @@ def access_code(db) -> AccessCode:
 
 
 @pytest.fixture()
-def recurrence_rule(db) -> RecurrenceRule:
-    return RecurrenceRuleFactory()
+def booking_series(db) -> BookingSeries:
+    return BookingSeriesFactory()

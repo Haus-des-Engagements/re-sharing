@@ -242,9 +242,9 @@ def create_booking_data_form_view(request):
     if request.method == "POST":
         form = BookingForm(data=request.POST, user=request.user)
         if form.is_valid():
-            booking_data, rrule_string = create_booking_data(request.user, form)
+            booking_data, rrule = create_booking_data(request.user, form)
             request.session["booking_data"] = booking_data
-            if rrule_string:
+            if rrule:
                 return redirect("bookings:preview-recurrence")
             return redirect("bookings:preview-booking")
 

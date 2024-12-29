@@ -14,7 +14,7 @@ from freezegun import freeze_time
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
-from re_sharing.bookings.models import RecurrenceRule
+from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import collect_booking_reminder_mails
@@ -33,12 +33,12 @@ from re_sharing.bookings.services import save_bookingmessage
 from re_sharing.bookings.services import set_initial_booking_data
 from re_sharing.bookings.services import show_booking
 from re_sharing.bookings.services_recurrences import cancel_rrule_bookings
+from re_sharing.bookings.services_recurrences import create_rrule
 from re_sharing.bookings.services_recurrences import create_rrule_and_occurrences
-from re_sharing.bookings.services_recurrences import create_rrule_string
 from re_sharing.bookings.services_recurrences import manager_cancel_rrule
 from re_sharing.bookings.services_recurrences import save_rrule
 from re_sharing.bookings.tests.factories import BookingFactory
-from re_sharing.bookings.tests.factories import RecurrenceRuleFactory
+from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.bookings.tests.factories import create_timespan
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
@@ -104,25 +104,25 @@ def test_cancel_recurring_bookings():
         user=user, organization=organization, status=BookingPermission.Status.CONFIRMED
     )
 
-    rrule = RecurrenceRuleFactory()
+    rrule = BookingSeriesFactory()
     booking1 = BookingFactory(
         user=user,
         organization=organization,
-        recurrence_rule=rrule,
+        booking_series=rrule,
         start_date=timezone.now().date() - timedelta(days=5),
         status=BookingStatus.PENDING,
     )
     booking2 = BookingFactory(
         user=user,
         organization=organization,
-        recurrence_rule=rrule,
+        booking_series=rrule,
         start_date=timezone.now().date() + timedelta(days=10),
         status=BookingStatus.PENDING,
     )
     booking3 = BookingFactory(
         user=user,
         organization=organization,
-        recurrence_rule=rrule,
+        booking_series=rrule,
         start_date=timezone.now().date() + timedelta(days=5),
         status=BookingStatus.PENDING,
     )
@@ -614,8 +614,8 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         ),
     ],
 )
-def test_create_rrule_string(rrule_data, expected):
-    result = create_rrule_string(rrule_data)
+def test_create_rrule(rrule_data, expected):
+    result = create_rrule(rrule_data)
     assert result == expected
 
 
@@ -789,11 +789,11 @@ class TestGenerateRecurrence(TestCase):
             assert booking.differing_billing_address == self.differing_billing_address
             assert booking.activity_description == "Simple Meeting"
 
-        assert isinstance(rrule, RecurrenceRule)
+        assert isinstance(rrule, BookingSeries)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
-        assert rrule.first_occurrence_date == rrule_occurrences[0]
-        assert rrule.last_occurrence_date == rrule_occurrences[-1]
+        assert rrule.first_booking_date == rrule_occurrences[0]
+        assert rrule.last_booking_date == rrule_occurrences[-1]
         assert bookable is True
 
     def test_generate_recurrence_no_compensation(self):
@@ -813,13 +813,13 @@ class TestGenerateRecurrence(TestCase):
             assert booking.total_amount is None
             assert booking.differing_billing_address == ""
 
-        assert isinstance(rrule, RecurrenceRule)
+        assert isinstance(rrule, BookingSeries)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
         assert rrule.start_time == self.start.time()
         assert rrule.end_time == self.end_datetime.time()
-        assert rrule.first_occurrence_date == rrule_occurrences[0]
-        assert rrule.last_occurrence_date == rrule_occurrences[-1]
+        assert rrule.first_booking_date == rrule_occurrences[0]
+        assert rrule.last_booking_date == rrule_occurrences[-1]
         assert bookable is True
 
     def test_generate_recurrence_invalid_organization(self):
@@ -887,7 +887,7 @@ class TestSaveRecurrence(TestCase):
         bookings, rrule = save_rrule(self.user, self.bookings, self.rrule)
 
         for booking in bookings:
-            assert booking.recurrence_rule == rrule
+            assert booking.booking_series == rrule
 
     def test_save_recurrence_permission_denied(self):
         # Do not add the booking permission for the user
@@ -901,9 +901,9 @@ class TestSaveRecurrence(TestCase):
 @patch.object(Booking, "is_cancelable", return_value=True)
 def test_manager_cancel_rrule(mock_is_cancelable):
     user = UserFactory(is_staff=True)
-    rrule = RecurrenceRuleFactory()
-    booking1 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
-    booking2 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+    rrule = BookingSeriesFactory()
+    booking1 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
+    booking2 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
 
     manager_cancel_rrule(user, rrule.uuid)
 
@@ -917,9 +917,9 @@ def test_manager_cancel_rrule(mock_is_cancelable):
 @patch.object(Booking, "is_confirmable", return_value=True)
 def test_manager_confirm_rrule(mock_is_confirmable):
     user = UserFactory(is_staff=True)
-    rrule = RecurrenceRuleFactory()
-    booking1 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
-    booking2 = BookingFactory(recurrence_rule=rrule, status=BookingStatus.PENDING)
+    rrule = BookingSeriesFactory()
+    booking1 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
+    booking2 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
 
     manager_confirm_rrule(user, rrule.uuid)
 

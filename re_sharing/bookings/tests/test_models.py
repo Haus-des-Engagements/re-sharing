@@ -5,10 +5,10 @@ from django.test import TestCase
 from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
-from re_sharing.bookings.models import RecurrenceRule
+from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingMessageFactory
-from re_sharing.bookings.tests.factories import RecurrenceRuleFactory
+from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.utils.models import BookingStatus
 
 
@@ -27,10 +27,10 @@ class BookingMessageTestCase(TestCase):
         )
 
 
-def test_recurrence_rule_get_absolute_url(recurrence_rule: RecurrenceRule):
+def test_booking_series_get_absolute_url(booking_series: BookingSeries):
     assert (
-        recurrence_rule.get_absolute_url()
-        == f"/bookings/recurrences/{recurrence_rule.slug}/"
+        booking_series.get_absolute_url()
+        == f"/bookings/recurrences/{booking_series.slug}/"
     )
 
 
@@ -41,25 +41,23 @@ def test_human_readable_rule():
     expected_end_date_str = one_year_from_now.strftime("%m/%d/%Y")
 
     # DAILY
-    rrule1 = RecurrenceRuleFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=5")
+    rrule1 = BookingSeriesFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=5")
     assert rrule1.get_human_readable_rule() == "every day, ends after 5 times"
 
-    rrule2 = RecurrenceRuleFactory(
-        rrule=f"FREQ=DAILY;INTERVAL=3;UNTIL={until_date_str}"
-    )
+    rrule2 = BookingSeriesFactory(rrule=f"FREQ=DAILY;INTERVAL=3;UNTIL={until_date_str}")
     assert (
         rrule2.get_human_readable_rule()
         == f"every 3rd day, ends at the {expected_end_date_str}"
     )
 
     # WEEKLY
-    rrule3 = RecurrenceRuleFactory(rrule="FREQ=WEEKLY;COUNT=3;BYDAY=MO,TU,FR")
+    rrule3 = BookingSeriesFactory(rrule="FREQ=WEEKLY;COUNT=3;BYDAY=MO,TU,FR")
     assert (
         rrule3.get_human_readable_rule()
         == "every week (only Mondays, Tuesdays, Fridays), ends after 3 times"
     )
 
-    rrule4 = RecurrenceRuleFactory(
+    rrule4 = BookingSeriesFactory(
         rrule=f"FREQ=WEEKLY;INTERVAL=5;UNTIL={until_date_str};BYDAY=MO,TU,WE,TH,FR,SA,SU"
     )
     assert (
@@ -69,13 +67,13 @@ def test_human_readable_rule():
     )
 
     # MONTHLY (by day)
-    rrule5 = RecurrenceRuleFactory(rrule="FREQ=MONTHLY;COUNT=4;BYDAY=+1MO,+3TU,-1FR")
+    rrule5 = BookingSeriesFactory(rrule="FREQ=MONTHLY;COUNT=4;BYDAY=+1MO,+3TU,-1FR")
     assert (
         rrule5.get_human_readable_rule()
         == "every month at the 1. Monday, 3. Tuesday, last Friday, ends after 4 times"
     )
 
-    rrule6 = RecurrenceRuleFactory(
+    rrule6 = BookingSeriesFactory(
         rrule=f"FREQ=MONTHLY;INTERVAL=2;UNTIL={until_date_str};BYDAY=+4FR"
     )
     assert (
@@ -84,13 +82,13 @@ def test_human_readable_rule():
     )
 
     # MONTHLY (by date)
-    rrule7 = RecurrenceRuleFactory(rrule="FREQ=MONTHLY;COUNT=4;BYMONTHDAY=1,4,31")
+    rrule7 = BookingSeriesFactory(rrule="FREQ=MONTHLY;COUNT=4;BYMONTHDAY=1,4,31")
     assert (
         rrule7.get_human_readable_rule()
         == "every month (only at the 1., 4., 31. day), ends after 4 times"
     )
 
-    rrule8 = RecurrenceRuleFactory(
+    rrule8 = BookingSeriesFactory(
         rrule=f"FREQ=MONTHLY;INTERVAL=1;UNTIL={until_date_str};BYMONTHDAY=18"
     )
     assert (
@@ -101,20 +99,20 @@ def test_human_readable_rule():
 
 @pytest.mark.django_db()
 def test_number_of_occurrences():
-    rrule = RecurrenceRuleFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
-    BookingFactory(recurrence_rule=rrule)
-    BookingFactory(recurrence_rule=rrule)
-    BookingFactory(recurrence_rule=rrule)
+    rrule = BookingSeriesFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
+    BookingFactory(booking_series=rrule)
+    BookingFactory(booking_series=rrule)
+    BookingFactory(booking_series=rrule)
     assert rrule.number_of_occurrences() == 3  # noqa: PLR2004
 
 
 @pytest.mark.django_db()
 def test_get_first_booking():
-    rrule = RecurrenceRuleFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
+    rrule = BookingSeriesFactory(rrule="FREQ=DAILY;INTERVAL=1;COUNT=10")
     start_date = timezone.now()
-    b1 = BookingFactory(recurrence_rule=rrule, start_date=start_date.date())
-    BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
-    BookingFactory(recurrence_rule=rrule, start_date=start_date + timedelta(days=1))
+    b1 = BookingFactory(booking_series=rrule, start_date=start_date.date())
+    BookingFactory(booking_series=rrule, start_date=start_date + timedelta(days=1))
+    BookingFactory(booking_series=rrule, start_date=start_date + timedelta(days=1))
     assert rrule.get_first_booking() == b1
 
 
@@ -165,15 +163,15 @@ def test_get_first_booking():
 def test_is_cancelable(
     booking1_start, booking1_status, booking2_start, booking2_status, expected
 ):
-    rrule = RecurrenceRuleFactory()
+    rrule = BookingSeriesFactory()
 
     BookingFactory(
-        recurrence_rule=rrule,
+        booking_series=rrule,
         start_date=booking1_start,
         status=booking1_status,
     )
     BookingFactory(
-        recurrence_rule=rrule,
+        booking_series=rrule,
         start_date=booking2_start,
         status=booking2_status,
     )

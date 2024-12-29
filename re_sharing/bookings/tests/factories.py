@@ -14,7 +14,7 @@ from psycopg.types.range import Range
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
-from re_sharing.bookings.models import RecurrenceRule
+from re_sharing.bookings.models import BookingSeries
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -84,7 +84,7 @@ class BookingMessageFactory(DjangoModelFactory):
         django_get_or_create = ["uuid"]
 
 
-class RecurrenceRuleFactory(DjangoModelFactory):
+class BookingSeriesFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     rrule = "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=5;BYDAY=MO,TU"
     reminder_emails = True
@@ -111,13 +111,13 @@ class RecurrenceRuleFactory(DjangoModelFactory):
         ).time()
 
     @LazyAttribute
-    def first_occurrence_date(self):
+    def first_booking_date(self):
         return next(iter(rrulestr(self.rrule)))
 
     @LazyAttribute
-    def last_occurrence_date(self):
+    def last_booking_date(self):
         return list(rrulestr(self.rrule))[-1]
 
     class Meta:
-        model = RecurrenceRule
+        model = BookingSeries
         django_get_or_create = ["slug"]

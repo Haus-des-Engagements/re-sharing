@@ -16,7 +16,7 @@ from config.settings.base import ADMIN_URL
 from re_sharing.bookings.forms import BookingForm
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingMessageFactory
-from re_sharing.bookings.tests.factories import RecurrenceRuleFactory
+from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.bookings.views import list_bookings_view
 from re_sharing.bookings.views import manager_list_bookings_view
 from re_sharing.organizations.models import BookingPermission
@@ -294,8 +294,8 @@ class ShowRecurrenceView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.client.force_login(self.user)
-        self.rrule = RecurrenceRuleFactory()
-        self.booking = BookingFactory(recurrence_rule=self.rrule)
+        self.rrule = BookingSeriesFactory()
+        self.booking = BookingFactory(booking_series=self.rrule)
 
     @patch("re_sharing.bookings.views.get_rrule_bookings")
     def test_show_recurrence_view(self, mock_get_occurrences):
