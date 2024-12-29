@@ -3,18 +3,18 @@
 {% load static i18n %}
 
 {% block title %}
-  {% trans "Resource" %}: {{ room.name }}
+  {% trans "Resource" %}: {{ resource.name }}
 {% endblock title %}
 {% block content %}
-  <h1 class="mt-4">{{ room.name }}</h1>
+  <h1 class="mt-4">{{ resource.name }}</h1>
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col-md-2">
-        {% with room.roomimages_of_room.all.0.image.url as img_url %}
+        {% with resource.resourceimages_of_resource.all.0.image.url as img_url %}
           {% if img_url %}
             <img src="{{ img_url }}"
                  class="img-fluid rounded-start"
-                 alt="{{ room.name }}" />
+                 alt="{{ resource.name }}" />
           {% else %}
             <img src="..." class="img-fluid rounded-start" alt="..." />
           {% endif %}
@@ -27,19 +27,19 @@
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-people" />
               </svg>
-              Max. {{ room.max_persons }} {% trans "Persons" %} ({{ room.square_meters|default_if_none:"" }}m²)
+              Max. {{ resource.max_persons }} {% trans "Persons" %} ({{ resource.square_meters|default_if_none:"" }}m²)
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-calendar2-check" />
               </svg>
-              {{ room.bookable_times }}
+              {{ resource.bookable_times }}
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-geo-alt" />
               </svg>
-              {{ room.address }}
+              {{ resource.address }}
             </li>
           </ul>
         </div>
@@ -51,13 +51,13 @@
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-piggy-bank" />
               </svg>
-              {% trans "Pricing" %}: {{ room.pricing }}
+              {% trans "Pricing" %}: {{ resource.pricing }}
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-easel2" />
               </svg>
-              {{ room.included_equipment }}
+              {{ resource.included_equipment }}
             </li>
           </ul>
         </div>
@@ -65,7 +65,7 @@
     </div>
   </div>
   <h2 class="mt-5">{% trans "Description" %}</h2>
-  {{ room.description|safe }}
+  {{ resource.description|safe }}
   <h2 class="mt-5">{% trans "Compensations" %}</h2>
   <ul>
     {% for compensation in compensations %}
@@ -79,14 +79,14 @@
     {% endfor %}
   </ul>
   <h2 class="mt-5">{% trans "Access" %}</h2>
-  {{ room.access.instructions }}
+  {{ resource.access.instructions }}
   <h2 class="mt-5">{% trans "Accessibility" %}</h2>
-  {{ room.accessibility|safe }}
+  {{ resource.accessibility|safe }}
   <h2 class="mt-5">Bookings</h2>
   <div class="mt-3 mb-4">
     <p>
-      {% trans "In this view, you can see the free times for this room. Click on a free slot to go directly to the booking page." %}
+      {% trans "In this view, you can see the free times for this resource. Click on a free slot to go directly to the booking page." %}
     </p>
   </div>
-  <div id="results">{% include "rooms/partials/weekly_bookings_table.html" %}</div>
+  <div id="results">{% include "resources/partials/weekly_bookings_table.html" %}</div>
 {% endblock content %}

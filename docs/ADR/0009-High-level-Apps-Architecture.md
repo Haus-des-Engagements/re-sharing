@@ -19,7 +19,7 @@ In the best case, one App has only one (!) relation to another app
 (of course the Model have the relations, but there should only one important relation from all models within an app to the models of another app).
 * Bookings: the main model, handling Bookings itself. And auxiliary models, handling message for bookings and recurrence.
 * Organizations: as only organizations are allowed to book, organizations handels booking permissions for organizations and their users.
-* Rooms: the central unit, that can be booked. Rooms have access codes.
+* Resources: the central unit, that can be booked. Resources have access codes.
 * User: Only contains the barbone User model and the registration user profile actions.
 
 ## Consequences

@@ -61,7 +61,7 @@
                 </li>
                 <li class="nav-item active">
                   <li class="nav-item">
-                    <a class="nav-link" href="{% url 'rooms:list-rooms' %}">{% trans "Rooms" %}</a>
+                    <a class="nav-link" href="{% url 'resources:list-resources' %}">{% trans "Resources" %}</a>
                   </li>
                   <div class="vr ms-2 me-2"></div>
                   <a class="nav-link"
@@ -175,7 +175,8 @@
               <a href="{% url 'home' %}" class="nav-link px-2 text-muted">{% trans "Home" %}</a>
             </li>
             <li class="nav-item">
-              <a href="{% url 'rooms:list-rooms' %}" class="nav-link px-2 text-muted">{% trans "Rooms" %}</a>
+              <a href="{% url 'resources:list-resources' %}"
+                 class="nav-link px-2 text-muted">{% trans "Resources" %}</a>
             </li>
             <li class="nav-item">
               <a href="{% url "dashboards:users_bookings_and_permissions" %}"

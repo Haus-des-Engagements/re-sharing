@@ -48,15 +48,15 @@ class OrganizationGroupFactory(DjangoModelFactory):
     slug = LazyAttribute(lambda o: slugify(o.name))
 
     @post_generation
-    def auto_confirmed_rooms(self, create, extracted, **kwargs):
+    def auto_confirmed_resources(self, create, extracted, **kwargs):
         if not create:
             # Simple build, do nothing
             return
 
         if extracted:
-            # A list of rooms were passed in, use them
-            for room in extracted:
-                self.auto_confirmed_rooms.add(room)
+            # A list of resources were passed in, use them
+            for resource in extracted:
+                self.auto_confirmed_resources.add(resource)
 
     class Meta:
         model = OrganizationGroup

@@ -29,7 +29,7 @@ def user(db) -> User:
 
 
 @pytest.fixture()
-def room(db) -> Resource:
+def resource(db) -> Resource:
     return RoomFactory()
 
 

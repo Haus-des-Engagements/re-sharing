@@ -157,7 +157,7 @@ class TestBookingActivityStream(TestCase):
         self.booking.save()
         cancel_booking(self.user, self.booking.slug)
 
-        bookingmessage = "Hello, but I still need a room"
+        bookingmessage = "Hello, but I still need a resource"
         save_bookingmessage(self.booking, bookingmessage, self.user)
         self.booking.refresh_from_db()
 
@@ -182,14 +182,14 @@ class TestBookingActivityStream(TestCase):
 class TestShowBooking(TestCase):
     def setUp(self):
         self.access = AccessFactory()
-        self.room = RoomFactory(access=self.access)
+        self.resource = RoomFactory(access=self.access)
         self.user = UserFactory()
         self.organization = OrganizationFactory()
         self.start_datetime = timezone.now() + timedelta(days=10)
         self.booking = BookingFactory(
             organization=self.organization,
             status=BookingStatus.PENDING,
-            room=self.room,
+            resource=self.resource,
             timespan=(self.start_datetime, self.start_datetime + timedelta(hours=2)),
         )
         validity_start = self.start_datetime - timedelta(days=1)
@@ -249,7 +249,7 @@ class TestSaveBooking(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization
         )
@@ -284,7 +284,7 @@ class TestCreateBookingMessage(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization
         )
@@ -297,7 +297,7 @@ class TestCreateBookingMessage(TestCase):
         )
         form = Mock()
         form.is_valid.return_value = True
-        text_message = "I need a room!"
+        text_message = "I need a resource!"
         form.cleaned_data = {"text": text_message}
         create_bookingmessage(self.booking.slug, form, self.user)
         booking_message = BookingMessage.objects.filter(
@@ -427,13 +427,13 @@ def test_create_booking():
     # Arrange
     user = UserFactory()
     organization = OrganizationFactory()
-    room = RoomFactory()
+    resource = RoomFactory()
     timespan = create_timespan(None, None)
 
     booking_details = {
         "user": user,
         "title": "Test Booking",
-        "room": room,
+        "resource": resource,
         "timespan": timespan,
         "organization": organization,
         "status": BookingStatus.PENDING,
@@ -446,7 +446,7 @@ def test_create_booking():
         "differing_billing_address": None,
         "activity_description": "Just a meeting",
     }
-    kwargs = {"room_booked": True, "rrule": "FREQ=DAILY"}
+    kwargs = {"resource_booked": True, "rrule": "FREQ=DAILY"}
 
     # Act
     booking = create_booking(booking_details, **kwargs)
@@ -455,7 +455,7 @@ def test_create_booking():
     assert isinstance(booking, Booking)
     assert booking.user == booking_details["user"]
     assert booking.title == booking_details["title"]
-    assert booking.room == booking_details["room"]
+    assert booking.resource == booking_details["resource"]
     assert booking.timespan == booking_details["timespan"]
     assert booking.organization == booking_details["organization"]
     assert booking.status == booking_details["status"]
@@ -463,7 +463,7 @@ def test_create_booking():
     assert booking.end_date == booking_details["end_date"]
     assert booking.start_time == booking_details["start_time"]
     assert booking.end_time == booking_details["end_time"]
-    assert booking.room_booked == kwargs["room_booked"]
+    assert booking.resource_booked == kwargs["resource_booked"]
     assert booking.compensation is None
     assert booking.total_amount is None
     assert not booking.pk  # Not saved in the database
@@ -476,7 +476,7 @@ def test_create_booking():
         "organization",
         "status",
         "hide_recurring_bookings",
-        "room",
+        "resource",
         "date_string",
         "expected",
     ),
@@ -492,7 +492,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     organization,
     status,
     hide_recurring_bookings,
-    room,
+    resource,
     date_string,
     expected,
 ):
@@ -521,12 +521,12 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         ),
     )
     # Act
-    bookings, organizations, rooms = manager_filter_bookings_list(
+    bookings, organizations, resources = manager_filter_bookings_list(
         organization,
         show_past_bookings,
         status,
         hide_recurring_bookings,
-        room,
+        resource,
         date_string,
     )
     # Assert
@@ -664,8 +664,10 @@ class TestGenerateSingleBooking(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.room = RoomFactory()
-        self.compensation = CompensationFactory(hourly_rate=50, room=[self.room])
+        self.resource = RoomFactory()
+        self.compensation = CompensationFactory(
+            hourly_rate=50, resource=[self.resource]
+        )
         self.start_datetime = timezone.now() + timedelta(days=1)
         self.duration = 2
         self.differing_billing_address = "Fast lane 2, 929 Free-City"
@@ -673,7 +675,7 @@ class TestGenerateSingleBooking(TestCase):
         self.booking_data = {
             "user": self.user.slug,
             "title": "Meeting",
-            "room": self.room.slug,
+            "resource": self.resource.slug,
             "organization": self.organization.slug,
             "timespan": [
                 self.start_datetime.isoformat(),
@@ -695,7 +697,7 @@ class TestGenerateSingleBooking(TestCase):
         assert isinstance(booking, Booking)
         assert booking.user == self.user
         assert booking.title == "Meeting"
-        assert booking.room == self.room
+        assert booking.resource == self.resource
         assert booking.organization == self.organization
         assert booking.timespan == (self.start_datetime, self.end_datetime)
         assert booking.compensation == self.compensation
@@ -711,7 +713,7 @@ class TestGenerateSingleBooking(TestCase):
         assert isinstance(booking, Booking)
         assert booking.user == self.user
         assert booking.title == "Meeting"
-        assert booking.room == self.room
+        assert booking.resource == self.resource
         assert booking.organization == self.organization
         assert booking.timespan == (self.start_datetime, self.end_datetime)
         assert booking.compensation is None
@@ -723,8 +725,8 @@ class TestGenerateSingleBooking(TestCase):
         with pytest.raises(Http404):
             generate_single_booking(self.booking_data)
 
-    def test_generate_single_booking_invalid_room(self):
-        self.booking_data["room"] = "invalid-slug"
+    def test_generate_single_booking_invalid_resource(self):
+        self.booking_data["resource"] = "invalid-slug"
 
         with pytest.raises(Http404):
             generate_single_booking(self.booking_data)
@@ -740,7 +742,7 @@ class TestGenerateRecurrence(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
         self.start = (timezone.now() + timedelta(days=1)).replace(microsecond=0)
@@ -754,7 +756,7 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data = {
             "user": self.user.slug,
             "title": "Recurring Meeting",
-            "room": self.room.slug,
+            "resource": self.resource.slug,
             "organization": self.organization.slug,
             "timespan": [
                 self.start.isoformat(),
@@ -780,7 +782,7 @@ class TestGenerateRecurrence(TestCase):
             assert isinstance(booking, Booking)
             assert booking.user == self.user
             assert booking.title == "Recurring Meeting"
-            assert booking.room == self.room
+            assert booking.resource == self.resource
             assert booking.organization == self.organization
             assert booking.compensation == self.compensation
             assert booking.total_amount == self.compensation.hourly_rate * self.duration
@@ -805,7 +807,7 @@ class TestGenerateRecurrence(TestCase):
             assert isinstance(booking, Booking)
             assert booking.user == self.user
             assert booking.title == "Recurring Meeting"
-            assert booking.room == self.room
+            assert booking.resource == self.resource
             assert booking.organization == self.organization
             assert booking.compensation is None
             assert booking.total_amount is None
@@ -826,8 +828,8 @@ class TestGenerateRecurrence(TestCase):
         with pytest.raises(Http404):
             create_rrule_and_occurrences(self.booking_data)
 
-    def test_generate_recurrence_invalid_room(self):
-        self.booking_data["room"] = "invalid-slug"
+    def test_generate_recurrence_invalid_resource(self):
+        self.booking_data["resource"] = "invalid-slug"
 
         with pytest.raises(Http404):
             create_rrule_and_occurrences(self.booking_data)
@@ -843,7 +845,7 @@ class TestSaveRecurrence(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.start = timezone.now() + timedelta(days=1)
         self.end = self.start + timedelta(hours=2)
@@ -852,7 +854,7 @@ class TestSaveRecurrence(TestCase):
         self.booking_data = {
             "user": self.user.slug,
             "title": "Recurring Meeting",
-            "room": self.room.slug,
+            "resource": self.resource.slug,
             "organization": self.organization.slug,
             "timespan": [
                 self.start.isoformat(),
@@ -1024,37 +1026,37 @@ class CollectBookingReminderMailsTest(TestCase):
     )
 )
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
-    result = set_initial_booking_data(endtime, startdate, starttime, room=None)
+    result = set_initial_booking_data(endtime, startdate, starttime, resource=None)
     assert result == expected_data
 
 
 class TestGetBookingStatus(TestCase):
     def setUp(self):
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
 
         self.organization_group = OrganizationGroupFactory()
-        self.organization_group.auto_confirmed_rooms.add(self.room)
+        self.organization_group.auto_confirmed_resources.add(self.resource)
         self.organization = OrganizationFactory()
 
         self.user = UserFactory()
         self.user_group = UserGroupFactory()
-        self.user_group.auto_confirmed_rooms.add(self.room)
+        self.user_group.auto_confirmed_resources.add(self.resource)
 
     def test_confirmed_by_organization(self):
         self.organization.organization_groups.add(self.organization_group)
-        status = get_booking_status(self.user, self.organization, self.room)
+        status = get_booking_status(self.user, self.organization, self.resource)
         assert status == BookingStatus.CONFIRMED
 
     def test_pending_by_organization(self):
-        status = get_booking_status(self.user, self.organization, self.room)
+        status = get_booking_status(self.user, self.organization, self.resource)
         assert status == BookingStatus.PENDING
 
     def test_confirmed_by_is_staff(self):
         self.user.is_staff = True
-        status = get_booking_status(self.user, self.organization, self.room)
+        status = get_booking_status(self.user, self.organization, self.resource)
         assert status == BookingStatus.CONFIRMED
 
     def test_confirmed_by_usergroup(self):
         self.user_group.users.add(self.user)
-        status = get_booking_status(self.user, self.organization, self.room)
+        status = get_booking_status(self.user, self.organization, self.resource)
         assert status == BookingStatus.CONFIRMED

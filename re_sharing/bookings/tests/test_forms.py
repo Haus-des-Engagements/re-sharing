@@ -9,10 +9,12 @@ from re_sharing.organizations.tests.factories import BookingPermissionFactory
 
 
 @pytest.fixture()
-def booking_db(room):
+def booking_db(resource):
     start_datetime = timezone.now() + timedelta(days=1)
     end_datetime = start_datetime + timedelta(hours=1)
-    return BookingFactory(room=room, timespan=(start_datetime, end_datetime), status=2)
+    return BookingFactory(
+        resource=resource, timespan=(start_datetime, end_datetime), status=2
+    )
 
 
 @pytest.mark.django_db()
@@ -90,7 +92,7 @@ def test_clean_method(  # noqa: PLR0913
     rrule_ends_enddate,
     expected_errors,
     user,
-    room,
+    resource,
     organization,
     booking_db,
     compensation,
@@ -106,7 +108,7 @@ def test_clean_method(  # noqa: PLR0913
         "rrule_ends_enddate": rrule_ends_enddate,
         "title": "Test title",
         "organization": organization.id,
-        "room": room.id,
+        "resource": resource.id,
         "number_of_attendees": 20,
         "message": "Test message",
         "compensation": compensation.id,

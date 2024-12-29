@@ -65,8 +65,8 @@ class TestListBookingsView(TestCase):
             datetime.datetime.combine(tomorrow, datetime.time(15, 0)),
         )
         end_time = make_aware(datetime.datetime.combine(tomorrow, datetime.time(16, 0)))
-        BookingFactory(organization=o1, timespan=(start_time, end_time), room=r1)
-        BookingFactory(organization=o1, timespan=(start_time, end_time), room=r2)
+        BookingFactory(organization=o1, timespan=(start_time, end_time), resource=r1)
+        BookingFactory(organization=o1, timespan=(start_time, end_time), resource=r2)
 
         client.login(username=self.user.email, password=self.user.password)
         response = client.get(reverse("bookings:list-bookings"))
@@ -326,7 +326,7 @@ class CreateBookingDataFormViewTest(TestCase):
                 "startdate": "2023-10-01",
                 "starttime": "08:00",
                 "endtime": "17:00",
-                "room": "101",
+                "resource": "101",
             },
         )
 

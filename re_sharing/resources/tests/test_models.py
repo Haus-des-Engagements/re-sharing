@@ -14,24 +14,24 @@ from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.utils.models import BookingStatus
 
 
-def test_room_get_absolute_url(room: Resource):
-    assert room.get_absolute_url() == f"/rooms/{room.slug}/"
+def test_resource_get_absolute_url(resource: Resource):
+    assert resource.get_absolute_url() == f"/resources/{resource.slug}/"
 
 
 class TestRoomIsBooked(TestCase):
     def setUp(self):
-        self.room = RoomFactory()
+        self.resource = RoomFactory()
         self.now = timezone.now()
 
-    def test_is_booked_when_room_is_booked(self):
+    def test_is_booked_when_resource_is_booked(self):
         BookingFactory(
-            room=self.room,
+            resource=self.resource,
             timespan=Range(
                 self.now + timedelta(hours=1), self.now + timedelta(hours=2)
             ),
         )
 
-        is_booked = self.room.is_booked(
+        is_booked = self.resource.is_booked(
             Range(
                 self.now + timedelta(hours=1, minutes=30), self.now + timedelta(hours=2)
             )
@@ -39,23 +39,23 @@ class TestRoomIsBooked(TestCase):
 
         assert is_booked is True
 
-    def test_is_booked_when_room_is_not_booked(self):
+    def test_is_booked_when_resource_is_not_booked(self):
         BookingFactory(
-            room=self.room,
+            resource=self.resource,
             timespan=Range(
                 self.now + timedelta(hours=3), self.now + timedelta(hours=4)
             ),
         )
 
-        is_booked = self.room.is_booked(
+        is_booked = self.resource.is_booked(
             Range(self.now + timedelta(hours=1), self.now + timedelta(hours=2))
         )
 
         assert is_booked is False
 
 
-def test_room_str(room: Resource):
-    assert room.__str__() == room.name
+def test_resource_str(resource: Resource):
+    assert resource.__str__() == resource.name
 
 
 def test_access_str(access: Access):
@@ -92,14 +92,14 @@ def test_access_code_str(access_code: AccessCode):
         ),  # Resource is booked and new booking overlaps, so it should not be bookable
     ],
 )
-def test_room_is_bookable(start_datetime, booking_exists, expected):
-    # Create a room instance
-    room = RoomFactory(name="TestRoom")
+def test_resource_is_bookable(start_datetime, booking_exists, expected):
+    # Create a resource instance
+    resource = RoomFactory(name="TestRoom")
 
     # Create a confirmed booking if booking_exists parameter is True
     if booking_exists:
         BookingFactory(
-            room=room,
+            resource=resource,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(parse("2024-07-25T12:00")),
@@ -107,8 +107,8 @@ def test_room_is_bookable(start_datetime, booking_exists, expected):
             ),
         )
 
-    # Call the is_bookable method on the room instance
-    result = room.is_bookable(timezone.make_aware(parse(start_datetime)))
+    # Call the is_bookable method on the resource instance
+    result = resource.is_bookable(timezone.make_aware(parse(start_datetime)))
 
     # Assert the result is as expected
     assert result == expected

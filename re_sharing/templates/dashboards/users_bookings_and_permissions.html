@@ -46,7 +46,7 @@
             <tr>
               <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
               <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>{{ booking.room }}</td>
+              <td>{{ booking.resource }}</td>
               <td>
                 <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
               </td>

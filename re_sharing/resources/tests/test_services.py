@@ -8,10 +8,10 @@ from django.utils import timezone
 
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
-from re_sharing.resources.services import filter_rooms
+from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_access_code
 from re_sharing.resources.services import planner_table
-from re_sharing.resources.services import show_room
+from re_sharing.resources.services import show_resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import RoomFactory
@@ -22,10 +22,10 @@ class GetWeeklyBookingsTest(TestCase):
     def test_empty_weekly_bookings(self):
         date = timezone.make_aware(timezone.datetime(2024, 7, 23))
 
-        room = RoomFactory()
+        resource = RoomFactory()
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays, dates, compensations = show_room(
-            room.slug, date_string
+        resource, time_slots, weekdays, dates, compensations = show_resource(
+            resource.slug, date_string
         )
 
         # Check the length of returned lists
@@ -39,13 +39,20 @@ class GetWeeklyBookingsTest(TestCase):
             2024, 7, 22, 6, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
         )
         assert time_slots[0]["booked"] == [
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-22&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-23&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-24&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-25&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-26&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-27&room=" + room.slug,
-            "?starttime=06:00&endtime=07:30&startdate=2024-07-28&room=" + room.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-22&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-23&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-24&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-25&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-26&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-27&resource="
+            + resource.slug,
+            "?starttime=06:00&endtime=07:30&startdate=2024-07-28&resource="
+            + resource.slug,
         ]
         assert weekdays[0] == datetime.datetime(
             2024, 7, 22, 0, 0, tzinfo=ZoneInfo(key="Europe/Berlin")
@@ -61,9 +68,9 @@ class GetWeeklyBookingsTest(TestCase):
         )
 
     def test_some_bookings_exist(self):
-        room = RoomFactory()
+        resource = RoomFactory()
         booking1 = BookingFactory(
-            room=room,
+            resource=resource,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime(2024, 6, 5, 8, 0)),
@@ -71,7 +78,7 @@ class GetWeeklyBookingsTest(TestCase):
             ),
         )
         booking2 = BookingFactory(
-            room=room,
+            resource=resource,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime(2024, 6, 5, 18, 0)),
@@ -84,8 +91,8 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        room, time_slots, weekdays, dates, compensations = show_room(
-            room.slug, date_string
+        resource, time_slots, weekdays, dates, compensations = show_resource(
+            resource.slug, date_string
         )
 
         number_of_timeslots = 36
@@ -105,28 +112,28 @@ class GetWeeklyBookingsTest(TestCase):
 
     def test_without_date(self):
         date_string = None
-        room = RoomFactory()
-        room, time_slots, weekdays, dates, compensations = show_room(
-            room.slug, date_string
+        resource = RoomFactory()
+        resource, time_slots, weekdays, dates, compensations = show_resource(
+            resource.slug, date_string
         )
         today = timezone.now().date()
         start_of_week = today - datetime.timedelta(days=today.weekday())
 
         assert time_slots[0]["booked"] == [
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=0)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=0)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=1)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=1)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=2)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=2)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=3)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=3)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=4)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=4)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=5)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=5)}&resource=" + resource.slug,
             f"?starttime=06:00&endtime=07:30&startdate="
-            f"{start_of_week + datetime.timedelta(days=6)}&room=" + room.slug,
+            f"{start_of_week + datetime.timedelta(days=6)}&resource=" + resource.slug,
         ]
 
 
@@ -140,19 +147,19 @@ class GetWeeklyBookingsTest(TestCase):
         (None, None, ["Room1", "Room2", "Small Resource"]),
     ],
 )
-def test_filter_rooms(persons_count, start_datetime, expected):
+def test_filter_resources(persons_count, start_datetime, expected):
     RoomFactory.create(name="Room1", max_persons=2)
     RoomFactory.create(name="Room2", max_persons=3)
     RoomFactory.create(name="Small Resource", max_persons=1)
 
-    rooms = filter_rooms(persons_count, start_datetime)
-    assert {room.name for room in rooms} == set(expected)
+    resources = filter_resources(persons_count, start_datetime)
+    assert {resource.name for resource in resources} == set(expected)
 
 
 class TestGetAccessCode(TestCase):
     """
-    Given an organization, room and a timestamp,
-    when I ask for an access code for that room,
+    Given an organization, resource and a timestamp,
+    when I ask for an access code for that resource,
     I get back the correct code.
     """
 
@@ -160,8 +167,8 @@ class TestGetAccessCode(TestCase):
         self.timestamp = timezone.make_aware(timezone.datetime(2024, 7, 23, 13, 30))
         self.access1 = AccessFactory()
         self.access2 = AccessFactory()
-        self.room1 = RoomFactory(access=self.access1)
-        self.room2 = RoomFactory(access=self.access2)
+        self.resource1 = RoomFactory(access=self.access1)
+        self.resource2 = RoomFactory(access=self.access2)
         self.organization1 = OrganizationFactory()
         self.organization2 = OrganizationFactory()
         self.access_code1 = AccessCodeFactory(
@@ -182,7 +189,7 @@ class TestGetAccessCode(TestCase):
         # gets as access_code1, as there is no access_key having a specific organization
         assert (
             get_access_code(
-                room_slug=self.room1.slug,
+                resource_slug=self.resource1.slug,
                 organization_slug=self.organization1.slug,
                 timestamp=(self.timestamp + timedelta(days=1)),
             )
@@ -193,7 +200,7 @@ class TestGetAccessCode(TestCase):
         # because access_code2 is only for organization2
         assert (
             get_access_code(
-                room_slug=self.room1.slug,
+                resource_slug=self.resource1.slug,
                 organization_slug=self.organization1.slug,
                 timestamp=(self.timestamp + timedelta(days=10)),
             )
@@ -204,7 +211,7 @@ class TestGetAccessCode(TestCase):
         # because access_code2 is only for organization2
         assert (
             get_access_code(
-                room_slug=self.room1.slug,
+                resource_slug=self.resource1.slug,
                 organization_slug=self.organization2.slug,
                 timestamp=(self.timestamp + timedelta(days=10)),
             )
@@ -213,7 +220,7 @@ class TestGetAccessCode(TestCase):
 
         assert (
             get_access_code(
-                room_slug=self.room2.slug,
+                resource_slug=self.resource2.slug,
                 organization_slug=self.organization1.slug,
                 timestamp=(self.timestamp + timedelta(days=1)),
             )
@@ -226,13 +233,13 @@ class TestRoomPlanner(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 7, 23))
         date_string = date.strftime("%Y-%m-%d")
 
-        room1 = RoomFactory()
-        room2 = RoomFactory()
-        rooms, timeslots, dates = planner_table(date_string)
+        resource1 = RoomFactory()
+        resource2 = RoomFactory()
+        resources, timeslots, dates = planner_table(date_string)
 
         number_of_timeslots = 48
         assert len(timeslots) == number_of_timeslots
-        assert set(rooms) == {room1, room2}
+        assert set(resources) == {resource1, resource2}
 
         # Check some sample values
         assert (
@@ -246,10 +253,12 @@ class TestRoomPlanner(TestCase):
         )
 
         booking_link1 = (
-            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&room=" + room1.slug
+            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&resource="
+            + resource1.slug
         )
         booking_link2 = (
-            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&room=" + room2.slug
+            "?starttime=08:00&endtime=09:30&startdate=2024-07-23&resource="
+            + resource2.slug
         )
         assert timeslots[16]["slot"] == [
             {"booked": False, "booking_link": booking_link1},
@@ -258,13 +267,13 @@ class TestRoomPlanner(TestCase):
 
         # Check that every slot is False (not booked)
         for item in timeslots:
-            assert all(room["booked"] is False for room in item["slot"])
+            assert all(resource["booked"] is False for resource in item["slot"])
 
     def test_some_bookings_exist(self):
-        room1 = RoomFactory()
-        room2 = RoomFactory()
+        resource1 = RoomFactory()
+        resource2 = RoomFactory()
         booking1 = BookingFactory(
-            room=room1,
+            resource=resource1,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime(2024, 6, 5, 5, 0)),
@@ -272,7 +281,7 @@ class TestRoomPlanner(TestCase):
             ),
         )
         booking2 = BookingFactory(
-            room=room1,
+            resource=resource1,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime(2024, 6, 5, 18, 0)),
@@ -280,7 +289,7 @@ class TestRoomPlanner(TestCase):
             ),
         )
         booking3 = BookingFactory(
-            room=room2,
+            resource=resource2,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime(2024, 6, 5, 23, 0)),
@@ -294,7 +303,7 @@ class TestRoomPlanner(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        rooms, timeslots, dates = planner_table(date_string)
+        resources, timeslots, dates = planner_table(date_string)
 
         number_of_timeslots = 48
         assert len(timeslots) == number_of_timeslots
@@ -302,12 +311,12 @@ class TestRoomPlanner(TestCase):
         # This should be True because we booked the slot from 8:00 to 9:00
         assert timeslots[26]["slot"][0] == {
             "booked": False,
-            "booking_link": "?starttime=13:00&endtime=14:30&startdate=2024-06-05&room="
-            + room1.slug,
+            "booking_link": "?starttime=13:00&endtime=14:30&startdate=2024-06-05"
+            "&resource=" + resource1.slug,
         }  # This should be False because we did not book the slot
         assert timeslots[36]["slot"][0] == {"booked": True, "booking_link": None}
         assert timeslots[36]["slot"][1] == {
             "booked": False,
-            "booking_link": "?starttime=18:00&endtime=19:30&startdate=2024-06-05&room="
-            + room2.slug,
+            "booking_link": "?starttime=18:00&endtime=19:30&startdate=2024-06-05"
+            "&resource=" + resource2.slug,
         }  # This should be True because we booked the slot from 18:00 to 22:00

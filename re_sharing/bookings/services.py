@@ -47,7 +47,7 @@ def show_booking(user, booking_slug):
     activity_stream = get_booking_activity_stream(booking)
 
     access_code = get_access_code(
-        booking.room.slug, booking.organization.slug, booking.timespan.lower
+        booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
 
     if access_code and booking.status in [
@@ -69,7 +69,7 @@ def generate_single_booking(booking_data):
         isoparse(booking_data["timespan"][1]),
     )
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
-    room = get_object_or_404(Resource, slug=booking_data["room"])
+    resource = get_object_or_404(Resource, slug=booking_data["resource"])
 
     start = timespan[0]
     end = timespan[1]
@@ -87,9 +87,9 @@ def generate_single_booking(booking_data):
     booking_details = {
         "user": user,
         "title": booking_data["title"],
-        "room": room,
+        "resource": resource,
         "organization": organization,
-        "status": get_booking_status(user, organization, room),
+        "status": get_booking_status(user, organization, resource),
         "timespan": timespan,
         "start_date": booking_data["start_date"],
         "end_date": booking_data["end_date"],
@@ -131,7 +131,7 @@ def create_booking(booking_details, **kwargs):
     booking = Booking(
         user=booking_details["user"],
         title=booking_details["title"],
-        room=booking_details["room"],
+        resource=booking_details["resource"],
         timespan=booking_details["timespan"],
         end_date=booking_details["end_date"],
         start_date=booking_details["start_date"],
@@ -144,7 +144,7 @@ def create_booking(booking_details, **kwargs):
         differing_billing_address=booking_details["differing_billing_address"],
         activity_description=booking_details["activity_description"],
     )
-    booking.room_booked = kwargs.get("room_booked") or None
+    booking.resource_booked = kwargs.get("resource_booked") or None
     return booking
 
 
@@ -176,7 +176,7 @@ def create_bookingmessage(booking_slug, form, user):
     raise InvalidBookingOperationError
 
 
-def set_initial_booking_data(endtime, startdate, starttime, room):
+def set_initial_booking_data(endtime, startdate, starttime, resource):
     initial_data = {}
     if startdate:
         initial_data["startdate"] = startdate
@@ -195,8 +195,8 @@ def set_initial_booking_data(endtime, startdate, starttime, room):
     else:
         endtime = starttime + timedelta(hours=1)
         initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
-    if room:
-        initial_data["room"] = get_object_or_404(Resource, slug=room)
+    if resource:
+        initial_data["resource"] = get_object_or_404(Resource, slug=resource)
     return initial_data
 
 
@@ -253,7 +253,7 @@ def filter_bookings_list(  # noqa: PLR0913
     organizations = organizations_with_confirmed_bookingpermission(user)
     related_fields = [
         "organization",
-        "room__compensations_of_room",
+        "resource__compensations_of_resource",
         "user",
         "recurrence_rule",
     ]
@@ -298,7 +298,7 @@ def create_booking_data(user, form):
 
     booking_data = {
         "title": form.cleaned_data["title"],
-        "room": form.cleaned_data["room"].slug,
+        "resource": form.cleaned_data["resource"].slug,
         "timespan": timespan,
         "organization": form.cleaned_data["organization"].slug,
         "start_date": form.cleaned_data["startdate"].isoformat(),
@@ -319,13 +319,18 @@ def create_booking_data(user, form):
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913
-    organization, show_past_bookings, status, show_recurring_bookings, room, date_string
+    organization,
+    show_past_bookings,
+    status,
+    show_recurring_bookings,
+    resource,
+    date_string,
 ):
     organizations = Organization.objects.all()
-    rooms = Resource.objects.all()
+    resources = Resource.objects.all()
     related_fields = [
         "organization",
-        "room__compensations_of_room",
+        "resource__compensations_of_resource",
         "user",
         "recurrence_rule",
     ]
@@ -334,8 +339,8 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":
         bookings = bookings.filter(organization__slug=organization)
-    if room != "all":
-        bookings = bookings.filter(room__slug=room)
+    if resource != "all":
+        bookings = bookings.filter(resource__slug=resource)
     if status != "all":
         bookings = bookings.filter(status__in=status)
     if not show_recurring_bookings:
@@ -352,7 +357,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, organizations, rooms
+    return bookings, organizations, resources
 
 
 def manager_cancel_booking(user, booking_slug):
@@ -432,13 +437,13 @@ def collect_booking_reminder_mails():
 
 
 def manager_filter_invoice_bookings_list(
-    organization, only_with_invoice_number, invoice_number, room
+    organization, only_with_invoice_number, invoice_number, resource
 ):
     organizations = Organization.objects.all()
-    rooms = Resource.objects.all()
+    resources = Resource.objects.all()
     related_fields = [
         "organization",
-        "room__compensations_of_room",
+        "resource__compensations_of_resource",
         "user",
         "recurrence_rule",
     ]
@@ -452,11 +457,11 @@ def manager_filter_invoice_bookings_list(
         bookings = bookings.filter(organization__slug=organization)
     if invoice_number:
         bookings = bookings.filter(invoice_number=invoice_number)
-    if room != "all":
-        bookings = bookings.filter(room__slug=room)
+    if resource != "all":
+        bookings = bookings.filter(resource__slug=resource)
     if only_with_invoice_number:
         bookings = bookings.exclude(invoice_number="")
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, organizations, rooms
+    return bookings, organizations, resources

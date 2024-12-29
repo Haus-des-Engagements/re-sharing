@@ -64,13 +64,13 @@ class BookingForm(forms.ModelForm):
         label=_("Please describe shortly what you are planning to do."),
         required=True,
     )
-    room = forms.ModelChoiceField(
+    resource = forms.ModelChoiceField(
         queryset=Resource.objects.all(),
         label=_("Resource"),
         widget=forms.Select(
             attrs={
                 "hx-trigger": "change, load",
-                "hx-post": reverse_lazy("rooms:get-compensations"),
+                "hx-post": reverse_lazy("resources:get-compensations"),
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -170,8 +170,8 @@ class BookingForm(forms.ModelForm):
         self.fields["rrule_monthly_interval"].label = False
         self.fields["rrule_monthly_byday"].label = False
         self.fields["rrule_monthly_bydate"].label = False
-        planner_url = reverse_lazy("rooms:planner")
-        self.fields["room"].help_text = mark_safe(  # noqa: S308
+        planner_url = reverse_lazy("resources:planner")
+        self.fields["resource"].help_text = mark_safe(  # noqa: S308
             _("Have a look at the <a href='{url}'>planner</a> for free slots.").format(
                 url=planner_url
             )
@@ -181,7 +181,7 @@ class BookingForm(forms.ModelForm):
                 Column("title"),
                 Column("organization"),
             ),
-            Row(Column("room"), Column("number_of_attendees")),
+            Row(Column("resource"), Column("number_of_attendees")),
             Row(
                 Column("startdate"),
                 Column("starttime"),
@@ -337,14 +337,14 @@ class BookingForm(forms.ModelForm):
         ]
         self.fields["endtime"].choices = self.fields["starttime"].choices
 
-        if "room" in self.initial:
+        if "resource" in self.initial:
             self.fields["compensation"].queryset = Compensation.objects.filter(
-                room=self.initial["room"]
+                resource=self.initial["resource"]
             )
 
     def clean(self):  # noqa: C901
         cleaned_data = super().clean()
-        room = cleaned_data.get("room")
+        resource = cleaned_data.get("resource")
         startdate = cleaned_data.get("startdate")
         starttime = cleaned_data.get("starttime")
         endtime = cleaned_data.get("endtime")
@@ -433,11 +433,11 @@ class BookingForm(forms.ModelForm):
         if rrule_repetitions == "NO_REPETITIONS" and end > start:
             if Booking.objects.filter(
                 status=BookingStatus.CONFIRMED,
-                room=room,
+                resource=resource,
                 timespan__overlap=(start, end),
             ).exists():
-                msg = _("The room is already booked during your selected timeslot.")
-                self.add_error("room", msg)
+                msg = _("The resource is already booked during your selected timeslot.")
+                self.add_error("resource", msg)
 
         return cleaned_data
 
@@ -449,7 +449,7 @@ class BookingForm(forms.ModelForm):
             "starttime",
             "endtime",
             "organization",
-            "room",
+            "resource",
             "number_of_attendees",
             "differing_billing_address",
             "activity_description",

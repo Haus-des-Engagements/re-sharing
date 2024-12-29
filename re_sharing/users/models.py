@@ -81,11 +81,11 @@ class UserGroup(TimeStampedModel):
         related_name="usergroups_of_user",
         related_query_name="usergroup_of_user",
     )
-    auto_confirmed_rooms = ManyToManyField(
+    auto_confirmed_resources = ManyToManyField(
         Resource,
-        verbose_name=_("Auto confirmed rooms"),
-        related_name="autoconfirmedrooms_of_usergroup",
-        related_query_name="autoconfirmedroom_of_usergroup",
+        verbose_name=_("Auto confirmed resources"),
+        related_name="autoconfirmedresources_of_usergroup",
+        related_query_name="autoconfirmedresource_of_usergroup",
         blank=True,
     )
     auto_confirm_organizations = BooleanField(

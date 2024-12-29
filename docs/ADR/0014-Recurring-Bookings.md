@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Recurring Bookings are a central requirement for this application, as many organizations use the rooms on a regular basis.
+Recurring Bookings are a central requirement for this application, as many organizations use the resources on a regular basis.
 There are multiple ways of implementing Recurrences, see discussions about it here:
 - https://github.com/bmoeskau/Extensible/blob/master/recurrence-overview.md
 - https://stackoverflow.com/questions/85699/whats-the-best-way-to-model-recurring-events-in-a-calendar-application

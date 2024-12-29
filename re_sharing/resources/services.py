@@ -16,8 +16,8 @@ from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 
-def show_room(room_slug, date_string):
-    room = get_object_or_404(Resource, slug=room_slug)
+def show_resource(resource_slug, date_string):
+    resource = get_object_or_404(Resource, slug=resource_slug)
     # Calculate the start and end dates for the week
     shown_date = (
         parser.parse(date_string).date() if date_string else timezone.now().date()
@@ -51,13 +51,13 @@ def show_room(room_slug, date_string):
             slot["booked"][j] = (
                 f"?starttime={slot['time'].strftime('%H:%M')}&endtime="
                 f"{(slot['time'] + relativedelta(minutes=90)).strftime('%H:%M')}"
-                f"&startdate={weekdays[j].strftime('%Y-%m-%d')}&room={room.slug}"
+                f"&startdate={weekdays[j].strftime('%Y-%m-%d')}&resource={resource.slug}"
             )
         time_slots.append(slot)
 
     # Filter bookings for the current week
     weekly_bookings = (
-        Booking.objects.filter(room=room)
+        Booking.objects.filter(resource=resource)
         .filter(status=BookingStatus.CONFIRMED)
         .filter(timespan__overlap=(start_of_week, end_of_week))
     )
@@ -86,33 +86,33 @@ def show_room(room_slug, date_string):
         "shown_date": shown_date,
         "next_week": shown_date + timedelta(days=7),
     }
-    compensations = Compensation.objects.filter(room=room)
-    return room, time_slots, weekdays, dates, compensations
+    compensations = Compensation.objects.filter(resource=resource)
+    return resource, time_slots, weekdays, dates, compensations
 
 
-def filter_rooms(persons_count, start_datetime):
-    rooms = Resource.objects.all()
+def filter_resources(persons_count, start_datetime):
+    resources = Resource.objects.all()
 
     if persons_count:
-        rooms = rooms.filter(max_persons__gte=persons_count)
+        resources = resources.filter(max_persons__gte=persons_count)
     if start_datetime:
         start_datetime = timezone.make_aware(parser.parse(start_datetime))
         end_datetime = start_datetime + timedelta(minutes=30)
         overlapping_bookings = Booking.objects.filter(
             timespan__overlap=(start_datetime, end_datetime),
         )
-        booked_room_ids = overlapping_bookings.values_list("room_id", flat=True)
-        rooms = rooms.exclude(id__in=booked_room_ids)
-    return rooms.prefetch_related("roomimages_of_room")
+        booked_resource_ids = overlapping_bookings.values_list("resource_id", flat=True)
+        resources = resources.exclude(id__in=booked_resource_ids)
+    return resources.prefetch_related("resourceimages_of_resource")
 
 
-def get_access_code(room_slug, organization_slug, timestamp):
-    room = get_object_or_404(Resource, slug=room_slug)
+def get_access_code(resource_slug, organization_slug, timestamp):
+    resource = get_object_or_404(Resource, slug=resource_slug)
     organization = get_object_or_404(Organization, slug=organization_slug)
 
     access_code = (
         AccessCode.objects.filter(
-            Q(access=room.access)
+            Q(access=resource.access)
             & Q(validity_start__lte=timestamp)
             & Q(organization=organization)
         )
@@ -125,7 +125,7 @@ def get_access_code(room_slug, organization_slug, timestamp):
     if not access_code:
         access_code = (
             AccessCode.objects.filter(
-                Q(access=room.access)
+                Q(access=resource.access)
                 & Q(validity_start__lte=timestamp)
                 & Q(organization=None)
             )
@@ -137,7 +137,7 @@ def get_access_code(room_slug, organization_slug, timestamp):
 
 
 def planner_table(date_string):
-    rooms = Resource.objects.all().order_by("id")
+    resources = Resource.objects.all().order_by("id")
 
     shown_date = (
         parser.parse(date_string).date() if date_string else timezone.now().date()
@@ -156,18 +156,19 @@ def planner_table(date_string):
             "timeslot": i,
             "time": start_of_day + timedelta(minutes=30) * i,
             "slot": [
-                {"booked": False, "booking_link": None} for _ in range(rooms.count())
+                {"booked": False, "booking_link": None}
+                for _ in range(resources.count())
             ],
         }
         for i in range(number_of_slots)
     ]
     daily_bookings = (
-        Booking.objects.filter(room__in=rooms)
+        Booking.objects.filter(resource__in=resources)
         .filter(status=BookingStatus.CONFIRMED)
         .filter(timespan__overlap=(start_of_day, end_of_day))
     )
 
-    room_ids = [room.id for room in rooms]
+    resource_ids = [resource.id for resource in resources]
 
     for booking in daily_bookings:
         booking_start = max(booking.timespan.lower, start_of_day)
@@ -177,20 +178,20 @@ def planner_table(date_string):
         start_index = int((booking_start - start_of_day).total_seconds() // 1800)
         end_index = int((booking_end - start_of_day).total_seconds() // 1800)
 
-        room_index = room_ids.index(booking.room.id)
+        resource_index = resource_ids.index(booking.resource.id)
 
         # Mark corresponding time slots as booked
         for i in range(start_index, end_index):
-            timeslots[i]["slot"][room_index]["booked"] = True
+            timeslots[i]["slot"][resource_index]["booked"] = True
 
     for timeslot in timeslots:
-        for i, room in enumerate(timeslot["slot"]):
-            if not room["booked"]:
-                room["booking_link"] = (
+        for i, resource in enumerate(timeslot["slot"]):
+            if not resource["booked"]:
+                resource["booking_link"] = (
                     f"?starttime={timeslot['time'].strftime('%H:%M')}"
                     f"&endtime="
                     f"{(timeslot['time']+ relativedelta(minutes=90)).strftime('%H:%M')}"
-                    f"&startdate={shown_date.strftime('%Y-%m-%d')}&room={rooms[i].slug}"
+                    f"&startdate={shown_date.strftime('%Y-%m-%d')}&resource={resources[i].slug}"
                 )
 
     previous_day = shown_date - timedelta(days=1)
@@ -200,4 +201,4 @@ def planner_table(date_string):
         "shown_date": shown_date,
         "next_day": next_day,
     }
-    return rooms, timeslots, dates
+    return resources, timeslots, dates

@@ -46,7 +46,7 @@ def booking_ics(booking):
     event.add("dtstart", booking.timespan.lower)
     event.add("dtend", booking.timespan.upper)
     event.add("dtstamp", timezone.now())
-    event.add("location", f"{booking.room.name}, {booking.room.address}")
+    event.add("location", f"{booking.resource.name}, {booking.resource.address}")
     event["description"] = _("Find all related information here: %s%s") % (
         domain,
         booking.get_absolute_url(),
@@ -77,7 +77,7 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
 
 def booking_confirmation_email(booking):
     access_code = get_access_code(
-        booking.room.slug, booking.organization.slug, booking.timespan.lower
+        booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "access_code": access_code, "domain": domain}
@@ -93,7 +93,7 @@ def booking_confirmation_email(booking):
 
 def booking_reminder_email(booking):
     access_code = get_access_code(
-        booking.room.slug, booking.organization.slug, booking.timespan.lower
+        booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "access_code": access_code, "domain": domain}

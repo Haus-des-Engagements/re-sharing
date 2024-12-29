@@ -4,5 +4,5 @@ from django.utils.translation import gettext_lazy as _
 
 class RoomsConfig(AppConfig):
     name = "re_sharing.resources"
-    verbose_name = _("Rooms")
+    verbose_name = _("Resources")
     default_auto_field = "django.db.models.BigAutoField"

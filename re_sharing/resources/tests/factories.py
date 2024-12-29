@@ -66,15 +66,15 @@ class CompensationFactory(DjangoModelFactory):
     hourly_rate = Faker("random_int", min=1, max=1000)
 
     @post_generation
-    def room(self, create, extracted, **kwargs):
+    def resource(self, create, extracted, **kwargs):
         if not create:
             # Simple build, do nothing
             return
 
         if extracted:
-            # A list of rooms were passed in, use them
-            for room in extracted:
-                self.room.add(room)
+            # A list of resources were passed in, use them
+            for resource in extracted:
+                self.resource.add(resource)
 
     class Meta:
         model = Compensation

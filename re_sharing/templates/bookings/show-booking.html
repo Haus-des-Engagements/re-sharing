@@ -33,13 +33,13 @@
         <div class="card-body">
           <h5 class="card-title">{% trans "Instructions" %}</h5>
           <p class="card-text">
-            {% if booking.room.access.instructions %}
+            {% if booking.resource.access.instructions %}
               {% if not access_code %}
                 <p class="card-text">{% trans "The access code and instructions are only visible for confirmed bookings." %}</p>
               {% endif %}
-              {{ booking.room.access.instructions }}
+              {{ booking.resource.access.instructions }}
             {% else %}
-              The room has no specific access information.
+              The resource has no specific access information.
             </p>
           {% endif %}
         </div>

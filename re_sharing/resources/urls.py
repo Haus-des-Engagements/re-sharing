@@ -1,14 +1,14 @@
 from django.urls import path
 
 from .views import get_compensations
-from .views import list_rooms_view
+from .views import list_resources_view
 from .views import planner_view
-from .views import show_room_view
+from .views import show_resource_view
 
 app_name = "resources"
 urlpatterns = [
-    path("", list_rooms_view, name="list-rooms"),
+    path("", list_resources_view, name="list-resources"),
     path("get-compensations/", get_compensations, name="get-compensations"),
     path("planner/", planner_view, name="planner"),
-    path("<slug:room_slug>/", show_room_view, name="show-room"),
+    path("<slug:resource_slug>/", show_resource_view, name="show-resource"),
 ]

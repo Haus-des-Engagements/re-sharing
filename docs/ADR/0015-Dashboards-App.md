@@ -14,7 +14,7 @@ We weren't sure in which app swe should put the code, as it already shows inform
 ## Decision
 
 - We create a new app, called "Dashboards".
-- This app will contain this dashboard but also others, that might be coming (e.g. for managing rooms)
+- This app will contain this dashboard but also others, that might be coming (e.g. for managing resources)
 
 
 ## Consequences

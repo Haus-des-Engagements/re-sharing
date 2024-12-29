@@ -36,7 +36,7 @@ class BookingFactory(DjangoModelFactory):
         "re_sharing.organizations.tests.factories.OrganizationFactory"
     )
     user = SubFactory(UserFactory)
-    room = SubFactory("re_sharing.resources.tests.factories.RoomFactory")
+    resource = SubFactory("re_sharing.resources.tests.factories.RoomFactory")
     status = BookingStatus.CONFIRMED
     start_date = Faker(
         "date_between_dates",
@@ -94,7 +94,7 @@ class RecurrenceRuleFactory(DjangoModelFactory):
         "re_sharing.organizations.tests.factories.OrganizationFactory"
     )
     user = SubFactory(UserFactory)
-    room = SubFactory("re_sharing.resources.tests.factories.RoomFactory")
+    resource = SubFactory("re_sharing.resources.tests.factories.RoomFactory")
     status = BookingStatus.CONFIRMED
 
     @LazyAttribute
