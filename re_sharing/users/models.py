@@ -15,7 +15,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.users.managers import UserManager
 from re_sharing.utils.models import TimeStampedModel
 
@@ -82,7 +82,7 @@ class UserGroup(TimeStampedModel):
         related_query_name="usergroup_of_user",
     )
     auto_confirmed_rooms = ManyToManyField(
-        Room,
+        Resource,
         verbose_name=_("Auto confirmed rooms"),
         related_name="autoconfirmedrooms_of_usergroup",
         related_query_name="autoconfirmedroom_of_usergroup",

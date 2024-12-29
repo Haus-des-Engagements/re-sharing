@@ -49,7 +49,7 @@ class BookingConfirmationEmailTestCase(TestCase):
         mock_booking.title = "Test Booking"
         mock_booking.timespan.lower = timezone.now()
         mock_booking.timespan.upper = timezone.now() + timezone.timedelta(hours=1)
-        mock_booking.room.name = "Test Room"
+        mock_booking.room.name = "Test Resource"
         mock_booking.room.address = "123 Test St"
         mock_booking.room.slug = "test-room"
         mock_booking.organization.slug = "test-org"

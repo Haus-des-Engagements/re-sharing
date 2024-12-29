@@ -16,7 +16,7 @@ It is mandatory, that users can - in the new system - perform these (booking rel
 - write a message for a specific booking
 - create multiple bookings for recurring meetings at once
 
-Room administrators on the other hand mus be able to:
+Resource administrators on the other hand mus be able to:
 - confirm a booking request (or multiple bookings being part of the same recurrence)
 - cancel a booking request (or multiple bookings being part of the same recurrence)
 

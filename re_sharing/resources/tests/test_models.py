@@ -9,12 +9,12 @@ from psycopg.types.range import Range
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.utils.models import BookingStatus
 
 
-def test_room_get_absolute_url(room: Room):
+def test_room_get_absolute_url(room: Resource):
     assert room.get_absolute_url() == f"/rooms/{room.slug}/"
 
 
@@ -54,7 +54,7 @@ class TestRoomIsBooked(TestCase):
         assert is_booked is False
 
 
-def test_room_str(room: Room):
+def test_room_str(room: Resource):
     assert room.__str__() == room.name
 
 
@@ -79,17 +79,17 @@ def test_access_code_str(access_code: AccessCode):
             "2024-07-25T12:00",
             False,
             True,
-        ),  # Room is not yet booked, so it should be bookable
+        ),  # Resource is not yet booked, so it should be bookable
         (
             "2024-07-25T12:00",
             True,
             False,
-        ),  # Room is already booked, so it should not be bookable
+        ),  # Resource is already booked, so it should not be bookable
         (
             "2024-07-25T12:20",
             True,
             False,
-        ),  # Room is booked and new booking overlaps, so it should not be bookable
+        ),  # Resource is booked and new booking overlaps, so it should not be bookable
     ],
 )
 def test_room_is_bookable(start_datetime, booking_exists, expected):

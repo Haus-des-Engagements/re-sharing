@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.utils.dicts import MONTHDATES
 from re_sharing.utils.dicts import MONTHDAYS
 from re_sharing.utils.dicts import RRULE_DAILY_INTERVAL
@@ -65,8 +65,8 @@ class BookingForm(forms.ModelForm):
         required=True,
     )
     room = forms.ModelChoiceField(
-        queryset=Room.objects.all(),
-        label=_("Room"),
+        queryset=Resource.objects.all(),
+        label=_("Resource"),
         widget=forms.Select(
             attrs={
                 "hx-trigger": "change, load",

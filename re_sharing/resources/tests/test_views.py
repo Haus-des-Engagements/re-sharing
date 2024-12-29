@@ -84,7 +84,7 @@ class PlannerViewTest(TestCase):
 class GetCompensationsViewTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.room = RoomFactory(name="Test Room")
+        self.room = RoomFactory(name="Test Resource")
         self.compensation_name = "For Free"
         self.compensation = CompensationFactory(name=self.compensation_name)
         self.compensation.room.add(self.room)

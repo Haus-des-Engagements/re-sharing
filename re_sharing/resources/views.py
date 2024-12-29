@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.resources.services import filter_rooms
 from re_sharing.resources.services import planner_table
 from re_sharing.resources.services import show_room
@@ -57,7 +57,7 @@ def get_compensations(request):
         return render(
             request, "bookings/partials/compensations.html", {"compensations": []}
         )
-    room = get_object_or_404(Room, id=room_id)
+    room = get_object_or_404(Resource, id=room_id)
     compensations = Compensation.objects.filter(room=room)
     return render(
         request,

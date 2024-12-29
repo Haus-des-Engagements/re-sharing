@@ -11,7 +11,7 @@ from factory.django import DjangoModelFactory
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.users.tests.factories import UserFactory
 
 
@@ -42,7 +42,7 @@ class RoomFactory(DjangoModelFactory):
     address = Faker("address")
 
     class Meta:
-        model = Room
+        model = Resource
         django_get_or_create = ["slug"]
 
 

@@ -31,7 +31,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.users.models import User
 from re_sharing.utils.dicts import RRULE_DAILY_INTERVAL
 from re_sharing.utils.dicts import RRULE_MONTHLY_INTERVAL
@@ -62,8 +62,8 @@ class RecurrenceRule(TimeStampedModel):
         related_query_name="rrule_of_user",
     )
     room = ForeignKey(
-        Room,
-        verbose_name=_("Room"),
+        Resource,
+        verbose_name=_("Resource"),
         on_delete=PROTECT,
         related_name="rrules_of_room",
         related_query_name="rrule_of_room",
@@ -231,8 +231,8 @@ class Booking(TimeStampedModel):
     )
     timespan = DateTimeRangeField("Date Time Range", default_bounds="()")
     room = ForeignKey(
-        Room,
-        verbose_name=_("Room"),
+        Resource,
+        verbose_name=_("Resource"),
         on_delete=PROTECT,
         related_name="bookings_of_room",
         related_query_name="booking_of_room",

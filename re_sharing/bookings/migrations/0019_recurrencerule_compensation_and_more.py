@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recurrencerule',
             name='room',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='rrules_of_room', related_query_name='rrule_of_room', to='resources.room', verbose_name='Room'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='rrules_of_room', related_query_name='rrule_of_room', to='resources.room', verbose_name='Resource'),
             preserve_default=False,
         ),
         migrations.AddField(

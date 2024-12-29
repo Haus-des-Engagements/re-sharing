@@ -12,12 +12,12 @@ from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 
 def show_room(room_slug, date_string):
-    room = get_object_or_404(Room, slug=room_slug)
+    room = get_object_or_404(Resource, slug=room_slug)
     # Calculate the start and end dates for the week
     shown_date = (
         parser.parse(date_string).date() if date_string else timezone.now().date()
@@ -91,7 +91,7 @@ def show_room(room_slug, date_string):
 
 
 def filter_rooms(persons_count, start_datetime):
-    rooms = Room.objects.all()
+    rooms = Resource.objects.all()
 
     if persons_count:
         rooms = rooms.filter(max_persons__gte=persons_count)
@@ -107,7 +107,7 @@ def filter_rooms(persons_count, start_datetime):
 
 
 def get_access_code(room_slug, organization_slug, timestamp):
-    room = get_object_or_404(Room, slug=room_slug)
+    room = get_object_or_404(Resource, slug=room_slug)
     organization = get_object_or_404(Organization, slug=organization_slug)
 
     access_code = (
@@ -137,7 +137,7 @@ def get_access_code(room_slug, organization_slug, timestamp):
 
 
 def planner_table(date_string):
-    rooms = Room.objects.all().order_by("id")
+    rooms = Resource.objects.all().order_by("id")
 
     shown_date = (
         parser.parse(date_string).date() if date_string else timezone.now().date()

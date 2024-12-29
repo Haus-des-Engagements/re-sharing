@@ -25,7 +25,7 @@ from re_sharing.organizations.services import (
 )
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.resources.services import get_access_code
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
@@ -69,7 +69,7 @@ def generate_single_booking(booking_data):
         isoparse(booking_data["timespan"][1]),
     )
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
-    room = get_object_or_404(Room, slug=booking_data["room"])
+    room = get_object_or_404(Resource, slug=booking_data["room"])
 
     start = timespan[0]
     end = timespan[1]
@@ -196,7 +196,7 @@ def set_initial_booking_data(endtime, startdate, starttime, room):
         endtime = starttime + timedelta(hours=1)
         initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
     if room:
-        initial_data["room"] = get_object_or_404(Room, slug=room)
+        initial_data["room"] = get_object_or_404(Resource, slug=room)
     return initial_data
 
 
@@ -322,7 +322,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     organization, show_past_bookings, status, show_recurring_bookings, room, date_string
 ):
     organizations = Organization.objects.all()
-    rooms = Room.objects.all()
+    rooms = Resource.objects.all()
     related_fields = [
         "organization",
         "room__compensations_of_room",
@@ -435,7 +435,7 @@ def manager_filter_invoice_bookings_list(
     organization, only_with_invoice_number, invoice_number, room
 ):
     organizations = Organization.objects.all()
-    rooms = Room.objects.all()
+    rooms = Resource.objects.all()
     related_fields = [
         "organization",
         "room__compensations_of_room",

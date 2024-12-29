@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import TimeStampedModel
 
@@ -52,7 +52,7 @@ class OrganizationGroup(TimeStampedModel):
     description = CharField(_("Description"), max_length=2048)
     slug = AutoSlugField(populate_from="name", unique=True, editable=False)
     auto_confirmed_rooms = ManyToManyField(
-        Room,
+        Resource,
         verbose_name=_("Auto confirmed rooms"),
         related_name="autoconfirmedrooms_of_organizationgroup",
         related_query_name="autoconfirmedroom_of_organizationgroup",
