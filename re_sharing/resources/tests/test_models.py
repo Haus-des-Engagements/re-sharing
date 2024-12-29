@@ -10,7 +10,7 @@ from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Resource
-from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.utils.models import BookingStatus
 
 
@@ -18,9 +18,9 @@ def test_resource_get_absolute_url(resource: Resource):
     assert resource.get_absolute_url() == f"/resources/{resource.slug}/"
 
 
-class TestRoomIsBooked(TestCase):
+class TestResourceIsBooked(TestCase):
     def setUp(self):
-        self.resource = RoomFactory()
+        self.resource = ResourceFactory()
         self.now = timezone.now()
 
     def test_is_booked_when_resource_is_booked(self):
@@ -94,7 +94,7 @@ def test_access_code_str(access_code: AccessCode):
 )
 def test_resource_is_bookable(start_datetime, booking_exists, expected):
     # Create a resource instance
-    resource = RoomFactory(name="TestRoom")
+    resource = ResourceFactory(name="TestResource")
 
     # Create a confirmed booking if booking_exists parameter is True
     if booking_exists:

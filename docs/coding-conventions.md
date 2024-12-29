@@ -12,7 +12,7 @@ In general, we are following the Coding Conventions of PEP 8. In case of questio
 names.
 
 ### Models
-* A class representing a database model is always written in singular (e.g. "RoomBooking") and should be in CamelCase 
+* A class representing a database model is always written in singular (e.g. "ResourceBooking") and should be in CamelCase 
 without underscores.
 * Variable names for backward resolution:
   * Used for finding all occurrences of a referenced attribute as a foreign key:

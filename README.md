@@ -1,4 +1,4 @@
-# Roomsharing
+# Resourcesharing
 
 Easily share resources!
 

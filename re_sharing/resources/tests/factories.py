@@ -26,7 +26,7 @@ class AccessFactory(DjangoModelFactory):
         django_get_or_create = ["slug"]
 
 
-class RoomFactory(DjangoModelFactory):
+class ResourceFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     name = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.name))

@@ -9,7 +9,7 @@ from .models import ResourceImage
 
 
 @admin.register(Resource)
-class RoomAdmin(ImportExportMixin, admin.ModelAdmin):
+class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "name", "square_meters", "max_persons"]
     search_fields = ["id", "name"]
     ordering = ["id"]
