@@ -44,10 +44,10 @@ from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
-from re_sharing.rooms.tests.factories import AccessCodeFactory
-from re_sharing.rooms.tests.factories import AccessFactory
-from re_sharing.rooms.tests.factories import CompensationFactory
-from re_sharing.rooms.tests.factories import RoomFactory
+from re_sharing.resources.tests.factories import AccessCodeFactory
+from re_sharing.resources.tests.factories import AccessFactory
+from re_sharing.resources.tests.factories import CompensationFactory
+from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.users.tests.factories import UserGroupFactory
 from re_sharing.utils.models import BookingStatus

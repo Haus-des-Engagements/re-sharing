@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rooms', '0005_remove_room_bookable_equipment_room_accessibility_and_more'),
+        ('resources', '0005_remove_room_bookable_equipment_room_accessibility_and_more'),
     ]
 
     operations = [

@@ -18,7 +18,7 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("re_sharing.users.urls", namespace="users")),
-    path("rooms/", include("re_sharing.rooms.urls", namespace="rooms")),
+    path("resources/", include("re_sharing.resources.urls", namespace="resources")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("bookings/", include("re_sharing.bookings.urls", namespace="bookings")),

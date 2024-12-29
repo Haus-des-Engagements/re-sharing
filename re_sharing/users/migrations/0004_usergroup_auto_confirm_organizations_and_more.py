@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rooms', '0009_alter_roomimage_image'),
+        ('resources', '0009_alter_roomimage_image'),
         ('users', '0003_usergroup'),
     ]
 
@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='usergroup',
             name='auto_confirmed_rooms',
-            field=models.ManyToManyField(blank=True, related_name='autoconfirmedrooms_of_usergroup', related_query_name='autoconfirmedroom_of_usergroup', to='rooms.room', verbose_name='Auto confirmed rooms'),
+            field=models.ManyToManyField(blank=True, related_name='autoconfirmedrooms_of_usergroup', related_query_name='autoconfirmedroom_of_usergroup', to='resources.room', verbose_name='Auto confirmed resources'),
         ),
     ]

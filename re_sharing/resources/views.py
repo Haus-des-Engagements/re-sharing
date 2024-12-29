@@ -2,11 +2,11 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
-from re_sharing.rooms.services import filter_rooms
-from re_sharing.rooms.services import planner_table
-from re_sharing.rooms.services import show_room
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
+from re_sharing.resources.services import filter_rooms
+from re_sharing.resources.services import planner_table
+from re_sharing.resources.services import show_room
 
 
 @require_http_methods(["GET"])

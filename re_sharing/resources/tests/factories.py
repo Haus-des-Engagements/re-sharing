@@ -8,10 +8,10 @@ from factory import SubFactory
 from factory import post_generation
 from factory.django import DjangoModelFactory
 
-from re_sharing.rooms.models import Access
-from re_sharing.rooms.models import AccessCode
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Access
+from re_sharing.resources.models import AccessCode
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
 from re_sharing.users.tests.factories import UserFactory
 
 

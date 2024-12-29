@@ -3,6 +3,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class RoomsConfig(AppConfig):
-    name = "re_sharing.rooms"
+    name = "re_sharing.resources"
     verbose_name = _("Rooms")
     default_auto_field = "django.db.models.BigAutoField"

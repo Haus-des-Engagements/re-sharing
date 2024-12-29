@@ -5,7 +5,7 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import django_extensions.db.fields
-import re_sharing.rooms.models
+import re_sharing.resources.models
 import uuid
 
 
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 ('updated', models.DateTimeField(auto_now=True, verbose_name='Updated')),
                 ('image', models.ImageField(upload_to=re_sharing.rooms.models.create_roomimage_path, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg'])])),
                 ('description', models.CharField(blank=True, max_length=250, verbose_name='Description')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='roomimages_of_room', related_query_name='roomimage_of_room', to='rooms.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='roomimages_of_room', related_query_name='roomimage_of_room', to='resources.room', verbose_name='Room')),
             ],
             options={
                 'verbose_name': 'Room Image',

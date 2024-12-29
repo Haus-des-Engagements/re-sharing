@@ -5,12 +5,12 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
-from re_sharing.rooms.tests.factories import CompensationFactory
-from re_sharing.rooms.tests.factories import RoomFactory
-from re_sharing.rooms.views import get_compensations
-from re_sharing.rooms.views import list_rooms_view
-from re_sharing.rooms.views import planner_view
-from re_sharing.rooms.views import show_room_view
+from re_sharing.resources.tests.factories import CompensationFactory
+from re_sharing.resources.tests.factories import RoomFactory
+from re_sharing.resources.views import get_compensations
+from re_sharing.resources.views import list_rooms_view
+from re_sharing.resources.views import planner_view
+from re_sharing.resources.views import show_room_view
 
 
 class ShowRoomViewTest(TestCase):
