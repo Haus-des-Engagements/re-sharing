@@ -120,7 +120,7 @@ def create_roomimage_path(instance, filename):
     return f"rooms/{room_slug}-{filename}"
 
 
-class RoomImage(TimeStampedModel):
+class ResourceImage(TimeStampedModel):
     room = ForeignKey(
         Resource,
         verbose_name=_("Resource"),
