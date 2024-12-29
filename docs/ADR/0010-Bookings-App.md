@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-The project aims at making room bookings a lot easier. It needs to be developed with little ressources and quickly.
+The project aims at making resource bookings a lot easier. It needs to be developed with little ressources and quickly.
 There is an existing booking process, that start with a wordpress form, a pdf, e-mail and a crm system and two spreadsheets.
 It is mandatory, that users can - in the new system - perform these (booking related) actions:
 - create a booking request for an organizations

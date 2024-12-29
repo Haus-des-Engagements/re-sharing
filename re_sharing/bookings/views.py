@@ -223,8 +223,8 @@ def create_booking_data_form_view(request):
         startdate = request.GET.get("startdate")
         starttime = request.GET.get("starttime")
         endtime = request.GET.get("endtime")
-        room = request.GET.get("room")
-        initial_data = set_initial_booking_data(endtime, startdate, starttime, room)
+        resource = request.GET.get("resource")
+        initial_data = set_initial_booking_data(endtime, startdate, starttime, resource)
         # user needs at least to be confirmed for one organization
         user_has_bookingpermission = (
             BookingPermission.objects.filter(user=request.user)
@@ -265,21 +265,21 @@ def create_booking_data_form_view(request):
 @staff_member_required
 def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     """
-    Shows the bookings for a room manager so that they can be confirmed or cancelled
+    Shows the bookings for a resource manager so that they can be confirmed or cancelled
     """
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "1"
     organization = request.GET.get("organization") or "all"
-    room = request.GET.get("room") or "all"
+    resource = request.GET.get("resource") or "all"
     date_string = request.GET.get("date") or None
     show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
 
-    bookings, organizations, rooms = manager_filter_bookings_list(
+    bookings, organizations, resources = manager_filter_bookings_list(
         organization,
         show_past_bookings,
         status,
         show_recurring_bookings,
-        room,
+        resource,
         date_string,
     )
 
@@ -288,7 +288,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         "current_time": timezone.now(),
         "organizations": organizations,
         "statuses": BookingStatus.choices,
-        "rooms": rooms,
+        "resources": resources,
     }
 
     if request.headers.get("HX-Request"):
@@ -320,7 +320,8 @@ def manager_confirm_booking_view(request, booking_slug):
 @staff_member_required
 def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
     """
-    Shows the recurrences for a room manager so that they can be confirmed or cancelled
+    Shows the recurrences for a resource manager so that they can be confirmed or
+    cancelled
     """
     show_past_rrules = request.GET.get("show_past_rrules") or False
     status = request.GET.get("status") or 1
@@ -367,21 +368,21 @@ def manager_confirm_rrule_view(request, rrule_uuid):
 @staff_member_required
 def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpResponse:
     """
-    Shows the bookings with an invoice for a room manager so that they can be
+    Shows the bookings with an invoice for a resource manager so that they can be
     confirmed or cancelled
     """
     only_with_invoice_number = request.GET.get("only_with_invoice_number") or False
     organization = request.GET.get("organization", "all")
     invoice_number = request.GET.get("invoice_number") or None
-    room = request.GET.get("room") or "all"
-    bookings, organizations, rooms = manager_filter_invoice_bookings_list(
-        organization, only_with_invoice_number, invoice_number, room
+    resource = request.GET.get("resource") or "all"
+    bookings, organizations, resources = manager_filter_invoice_bookings_list(
+        organization, only_with_invoice_number, invoice_number, resource
     )
 
     context = {
         "bookings": bookings,
         "organizations": organizations,
-        "rooms": rooms,
+        "resources": resources,
     }
 
     if request.headers.get("HX-Request"):

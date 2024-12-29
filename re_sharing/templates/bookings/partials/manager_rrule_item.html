@@ -6,7 +6,7 @@
   {{ rrule.get_first_booking.timespan.lower|date:"H:i" }}
   - {{ rrule.get_first_booking.timespan.upper|date:"H:i" }}
 </td>
-<td>{{ rrule.get_first_booking.room }}</td>
+<td>{{ rrule.get_first_booking.resource }}</td>
 <td>
   <a href="{% url "bookings:show-recurrence" rrule.slug %}">{{ rrule.get_first_booking.title }}</a>
 </td>

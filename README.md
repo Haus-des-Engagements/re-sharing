@@ -1,10 +1,10 @@
 # Roomsharing
 
-Easily share rooms!
+Easily share resources!
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![codecov](https://codecov.io/gh/Haus-des-Engagements/roomsharing/branch/main/graph/badge.svg?token=JDD51UPVQ8)](https://codecov.io/gh/Haus-des-Engagements/roomsharing)
+[![codecov](https://codecov.io/gh/Haus-des-Engagements/resourcesharing/branch/main/graph/badge.svg?token=JDD51UPVQ8)](https://codecov.io/gh/Haus-des-Engagements/resourcesharing)
 
 License: GPLv3
 
@@ -40,10 +40,10 @@ Our code is organised in so-called "apps", where we try to isolate functionaliti
 Currently, we have the following apps:
 - users
 - bookings
-- rooms
+- resources
 - organizations
 
-To create a new app, first create the new folder, then run: `django-admin startapp newappname ./roomsharing/newappname`.
+To create a new app, first create the new folder, then run: `django-admin startapp newappname ./resourcesharing/newappname`.
 
 ### Translations
 To make strings available for translations in Django:

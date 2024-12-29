@@ -8,17 +8,17 @@ Accepted
 
 ## Context
 
-"Haus des Engagements" has currently to administer 7 rooms, each one with several bookings a day. This is a very time
+"Haus des Engagements" has currently to administer 7 resources, each one with several bookings a day. This is a very time
 and energy consuming activity, especially because the process is half-manual.
-To facilitate the process for both the room provider (currently only "Haus des Engagements") and the clients, the 
+To facilitate the process for both the resource provider (currently only "Haus des Engagements") and the clients, the 
 process should be fully digital with more automation and less manual work.
 
 We could easily use existing software but our use-case deviates in three aspects from all the booking software, that 
 we know of:
-1. The pricing: for non-profits, our rooms are for free. However, if they wish, they can pay for it (that happens e.g.
-when they have funding and need to spend it). For-profits have to pay for the rooms, but they can choose between
+1. The pricing: for non-profits, our resources are for free. However, if they wish, they can pay for it (that happens e.g.
+when they have funding and need to spend it). For-profits have to pay for the resources, but they can choose between
 different prices depending on what they can pay.
-2. We plan to open the platform for other hosts / room providers. The whole software then rather becomes a platform or
+2. We plan to open the platform for other hosts / resource providers. The whole software then rather becomes a platform or
 a marketplace.
 3. Organization-orientation: usually, the bookings are for organizations, not for individuals. Of course, we need to have
 individual user-accounts, but bookings are always in the name of organizations.
@@ -33,7 +33,7 @@ All three options have severe drawbacks, especially looking at the three aspects
 ## Decision
 
 We will build our own, specialised software. We will adjust it to our requirements in the first place but keep in mind
-that others might want to use it as well for their rooms. We will surley not build the software from scratch but use 
+that others might want to use it as well for their resources. We will surley not build the software from scratch but use 
 sone existing Web-Framework.
 
 ## Consequences

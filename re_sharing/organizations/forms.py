@@ -30,7 +30,7 @@ class OrganizationForm(forms.ModelForm):
         label=_("We are a charitable organization."),
         help_text=_(
             "Please select only if you have a valid certificate of tax exemption. "
-            "Of course you can also book rooms if you're not officially charitable!"
+            "Of course you can also book resources if you're not officially charitable!"
         ),
         required=False,
     )

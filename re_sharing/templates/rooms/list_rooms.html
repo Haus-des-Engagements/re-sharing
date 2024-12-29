@@ -3,29 +3,29 @@
 {% load static i18n %}
 
 {% block title %}
-  {% trans "Rooms" %}
+  {% trans "Resources" %}
 {% endblock title %}
 {% block content %}
-  <h1 class="mt-4">{% trans "Rooms" %}</h1>
+  <h1 class="mt-4">{% trans "Resources" %}</h1>
   <div class="col-auto">
     <svg class="fs-4 me-1" width="1em" height="1em">
       <use href="#bi-calendar4-week" />
     </svg>
-    {% url 'rooms:planner' as planner_url %}
+    {% url 'resources:planner' as planner_url %}
     {% blocktrans %}You can also find free slots in the <a href="{{ planner_url }}">planner overview</a>.{% endblocktrans %}
   </div>
   <form class="row g-2 mt-2"
-        hx-get="{% url 'rooms:list-rooms' %}"
-        hx-target="#room-list"
+        hx-get="{% url 'resources:list-resources' %}"
+        hx-target="#resource-list"
         hx-trigger="input change"
         hx-indicator="#spinner">
     <div id="div_start_datetime" class="form-floating mb-3 col-3">
       <input type="datetime-local"
              name="start_datetime"
              class="form-control textinput"
-             placeholder="{% trans 'Find a free room' %}"
+             placeholder="{% trans 'Find a free resource' %}"
              id="start_datetime" />
-      <label for="start_datetime">{% trans "Find a free room" %}</label>
+      <label for="start_datetime">{% trans "Find a free resource" %}</label>
     </div>
     <div id="div_persons_count" class="form-floating mb-3 col-3">
       <input type="number"
@@ -41,5 +41,5 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="room-list">{% include "rooms/partials/list_filter_rooms.html" %}</div>
+  <div id="resource-list">{% include "resources/partials/list_filter_resources.html" %}</div>
 {% endblock content %}

@@ -465,7 +465,7 @@ msgstr "Wir sind eine gemeinützige Organisation."
 #: roomsharing/organizations/forms.py:32
 msgid ""
 "Please select only if you have a valid certificate of tax exemption. Of "
-"course you can also book rooms if you're not officially charitable!"
+"course you can also book resources if you're not officially charitable!"
 msgstr ""
 "Bitte nur auswählen bei einem gültigen Freistellungsbescheid des Finanzamts. "
 "Du kannst natürlich auch ohne steuerlich anerkannter Gemeinnützigkeit Räume "
@@ -572,7 +572,7 @@ msgid "Name"
 msgstr "Name"
 
 #: roomsharing/organizations/models.py:56 roomsharing/users/models.py:86
-msgid "Auto confirmed rooms"
+msgid "Auto confirmed resources"
 msgstr "Automatisch bestätigte Räume"
 
 #: roomsharing/organizations/models.py:62
@@ -873,7 +873,7 @@ msgstr "Sende diese E-Mails"
 #: roomsharing/templates/base.html:64 roomsharing/templates/base.html:178
 #: roomsharing/templates/rooms/list_rooms.html:6
 #: roomsharing/templates/rooms/list_rooms.html:9
-msgid "Rooms"
+msgid "Resources"
 msgstr "Räume"
 
 #: roomsharing/rooms/models.py:30
@@ -1130,7 +1130,7 @@ msgstr "Buchungen verwalten"
 
 #: roomsharing/templates/bookings/manager_list_bookings.html:37
 #: roomsharing/templates/bookings/manager_list_invoices.html:37
-msgid "all rooms"
+msgid "all resources"
 msgstr "alle Räume"
 
 #: roomsharing/templates/bookings/manager_list_bookings.html:65
@@ -1366,7 +1366,7 @@ msgstr "Neue Organisation registrieren"
 #: roomsharing/templates/organizations/create_organization.html:15
 #: roomsharing/templates/organizations/list_organizations.html:25
 msgid ""
-"Only registered organizations can book rooms. If your organization is not "
+"Only registered organizations can book resources. If your organization is not "
 "registered yet, you can add it here."
 msgstr ""
 "Nur registrierte Organisationen können Räume buchen. Wenn deine Organisation "
@@ -1471,7 +1471,7 @@ msgstr "Roomsharing | Startseite"
 
 #: roomsharing/templates/pages/home.html:14
 msgid ""
-"This is the new place where you can book rooms for the 'Haus des "
+"This is the new place where you can book resources for the 'Haus des "
 "Engagements'."
 msgstr "Hier kannst du Räume im Haus des Engagements buchen."
 
@@ -1543,7 +1543,7 @@ msgstr "Planer"
 
 #: roomsharing/templates/rooms/planner.html:12
 msgid ""
-"In this view, you can see the free times for all rooms. Click on a free slot "
+"In this view, you can see the free times for all resources. Click on a free slot "
 "to go directly to the booking page."
 msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Räume. Klicke auf "

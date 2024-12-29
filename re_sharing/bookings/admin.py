@@ -26,9 +26,17 @@ from .services_recurrences import max_future_booking_date
 
 @admin.register(Booking)
 class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "room", "timespan", "status", "organization", "title", "user"]
+    list_display = [
+        "id",
+        "resource",
+        "timespan",
+        "status",
+        "organization",
+        "title",
+        "user",
+    ]
     search_fields = ["id", "title", "slug"]
-    list_filter = ["status", "organization", "room", "recurrence_rule"]
+    list_filter = ["status", "organization", "resource", "recurrence_rule"]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
 
@@ -137,7 +145,7 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
                     # thus should not be saved
                     is_same_rrule_booking = (
                         current_booking.status == BookingStatus.UNAVAILABLE
-                        and Booking.objects.filter(room=rrule.room)
+                        and Booking.objects.filter(resource=rrule.resource)
                         .filter(timespan__overlap=current_booking.timespan)
                         .filter(recurrence_rule=rrule)
                         .exists()

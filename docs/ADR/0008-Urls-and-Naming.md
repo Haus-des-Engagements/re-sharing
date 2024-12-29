@@ -12,7 +12,7 @@ Urls, Views and Models - the three basic concepts in Django - need to be named i
 
 ## Decision
 
-* Apps are named by the main model in plural, all in lowercase. E.g. "rooms".
+* Apps are named by the main model in plural, all in lowercase. E.g. "resources".
 * Model are named in singular, with CamelCase. E.g. "BookingMessage".
   * Variable names for backward resolution:
     * Used for finding all occurrences of a referenced attribute as a foreign key: https://docs.djangoproject.com/en/dev/ref/models/fields/#django.db.models.ForeignKey.related_name
@@ -20,7 +20,7 @@ Urls, Views and Models - the three basic concepts in Django - need to be named i
     * 'related_name': 'current class in plural' + '_of_' + 'foreign key class', e.g. 'boookingmessages_of_booking' is the related_name of Booking in BookingMessage class.
     * 'related_query_name': Like 'related_name', but the current class is written in singular.
 * Standard Url and View naming
-  * base url for an app just like the app name. E.g.: "rooms/"
+  * base url for an app just like the app name. E.g.: "resources/"
   * htmx-patterns should be listed separately int the url file.
   * view name: action_model(if multiple, then plural)_view, e.g.: show_booking_view
   * name: action-model(if multiple, then plural), e.g.: show-booking
@@ -32,10 +32,10 @@ Urls, Views and Models - the three basic concepts in Django - need to be named i
 ## Consequences
 
 Alle new Urls should be named according to the above-mentioned patterns. That would currently lead to these Urls (not all of them are already implemented):
-* rooms: 
-  * rooms/ (list of all rooms)
-  * rooms/slug (detail of one room)
-  * rooms/new-room (create a new room)
+* resources: 
+  * resources/ (list of all resources)
+  * resources/slug (detail of one resource)
+  * resources/new-resource (create a new resource)
 * bookings:
   * bookings/ (list of bookings of my organizations)
   * bookings/filter-bookings (filter list of bookings)

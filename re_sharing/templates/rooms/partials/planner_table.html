@@ -4,7 +4,7 @@
   <button type="button"
           id="prevDay"
           class="col-auto btn btn-outline-primary"
-          hx-get="{% url 'rooms:planner' %}?date={{ dates.previous_day|date:'Y-m-d' }}"
+          hx-get="{% url 'resources:planner' %}?date={{ dates.previous_day|date:'Y-m-d' }}"
           hx-target="#planner-table"
           hx-indicator="#spinner"
           hx-push-url="true"
@@ -20,7 +20,7 @@
            placeholder="{% trans 'Date' %}"
            id="date"
            value="{{ dates.shown_date|date:'Y-m-d' }}"
-           hx-get="{% url 'rooms:planner' %}"
+           hx-get="{% url 'resources:planner' %}"
            hx-target="#planner-table"
            hx-swap="outerHTML"
            hx-indicator="#spinner"
@@ -29,7 +29,7 @@
   <button type="button"
           id="nextDay"
           class="col-auto btn btn-outline-primary"
-          hx-get="{% url 'rooms:planner' %}?date={{ dates.next_day|date:'Y-m-d' }}"
+          hx-get="{% url 'resources:planner' %}?date={{ dates.next_day|date:'Y-m-d' }}"
           hx-target="#planner-table"
           hx-swap="outerHTML"
           hx-indicator="#spinner"
@@ -48,9 +48,9 @@
       <thead>
         <tr>
           <th>Time</th>
-          {% for room in rooms %}
+          {% for resource in resources %}
             <th scope="col">
-              <a href="{% url 'rooms:show-room' room_slug=room.slug %}">{{ room.name }}</a>
+              <a href="{% url 'resources:show-resource' resource_slug=resource.slug %}">{{ resource.name }}</a>
             </th>
           {% endfor %}
         </tr>

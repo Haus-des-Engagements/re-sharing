@@ -9,8 +9,8 @@ python_files = [
 
 # ==== Coverage ====
 [tool.coverage.run]
-include = ["roomsharing/**"]
-omit = ["*/migrations/*", "*/tests/*", "roomsharing/templates/*"]
+include = ["resourcesharing/**"]
+omit = ["*/migrations/*", "*/tests/*", "resourcesharing/templates/*"]
 plugins = ["django_coverage_plugin"]
 
 # ==== mypy ====

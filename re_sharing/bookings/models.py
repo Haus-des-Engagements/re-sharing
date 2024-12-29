@@ -61,12 +61,12 @@ class RecurrenceRule(TimeStampedModel):
         related_name="rrules_of_user",
         related_query_name="rrule_of_user",
     )
-    room = ForeignKey(
+    resource = ForeignKey(
         Resource,
         verbose_name=_("Resource"),
         on_delete=PROTECT,
-        related_name="rrules_of_room",
-        related_query_name="rrule_of_room",
+        related_name="rrules_of_resource",
+        related_query_name="rrule_of_resource",
     )
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
@@ -230,12 +230,12 @@ class Booking(TimeStampedModel):
         related_query_name="booking_of_user",
     )
     timespan = DateTimeRangeField("Date Time Range", default_bounds="()")
-    room = ForeignKey(
+    resource = ForeignKey(
         Resource,
         verbose_name=_("Resource"),
         on_delete=PROTECT,
-        related_name="bookings_of_room",
-        related_query_name="booking_of_room",
+        related_name="bookings_of_resource",
+        related_query_name="booking_of_resource",
     )
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
     recurrence_rule = ForeignKey(
@@ -303,11 +303,11 @@ class Booking(TimeStampedModel):
                 name="exclude_overlapping_reservations",
                 violation_error_message=_(
                     "The requested timespan overlaps with an existing booking for this "
-                    "room. Please chose another timespan.",
+                    "resource. Please chose another timespan.",
                 ),
                 expressions=[
                     ("timespan", RangeOperators.OVERLAPS),
-                    ("room", RangeOperators.EQUAL),
+                    ("resource", RangeOperators.EQUAL),
                 ],
                 condition=Q(status=2),  # 2 = CONFIRMED
             ),

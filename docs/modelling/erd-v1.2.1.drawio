@@ -150,7 +150,7 @@
         <mxCell id="P9tfZdVA_Q1qab-0Jz63-4" value="booking_user" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="P9tfZdVA_Q1qab-0Jz63-0" vertex="1">
           <mxGeometry y="130" width="160" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="DHsyRq-7OZb0GiJfyIvF-25" value="room" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="P9tfZdVA_Q1qab-0Jz63-0" vertex="1">
+        <mxCell id="DHsyRq-7OZb0GiJfyIvF-25" value="resource" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="P9tfZdVA_Q1qab-0Jz63-0" vertex="1">
           <mxGeometry y="156" width="160" height="26" as="geometry" />
         </mxCell>
         <mxCell id="DHsyRq-7OZb0GiJfyIvF-22" value="start_time" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="P9tfZdVA_Q1qab-0Jz63-0" vertex="1">
@@ -225,7 +225,7 @@
         <mxCell id="88FL0zXMnvIBBJy27cDV-21" value="booking_organization" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="-uLNadK9ndLGcvB0rP6w-27" vertex="1">
           <mxGeometry y="26" width="190" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="-uLNadK9ndLGcvB0rP6w-29" value="room" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="-uLNadK9ndLGcvB0rP6w-27" vertex="1">
+        <mxCell id="-uLNadK9ndLGcvB0rP6w-29" value="resource" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="-uLNadK9ndLGcvB0rP6w-27" vertex="1">
           <mxGeometry y="52" width="190" height="26" as="geometry" />
         </mxCell>
         <mxCell id="NxDr_np-HnYLJz2wNENO-20" value="default_booking_status" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="-uLNadK9ndLGcvB0rP6w-27" vertex="1">
@@ -289,7 +289,7 @@
             <mxRectangle x="550" y="140" width="160" height="26" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="4ImAAEsBANH0iSqSUmN2-25" value="room" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="4ImAAEsBANH0iSqSUmN2-21" vertex="1">
+        <mxCell id="4ImAAEsBANH0iSqSUmN2-25" value="resource" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="4ImAAEsBANH0iSqSUmN2-21" vertex="1">
           <mxGeometry y="26" width="160" height="26" as="geometry" />
         </mxCell>
         <mxCell id="4ImAAEsBANH0iSqSUmN2-26" value="name" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" parent="4ImAAEsBANH0iSqSUmN2-21" vertex="1">

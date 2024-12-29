@@ -79,8 +79,8 @@ class Resource(Model):
         on_delete=SET_NULL,
         null=True,
         blank=True,
-        related_name="rooms_of_access",
-        related_query_name="room_of_access",
+        related_name="resources_of_access",
+        related_query_name="resource_of_access",
     )
     description = HTMLField(_("Description"), max_length=5000, blank=True)
     accessibility = HTMLField(_("Accessibility"), max_length=5000, blank=True)
@@ -94,42 +94,42 @@ class Resource(Model):
 
     class Meta:
         verbose_name = _("Resource")
-        verbose_name_plural = _("Rooms")
+        verbose_name_plural = _("Resources")
         ordering = ["name"]
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("rooms:show-room", kwargs={"room_slug": self.slug})
+        return reverse("resources:show-resource", kwargs={"resource_slug": self.slug})
 
     def is_booked(self, timespan):
-        return self.bookings_of_room.filter(timespan__overlap=timespan).exists()
+        return self.bookings_of_resource.filter(timespan__overlap=timespan).exists()
 
     def is_bookable(self, start_datetime):
         end_datetime = start_datetime + timedelta(minutes=30)
-        return not self.bookings_of_room.filter(
+        return not self.bookings_of_resource.filter(
             timespan__overlap=(start_datetime, end_datetime),
             status=BookingStatus.CONFIRMED,
         ).exists()
 
 
-def create_roomimage_path(instance, filename):
-    room_slug = instance.room.slug
+def create_resourceimage_path(instance, filename):
+    resource_slug = instance.resource.slug
 
-    return f"rooms/{room_slug}-{filename}"
+    return f"resources/{resource_slug}-{filename}"
 
 
 class ResourceImage(TimeStampedModel):
-    room = ForeignKey(
+    resource = ForeignKey(
         Resource,
         verbose_name=_("Resource"),
         on_delete=CASCADE,
-        related_name="roomimages_of_room",
-        related_query_name="roomimage_of_room",
+        related_name="resourceimages_of_resource",
+        related_query_name="resourceimage_of_resource",
     )
     image = ImageField(
-        upload_to="room_images/",
+        upload_to="resource_images/",
         validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg"])],
     )
     description = CharField(
@@ -143,18 +143,18 @@ class ResourceImage(TimeStampedModel):
         verbose_name_plural = _("Resource Images")
 
     def __str__(self):
-        return self.room.name + ": " + self.description
+        return self.resource.name + ": " + self.description
 
     def get_absolute_url(self):
-        return reverse("rooms:show-room", kwargs={"slug": self.room.slug})
+        return reverse("resources:show-resource", kwargs={"slug": self.resource.slug})
 
 
 class Compensation(TimeStampedModel):
-    room = ManyToManyField(
+    resource = ManyToManyField(
         Resource,
         verbose_name=_("Resource"),
-        related_name="compensations_of_room",
-        related_query_name="compensation_of_room",
+        related_name="compensations_of_resource",
+        related_query_name="compensation_of_resource",
     )
     name = CharField(_("Name"), max_length=255)
     conditions = CharField(_("Conditions"), max_length=512, blank=True)

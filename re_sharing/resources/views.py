@@ -4,61 +4,63 @@ from django.views.decorators.http import require_http_methods
 
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
-from re_sharing.resources.services import filter_rooms
+from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import planner_table
-from re_sharing.resources.services import show_room
+from re_sharing.resources.services import show_resource
 
 
 @require_http_methods(["GET"])
-def list_rooms_view(request):
+def list_resources_view(request):
     persons_count = request.GET.get("persons_count")
     start_datetime = request.GET.get("start_datetime")
-    rooms = filter_rooms(persons_count, start_datetime)
-    context = {"rooms": rooms}
+    resources = filter_resources(persons_count, start_datetime)
+    context = {"resources": resources}
     if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/list_filter_rooms.html", context)
+        return render(request, "resources/partials/list_filter_resources.html", context)
 
-    return render(request, "rooms/list_rooms.html", context)
+    return render(request, "resources/list_resources.html", context)
 
 
 @require_http_methods(["GET"])
-def show_room_view(request, room_slug):
+def show_resource_view(request, resource_slug):
     date_string = request.GET.get("date")
-    room, timeslots, weekdays, dates, compensations = show_room(room_slug, date_string)
+    resource, timeslots, weekdays, dates, compensations = show_resource(
+        resource_slug, date_string
+    )
 
     context = {
-        "room": room,
+        "resource": resource,
         "weekdays": weekdays,
         "timeslots": timeslots,
         "dates": dates,
         "compensations": compensations,
     }
     if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/weekly_bookings_table.html", context)
+        return render(request, "resources/partials/weekly_bookings_table.html", context)
 
-    return render(request, "rooms/show_room.html", context)
+    return render(request, "resources/show_resource.html", context)
 
 
 @require_http_methods(["GET"])
 def planner_view(request):
     date_string = request.GET.get("date")
-    rooms, timeslots, dates = planner_table(date_string)
-    context = {"rooms": rooms, "timeslots": timeslots, "dates": dates}
+    resources, timeslots, dates = planner_table(date_string)
+    context = {"resources": resources, "timeslots": timeslots, "dates": dates}
 
     if request.headers.get("HX-Request"):
-        return render(request, "rooms/partials/planner_table.html", context)
-    return render(request, "rooms/planner.html", context)
+        return render(request, "resources/partials/planner_table.html", context)
+    return render(request, "resources/planner.html", context)
 
 
 @require_http_methods(["POST"])
 def get_compensations(request):
-    room_id = request.POST.get("room")
-    if not room_id:
+    resource_id = request.POST.get("resource")
+    if not resource_id:
         return render(
             request, "bookings/partials/compensations.html", {"compensations": []}
         )
-    room = get_object_or_404(Resource, id=room_id)
-    compensations = Compensation.objects.filter(room=room)
+    resource = get_object_or_404(Resource, id=resource_id)
+    compensations = Compensation.objects.filter(resource=resource)
     return render(
         request,
         "bookings/partials/compensations.html",

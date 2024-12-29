@@ -51,11 +51,11 @@ class OrganizationGroup(TimeStampedModel):
     name = CharField(_("Name"), max_length=160)
     description = CharField(_("Description"), max_length=2048)
     slug = AutoSlugField(populate_from="name", unique=True, editable=False)
-    auto_confirmed_rooms = ManyToManyField(
+    auto_confirmed_resources = ManyToManyField(
         Resource,
-        verbose_name=_("Auto confirmed rooms"),
-        related_name="autoconfirmedrooms_of_organizationgroup",
-        related_query_name="autoconfirmedroom_of_organizationgroup",
+        verbose_name=_("Auto confirmed resources"),
+        related_name="autoconfirmedresources_of_organizationgroup",
+        related_query_name="autoconfirmedresource_of_organizationgroup",
         blank=True,
     )
     show_on_organization_creation = BooleanField(

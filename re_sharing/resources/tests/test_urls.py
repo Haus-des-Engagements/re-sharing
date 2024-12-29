@@ -4,24 +4,29 @@ from django.urls import reverse
 from re_sharing.resources.models import Resource
 
 
-def test_show_room(room: Resource):
+def test_show_resource(resource: Resource):
     assert (
-        reverse("rooms:show-room", kwargs={"room_slug": room.slug})
-        == f"/rooms/{room.slug}/"
+        reverse("resources:show-resource", kwargs={"resource_slug": resource.slug})
+        == f"/resources/{resource.slug}/"
     )
-    assert resolve(f"/rooms/{room.slug}/").view_name == "rooms:show-room"
+    assert (
+        resolve(f"/resources/{resource.slug}/").view_name == "resources:show-resource"
+    )
 
 
-def test_list_rooms():
-    assert reverse("rooms:list-rooms") == "/rooms/"
-    assert resolve("/rooms/").view_name == "rooms:list-rooms"
+def test_list_resources():
+    assert reverse("resources:list-resources") == "/resources/"
+    assert resolve("/resources/").view_name == "resources:list-resources"
 
 
-def test_room_planner():
-    assert reverse("rooms:planner") == "/rooms/planner/"
-    assert resolve("/rooms/planner/").view_name == "rooms:planner"
+def test_resource_planner():
+    assert reverse("resources:planner") == "/resources/planner/"
+    assert resolve("/resources/planner/").view_name == "resources:planner"
 
 
 def test_get_compensations():
-    assert reverse("rooms:get-compensations") == "/rooms/get-compensations/"
-    assert resolve("/rooms/get-compensations/").view_name == "rooms:get-compensations"
+    assert reverse("resources:get-compensations") == "/resources/get-compensations/"
+    assert (
+        resolve("/resources/get-compensations/").view_name
+        == "resources:get-compensations"
+    )

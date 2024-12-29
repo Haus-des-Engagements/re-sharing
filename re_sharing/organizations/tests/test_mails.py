@@ -49,9 +49,9 @@ class BookingConfirmationEmailTestCase(TestCase):
         mock_booking.title = "Test Booking"
         mock_booking.timespan.lower = timezone.now()
         mock_booking.timespan.upper = timezone.now() + timezone.timedelta(hours=1)
-        mock_booking.room.name = "Test Resource"
-        mock_booking.room.address = "123 Test St"
-        mock_booking.room.slug = "test-room"
+        mock_booking.resource.name = "Test Resource"
+        mock_booking.resource.address = "123 Test St"
+        mock_booking.resource.slug = "test-resource"
         mock_booking.organization.slug = "test-org"
         mock_booking.get_absolute_url.return_value = "/booking/123-url"
         mock_booking.user.email = "user@example.com"
@@ -63,7 +63,7 @@ class BookingConfirmationEmailTestCase(TestCase):
 
         mock_site.objects.get_current.assert_called_once()
         mock_get_access_code.assert_called_once_with(
-            "test-room", "test-org", mock_booking.timespan.lower
+            "test-resource", "test-org", mock_booking.timespan.lower
         )
         mock_email_template.objects.get.assert_called_once_with(
             email_type="booking_confirmation"
@@ -150,7 +150,7 @@ class BookingReminderEmailTestCase(TestCase):
         mock_booking_ics.return_value = "ICS_CONTENT"
 
         mock_booking = MagicMock()
-        mock_booking.room.slug = "test-room"
+        mock_booking.resource.slug = "test-resource"
         mock_booking.organization.slug = "test-org"
         mock_booking.timespan.lower = timezone.now()
         mock_booking.user.email = "user@example.com"
@@ -160,7 +160,7 @@ class BookingReminderEmailTestCase(TestCase):
 
         mock_site.objects.get_current.assert_called_once()
         mock_get_access_code.assert_called_once_with(
-            "test-room", "test-org", mock_booking.timespan.lower
+            "test-resource", "test-org", mock_booking.timespan.lower
         )
         mock_email_template.objects.get.assert_called_once_with(
             email_type="booking_reminder"

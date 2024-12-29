@@ -15,8 +15,8 @@ provides a ground to integrate with many other tools (like an ORM-Layer) the lat
 
 At this point we already had the basic design prototype for the main application parts and knew the current
 requirements:
-* an user can create new bookable rooms for an organization
-* a user can book a (free) room for its organization
+* an user can create new bookable resources for an organization
+* a user can book a (free) resource for its organization
 
 ## Decision
 

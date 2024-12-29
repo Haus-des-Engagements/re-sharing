@@ -4,14 +4,14 @@ How To - Project Documentation
 Get Started
 ----------------------------------------------------------------------
 
-Documentation can be written as rst files in `roomsharing/docs`.
+Documentation can be written as rst files in `resourcesharing/docs`.
 
 
 To build and serve docs, use the command::
 
     make livehtml
 
-from inside the `roomsharing/docs` directory.
+from inside the `resourcesharing/docs` directory.
 
 
 Changes to files in `docs/_source` will be picked up and reloaded automatically.

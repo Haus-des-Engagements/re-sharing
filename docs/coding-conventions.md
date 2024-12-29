@@ -24,7 +24,7 @@ related_name of the Organization in Bookings class.
 
 ### Apps
 * We seperate the Django-project in multiple apps. Each app has some core functionality.
-* An app’s name should be a plural version of the app’s main model (e.g. appname "rooms" as the main model is "room").
+* An app’s name should be a plural version of the app’s main model (e.g. appname "resources" as the main model is "resource").
 * When there are no models inside the app (e.g. for pure API apps), the app's name should reflect what it is doing or 
 for whom (e.g. "api_mobile_app")
 

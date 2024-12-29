@@ -135,11 +135,11 @@ def create_rrule_and_occurrences(booking_data):
     rrule = RecurrenceRule()
     rrule.user = get_object_or_404(User, slug=booking_data["user"])
     rrule.title = booking_data["title"]
-    rrule.room = get_object_or_404(Resource, slug=booking_data["room"])
+    rrule.resource = get_object_or_404(Resource, slug=booking_data["resource"])
     rrule.organization = get_object_or_404(
         Organization, slug=booking_data["organization"]
     )
-    rrule.status = get_booking_status(rrule.user, rrule.organization, rrule.room)
+    rrule.status = get_booking_status(rrule.user, rrule.organization, rrule.resource)
     rrule.start_time = datetime.strptime(booking_data["start_time"], "%H:%M:%S").time()  # noqa: DTZ007
     rrule.end_time = datetime.strptime(booking_data["end_time"], "%H:%M:%S").time()  # noqa: DTZ007
     rrule.rrule = booking_data.get("rrule_string", "")
@@ -172,7 +172,7 @@ def create_rrule_and_occurrences(booking_data):
         rrule, rrule.first_occurrence_date, max_booking_datetime
     )
 
-    # Determine if room is at least once bookable
+    # Determine if resource is at least once bookable
     bookable = any(booking.status != BookingStatus.UNAVAILABLE for booking in bookings)
     return bookings, rrule, bookable
 
@@ -301,7 +301,7 @@ def extend_recurrences():
             # should not be saved
             is_same_rrule_booking = (
                 current_booking.status == BookingStatus.UNAVAILABLE
-                and Booking.objects.filter(room=current_rrule.room)
+                and Booking.objects.filter(resource=current_rrule.resource)
                 .filter(timespan__overlap=current_booking.timespan)
                 .filter(recurrence_rule=current_rrule)
                 .exists()
@@ -327,7 +327,7 @@ def generate_bookings(rrule, start, end):
         booking = Booking(
             title=rrule.title,
             user=rrule.user,
-            room=rrule.room,
+            resource=rrule.resource,
             timespan=timespan,
             organization=rrule.organization,
             status=rrule.status,
@@ -342,7 +342,7 @@ def generate_bookings(rrule, start, end):
             differing_billing_address=rrule.differing_billing_address,
             activity_description=rrule.activity_description,
         )
-        if booking.room.is_booked(booking.timespan):
+        if booking.resource.is_booked(booking.timespan):
             booking.status = BookingStatus.UNAVAILABLE
         return booking
 

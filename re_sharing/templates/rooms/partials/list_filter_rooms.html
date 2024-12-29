@@ -1,14 +1,14 @@
 {% load i18n %}
 
-{% for room in rooms %}
+{% for resource in resources %}
   <div class="card mb-3">
     <div class="row g-0">
       <div class="col-md-2">
-        {% with room.roomimages_of_room.all.0.image.url as img_url %}
+        {% with resource.resourceimages_of_resource.all.0.image.url as img_url %}
           {% if img_url %}
             <img src="{{ img_url }}"
                  class="img-fluid rounded-start"
-                 alt="{{ room.name }}" />
+                 alt="{{ resource.name }}" />
           {% else %}
             <img src="..." class="img-fluid rounded-start" alt="..." />
           {% endif %}
@@ -17,26 +17,26 @@
       <div class="col-md-5">
         <div class="card-body">
           <h5 class="card-title">
-            <a href="{% url 'rooms:show-room' room_slug=room.slug %}">{{ room.name }}</a>
+            <a href="{% url 'resources:show-resource' resource_slug=resource.slug %}">{{ resource.name }}</a>
           </h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-people" />
               </svg>
-              Max. {{ room.max_persons }} {% trans "Persons" %} ({{ room.square_meters|default_if_none:"" }}m²)
+              Max. {{ resource.max_persons }} {% trans "Persons" %} ({{ resource.square_meters|default_if_none:"" }}m²)
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-calendar2-check" />
               </svg>
-              {{ room.bookable_times }}
+              {{ resource.bookable_times }}
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-geo-alt" />
               </svg>
-              {{ room.address }}
+              {{ resource.address }}
             </li>
           </ul>
         </div>
@@ -49,13 +49,13 @@
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-piggy-bank" />
               </svg>
-              {% trans "Pricing" %}: {{ room.pricing }}
+              {% trans "Pricing" %}: {{ resource.pricing }}
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-easel2" />
               </svg>
-              {{ room.included_equipment }}
+              {{ resource.included_equipment }}
             </li>
           </ul>
         </div>
@@ -63,5 +63,5 @@
     </div>
   </div>
 {% empty %}
-  {% trans "No room matches your filter." %}
+  {% trans "No resource matches your filter." %}
 {% endfor %}

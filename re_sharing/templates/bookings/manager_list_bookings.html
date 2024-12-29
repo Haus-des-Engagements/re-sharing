@@ -32,10 +32,10 @@
         {% endfor %}
       </select>
     </div>
-    <div id="div_id_room" class="col-auto">
-      <select name="room" class="form-select" id="id_room">
-        <option selected value="all">{% trans "all rooms" %}</option>
-        {% for room in rooms %}<option value="{{ room.slug }}">{{ room }}</option>{% endfor %}
+    <div id="div_id_resource" class="col-auto">
+      <select name="resource" class="form-select" id="id_resource">
+        <option selected value="all">{% trans "all resources" %}</option>
+        {% for resource in resources %}<option value="{{ resource.slug }}">{{ resource }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-auto" id="div_id_status">
