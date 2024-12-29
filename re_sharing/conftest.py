@@ -6,14 +6,14 @@ from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import RecurrenceRuleFactory
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import OrganizationFactory
-from re_sharing.rooms.models import Access
-from re_sharing.rooms.models import AccessCode
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
-from re_sharing.rooms.tests.factories import AccessCodeFactory
-from re_sharing.rooms.tests.factories import AccessFactory
-from re_sharing.rooms.tests.factories import CompensationFactory
-from re_sharing.rooms.tests.factories import RoomFactory
+from re_sharing.resources.models import Access
+from re_sharing.resources.models import AccessCode
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
+from re_sharing.resources.tests.factories import AccessCodeFactory
+from re_sharing.resources.tests.factories import AccessFactory
+from re_sharing.resources.tests.factories import CompensationFactory
+from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.users.models import User
 from re_sharing.users.tests.factories import UserFactory
 

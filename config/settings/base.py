@@ -91,7 +91,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "re_sharing.users",
-    "re_sharing.rooms",
+    "re_sharing.resources",
     "re_sharing.bookings",
     "re_sharing.organizations",
     "re_sharing.dashboards",

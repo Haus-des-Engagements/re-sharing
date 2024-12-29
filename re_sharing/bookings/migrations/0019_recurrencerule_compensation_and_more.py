@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('bookings', '0018_remove_recurrencerule_excepted_dates_and_more'),
         ('organizations', '0011_alter_defaultbookingstatus_status'),
-        ('rooms', '0007_room_address'),
+        ('resources', '0007_room_address'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recurrencerule',
             name='compensation',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rrules_of_compensation', related_query_name='rrule_of_compensation', to='rooms.compensation', verbose_name='Compensation'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rrules_of_compensation', related_query_name='rrule_of_compensation', to='resources.compensation', verbose_name='Compensation'),
         ),
         migrations.AddField(
             model_name='recurrencerule',
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recurrencerule',
             name='room',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='rrules_of_room', related_query_name='rrule_of_room', to='rooms.room', verbose_name='Room'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='rrules_of_room', related_query_name='rrule_of_room', to='resources.room', verbose_name='Room'),
             preserve_default=False,
         ),
         migrations.AddField(

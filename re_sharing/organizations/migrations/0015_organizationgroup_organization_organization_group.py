@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0014_alter_organization_usage_agreement'),
-        ('rooms', '0009_alter_roomimage_image'),
+        ('resources', '0009_alter_roomimage_image'),
     ]
 
     operations = [
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=160, verbose_name='Name')),
                 ('description', models.CharField(max_length=2048, verbose_name='Description')),
                 ('slug', django_extensions.db.fields.AutoSlugField(blank=True, editable=False, populate_from='name', unique=True)),
-                ('auto_confirmed_rooms', models.ManyToManyField(blank=True, related_name='autoconfirmedrooms_of_organizationgroup', related_query_name='autoconfirmedroom_of_organizationgroup', to='rooms.room', verbose_name='Auto confirmed rooms')),
+                ('auto_confirmed_rooms', models.ManyToManyField(blank=True, related_name='autoconfirmedrooms_of_organizationgroup', related_query_name='autoconfirmedroom_of_organizationgroup', to='resources.room', verbose_name='Auto confirmed resources')),
             ],
             options={
                 'verbose_name': 'User group',

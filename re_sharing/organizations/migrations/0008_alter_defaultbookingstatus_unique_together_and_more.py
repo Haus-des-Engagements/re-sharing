@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0007_organization_usage_agreement'),
-        ('rooms', '0006_alter_room_accessibility_alter_room_description'),
+        ('resources', '0006_alter_room_accessibility_alter_room_description'),
     ]
 
     operations = [
@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='defaultbookingstatus',
             name='room',
-            field=models.ManyToManyField(related_name='defaultbookingstatuses_of_room', related_query_name='defaultbookingstatus_of_room', to='rooms.room', verbose_name='Rooms'),
+            field=models.ManyToManyField(related_name='defaultbookingstatuses_of_room', related_query_name='defaultbookingstatus_of_room', to='resources.room', verbose_name='Rooms'),
         ),
     ]

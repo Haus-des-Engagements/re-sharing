@@ -10,9 +10,9 @@ from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
-from re_sharing.rooms.models import AccessCode
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import AccessCode
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
 from re_sharing.utils.models import BookingStatus
 
 

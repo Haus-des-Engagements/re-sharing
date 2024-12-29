@@ -12,7 +12,7 @@ from icalendar import Event
 
 from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.services import user_has_bookingpermission
-from re_sharing.rooms.services import get_access_code
+from re_sharing.resources.services import get_access_code
 
 logger = logging.getLogger(__name__)
 

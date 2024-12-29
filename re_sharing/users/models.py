@@ -15,7 +15,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Room
 from re_sharing.users.managers import UserManager
 from re_sharing.utils.models import TimeStampedModel
 

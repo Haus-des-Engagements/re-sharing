@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Room
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import TimeStampedModel
 

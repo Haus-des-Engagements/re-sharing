@@ -1,7 +1,7 @@
 from django.urls import resolve
 from django.urls import reverse
 
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Room
 
 
 def test_show_room(room: Room):

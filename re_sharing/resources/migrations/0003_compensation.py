@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rooms', '0002_access_accesscode_room_access'),
+        ('resources', '0002_access_accesscode_room_access'),
     ]
 
     operations = [
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255, verbose_name='Name')),
                 ('conditions', models.CharField(blank=True, max_length=512, verbose_name='Conditions')),
                 ('hourly_rate', models.IntegerField(blank=True, null=True, verbose_name='Hourly Rate')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='compensations_of_room', related_query_name='compensation_of_room', to='rooms.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='compensations_of_room', related_query_name='compensation_of_room', to='resources.room', verbose_name='Room')),
             ],
             options={
                 'verbose_name': 'Compensation',

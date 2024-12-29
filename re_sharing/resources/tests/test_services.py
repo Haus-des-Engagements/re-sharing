@@ -8,13 +8,13 @@ from django.utils import timezone
 
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
-from re_sharing.rooms.services import filter_rooms
-from re_sharing.rooms.services import get_access_code
-from re_sharing.rooms.services import planner_table
-from re_sharing.rooms.services import show_room
-from re_sharing.rooms.tests.factories import AccessCodeFactory
-from re_sharing.rooms.tests.factories import AccessFactory
-from re_sharing.rooms.tests.factories import RoomFactory
+from re_sharing.resources.services import filter_rooms
+from re_sharing.resources.services import get_access_code
+from re_sharing.resources.services import planner_table
+from re_sharing.resources.services import show_room
+from re_sharing.resources.tests.factories import AccessCodeFactory
+from re_sharing.resources.tests.factories import AccessFactory
+from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.utils.models import BookingStatus
 
 

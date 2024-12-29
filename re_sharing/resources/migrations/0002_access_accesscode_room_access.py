@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0001_initial'),
-        ('rooms', '0001_initial'),
+        ('resources', '0001_initial'),
     ]
 
     operations = [
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
                 ('code', models.CharField(max_length=256, verbose_name='Code')),
                 ('validity_start', models.DateTimeField(verbose_name='Validity start')),
-                ('access', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='accesscodes_of_access', related_query_name='accesscode_of_access', to='rooms.access', verbose_name='Access')),
+                ('access', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='accesscodes_of_access', related_query_name='accesscode_of_access', to='resources.access', verbose_name='Access')),
                 ('organization', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='organizations_of_access', related_query_name='organization_of_access', to='organizations.organization', verbose_name='Organization')),
             ],
             options={
@@ -52,6 +52,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='room',
             name='access',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rooms_of_access', related_query_name='room_of_access', to='rooms.access', verbose_name='Access'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rooms_of_access', related_query_name='room_of_access', to='resources.access', verbose_name='Access'),
         ),
     ]

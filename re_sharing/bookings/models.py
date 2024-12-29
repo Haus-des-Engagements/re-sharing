@@ -30,8 +30,8 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.organizations.models import Organization
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
 from re_sharing.users.models import User
 from re_sharing.utils.dicts import RRULE_DAILY_INTERVAL
 from re_sharing.utils.dicts import RRULE_MONTHLY_INTERVAL

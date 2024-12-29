@@ -17,8 +17,8 @@ from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
 from re_sharing.utils.dicts import MONTHDATES
 from re_sharing.utils.dicts import MONTHDAYS
 from re_sharing.utils.dicts import RRULE_DAILY_INTERVAL

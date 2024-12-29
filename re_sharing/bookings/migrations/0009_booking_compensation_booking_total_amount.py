@@ -8,14 +8,14 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('bookings', '0008_remove_recurrencerule_end_time_and_more'),
-        ('rooms', '0003_compensation'),
+        ('resources', '0003_compensation'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='booking',
             name='compensation',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='bookings_of_compensation', related_query_name='booking_of_compensation', to='rooms.compensation', verbose_name='Compensation'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='bookings_of_compensation', related_query_name='booking_of_compensation', to='resources.compensation', verbose_name='Compensation'),
         ),
         migrations.AddField(
             model_name='booking',

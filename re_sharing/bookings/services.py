@@ -24,9 +24,9 @@ from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
 from re_sharing.organizations.services import user_has_bookingpermission
-from re_sharing.rooms.models import Compensation
-from re_sharing.rooms.models import Room
-from re_sharing.rooms.services import get_access_code
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Room
+from re_sharing.resources.services import get_access_code
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import get_booking_status

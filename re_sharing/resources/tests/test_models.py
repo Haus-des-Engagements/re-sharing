@@ -7,10 +7,10 @@ from django.utils import timezone
 from psycopg.types.range import Range
 
 from re_sharing.bookings.tests.factories import BookingFactory
-from re_sharing.rooms.models import Access
-from re_sharing.rooms.models import AccessCode
-from re_sharing.rooms.models import Room
-from re_sharing.rooms.tests.factories import RoomFactory
+from re_sharing.resources.models import Access
+from re_sharing.resources.models import AccessCode
+from re_sharing.resources.models import Room
+from re_sharing.resources.tests.factories import RoomFactory
 from re_sharing.utils.models import BookingStatus
 
 

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('bookings', '0025_booking_activity_description_and_more'),
         ('organizations', '0021_emailtemplate_active_alter_emailtemplate_email_type'),
-        ('rooms', '0009_alter_roomimage_image'),
+        ('resources', '0009_alter_roomimage_image'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

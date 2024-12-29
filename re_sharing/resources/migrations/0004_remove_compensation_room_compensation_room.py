@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rooms', '0003_compensation'),
+        ('resources', '0003_compensation'),
     ]
 
     operations = [
@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='compensation',
             name='room',
-            field=models.ManyToManyField(related_name='compensations_of_room', related_query_name='compensation_of_room', to='rooms.room', verbose_name='Room'),
+            field=models.ManyToManyField(related_name='compensations_of_room', related_query_name='compensation_of_room', to='resources.room', verbose_name='Room'),
         ),
     ]
