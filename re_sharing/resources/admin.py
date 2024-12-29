@@ -5,7 +5,7 @@ from .models import Access
 from .models import AccessCode
 from .models import Compensation
 from .models import Resource
-from .models import RoomImage
+from .models import ResourceImage
 
 
 @admin.register(Resource)
@@ -37,4 +37,4 @@ class AccessAdmin(ImportExportMixin, admin.ModelAdmin):
     ordering = ["id"]
 
 
-admin.site.register(RoomImage)
+admin.site.register(ResourceImage)
