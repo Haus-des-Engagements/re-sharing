@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                 ('timespan', django.contrib.postgres.fields.ranges.DateTimeRangeField(default_bounds='()', verbose_name='Date Time Range')),
                 ('status', models.IntegerField(choices=[(1, 'Pending'), (2, 'Confirmed'), (3, 'Cancelled')], verbose_name='Status')),
                 ('organization', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='bookings_of_organization', related_query_name='booking_of_organization', to='organizations.organization', verbose_name='Booking Organization')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='bookings_of_room', related_query_name='booking_of_room', to='resources.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='bookings_of_room', related_query_name='booking_of_room', to='resources.room', verbose_name='Resource')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='bookings_of_user', related_query_name='booking_of_user', to=settings.AUTH_USER_MODEL, verbose_name='Initial Booking User')),
             ],
             options={

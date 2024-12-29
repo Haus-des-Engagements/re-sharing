@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('updated', models.DateTimeField(auto_now=True, verbose_name='Updated')),
                 ('status', models.IntegerField(choices=[(1, 'Pending'), (2, 'Confirmed'), (3, 'Cancelled')], verbose_name='Status')),
                 ('organization', models.ForeignKey(blank=True, on_delete=django.db.models.deletion.CASCADE, related_name='defaultbookingstatuses_of_organization', related_query_name='defaultbookingstatus_of_organization', to='organizations.organization', verbose_name='Organization')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='defaultbookingstatuses_of_room', related_query_name='defaultbookingstatus_of_room', to='resources.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='defaultbookingstatuses_of_room', related_query_name='defaultbookingstatus_of_room', to='resources.room', verbose_name='Resource')),
             ],
             options={
                 'verbose_name': 'Default booking status',

@@ -4,11 +4,11 @@ from import_export.admin import ImportExportMixin
 from .models import Access
 from .models import AccessCode
 from .models import Compensation
-from .models import Room
+from .models import Resource
 from .models import RoomImage
 
 
-@admin.register(Room)
+@admin.register(Resource)
 class RoomAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "name", "square_meters", "max_persons"]
     search_fields = ["id", "name"]

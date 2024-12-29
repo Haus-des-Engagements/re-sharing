@@ -69,7 +69,7 @@ class AccessCode(TimeStampedModel):
         return self.access.name + " " + self.validity_start.strftime("%Y-%m-%d %H:%M")
 
 
-class Room(Model):
+class Resource(Model):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     name = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="name")
@@ -93,7 +93,7 @@ class Room(Model):
     address = CharField(_("Address"), max_length=256)
 
     class Meta:
-        verbose_name = _("Room")
+        verbose_name = _("Resource")
         verbose_name_plural = _("Rooms")
         ordering = ["name"]
 
@@ -122,8 +122,8 @@ def create_roomimage_path(instance, filename):
 
 class RoomImage(TimeStampedModel):
     room = ForeignKey(
-        Room,
-        verbose_name=_("Room"),
+        Resource,
+        verbose_name=_("Resource"),
         on_delete=CASCADE,
         related_name="roomimages_of_room",
         related_query_name="roomimage_of_room",
@@ -139,8 +139,8 @@ class RoomImage(TimeStampedModel):
     )
 
     class Meta:
-        verbose_name = _("Room Image")
-        verbose_name_plural = _("Room Images")
+        verbose_name = _("Resource Image")
+        verbose_name_plural = _("Resource Images")
 
     def __str__(self):
         return self.room.name + ": " + self.description
@@ -151,8 +151,8 @@ class RoomImage(TimeStampedModel):
 
 class Compensation(TimeStampedModel):
     room = ManyToManyField(
-        Room,
-        verbose_name=_("Room"),
+        Resource,
+        verbose_name=_("Resource"),
         related_name="compensations_of_room",
         related_query_name="compensation_of_room",
     )

@@ -35,7 +35,7 @@ from re_sharing.organizations.services import (
 )
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.models import Compensation
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import get_booking_status
@@ -135,7 +135,7 @@ def create_rrule_and_occurrences(booking_data):
     rrule = RecurrenceRule()
     rrule.user = get_object_or_404(User, slug=booking_data["user"])
     rrule.title = booking_data["title"]
-    rrule.room = get_object_or_404(Room, slug=booking_data["room"])
+    rrule.room = get_object_or_404(Resource, slug=booking_data["room"])
     rrule.organization = get_object_or_404(
         Organization, slug=booking_data["organization"]
     )

@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Room',
+            name='Resource',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('uuid', models.UUIDField(default=uuid.uuid4, editable=False)),
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 ('manager', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL, verbose_name='Manager')),
             ],
             options={
-                'verbose_name': 'Room',
+                'verbose_name': 'Resource',
                 'verbose_name_plural': 'Rooms',
                 'ordering': ['name'],
             },
@@ -48,11 +48,11 @@ class Migration(migrations.Migration):
                 ('updated', models.DateTimeField(auto_now=True, verbose_name='Updated')),
                 ('image', models.ImageField(upload_to=re_sharing.rooms.models.create_roomimage_path, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg'])])),
                 ('description', models.CharField(blank=True, max_length=250, verbose_name='Description')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='roomimages_of_room', related_query_name='roomimage_of_room', to='resources.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='roomimages_of_room', related_query_name='roomimage_of_room', to='resources.room', verbose_name='Resource')),
             ],
             options={
-                'verbose_name': 'Room Image',
-                'verbose_name_plural': 'Room Images',
+                'verbose_name': 'Resource Image',
+                'verbose_name_plural': 'Resource Images',
             },
         ),
     ]

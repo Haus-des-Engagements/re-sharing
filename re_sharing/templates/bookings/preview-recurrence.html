@@ -68,7 +68,7 @@
         <li class="list-group-item">
           {% if booking.status == 4 %}
             <s>{{ booking.timespan.0|date:"D, d.m.Y" }}</s>
-            <span class="text-danger">{% trans "Room not free at this date." %}</span>
+            <span class="text-danger">{% trans "Resource not free at this date." %}</span>
           {% else %}
             {{ booking.timespan.0|date:"D, d.m.Y" }}
             {% if booking.compensation %}

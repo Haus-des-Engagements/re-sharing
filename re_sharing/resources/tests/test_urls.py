@@ -1,10 +1,10 @@
 from django.urls import resolve
 from django.urls import reverse
 
-from re_sharing.resources.models import Room
+from re_sharing.resources.models import Resource
 
 
-def test_show_room(room: Room):
+def test_show_room(room: Resource):
     assert (
         reverse("rooms:show-room", kwargs={"room_slug": room.slug})
         == f"/rooms/{room.slug}/"

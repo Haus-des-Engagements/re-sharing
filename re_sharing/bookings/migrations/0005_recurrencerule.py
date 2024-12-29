@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('first_occurrence_date', models.DateField(verbose_name='First occurrence date')),
                 ('last_occurrence_date', models.DateField(verbose_name='Last occurrence date')),
                 ('excepted_dates', django.contrib.postgres.fields.ArrayField(base_field=models.DateField(verbose_name='Excepted dates'), size=None)),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='recurrencerules_of_room', related_query_name='recurrencerule_of_room', to='resources.room', verbose_name='Room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='recurrencerules_of_room', related_query_name='recurrencerule_of_room', to='resources.room', verbose_name='Resource')),
             ],
             options={
                 'verbose_name': 'Recurrence rule',

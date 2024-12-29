@@ -135,15 +135,15 @@ class GetWeeklyBookingsTest(TestCase):
     ("persons_count", "start_datetime", "expected"),
     [
         ("2", None, ["Room1", "Room2"]),
-        ("1", "2024-07-25T12:30", ["Room1", "Room2", "Small Room"]),
+        ("1", "2024-07-25T12:30", ["Room1", "Room2", "Small Resource"]),
         ("3", None, ["Room2"]),
-        (None, None, ["Room1", "Room2", "Small Room"]),
+        (None, None, ["Room1", "Room2", "Small Resource"]),
     ],
 )
 def test_filter_rooms(persons_count, start_datetime, expected):
     RoomFactory.create(name="Room1", max_persons=2)
     RoomFactory.create(name="Room2", max_persons=3)
-    RoomFactory.create(name="Small Room", max_persons=1)
+    RoomFactory.create(name="Small Resource", max_persons=1)
 
     rooms = filter_rooms(persons_count, start_datetime)
     assert {room.name for room in rooms} == set(expected)
