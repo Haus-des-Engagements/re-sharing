@@ -32,11 +32,11 @@ from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
 from re_sharing.bookings.services import set_initial_booking_data
 from re_sharing.bookings.services import show_booking
-from re_sharing.bookings.services_recurrences import cancel_rrule_bookings
+from re_sharing.bookings.services_recurrences import cancel_bookings_of_booking_series
+from re_sharing.bookings.services_recurrences import create_booking_series_and_bookings
 from re_sharing.bookings.services_recurrences import create_rrule
-from re_sharing.bookings.services_recurrences import create_rrule_and_occurrences
-from re_sharing.bookings.services_recurrences import manager_cancel_rrule
-from re_sharing.bookings.services_recurrences import save_rrule
+from re_sharing.bookings.services_recurrences import manager_cancel_booking_series
+from re_sharing.bookings.services_recurrences import save_booking_series
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.bookings.tests.factories import create_timespan
@@ -97,37 +97,37 @@ class TestCancelBooking(TestCase):
 
 
 @pytest.mark.django_db()
-def test_cancel_recurring_bookings():
+def test_cancel_bookings_of_booking_series():
     user = UserFactory()
     organization = OrganizationFactory()
     BookingPermissionFactory(
         user=user, organization=organization, status=BookingPermission.Status.CONFIRMED
     )
 
-    rrule = BookingSeriesFactory()
+    booking_series = BookingSeriesFactory()
     booking1 = BookingFactory(
         user=user,
         organization=organization,
-        booking_series=rrule,
+        booking_series=booking_series,
         start_date=timezone.now().date() - timedelta(days=5),
         status=BookingStatus.PENDING,
     )
     booking2 = BookingFactory(
         user=user,
         organization=organization,
-        booking_series=rrule,
+        booking_series=booking_series,
         start_date=timezone.now().date() + timedelta(days=10),
         status=BookingStatus.PENDING,
     )
     booking3 = BookingFactory(
         user=user,
         organization=organization,
-        booking_series=rrule,
+        booking_series=booking_series,
         start_date=timezone.now().date() + timedelta(days=5),
         status=BookingStatus.PENDING,
     )
 
-    cancel_rrule_bookings(user, rrule.uuid)
+    cancel_bookings_of_booking_series(user, booking_series.uuid)
 
     booking1.refresh_from_db()
     booking2.refresh_from_db()
@@ -775,7 +775,9 @@ class TestGenerateRecurrence(TestCase):
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, rrule, bookable = create_rrule_and_occurrences(self.booking_data)
+        bookings, rrule, bookable = create_booking_series_and_bookings(
+            self.booking_data
+        )
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -800,7 +802,9 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["compensation"] = ""
         self.booking_data["differing_billing_address"] = ""
 
-        bookings, rrule, bookable = create_rrule_and_occurrences(self.booking_data)
+        bookings, rrule, bookable = create_booking_series_and_bookings(
+            self.booking_data
+        )
 
         assert len(bookings) == self.count
         for booking in bookings:
@@ -826,19 +830,19 @@ class TestGenerateRecurrence(TestCase):
         self.booking_data["organization"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            create_rrule_and_occurrences(self.booking_data)
+            create_booking_series_and_bookings(self.booking_data)
 
     def test_generate_recurrence_invalid_resource(self):
         self.booking_data["resource"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            create_rrule_and_occurrences(self.booking_data)
+            create_booking_series_and_bookings(self.booking_data)
 
     def test_generate_recurrence_invalid_user(self):
         self.booking_data["user"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            create_rrule_and_occurrences(self.booking_data)
+            create_booking_series_and_bookings(self.booking_data)
 
 
 class TestSaveRecurrence(TestCase):
@@ -874,7 +878,7 @@ class TestSaveRecurrence(TestCase):
             self.bookings,
             self.rrule,
             self.bookable,
-        ) = create_rrule_and_occurrences(self.booking_data)
+        ) = create_booking_series_and_bookings(self.booking_data)
 
     def test_save_recurrence_valid(self):
         # Add the booking permission for the user
@@ -884,7 +888,7 @@ class TestSaveRecurrence(TestCase):
             status=BookingPermission.Status.CONFIRMED,
         )
 
-        bookings, rrule = save_rrule(self.user, self.bookings, self.rrule)
+        bookings, rrule = save_booking_series(self.user, self.bookings, self.rrule)
 
         for booking in bookings:
             assert booking.booking_series == rrule
@@ -894,7 +898,7 @@ class TestSaveRecurrence(TestCase):
         another_user = UserFactory()
 
         with pytest.raises(PermissionDenied):
-            save_rrule(another_user, self.bookings, self.rrule)
+            save_booking_series(another_user, self.bookings, self.rrule)
 
 
 @pytest.mark.django_db()
@@ -905,7 +909,7 @@ def test_manager_cancel_rrule(mock_is_cancelable):
     booking1 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
     booking2 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
 
-    manager_cancel_rrule(user, rrule.uuid)
+    manager_cancel_booking_series(user, rrule.uuid)
 
     booking1.refresh_from_db()
     assert booking1.status == BookingStatus.CANCELLED

@@ -254,7 +254,7 @@ class TestCancelOccurrenceView(TestCase):
         )
         self.booking = BookingFactory(organization=self.organization)
         self.cancel_occurrence_url = reverse(
-            "bookings:cancel-occurrence",
+            "bookings:cancel-booking-series-booking",
             kwargs={"slug": self.booking.slug},
         )
 
@@ -273,8 +273,8 @@ class TestCancelOccurrenceView(TestCase):
         response = client.patch(self.cancel_occurrence_url)
         assert response.status_code == HTTPStatus.FOUND
         assert (
-            response.url
-            == f"/accounts/login/?next=/bookings/{self.booking.slug}/cancel-occurrence/"
+            response.url == f"/accounts/login/?next=/bookings/{self.booking.slug}/"
+            "cancel-booking-series-booking/"
         )
 
 
@@ -284,29 +284,30 @@ class ListRecurrencesViewTest(TestCase):
         self.client.force_login(self.user)
 
     def test_list_recurrences_view(self):
-        response = self.client.get(reverse("bookings:list-recurrences"))
+        response = self.client.get(reverse("bookings:list-booking-series"))
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(response, "bookings/list_recurrences.html")
-        assert "recurrences" in response.context
+        self.assertTemplateUsed(response, "bookings/list_booking_series.html")
 
 
 class ShowRecurrenceView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.client.force_login(self.user)
-        self.rrule = BookingSeriesFactory()
-        self.booking = BookingFactory(booking_series=self.rrule)
+        self.booking_series = BookingSeriesFactory()
+        self.booking = BookingFactory(booking_series=self.booking_series)
 
-    @patch("re_sharing.bookings.views.get_rrule_bookings")
+    @patch("re_sharing.bookings.views.get_bookings_of_booking_series")
     def test_show_recurrence_view(self, mock_get_occurrences):
-        mock_get_occurrences.return_value = (self.rrule, [self.booking], False)
+        mock_get_occurrences.return_value = (self.booking_series, [self.booking], False)
         response = self.client.get(
-            reverse("bookings:show-recurrence", kwargs={"rrule": self.rrule.slug})
+            reverse(
+                "bookings:show-booking-series",
+                kwargs={"booking_series": self.booking_series.slug},
+            )
         )
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(response, "bookings/show_recurrence.html")
+        self.assertTemplateUsed(response, "bookings/show_booking_series.html")
         assert "bookings" in response.context
-        assert "rrule" in response.context
         assert "is_cancelable" in response.context
 
 

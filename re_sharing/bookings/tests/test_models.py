@@ -30,7 +30,7 @@ class BookingMessageTestCase(TestCase):
 def test_booking_series_get_absolute_url(booking_series: BookingSeries):
     assert (
         booking_series.get_absolute_url()
-        == f"/bookings/recurrences/{booking_series.slug}/"
+        == f"/bookings/booking-series/{booking_series.slug}/"
     )
 
 

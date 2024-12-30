@@ -12,47 +12,47 @@
           <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
         </li>
         <li class="breadcrumb-item">
-          <a href="{% url "bookings:list-recurrences" %}">{% trans "My recurring bookings" %}</a>
+          <a href="{% url "bookings:list-booking-series" %}">{% trans "My recurring bookings" %}</a>
         </li>
-        <li class="breadcrumb-item active" aria-current="page">{{ rrule.title }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ booking_series.title }}</li>
       </ol>
     </nav>
   </div>
   <h1 class="mt-4">
-    {% trans "Recurring booking" %}: <em>{{ rrule.title }}</em>
+    {% trans "Recurring booking" %}: <em>{{ booking_series.title }}</em>
   </h1>
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
-          {{ rrule.first_occurrence_date }}
+          {{ booking_series.first_booking_date }}
           <br />
           -
           <br />
-          {% if rrule.last_occurrence_date %}
-            {{ rrule.last_occurrence_date|date:"d.m.Y" }}
+          {% if booking_series.last_booking_date %}
+            {{ booking_series.last_booking_date|date:"d.m.Y" }}
           {% else %}
             {% trans "(without end)" %}
           {% endif %}
         </p>
-        <p class="h6">{{ rrule.start_time|date:"H:i" }} - {{ rrule.end_time|date:"H:i" }}</p>
+        <p class="h6">{{ booking_series.start_time|date:"H:i" }} - {{ booking_series.end_time|date:"H:i" }}</p>
       </div>
       <div class="col-md-7">
         <div class="card-body">
-          <h5 class="card-title">{{ rrule.title }}</h5>
+          <h5 class="card-title">{{ booking_series.title }}</h5>
           <p class="card-text">
             <svg width="1em" height="1em">
               <use href="#bi-door-closed" />
             </svg>
-            <em>{{ rrule.resource }}</em>
+            <em>{{ booking_series.resource }}</em>
             <br />
             <svg width="1em" height="1em">
               <use href="#bi-person-fill" />
             </svg>
-            <em>{{ rrule.user }}</em> {% trans "for" %}
-            <em>{{ rrule.organization }}</em>
+            <em>{{ booking_series.user }}</em> {% trans "for" %}
+            <em>{{ booking_series.organization }}</em>
             <br />
-            {% trans "Occurrences" %}: {{ rrule.number_of_occurrences }}
+            {% trans "Occurrences" %}: {{ booking_series.number_of_occurrences }}
           </p>
         </div>
       </div>
@@ -65,7 +65,7 @@
                       class="btn btn-outline-danger mb-3"
                       value="Submit"
                       hx-confirm="{% trans 'Are you sure you want to cancel all future bookings?' %}"
-                      hx-patch="{% url 'bookings:cancel-rrule-bookings' rrule.uuid %}"
+                      hx-patch="{% url 'cancel-booking-series-bookings' booking_series.uuid %}"
                       hx-target="body"
                       hx-swap="innerHTML">{% trans "Cancel all future bookings" %}</button>
             {% endif %}
@@ -77,7 +77,7 @@
       <svg width="1em" height="1em">
         <use href="#bi-arrow-repeat" />
       </svg>
-      {{ rrule.get_human_readable_rule }}
+      {{ booking_series.get_human_readable_rule }}
       <br />
     </div>
   </div>
@@ -100,8 +100,8 @@
           {% endfor %}
         </tbody>
       </table>
-      {% if not rrule.last_occurrence_date %}
-        {% trans "We will automatically generate the next occurrences two years in advance." %}
+      {% if not booking_series.last_booking_date %}
+        {% trans "We will automatically generate the next bookings two years in advance." %}
       {% endif %}
     </div>
   </div>

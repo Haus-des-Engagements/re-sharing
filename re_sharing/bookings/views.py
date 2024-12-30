@@ -28,13 +28,13 @@ from .services import manager_filter_invoice_bookings_list
 from .services import save_booking
 from .services import set_initial_booking_data
 from .services import show_booking
-from .services_recurrences import cancel_rrule_bookings
-from .services_recurrences import create_rrule_and_occurrences
-from .services_recurrences import get_rrule_bookings
-from .services_recurrences import get_rrules_list
-from .services_recurrences import manager_cancel_rrule
-from .services_recurrences import manager_filter_rrules_list
-from .services_recurrences import save_rrule
+from .services_recurrences import cancel_bookings_of_booking_series
+from .services_recurrences import create_booking_series_and_bookings
+from .services_recurrences import get_booking_series_list
+from .services_recurrences import get_bookings_of_booking_series
+from .services_recurrences import manager_cancel_booking_series
+from .services_recurrences import manager_filter_booking_series_list
+from .services_recurrences import save_booking_series
 
 
 @require_http_methods(["GET"])
@@ -86,33 +86,41 @@ def show_booking_view(request, booking):
 
 @require_http_methods(["GET"])
 @login_required
-def list_recurrences_view(request):
-    recurrences = get_rrules_list(request.user)
+def list_booking_series_view(request):
+    booking_series_list = get_booking_series_list(request.user)
 
     return render(
-        request, "bookings/list_recurrences.html", {"recurrences": recurrences}
+        request,
+        "bookings/list_booking_series.html",
+        {"booking_series_list": booking_series_list},
     )
 
 
 @require_http_methods(["GET"])
 @login_required
-def show_recurrence_view(request, rrule):
-    rrule, bookings, is_cancelable = get_rrule_bookings(request.user, rrule)
+def show_booking_series_view(request, booking_series):
+    booking_series, bookings, is_cancelable = get_bookings_of_booking_series(
+        request.user, booking_series
+    )
 
     return render(
         request,
-        "bookings/show_recurrence.html",
-        {"bookings": bookings, "rrule": rrule, "is_cancelable": is_cancelable},
+        "bookings/show_booking_series.html",
+        {
+            "bookings": bookings,
+            "booking_series": booking_series,
+            "is_cancelable": is_cancelable,
+        },
     )
 
 
 @require_http_methods(["PATCH"])
 @login_required
-def cancel_rrule_bookings_view(request, rrule):
-    rrule = cancel_rrule_bookings(request.user, rrule)
+def cancel_bookings_of_booking_series_view(request, booking_series):
+    booking_series = cancel_bookings_of_booking_series(request.user, booking_series)
     messages.success(request, _("Successfully cancelled all future bookings."))
 
-    return redirect("bookings:show-recurrence", rrule.slug)
+    return redirect("bookings:show-booking-series", booking_series.slug)
 
 
 @require_http_methods(["POST"])
@@ -138,7 +146,7 @@ def cancel_booking_view(request, slug):
 
 @require_http_methods(["PATCH"])
 @login_required
-def cancel_occurrence_view(request, slug):
+def cancel_booking_series_booking_view(request, slug):
     booking = cancel_booking(request.user, slug)
 
     return render(
@@ -188,29 +196,33 @@ def preview_and_save_booking_view(request):
 
 @require_http_methods(["GET", "POST"])
 @login_required
-def preview_and_save_recurrence_view(request):
+def preview_and_save_booking_series_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    bookings, rrule, bookable = create_rrule_and_occurrences(booking_data)
+    bookings, booking_series, bookable = create_booking_series_and_bookings(
+        booking_data
+    )
 
     if request.method == "GET":
         return render(
             request,
-            "bookings/preview-recurrence.html",
+            "bookings/preview-booking-series.html",
             {
                 "bookings": bookings,
-                "rrule": rrule,
+                "booking_series": booking_series,
                 "bookable": bookable,
             },
         )
 
     if request.method == "POST":
-        bookings, rrule = save_rrule(request.user, bookings, rrule)
+        bookings, booking_series = save_booking_series(
+            request.user, bookings, booking_series
+        )
         request.session.pop("booking_data", None)
         messages.success(request, _("Recurrence created successfully!"))
-        return redirect("bookings:show-recurrence", rrule.slug)
+        return redirect("bookings:show-booking-series", booking_series.slug)
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
@@ -245,7 +257,7 @@ def create_booking_data_form_view(request):
             booking_data, rrule = create_booking_data(request.user, form)
             request.session["booking_data"] = booking_data
             if rrule:
-                return redirect("bookings:preview-recurrence")
+                return redirect("preview-booking-series")
             return redirect("bookings:preview-booking")
 
     user_has_bookingpermission = (
@@ -327,7 +339,7 @@ def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
     status = request.GET.get("status") or 1
     organization = request.GET.get("organization") or "all"
 
-    rrules, organizations = manager_filter_rrules_list(
+    rrules, organizations = manager_filter_booking_series_list(
         organization, show_past_rrules, status
     )
 
@@ -347,7 +359,7 @@ def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
 @require_http_methods(["PATCH"])
 @staff_member_required
 def manager_cancel_rrule_view(request, rrule_uuid):
-    rrule = manager_cancel_rrule(request.user, rrule_uuid)
+    rrule = manager_cancel_booking_series(request.user, rrule_uuid)
 
     return render(
         request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}

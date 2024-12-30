@@ -35,10 +35,10 @@ def test_cancel_booking(booking: Booking):
 def test_cancel_occurrence(booking: Booking):
     assert (
         reverse(
-            "bookings:cancel-occurrence",
+            "bookings:cancel-booking-series-booking",
             kwargs={"slug": booking.slug},
         )
-        == f"/bookings/{booking.slug}/cancel-occurrence/"
+        == f"/bookings/{booking.slug}/cancel-booking-series-booking/"
     )
 
 

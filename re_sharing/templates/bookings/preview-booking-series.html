@@ -5,44 +5,44 @@
 {% load tz %}
 
 {% block content %}
-  <h1 class="mt-4">{{ rrule.title }}</h1>
+  <h1 class="mt-4">{{ booking_series.title }}</h1>
   <div class="card mb-3 mt-4">
     <div class="row g-0">
       <div class="col col-md-2 card-body text-center">
         <p class="h5">
-          {{ rrule.first_occurrence_date|date:"d.m.Y" }}
+          {{ booking_series.first_booking_date|date:"d.m.Y" }}
           <br />
           -
           <br />
-          {% if rrule.last_occurrence_date %}
-            {{ rrule.last_occurrence_date|date:"d.m.Y" }}
+          {% if booking_series.last_booking_date %}
+            {{ booking_series.last_booking_date|date:"d.m.Y" }}
           {% else %}
             {% trans "(without end)" %}
           {% endif %}
         </p>
         <p class="h6">
-          {{ rrule.start_time|time:"H:i" }}
-          - {{ rrule.end_time|time:"H:i" }}
+          {{ booking_series.start_time|time:"H:i" }}
+          - {{ booking_series.end_time|time:"H:i" }}
         </p>
       </div>
       <div class="col-md-8">
         <div class="card-body">
-          <h5 class="card-title">{{ rrule.title }}</h5>
+          <h5 class="card-title">{{ booking_series.title }}</h5>
           <p class="card-text">
             <svg width="1em" height="1em">
               <use href="#bi-door-closed" />
             </svg>
-            <em>{{ rrule.resource }}</em>
+            <em>{{ booking_series.resource }}</em>
             <br />
             <svg width="1em" height="1em">
               <use href="#bi-person-fill" />
             </svg>
-            {% trans "booked by:" %}   {{ rrule.user.first_name }} {{ rrule.user.last_name }} ({{ rrule.user.email }}) {% trans "for" %} {{ rrule.organization.name }}
+            {% trans "booked by:" %}   {{ booking_series.user.first_name }} {{ booking_series.user.last_name }} ({{ booking_series.user.email }}) {% trans "for" %} {{ booking_series.organization.name }}
             <br />
-            {% trans "Occurrences" %}: {{ bookings|length }}
+            {% trans "bookings" %}: {{ bookings|length }}
             <br />
-            {% if rrule.differing_billing_address %}
-              {% trans "Differing billing address" %}: {{ rrule.differing_billing_address }}
+            {% if booking_series.differing_billing_address %}
+              {% trans "Differing billing address" %}: {{ booking_series.differing_billing_address }}
             {% endif %}
           </p>
         </div>
@@ -57,7 +57,7 @@
       <svg width="1em" height="1em">
         <use href="#bi-arrow-repeat" />
       </svg>
-      {{ rrule.get_human_readable_rule }}
+      {{ booking_series.get_human_readable_rule }}
       <br />
     </div>
   </div>

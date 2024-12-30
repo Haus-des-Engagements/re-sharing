@@ -126,7 +126,7 @@ def create_rrule(rrule_data):
     return str(modified_string)
 
 
-def create_rrule_and_occurrences(booking_data):
+def create_booking_series_and_bookings(booking_data):
     timespan = (
         isoparse(booking_data["timespan"][0]),
         isoparse(booking_data["timespan"][1]),
@@ -173,12 +173,12 @@ def create_rrule_and_occurrences(booking_data):
     return bookings, bs, bookable
 
 
-def save_rrule(user, bookings, rrule):
+def save_booking_series(user, bookings, booking_series):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
     if user.is_staff:
-        rrule.status = BookingStatus.CONFIRMED
-    rrule.save()
+        booking_series.status = BookingStatus.CONFIRMED
+    booking_series.save()
     for booking in bookings:
         booking.save()
 
@@ -188,18 +188,18 @@ def save_rrule(user, bookings, rrule):
         task_name="manager-new-recurrence",
     )
 
-    return bookings, rrule
+    return bookings, booking_series
 
 
-def cancel_rrule_bookings(user, rrule_uuid):
-    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, booking_series=rrule)
+def cancel_bookings_of_booking_series(user, booking_series_uuid):
+    bs = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
+    bookings = get_list_or_404(Booking, booking_series=bs)
 
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
 
-    rrule.status = BookingStatus.CANCELLED
-    rrule.save()
+    bs.status = BookingStatus.CANCELLED
+    bs.save()
 
     for booking in bookings:
         if booking.is_cancelable():
@@ -207,51 +207,51 @@ def cancel_rrule_bookings(user, rrule_uuid):
                 booking.status = BookingStatus.CANCELLED
                 booking.save()
 
-    return rrule
+    return bs
 
 
-def get_rrules_list(user):
+def get_booking_series_list(user):
     organizations = organizations_with_confirmed_bookingpermission(user)
     return BookingSeries.objects.filter(
         booking_of_bookingseries__organization__in=organizations
     ).distinct()
 
 
-def get_rrule_bookings(user, rrule_slug):
-    rrule = get_object_or_404(BookingSeries, slug=rrule_slug)
-    bookings = get_list_or_404(Booking, booking_series=rrule)
+def get_bookings_of_booking_series(user, booking_series_slug):
+    bs = get_object_or_404(BookingSeries, slug=booking_series_slug)
+    bookings = get_list_or_404(Booking, booking_series=bs)
 
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
 
-    is_cancelable = rrule.is_cancelable()
-    return rrule, bookings, is_cancelable
+    is_cancelable = bs.is_cancelable()
+    return bs, bookings, is_cancelable
 
 
-def manager_filter_rrules_list(organization, show_past_rrules, status):
+def manager_filter_booking_series_list(organization, show_past_rrules, status):
     organizations = Organization.objects.all()
-    rrules = BookingSeries.objects.all().distinct()
+    bs_set = BookingSeries.objects.all().distinct()
     if not show_past_rrules:
-        rrules = rrules.filter(
+        bs_set = bs_set.filter(
             Q(last_occurrence_date__gte=timezone.now())
             | Q(last_occurrence_date__isnull=True)
         )
     if organization != "all":
-        rrules = rrules.filter(
+        bs_set = bs_set.filter(
             booking_of_bookingseries__organization__slug=organization
         )
     if status != "all":
-        rrules = rrules.filter(status=status)
-    rrules = rrules.order_by("created")
+        bs_set = bs_set.filter(status=status)
+    bs_set = bs_set.order_by("created")
 
-    return rrules, organizations
+    return bs_set, organizations
 
 
-def manager_cancel_rrule(user, rrule_uuid):
-    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, booking_series=rrule)
-    rrule.status = BookingStatus.CANCELLED
-    rrule.save()
+def manager_cancel_booking_series(user, booking_series_uuid):
+    bs = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
+    bookings = get_list_or_404(Booking, booking_series=bs)
+    bs.status = BookingStatus.CANCELLED
+    bs.save()
 
     for booking in bookings:
         if booking.is_cancelable():
@@ -267,7 +267,7 @@ def manager_cancel_rrule(user, rrule_uuid):
     return rrule
 
 
-def extend_recurrences():
+def extend_booking_series():
     max_booking_date = timezone.now().date() + timedelta(
         days=max_future_booking_date + 1
     )
@@ -281,62 +281,66 @@ def extend_recurrences():
         UTC
     )
 
-    rrules = BookingSeries.objects.filter(
+    bs_set = BookingSeries.objects.filter(
         Q(last_occurrence_date=None)
         | Q(last_occurrence_date__gte=start_new_bookings_at)
     ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
-    rrules = rrules.order_by("created")
+    bs_set = bs_set.order_by("created")
     new_bookings = []
-    for current_rrule in rrules:
+    for bs in bs_set:
         # generate bookings that are after max booking date and before target date
-        bookings = generate_bookings(
-            current_rrule, start_new_bookings_at, end_new_bookings_at
-        )
+        bookings = generate_bookings(bs, start_new_bookings_at, end_new_bookings_at)
         for current_booking in bookings:
-            # Determine if the current booking stems from the same rrule and thus
-            # should not be saved
-            is_same_rrule_booking = (
+            # Determine if the current booking stems from the same booking_series and "
+            # thus should not be saved
+            is_same_booking_series = (
                 current_booking.status == BookingStatus.UNAVAILABLE
-                and Booking.objects.filter(resource=current_rrule.resource)
+                and Booking.objects.filter(resource=bs.resource)
                 .filter(timespan__overlap=current_booking.timespan)
-                .filter(booking_series=current_rrule)
+                .filter(booking_series=bs)
                 .exists()
             )
-            if not is_same_rrule_booking:
+            if not is_same_booking_series:
                 current_booking.save()
                 new_bookings.append(current_booking)
 
     return new_bookings
 
 
-def generate_bookings(rrule, start, end):
-    last_occurrence_before_end = rrulestr(rrule.rrule).before(end, inc=True)
+def generate_bookings(booking_series, start, end):
+    last_occurrence_before_end = rrulestr(booking_series.rrule).before(end, inc=True)
     occurrences = list(
-        rrulestr(rrule.rrule).between(start, last_occurrence_before_end, inc=True)
+        rrulestr(booking_series.rrule).between(
+            start, last_occurrence_before_end, inc=True
+        )
     )
 
     # Helper function to create a booking
-    def create_rrule_booking(occurrence):
-        b_start = timezone.make_aware(datetime.combine(occurrence, rrule.start_time))
-        b_end = timezone.make_aware(datetime.combine(occurrence, rrule.end_time))
-        timespan = (b_start, b_end)
+    def create_booking_series_booking(occurrence):
+        booking_start = timezone.make_aware(
+            datetime.combine(occurrence, booking_series.start_time)
+        )
+        booking_end = timezone.make_aware(
+            datetime.combine(occurrence, booking_series.end_time)
+        )
+        timespan = (booking_start, booking_end)
         booking = Booking(
-            title=rrule.title,
-            user=rrule.user,
-            resource=rrule.resource,
+            title=booking_series.title,
+            user=booking_series.user,
+            resource=booking_series.resource,
             timespan=timespan,
-            organization=rrule.organization,
-            status=rrule.status,
+            organization=booking_series.organization,
+            status=booking_series.status,
             start_date=occurrence.date(),
-            start_time=rrule.start_time,
+            start_time=booking_series.start_time,
             end_date=occurrence.date(),
-            end_time=rrule.end_time,
-            compensation=rrule.compensation,
-            total_amount=rrule.total_amount_per_occurrence,
-            booking_series=rrule,
+            end_time=booking_series.end_time,
+            compensation=booking_series.compensation,
+            total_amount=booking_series.total_amount_per_occurrence,
+            booking_series=booking_series,
             auto_generated_on=timezone.now(),
-            differing_billing_address=rrule.differing_billing_address,
-            activity_description=rrule.activity_description,
+            differing_billing_address=booking_series.differing_billing_address,
+            activity_description=booking_series.activity_description,
         )
         if booking.resource.is_booked(booking.timespan):
             booking.status = BookingStatus.UNAVAILABLE
@@ -344,4 +348,4 @@ def generate_bookings(rrule, start, end):
 
     # Create bookings in parallel
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        return list(executor.map(create_rrule_booking, occurrences))
+        return list(executor.map(create_booking_series_booking, occurrences))

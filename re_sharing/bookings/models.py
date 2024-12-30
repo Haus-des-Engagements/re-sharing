@@ -129,7 +129,9 @@ class BookingSeries(TimeStampedModel):
         return self.bookings_of_bookingseries.filter(status=BookingStatus.PENDING)
 
     def get_absolute_url(self):
-        return reverse("bookings:show-recurrence", kwargs={"rrule": self.slug})
+        return reverse(
+            "bookings:show-booking-series", kwargs={"booking_series": self.slug}
+        )
 
     def number_of_occurrences(self):
         return self.bookings_of_bookingseries.count()

@@ -16,7 +16,7 @@
               class="btn btn-outline-danger"
               value="Submit"
               hx-confirm="{% trans 'Are you sure you want to cancel this single booking?' %}"
-              hx-patch="{% url 'bookings:cancel-occurrence' slug=booking.slug %}"
+              hx-patch="{% url 'bookings:cancel-booking-series-booking' slug=booking.slug %}"
               hx-target="#booking-{{ booking.id }}"
               hx-swap="outerHTML">{% trans "Cancel Booking" %}</button>
     {% endif %}

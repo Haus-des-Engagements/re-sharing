@@ -1,12 +1,12 @@
 from django.urls import path
 
+from .views import cancel_booking_series_booking_view
 from .views import cancel_booking_view
-from .views import cancel_occurrence_view
-from .views import cancel_rrule_bookings_view
+from .views import cancel_bookings_of_booking_series_view
 from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
+from .views import list_booking_series_view
 from .views import list_bookings_view
-from .views import list_recurrences_view
 from .views import manager_cancel_booking_view
 from .views import manager_cancel_rrule_view
 from .views import manager_confirm_booking_view
@@ -14,10 +14,10 @@ from .views import manager_confirm_rrule_view
 from .views import manager_filter_invoice_bookings_list_view
 from .views import manager_list_bookings_view
 from .views import manager_list_rrules_view
+from .views import preview_and_save_booking_series_view
 from .views import preview_and_save_booking_view
-from .views import preview_and_save_recurrence_view
+from .views import show_booking_series_view
 from .views import show_booking_view
-from .views import show_recurrence_view
 
 app_name = "bookings"
 urlpatterns = [
@@ -58,8 +58,8 @@ urlpatterns = [
         name="manager-confirm-booking",
     ),
     path(
-        "recurrences/", list_recurrences_view, name="list-recurrences"
-    ),  # GET recurrence list
+        "booking-series/", list_booking_series_view, name="list-booking-series"
+    ),  # GET booking_series list
     path(
         "create-booking/", create_booking_data_form_view, name="create-booking"
     ),  # GET & POST booking form data
@@ -67,20 +67,22 @@ urlpatterns = [
         "preview-booking/", preview_and_save_booking_view, name="preview-booking"
     ),  # GET booking data & POST single booking
     path(
-        "preview-recurrence/",
-        preview_and_save_recurrence_view,
-        name="preview-recurrence",
+        "preview-booking-series/",
+        preview_and_save_booking_series_view,
+        name="preview-booking-series",
     ),  # GET recurrence & POST recurrence
     path(
         "<slug:booking>/", show_booking_view, name="show-booking"
     ),  # GET booking object
     path(
-        "recurrences/<slug:rrule>/", show_recurrence_view, name="show-recurrence"
+        "booking-series/<slug:booking_series>/",
+        show_booking_series_view,
+        name="show-booking-series",
     ),  # GET recurrence object
     path(
-        "recurrences/<uuid:rrule>/cancel-rrule-bookings/",
-        cancel_rrule_bookings_view,
-        name="cancel-rrule-bookings",
+        "booking-series/<uuid:booking_series>/cancel-booking-series-bookings/",
+        cancel_bookings_of_booking_series_view,
+        name="cancel-booking-series-bookings",
     ),
     path(
         "<slug:slug>/cancel-booking/",
@@ -88,9 +90,9 @@ urlpatterns = [
         name="cancel-booking",
     ),  # PATCH booking object
     path(
-        "<slug:slug>/cancel-occurrence/",
-        cancel_occurrence_view,
-        name="cancel-occurrence",
+        "<slug:slug>/cancel-booking-series-booking/",
+        cancel_booking_series_booking_view,
+        name="cancel-booking-series-booking",
     ),  # PATCH booking object
     path(
         "<slug:slug>/create-bookingmessage/",
