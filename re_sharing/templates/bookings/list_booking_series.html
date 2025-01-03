@@ -11,12 +11,12 @@
         <li class="breadcrumb-item">
           <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
         </li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans "My recurring bookings" %}</li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "My booking series" %}</li>
       </ol>
     </nav>
   </div>
   <h1 class="mt-4">
-    {% trans "My recurring bookings" %}
+    {% trans "My booking series" %}
     <a class="btn btn-outline-primary"
        href="{% url 'bookings:create-booking' %}"
        role="button">
@@ -57,7 +57,7 @@
                 <em>{{ booking_series.user }}</em> {% trans "for" %}
                 <em>{{ booking_series.organization }}</em>
                 <br />
-                {% trans "Occurrences" %}: {{ booking_series.number_of_occurrences }}
+                {% trans "Bookings" %}: {{ booking_series.number_of_occurrences }}
               </p>
             </div>
           </div>

@@ -277,7 +277,7 @@ def preview_and_save_booking_series_view(request):
             request.user, bookings, booking_series
         )
         request.session.pop("booking_data", None)
-        messages.success(request, _("Recurrence created successfully!"))
+        messages.success(request, _("Booking series created successfully!"))
         return redirect("bookings:show-booking-series", booking_series.slug)
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
