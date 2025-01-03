@@ -39,8 +39,8 @@
                 <s>({% trans "Total amount" %}: {{ booking.total_amount }}€)</s>
               {% else %}
                 ({% trans "Total amount" %}: {{ booking.total_amount }}€)
-                {% if booking.differing_billing_address %}
-                  , {% trans "Differing billing address" %}: {{ booking.differing_billing_address }}
+                {% if booking.invoice_address %}
+                  , {% trans "Differing billing address" %}: {{ booking.invoice_address }}
                 {% endif %}
               {% endif %}
             {% endif %}

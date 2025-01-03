@@ -94,7 +94,7 @@ class BookingForm(forms.ModelForm):
         required=True,
     )
 
-    differing_billing_address = forms.CharField(
+    invoice_address = forms.CharField(
         required=False,
         widget=forms.TextInput(
             attrs={"id": "id_billing_address", "class": "form-control textinput"}
@@ -451,6 +451,6 @@ class BookingForm(forms.ModelForm):
             "organization",
             "resource",
             "number_of_attendees",
-            "differing_billing_address",
+            "invoice_address",
             "activity_description",
         ]

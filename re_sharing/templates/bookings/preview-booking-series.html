@@ -41,8 +41,8 @@
             <br />
             {% trans "bookings" %}: {{ bookings|length }}
             <br />
-            {% if booking_series.differing_billing_address %}
-              {% trans "Differing billing address" %}: {{ booking_series.differing_billing_address }}
+            {% if booking_series.invoice_address %}
+              {% trans "Differing billing address" %}: {{ booking_series.invoice_address }}
             {% endif %}
           </p>
         </div>

@@ -12,7 +12,6 @@ from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
-from re_sharing.users.tests.factories import UserFactory
 
 
 class AccessFactory(DjangoModelFactory):
@@ -34,10 +33,8 @@ class ResourceFactory(DjangoModelFactory):
     square_meters = Faker("random_int", min=1, max=400)
     max_persons = Faker("random_int", min=1, max=100)
     bookable_times = Faker("sentence", nb_words=6)
-    pricing = Faker("sentence", nb_words=6)
     included_equipment = Faker("sentence", nb_words=6)
     accessibility = Faker("sentence", nb_words=6)
-    manager = SubFactory(UserFactory)
     access = SubFactory(AccessFactory)
     address = Faker("address")
 

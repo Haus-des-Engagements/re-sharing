@@ -69,6 +69,9 @@ class BookingSeries(TimeStampedModel):
         related_query_name="bookingseries_of_resource",
     )
     status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
+    rrule = TextField(_("Recurrence rule"))
+    first_booking_date = DateField(_("Date of first booking"))
+    last_booking_date = DateField(_("Date of last booking"), blank=True, null=True)
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
     start_time = TimeField(_("Start Time"))
     end_time = TimeField(_("End Time"))
@@ -81,22 +84,21 @@ class BookingSeries(TimeStampedModel):
         null=True,
         blank=True,
     )
-    total_amount_per_occurrence = DecimalField(
+    total_amount_per_booking = DecimalField(
         _("Total amount"),
         max_digits=8,
         decimal_places=2,
         null=True,
         blank=True,
     )
+    invoice_address = CharField(_("Invoice address"), blank=True, max_length=256)
     activity_description = CharField(
         _("Activity description"),
         help_text=_("Please describe shortly what you are planning to do."),
         max_length=2048,
     )
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
-    differing_billing_address = CharField(
-        _("Differing billing address"), blank=True, max_length=256
-    )
+    reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
     import_id = CharField(
         _("Import ID"),
         help_text=_(
@@ -106,10 +108,6 @@ class BookingSeries(TimeStampedModel):
         max_length=256,
         blank=True,
     )
-    rrule = TextField(_("Recurrence rule"))
-    first_booking_date = DateField(_("Date of first booking"))
-    last_booking_date = DateField(_("Date of last booking"), blank=True, null=True)
-    reminder_emails = BooleanField(_("Enable reminder e-mails"), default=True)
 
     class Meta:
         verbose_name = _("Booking series")
@@ -272,12 +270,15 @@ class Booking(TimeStampedModel):
         blank=True,
     )
     invoice_number = CharField(_("Invoice number"), max_length=160, blank=True)
+    invoice_address = CharField(_("Invoice address"), blank=True, max_length=256)
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
+    activity_description = CharField(
+        _("Activity description"),
+        help_text=_("Please describe shortly what you are planning to do."),
+        max_length=2048,
+    )
     auto_generated_on = DateTimeField(
         _("Automatically generated on"), blank=True, null=True
-    )
-    differing_billing_address = CharField(
-        _("Differing billing address"), blank=True, max_length=256
     )
     import_id = CharField(
         _("Import ID"),
@@ -287,11 +288,6 @@ class Booking(TimeStampedModel):
         ),
         max_length=256,
         blank=True,
-    )
-    activity_description = CharField(
-        _("Activity description"),
-        help_text=_("Please describe shortly what you are planning to do."),
-        max_length=2048,
     )
 
     class Meta:

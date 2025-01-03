@@ -49,7 +49,14 @@
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-piggy-bank" />
               </svg>
-              {% trans "Pricing" %}: {{ resource.pricing }}
+              {% for compensation in resource.compensations_of_resource.all %}
+                {% if compensation.hourly_rate %}
+                  {{ compensation.hourly_rate }}€/h
+                {% else %}
+                  {{ compensation.name }}
+                {% endif %}
+                {% if not forloop.last %}//{% endif %}
+              {% endfor %}
             </li>
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">

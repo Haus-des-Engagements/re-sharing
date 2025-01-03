@@ -142,7 +142,7 @@ def create_booking_series_and_bookings(booking_data):
     bs.end_time = datetime.strptime(booking_data["end_time"], "%H:%M:%S").time()  # noqa: DTZ007
     bs.rrule = booking_data.get("rrule_string", "")
     bs.first_booking_date = next(iter(rrulestr(bs.rrule)))
-    bs.differing_billing_address = booking_data["differing_billing_address"]
+    bs.invoice_address = booking_data["invoice_address"]
     bs.compensation = None
     bs.total_amount_per_occurrence = None
     bs.activity_description = booking_data["activity_description"]
@@ -339,7 +339,7 @@ def generate_bookings(booking_series, start, end):
             total_amount=booking_series.total_amount_per_occurrence,
             booking_series=booking_series,
             auto_generated_on=timezone.now(),
-            differing_billing_address=booking_series.differing_billing_address,
+            invoice_address=booking_series.invoice_address,
             activity_description=booking_series.activity_description,
         )
         if booking.resource.is_booked(booking.timespan):

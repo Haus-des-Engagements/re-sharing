@@ -443,7 +443,7 @@ def test_create_booking():
         "end_time": timespan.upper.time(),
         "compensation": None,
         "total_amount": None,
-        "differing_billing_address": None,
+        "invoice_address": None,
         "activity_description": "Just a meeting",
     }
     kwargs = {"resource_booked": True, "rrule": "FREQ=DAILY"}
@@ -670,7 +670,7 @@ class TestGenerateSingleBooking(TestCase):
         )
         self.start_datetime = timezone.now() + timedelta(days=1)
         self.duration = 2
-        self.differing_billing_address = "Fast lane 2, 929 Free-City"
+        self.invoice_address = "Fast lane 2, 929 Free-City"
         self.end_datetime = self.start_datetime + timedelta(hours=self.duration)
         self.booking_data = {
             "user": self.user.slug,
@@ -687,7 +687,7 @@ class TestGenerateSingleBooking(TestCase):
             "end_time": self.end_datetime.time(),
             "message": "Please confirm my booking",
             "compensation": self.compensation.id,
-            "differing_billing_address": self.differing_billing_address,
+            "invoice_address": self.invoice_address,
             "activity_description": "Simple Meeting",
         }
 
@@ -703,7 +703,7 @@ class TestGenerateSingleBooking(TestCase):
         assert booking.compensation == self.compensation
         assert booking.total_amount == self.compensation.hourly_rate * self.duration
         assert booking.activity_description == "Simple Meeting"
-        assert booking.differing_billing_address == self.differing_billing_address
+        assert booking.invoice_address == self.invoice_address
 
     def test_generate_single_booking_no_compensation(self):
         self.booking_data["compensation"] = ""
@@ -751,7 +751,7 @@ class TestGenerateRecurrence(TestCase):
             microsecond=0
         )
         self.count = 5
-        self.differing_billing_address = "Fast lane 2, 929 Free-City"
+        self.invoice_address = "Fast lane 2, 929 Free-City"
         self.rrule_string = self.dt_start + "\nFREQ=DAILY;COUNT=" + str(self.count)
         self.booking_data = {
             "user": self.user.slug,
@@ -770,7 +770,7 @@ class TestGenerateRecurrence(TestCase):
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
             "start": self.start,
-            "differing_billing_address": self.differing_billing_address,
+            "invoice_address": self.invoice_address,
             "activity_description": "Simple Meeting",
         }
 
@@ -788,7 +788,7 @@ class TestGenerateRecurrence(TestCase):
             assert booking.organization == self.organization
             assert booking.compensation == self.compensation
             assert booking.total_amount == self.compensation.hourly_rate * self.duration
-            assert booking.differing_billing_address == self.differing_billing_address
+            assert booking.invoice_address == self.invoice_address
             assert booking.activity_description == "Simple Meeting"
 
         assert isinstance(rrule, BookingSeries)
@@ -800,7 +800,7 @@ class TestGenerateRecurrence(TestCase):
 
     def test_generate_recurrence_no_compensation(self):
         self.booking_data["compensation"] = ""
-        self.booking_data["differing_billing_address"] = ""
+        self.booking_data["invoice_address"] = ""
 
         bookings, rrule, bookable = create_booking_series_and_bookings(
             self.booking_data
@@ -815,7 +815,7 @@ class TestGenerateRecurrence(TestCase):
             assert booking.organization == self.organization
             assert booking.compensation is None
             assert booking.total_amount is None
-            assert booking.differing_billing_address == ""
+            assert booking.invoice_address == ""
 
         assert isinstance(rrule, BookingSeries)
         rrule_occurrences = list(rrulestr(self.rrule_string))
@@ -870,7 +870,7 @@ class TestSaveRecurrence(TestCase):
             "compensation": self.compensation.id,
             "rrule_string": self.rrule_string,
             "start": self.start,
-            "differing_billing_address": "",
+            "invoice_address": "",
             "activity_description": "Meeting with team members",
         }
 

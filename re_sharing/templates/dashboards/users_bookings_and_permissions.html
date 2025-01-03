@@ -16,6 +16,43 @@
   <div class="row mt-4">
     <h1>{% trans "Hi" %}, {{ user.first_name }}!</h1>
   </div>
+  <div class="row mt-5 col-md-6">
+    <h2>
+      {% trans "My organizations" %}
+      <a class="btn btn-outline-primary"
+         href="{% url 'organizations:create-organization' %}"
+         role="button">
+        <svg width="1em" height="1em">
+          <use href="#bi-plus-lg" />
+        </svg>
+        {% trans "New Organization" %}
+      </a>
+    </h2>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Name" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bp in booking_permissions %}
+            <tr>
+              <td>
+                <a href="{% url "organizations:show-organization" bp.organization.slug %}">{{ bp.organization }}</a>
+              </td>
+              <td>
+                <span class="fs-6 badge text-bg-status-{{ bp.organization.status }}">{{ bp.organization.get_status_display }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <em>{% trans "No organizations yet. Go and add yours!" %}</em>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
   <div class="row mt-5">
     <h2>
       {% trans "My upcoming bookings and requests" %}
@@ -66,42 +103,5 @@
       </table>
     </div>
     <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a>
-  </div>
-  <div class="row mt-5 col-md-6">
-    <h2>
-      {% trans "My organizations" %}
-      <a class="btn btn-outline-primary"
-         href="{% url 'organizations:create-organization' %}"
-         role="button">
-        <svg width="1em" height="1em">
-          <use href="#bi-plus-lg" />
-        </svg>
-        {% trans "New Organization" %}
-      </a>
-    </h2>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Name" %}</th>
-            <th scope="col">{% trans "Status" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for bp in booking_permissions %}
-            <tr>
-              <td>
-                <a href="{% url "organizations:show-organization" bp.organization.slug %}">{{ bp.organization }}</a>
-              </td>
-              <td>
-                <span class="fs-6 badge text-bg-status-{{ bp.organization.status }}">{{ bp.organization.get_status_display }}</span>
-              </td>
-            </tr>
-          {% empty %}
-            <em>{% trans "No organizations yet. Go and add yours!" %}</em>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
   </div>
 {% endblock content %}

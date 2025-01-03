@@ -103,7 +103,9 @@ def filter_resources(persons_count, start_datetime):
         )
         booked_resource_ids = overlapping_bookings.values_list("resource_id", flat=True)
         resources = resources.exclude(id__in=booked_resource_ids)
-    return resources.prefetch_related("resourceimages_of_resource")
+    return resources.prefetch_related(
+        "resourceimages_of_resource", "compensations_of_resource"
+    )
 
 
 def get_access_code(resource_slug, organization_slug, timestamp):

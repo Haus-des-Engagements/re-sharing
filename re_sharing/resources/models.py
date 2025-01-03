@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
-from django.db.models import PROTECT
 from django.db.models import SET_NULL
 from django.db.models import CharField
 from django.db.models import DateTimeField
@@ -87,9 +86,7 @@ class Resource(Model):
     square_meters = PositiveIntegerField(_("Square Meters"), null=True, blank=True)
     max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
-    pricing = TextField(_("Pricing conditions"), max_length=512, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
-    manager = ForeignKey("users.User", on_delete=PROTECT, verbose_name=_("Manager"))
     address = CharField(_("Address"), max_length=256)
 
     class Meta:

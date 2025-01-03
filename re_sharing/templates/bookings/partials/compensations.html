@@ -29,15 +29,15 @@
     </p>
   {% endfor %}
   {# djlint:off H021 #}
-  <div id="div_id_differing_billing_address"
+  <div id="div_id_invoice_address"
        class="mb-3 col-8 mt-2"
        x-show="showBilling"
        style="display: none">
     {# djlint:on #}
-    <label for="id_differing_billing_address" class="form-label">{% trans "Differing billing address" %}</label>
+    <label for="id_invoice_address" class="form-label">{% trans "Differing billing address" %}</label>
     <input type="text"
-           name="differing_billing_address"
+           name="invoice_address"
            class="form-control textinput"
-           id="id_differing_billing_address" />
+           id="id_invoice_address" />
   </div>
 </div>

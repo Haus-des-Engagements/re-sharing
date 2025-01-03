@@ -97,7 +97,7 @@ def generate_single_booking(booking_data):
         "end_time": booking_data["end_time"],
         "compensation": compensation,
         "total_amount": total_amount,
-        "differing_billing_address": booking_data["differing_billing_address"],
+        "invoice_address": booking_data["invoice_address"],
         "activity_description": booking_data["activity_description"],
     }
     return create_booking(booking_details)
@@ -141,7 +141,7 @@ def create_booking(booking_details, **kwargs):
         status=booking_details["status"],
         compensation=booking_details["compensation"],
         total_amount=booking_details["total_amount"],
-        differing_billing_address=booking_details["differing_billing_address"],
+        invoice_address=booking_details["invoice_address"],
         activity_description=booking_details["activity_description"],
     )
     booking.resource_booked = kwargs.get("resource_booked") or None
@@ -307,7 +307,7 @@ def create_booking_data(user, form):
         "end_time": form.cleaned_data["endtime"].isoformat(),
         "user": user.slug,
         "compensation": form.cleaned_data["compensation"].id,
-        "differing_billing_address": form.cleaned_data["differing_billing_address"],
+        "invoice_address": form.cleaned_data["invoice_address"],
         "activity_description": form.cleaned_data["activity_description"],
     }
     rrule = None

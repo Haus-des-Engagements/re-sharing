@@ -86,10 +86,10 @@
             <td class="first-column">{% trans "Usage agreement" %}</td>
             <td>
               {% if organization.usage_agreement %}
-                <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement.url }}</a>
+                <a href="{{ organization.usage_agreement.url }}">{% trans "Usage agreement" %}</a>
               </td>
             {% else %}
-              {% trans "Please upload the usage agreement." %}
+              {% trans "Not uploaded." %}
             {% endif %}
           </tr>
           <tr>
