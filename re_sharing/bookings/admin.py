@@ -34,8 +34,9 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
         "organization",
         "title",
         "user",
+        "import_id",
     ]
-    search_fields = ["id", "title", "slug"]
+    search_fields = ["id", "title", "slug", "import_id"]
     list_filter = ["status", "organization", "resource", "booking_series"]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
@@ -78,18 +79,20 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 @admin.register(BookingSeries)
-class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
+class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = [
         "created",
         "id",
-        "uuid",
         "organization",
+        "user",
         "first_booking_date",
         "last_booking_date",
         "status",
         "get_first_booking",
         "booking_count_link",
+        "import_id",
     ]
+    search_fields = ["id", "title", "slug", "import_id", "user", "organization"]
     list_filter = ["status", "organization"]
     readonly_fields = ["booking_count_link"]
     actions = ["generate_bookings", "delete_bookings"]
@@ -126,7 +129,7 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
 
     @admin.action(description=_("Generate bookings"))
     def generate_bookings(self, request, queryset):
-        for rrule in queryset:
+        for booking_series in queryset:
             with set_actor(request.user):
                 max_booking_date = timezone.now().date() + timedelta(
                     days=max_future_booking_date
@@ -138,26 +141,26 @@ class RecurrenceRuleAdmin(ImportExportMixin, admin.ModelAdmin):
                     max_booking_date, last_second
                 ).astimezone(UTC)
                 bookings = generate_bookings(
-                    rrule, start_new_bookings_at, end_new_bookings_at
+                    booking_series, start_new_bookings_at, end_new_bookings_at
                 )
                 for current_booking in bookings:
                     # Determine if the current booking stems from the same rrule and
                     # thus should not be saved
-                    is_same_rrule_booking = (
+                    is_same_booking_series = (
                         current_booking.status == BookingStatus.UNAVAILABLE
-                        and Booking.objects.filter(resource=rrule.resource)
+                        and Booking.objects.filter(resource=booking_series.resource)
                         .filter(timespan__overlap=current_booking.timespan)
-                        .filter(booking_series=rrule)
+                        .filter(booking_series=booking_series)
                         .exists()
                     )
-                    if not is_same_rrule_booking:
+                    if not is_same_booking_series:
                         current_booking.save()
 
     @admin.action(description=_("Delete bookings"))
     def delete_bookings(self, request, queryset):
-        for rrule in queryset:
+        for booking_series in queryset:
             with set_actor(request.user):
-                Booking.objects.filter(booking_series=rrule).delete()
+                Booking.objects.filter(booking_series=booking_series).delete()
 
 
 @admin.register(BookingMessage)

@@ -17,8 +17,8 @@
       </tr>
     </thead>
     <tbody>
-      {% for rrule in rrules %}
-        <tr id="tr-{{ rrule.uuid }}">{% include "bookings/partials/manager_rrule_item.html" %}</tr>
+      {% for booking_series in booking_series_list %}
+        <tr id="tr-{{ booking_series.uuid }}">{% include "bookings/partials/manager_booking_series_item.html" %}</tr>
       {% endfor %}
     </tbody>
   </table>

@@ -146,6 +146,7 @@ def create_booking_series_and_bookings(booking_data):
     bs.compensation = None
     bs.total_amount_per_occurrence = None
     bs.activity_description = booking_data["activity_description"]
+    bs.import_id = booking_data.get("import_id")
     if booking_data["compensation"]:
         bs.compensation = get_object_or_404(
             Compensation, id=booking_data["compensation"]
@@ -228,23 +229,22 @@ def get_bookings_of_booking_series(user, booking_series_slug):
     return bs, bookings, is_cancelable
 
 
-def manager_filter_booking_series_list(organization, show_past_rrules, status):
+def manager_filter_booking_series_list(organization, show_past_booking_series, status):
     organizations = Organization.objects.all()
-    bs_set = BookingSeries.objects.all().distinct()
-    if not show_past_rrules:
-        bs_set = bs_set.filter(
-            Q(last_occurrence_date__gte=timezone.now())
-            | Q(last_occurrence_date__isnull=True)
+    bs_list = BookingSeries.objects.all().distinct()
+    if not show_past_booking_series:
+        bs_list = bs_list.filter(
+            Q(last_booking_date__gte=timezone.now()) | Q(last_booking_date__isnull=True)
         )
     if organization != "all":
-        bs_set = bs_set.filter(
+        bs_list = bs_list.filter(
             booking_of_bookingseries__organization__slug=organization
         )
     if status != "all":
-        bs_set = bs_set.filter(status=status)
-    bs_set = bs_set.order_by("created")
+        bs_list = bs_list.filter(status=status)
+    bs_list = bs_list.order_by("created")
 
-    return bs_set, organizations
+    return bs_list, organizations
 
 
 def manager_cancel_booking_series(user, booking_series_uuid):

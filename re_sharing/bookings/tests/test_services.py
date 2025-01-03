@@ -19,14 +19,13 @@ from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import collect_booking_reminder_mails
 from re_sharing.bookings.services import confirm_booking
-from re_sharing.bookings.services import create_booking
 from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
-from re_sharing.bookings.services import generate_single_booking
+from re_sharing.bookings.services import generate_booking
 from re_sharing.bookings.services import get_booking_activity_stream
 from re_sharing.bookings.services import manager_cancel_booking
 from re_sharing.bookings.services import manager_confirm_booking
-from re_sharing.bookings.services import manager_confirm_rrule
+from re_sharing.bookings.services import manager_confirm_booking_series
 from re_sharing.bookings.services import manager_filter_bookings_list
 from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
@@ -39,7 +38,6 @@ from re_sharing.bookings.services_recurrences import manager_cancel_booking_seri
 from re_sharing.bookings.services_recurrences import save_booking_series
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
-from re_sharing.bookings.tests.factories import create_timespan
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
@@ -421,55 +419,6 @@ def test_filter_bookings_list(
 
 
 @pytest.mark.django_db()
-def test_create_booking():
-    """Test the create_booking function."""
-
-    # Arrange
-    user = UserFactory()
-    organization = OrganizationFactory()
-    resource = ResourceFactory()
-    timespan = create_timespan(None, None)
-
-    booking_details = {
-        "user": user,
-        "title": "Test Booking",
-        "resource": resource,
-        "timespan": timespan,
-        "organization": organization,
-        "status": BookingStatus.PENDING,
-        "start_date": timespan.lower.date(),
-        "end_date": timespan.lower.date(),
-        "start_time": timespan.lower.time(),
-        "end_time": timespan.upper.time(),
-        "compensation": None,
-        "total_amount": None,
-        "invoice_address": None,
-        "activity_description": "Just a meeting",
-    }
-    kwargs = {"resource_booked": True, "rrule": "FREQ=DAILY"}
-
-    # Act
-    booking = create_booking(booking_details, **kwargs)
-
-    # Assert
-    assert isinstance(booking, Booking)
-    assert booking.user == booking_details["user"]
-    assert booking.title == booking_details["title"]
-    assert booking.resource == booking_details["resource"]
-    assert booking.timespan == booking_details["timespan"]
-    assert booking.organization == booking_details["organization"]
-    assert booking.status == booking_details["status"]
-    assert booking.start_date == booking_details["start_date"]
-    assert booking.end_date == booking_details["end_date"]
-    assert booking.start_time == booking_details["start_time"]
-    assert booking.end_time == booking_details["end_time"]
-    assert booking.resource_booked == kwargs["resource_booked"]
-    assert booking.compensation is None
-    assert booking.total_amount is None
-    assert not booking.pk  # Not saved in the database
-
-
-@pytest.mark.django_db()
 @pytest.mark.parametrize(
     (
         "show_past_bookings",
@@ -689,10 +638,11 @@ class TestGenerateSingleBooking(TestCase):
             "compensation": self.compensation.id,
             "invoice_address": self.invoice_address,
             "activity_description": "Simple Meeting",
+            "import_id": "",
         }
 
     def test_generate_single_booking_valid_data(self):
-        booking = generate_single_booking(self.booking_data)
+        booking = generate_booking(self.booking_data)
 
         assert isinstance(booking, Booking)
         assert booking.user == self.user
@@ -708,7 +658,7 @@ class TestGenerateSingleBooking(TestCase):
     def test_generate_single_booking_no_compensation(self):
         self.booking_data["compensation"] = ""
         self.booking_data["different_billing_address"] = ""
-        booking = generate_single_booking(self.booking_data)
+        booking = generate_booking(self.booking_data)
 
         assert isinstance(booking, Booking)
         assert booking.user == self.user
@@ -723,19 +673,19 @@ class TestGenerateSingleBooking(TestCase):
         self.booking_data["organization"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_single_booking(self.booking_data)
+            generate_booking(self.booking_data)
 
     def test_generate_single_booking_invalid_resource(self):
         self.booking_data["resource"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_single_booking(self.booking_data)
+            generate_booking(self.booking_data)
 
     def test_generate_single_booking_invalid_user(self):
         self.booking_data["user"] = "invalid-slug"
 
         with pytest.raises(Http404):
-            generate_single_booking(self.booking_data)
+            generate_booking(self.booking_data)
 
 
 class TestGenerateRecurrence(TestCase):
@@ -845,7 +795,7 @@ class TestGenerateRecurrence(TestCase):
             create_booking_series_and_bookings(self.booking_data)
 
 
-class TestSaveRecurrence(TestCase):
+class TestSaveBookingSeries(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.organization = OrganizationFactory()
@@ -872,15 +822,16 @@ class TestSaveRecurrence(TestCase):
             "start": self.start,
             "invoice_address": "",
             "activity_description": "Meeting with team members",
+            "import_id": "",
         }
 
         (
             self.bookings,
-            self.rrule,
+            self.booking_series,
             self.bookable,
         ) = create_booking_series_and_bookings(self.booking_data)
 
-    def test_save_recurrence_valid(self):
+    def test_save_booking_series_valid(self):
         # Add the booking permission for the user
         BookingPermissionFactory(
             user=self.user,
@@ -888,28 +839,34 @@ class TestSaveRecurrence(TestCase):
             status=BookingPermission.Status.CONFIRMED,
         )
 
-        bookings, rrule = save_booking_series(self.user, self.bookings, self.rrule)
+        bookings, booking_series = save_booking_series(
+            self.user, self.bookings, self.booking_series
+        )
 
         for booking in bookings:
-            assert booking.booking_series == rrule
+            assert booking.booking_series == booking_series
 
     def test_save_recurrence_permission_denied(self):
         # Do not add the booking permission for the user
         another_user = UserFactory()
 
         with pytest.raises(PermissionDenied):
-            save_booking_series(another_user, self.bookings, self.rrule)
+            save_booking_series(another_user, self.bookings, self.booking_series)
 
 
 @pytest.mark.django_db()
 @patch.object(Booking, "is_cancelable", return_value=True)
-def test_manager_cancel_rrule(mock_is_cancelable):
+def test_manager_cancel_booking_series(mock_is_cancelable):
     user = UserFactory(is_staff=True)
-    rrule = BookingSeriesFactory()
-    booking1 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
-    booking2 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
+    booking_series = BookingSeriesFactory()
+    booking1 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
+    booking2 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
 
-    manager_cancel_booking_series(user, rrule.uuid)
+    manager_cancel_booking_series(user, booking_series.uuid)
 
     booking1.refresh_from_db()
     assert booking1.status == BookingStatus.CANCELLED
@@ -919,13 +876,17 @@ def test_manager_cancel_rrule(mock_is_cancelable):
 
 @pytest.mark.django_db()
 @patch.object(Booking, "is_confirmable", return_value=True)
-def test_manager_confirm_rrule(mock_is_confirmable):
+def test_manager_confirm_booking_series(mock_is_confirmable):
     user = UserFactory(is_staff=True)
-    rrule = BookingSeriesFactory()
-    booking1 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
-    booking2 = BookingFactory(booking_series=rrule, status=BookingStatus.PENDING)
+    booking_series = BookingSeriesFactory()
+    booking1 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
+    booking2 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
 
-    manager_confirm_rrule(user, rrule.uuid)
+    manager_confirm_booking_series(user, booking_series.uuid)
 
     booking1.refresh_from_db()
     assert booking1.status == BookingStatus.CONFIRMED

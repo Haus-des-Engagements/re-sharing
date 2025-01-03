@@ -39,7 +39,7 @@
             </svg>
             {% trans "booked by:" %}   {{ booking_series.user.first_name }} {{ booking_series.user.last_name }} ({{ booking_series.user.email }}) {% trans "for" %} {{ booking_series.organization.name }}
             <br />
-            {% trans "bookings" %}: {{ bookings|length }}
+            {% trans "Bookings" %}: {{ bookings|length }}
             <br />
             {% if booking_series.invoice_address %}
               {% trans "Differing billing address" %}: {{ booking_series.invoice_address }}

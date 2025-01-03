@@ -65,7 +65,7 @@
                       class="btn btn-outline-danger mb-3"
                       value="Submit"
                       hx-confirm="{% trans 'Are you sure you want to cancel all future bookings?' %}"
-                      hx-patch="{% url 'cancel-booking-series-bookings' booking_series.uuid %}"
+                      hx-patch="{% url 'bookings:cancel-booking-series-bookings' booking_series.uuid %}"
                       hx-target="body"
                       hx-swap="innerHTML">{% trans "Cancel all future bookings" %}</button>
             {% endif %}

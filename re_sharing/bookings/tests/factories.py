@@ -96,6 +96,7 @@ class BookingSeriesFactory(DjangoModelFactory):
     user = SubFactory(UserFactory)
     resource = SubFactory("re_sharing.resources.tests.factories.ResourceFactory")
     status = BookingStatus.CONFIRMED
+    import_id = ""
 
     @LazyAttribute
     def start_time(self):

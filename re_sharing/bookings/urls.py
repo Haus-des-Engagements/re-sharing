@@ -7,13 +7,13 @@ from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_booking_series_view
 from .views import list_bookings_view
+from .views import manager_cancel_booking_series_view
 from .views import manager_cancel_booking_view
-from .views import manager_cancel_rrule_view
+from .views import manager_confirm_booking_series_view
 from .views import manager_confirm_booking_view
-from .views import manager_confirm_rrule_view
 from .views import manager_filter_invoice_bookings_list_view
+from .views import manager_list_booking_series_view
 from .views import manager_list_bookings_view
-from .views import manager_list_rrules_view
 from .views import preview_and_save_booking_series_view
 from .views import preview_and_save_booking_view
 from .views import show_booking_series_view
@@ -33,19 +33,19 @@ urlpatterns = [
         name="manager-list-invoices",
     ),
     path(
-        "manage-recurrences/",
-        manager_list_rrules_view,
-        name="manager-list-recurrences",
+        "manage-booking-series/",
+        manager_list_booking_series_view,
+        name="manager-list-booking_series",
     ),
     path(
-        "manage-bookings/<uuid:rrule_uuid>/cancel-recurrence/",
-        manager_cancel_rrule_view,
-        name="manager-cancel-recurrence",
+        "manage-bookings/<uuid:booking_series_uuid>/cancel-booking-series/",
+        manager_cancel_booking_series_view,
+        name="manager-cancel-booking-series",
     ),
     path(
-        "manage-bookings/<uuid:rrule_uuid>/confirm-recurrence/",
-        manager_confirm_rrule_view,
-        name="manager-confirm-recurrence",
+        "manage-bookings/<uuid:booking_series_uuid>/confirm-booking-series/",
+        manager_confirm_booking_series_view,
+        name="manager-confirm-booking-series",
     ),
     path(
         "manage-bookings/<slug:booking_slug>/cancel-booking/",

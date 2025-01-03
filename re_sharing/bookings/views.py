@@ -19,10 +19,10 @@ from .services import cancel_booking
 from .services import create_booking_data
 from .services import create_bookingmessage
 from .services import filter_bookings_list
-from .services import generate_single_booking
+from .services import generate_booking
 from .services import manager_cancel_booking
 from .services import manager_confirm_booking
-from .services import manager_confirm_rrule
+from .services import manager_confirm_booking_series
 from .services import manager_filter_bookings_list
 from .services import manager_filter_invoice_bookings_list
 from .services import save_booking
@@ -35,6 +35,107 @@ from .services_recurrences import get_bookings_of_booking_series
 from .services_recurrences import manager_cancel_booking_series
 from .services_recurrences import manager_filter_booking_series_list
 from .services_recurrences import save_booking_series
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+def create_booking_data_form_view(request):
+    if request.method == "GET":
+        startdate = request.GET.get("startdate")
+        starttime = request.GET.get("starttime")
+        endtime = request.GET.get("endtime")
+        resource = request.GET.get("resource")
+        initial_data = set_initial_booking_data(endtime, startdate, starttime, resource)
+        # user needs at least to be confirmed for one organization
+        user_has_bookingpermission = (
+            BookingPermission.objects.filter(user=request.user)
+            .filter(status=BookingPermission.Status.CONFIRMED)
+            .exists()
+        )
+
+        form = BookingForm(user=request.user, initial=initial_data)
+        return render(
+            request,
+            "bookings/create-booking.html",
+            {"form": form, "user_has_bookingpermission": user_has_bookingpermission},
+        )
+
+    if request.method == "POST":
+        form = BookingForm(data=request.POST, user=request.user)
+        if form.is_valid():
+            booking_data, rrule = create_booking_data(request.user, form)
+            request.session["booking_data"] = booking_data
+            if rrule:
+                return redirect("bookings:preview-booking-series")
+            return redirect("bookings:preview-booking")
+
+    user_has_bookingpermission = (
+        BookingPermission.objects.filter(user=request.user)
+        .filter(status=BookingPermission.Status.CONFIRMED)
+        .exists()
+    )
+
+    return render(
+        request,
+        "bookings/create-booking.html",
+        {"form": form, "user_has_bookingpermission": user_has_bookingpermission},
+    )
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+def preview_and_save_booking_view(request):
+    booking_data = request.session["booking_data"]
+    if not booking_data:
+        return redirect("bookings:create-booking")
+
+    booking = generate_booking(booking_data)
+    if request.method == "GET":
+        return render(
+            request,
+            "bookings/preview-booking.html",
+            {"booking": booking},
+        )
+
+    if request.method == "POST":
+        try:
+            booking = save_booking(request.user, booking)
+        except IntegrityError:
+            return HttpResponse(
+                "Booking not possible at the given date(s).", status=400
+            )
+
+        request.session.pop("booking_data", None)
+        if booking.status == BookingStatus.CONFIRMED:
+            messages.success(request, _("Booking created successfully!"))
+        if booking.status == BookingStatus.PENDING:
+            messages.info(
+                request,
+                _(
+                    "Booking request created successfully! Please await our "
+                    "confirmation. You will be notified by mail."
+                ),
+            )
+        return redirect("bookings:show-booking", booking.slug)
+
+    messages.error(request, _("Sorry, something went wrong. Please try again."))
+    return redirect("bookings:create-booking")
+
+
+@require_http_methods(["GET"])
+@login_required
+def show_booking_view(request, booking):
+    booking, activity_stream, access_code = show_booking(request.user, booking)
+
+    return render(
+        request,
+        "bookings/show-booking.html",
+        {
+            "booking": booking,
+            "activity_stream": activity_stream,
+            "access_code": access_code,
+        },
+    )
 
 
 @require_http_methods(["GET"])
@@ -66,22 +167,6 @@ def list_bookings_view(request):
         return render(request, "bookings/partials/list_bookings.html", context)
 
     return render(request, "bookings/list_bookings.html", context)
-
-
-@require_http_methods(["GET"])
-@login_required
-def show_booking_view(request, booking):
-    booking, activity_stream, access_code = show_booking(request.user, booking)
-
-    return render(
-        request,
-        "bookings/show-booking.html",
-        {
-            "booking": booking,
-            "activity_stream": activity_stream,
-            "access_code": access_code,
-        },
-    )
 
 
 @require_http_methods(["GET"])
@@ -118,9 +203,20 @@ def show_booking_series_view(request, booking_series):
 @login_required
 def cancel_bookings_of_booking_series_view(request, booking_series):
     booking_series = cancel_bookings_of_booking_series(request.user, booking_series)
+    booking_series, bookings, is_cancelable = get_bookings_of_booking_series(
+        request.user, booking_series.slug
+    )
     messages.success(request, _("Successfully cancelled all future bookings."))
 
-    return redirect("bookings:show-booking-series", booking_series.slug)
+    return render(
+        request,
+        "bookings/show_booking_series.html",
+        {
+            "bookings": bookings,
+            "booking_series": booking_series,
+            "is_cancelable": is_cancelable,
+        },
+    )
 
 
 @require_http_methods(["POST"])
@@ -156,46 +252,6 @@ def cancel_booking_series_booking_view(request, slug):
 
 @require_http_methods(["GET", "POST"])
 @login_required
-def preview_and_save_booking_view(request):
-    booking_data = request.session["booking_data"]
-    if not booking_data:
-        return redirect("bookings:create-booking")
-
-    booking = generate_single_booking(booking_data)
-    if request.method == "GET":
-        return render(
-            request,
-            "bookings/preview-booking.html",
-            {"booking": booking},
-        )
-
-    if request.method == "POST":
-        try:
-            booking = save_booking(request.user, booking)
-        except IntegrityError:
-            return HttpResponse(
-                "Booking not possbile at the given date(s).", status=400
-            )
-
-        request.session.pop("booking_data", None)
-        if booking.status == BookingStatus.CONFIRMED:
-            messages.success(request, _("Booking created successfully!"))
-        if booking.status == BookingStatus.PENDING:
-            messages.info(
-                request,
-                _(
-                    "Booking request created successfully! Please await our "
-                    "confirmation. You will be notified by mail."
-                ),
-            )
-        return redirect("bookings:show-booking", booking.slug)
-
-    messages.error(request, _("Sorry, something went wrong. Please try again."))
-    return redirect("bookings:create-booking")
-
-
-@require_http_methods(["GET", "POST"])
-@login_required
 def preview_and_save_booking_series_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
@@ -226,51 +282,6 @@ def preview_and_save_booking_series_view(request):
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
-
-
-@require_http_methods(["GET", "POST"])
-@login_required
-def create_booking_data_form_view(request):
-    if request.method == "GET":
-        startdate = request.GET.get("startdate")
-        starttime = request.GET.get("starttime")
-        endtime = request.GET.get("endtime")
-        resource = request.GET.get("resource")
-        initial_data = set_initial_booking_data(endtime, startdate, starttime, resource)
-        # user needs at least to be confirmed for one organization
-        user_has_bookingpermission = (
-            BookingPermission.objects.filter(user=request.user)
-            .filter(status=BookingPermission.Status.CONFIRMED)
-            .exists()
-        )
-
-        form = BookingForm(user=request.user, initial=initial_data)
-        return render(
-            request,
-            "bookings/create-booking.html",
-            {"form": form, "user_has_bookingpermission": user_has_bookingpermission},
-        )
-
-    if request.method == "POST":
-        form = BookingForm(data=request.POST, user=request.user)
-        if form.is_valid():
-            booking_data, rrule = create_booking_data(request.user, form)
-            request.session["booking_data"] = booking_data
-            if rrule:
-                return redirect("preview-booking-series")
-            return redirect("bookings:preview-booking")
-
-    user_has_bookingpermission = (
-        BookingPermission.objects.filter(user=request.user)
-        .filter(status=BookingPermission.Status.CONFIRMED)
-        .exists()
-    )
-
-    return render(
-        request,
-        "bookings/create-booking.html",
-        {"form": form, "user_has_bookingpermission": user_has_bookingpermission},
-    )
 
 
 @require_http_methods(["GET"])
@@ -330,49 +341,55 @@ def manager_confirm_booking_view(request, booking_slug):
 
 @require_http_methods(["GET"])
 @staff_member_required
-def manager_list_rrules_view(request: HttpRequest) -> HttpResponse:
+def manager_list_booking_series_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the recurrences for a resource manager so that they can be confirmed or
     cancelled
     """
-    show_past_rrules = request.GET.get("show_past_rrules") or False
+    show_past_booking_series = request.GET.get("show_past_booking_series") or False
     status = request.GET.get("status") or 1
     organization = request.GET.get("organization") or "all"
 
-    rrules, organizations = manager_filter_booking_series_list(
-        organization, show_past_rrules, status
+    booking_series_list, organizations = manager_filter_booking_series_list(
+        organization, show_past_booking_series, status
     )
 
     context = {
-        "rrules": rrules,
+        "booking_series_list": booking_series_list,
         "current_time": timezone.now(),
         "organizations": organizations,
         "statuses": BookingStatus.choices,
     }
 
     if request.headers.get("HX-Request"):
-        return render(request, "bookings/partials/manager_list_rrules.html", context)
+        return render(
+            request, "bookings/partials/manager_list_booking_series.html", context
+        )
 
-    return render(request, "bookings/manager_list_rrules.html", context)
+    return render(request, "bookings/manager_list_booking_series.html", context)
 
 
 @require_http_methods(["PATCH"])
 @staff_member_required
-def manager_cancel_rrule_view(request, rrule_uuid):
-    rrule = manager_cancel_booking_series(request.user, rrule_uuid)
+def manager_cancel_booking_series_view(request, booking_series_uuid):
+    booking_series = manager_cancel_booking_series(request.user, booking_series_uuid)
 
     return render(
-        request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}
+        request,
+        "bookings/partials/manager_booking_series_item.html",
+        {"booking_series": booking_series},
     )
 
 
 @require_http_methods(["PATCH"])
 @staff_member_required
-def manager_confirm_rrule_view(request, rrule_uuid):
-    rrule = manager_confirm_rrule(request.user, rrule_uuid)
+def manager_confirm_booking_series_view(request, booking_series_uuid):
+    booking_series = manager_confirm_booking_series(request.user, booking_series_uuid)
 
     return render(
-        request, "bookings/partials/manager_rrule_item.html", {"rrule": rrule}
+        request,
+        "bookings/partials/manager_booking_series_item.html",
+        {"booking_series": booking_series},
     )
 
 

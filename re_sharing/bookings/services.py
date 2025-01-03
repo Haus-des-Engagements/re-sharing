@@ -38,32 +38,59 @@ class InvalidBookingOperationError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
-def show_booking(user, booking_slug):
-    booking = get_object_or_404(Booking, slug=booking_slug)
-
-    if not user_has_bookingpermission(user, booking):
-        raise PermissionDenied
-
-    activity_stream = get_booking_activity_stream(booking)
-
-    access_code = get_access_code(
-        booking.resource.slug, booking.organization.slug, booking.timespan.lower
-    )
-
-    if access_code and booking.status in [
-        BookingStatus.PENDING,
-        BookingStatus.CANCELLED,
-    ]:
-        access_code = _("only shown when confirmed")
-    elif access_code and booking.status == BookingStatus.CONFIRMED:
-        access_code = access_code.code
+def set_initial_booking_data(endtime, startdate, starttime, resource):
+    initial_data = {}
+    if startdate:
+        initial_data["startdate"] = startdate
     else:
-        access_code = "not necessary"
+        initial_data["startdate"] = datetime.strftime(timezone.now().date(), "%Y-%m-%d")
+    if starttime:
+        initial_data["starttime"] = starttime
+        starttime = datetime.strptime(starttime, "%H:%M").astimezone(
+            timezone.get_current_timezone()
+        )
+    else:
+        starttime = timezone.localtime(timezone.now()) + timedelta(hours=1)
+        initial_data["starttime"] = datetime.strftime(starttime, "%H:00")
+    if endtime:
+        initial_data["endtime"] = endtime
+    else:
+        endtime = starttime + timedelta(hours=1)
+        initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
+    if resource:
+        initial_data["resource"] = get_object_or_404(Resource, slug=resource)
+    return initial_data
 
-    return booking, activity_stream, access_code
+
+def create_booking_data(user, form):
+    if isinstance(form.cleaned_data["timespan"], tuple):
+        start, end = form.cleaned_data["timespan"]
+        timespan = (start.isoformat(), end.isoformat())
+
+    booking_data = {
+        "title": form.cleaned_data["title"],
+        "resource": form.cleaned_data["resource"].slug,
+        "timespan": timespan,
+        "organization": form.cleaned_data["organization"].slug,
+        "start_date": form.cleaned_data["startdate"].isoformat(),
+        "end_date": form.cleaned_data["enddate"].isoformat(),
+        "start_time": form.cleaned_data["starttime"].isoformat(),
+        "end_time": form.cleaned_data["endtime"].isoformat(),
+        "user": user.slug,
+        "compensation": form.cleaned_data["compensation"].id,
+        "invoice_address": form.cleaned_data["invoice_address"],
+        "activity_description": form.cleaned_data["activity_description"],
+        "import_id": form.cleaned_data["import_id"],
+    }
+    rrule = None
+    if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
+        rrule = create_rrule(form.cleaned_data)
+        booking_data["rrule_string"] = rrule
+
+    return booking_data, rrule
 
 
-def generate_single_booking(booking_data):
+def generate_booking(booking_data):
     timespan = (
         isoparse(booking_data["timespan"][0]),
         isoparse(booking_data["timespan"][1]),
@@ -84,23 +111,23 @@ def generate_single_booking(booking_data):
 
     user = get_object_or_404(User, slug=booking_data["user"])
 
-    booking_details = {
-        "user": user,
-        "title": booking_data["title"],
-        "resource": resource,
-        "organization": organization,
-        "status": get_booking_status(user, organization, resource),
-        "timespan": timespan,
-        "start_date": booking_data["start_date"],
-        "end_date": booking_data["end_date"],
-        "start_time": booking_data["start_time"],
-        "end_time": booking_data["end_time"],
-        "compensation": compensation,
-        "total_amount": total_amount,
-        "invoice_address": booking_data["invoice_address"],
-        "activity_description": booking_data["activity_description"],
-    }
-    return create_booking(booking_details)
+    return Booking(
+        user=user,
+        title=booking_data["title"],
+        resource=resource,
+        organization=organization,
+        status=get_booking_status(user, organization, resource),
+        timespan=timespan,
+        start_date=booking_data["start_date"],
+        end_date=booking_data["end_date"],
+        start_time=booking_data["start_time"],
+        end_time=booking_data["end_time"],
+        compensation=compensation,
+        total_amount=total_amount,
+        invoice_address=booking_data["invoice_address"],
+        activity_description=booking_data["activity_description"],
+        import_id=booking_data["import_id"],
+    )
 
 
 def save_booking(user, booking):
@@ -127,25 +154,29 @@ def save_booking(user, booking):
     return booking
 
 
-def create_booking(booking_details, **kwargs):
-    booking = Booking(
-        user=booking_details["user"],
-        title=booking_details["title"],
-        resource=booking_details["resource"],
-        timespan=booking_details["timespan"],
-        end_date=booking_details["end_date"],
-        start_date=booking_details["start_date"],
-        start_time=booking_details["start_time"],
-        end_time=booking_details["end_time"],
-        organization=booking_details["organization"],
-        status=booking_details["status"],
-        compensation=booking_details["compensation"],
-        total_amount=booking_details["total_amount"],
-        invoice_address=booking_details["invoice_address"],
-        activity_description=booking_details["activity_description"],
+def show_booking(user, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+
+    activity_stream = get_booking_activity_stream(booking)
+
+    access_code = get_access_code(
+        booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
-    booking.resource_booked = kwargs.get("resource_booked") or None
-    return booking
+
+    if access_code and booking.status in [
+        BookingStatus.PENDING,
+        BookingStatus.CANCELLED,
+    ]:
+        access_code = _("only shown when confirmed")
+    elif access_code and booking.status == BookingStatus.CONFIRMED:
+        access_code = access_code.code
+    else:
+        access_code = "not necessary"
+
+    return booking, activity_stream, access_code
 
 
 def save_bookingmessage(booking, message, user):
@@ -174,30 +205,6 @@ def create_bookingmessage(booking_slug, form, user):
         return save_bookingmessage(booking, message, user)
 
     raise InvalidBookingOperationError
-
-
-def set_initial_booking_data(endtime, startdate, starttime, resource):
-    initial_data = {}
-    if startdate:
-        initial_data["startdate"] = startdate
-    else:
-        initial_data["startdate"] = datetime.strftime(timezone.now().date(), "%Y-%m-%d")
-    if starttime:
-        initial_data["starttime"] = starttime
-        starttime = datetime.strptime(starttime, "%H:%M").astimezone(
-            timezone.get_current_timezone()
-        )
-    else:
-        starttime = timezone.localtime(timezone.now()) + timedelta(hours=1)
-        initial_data["starttime"] = datetime.strftime(starttime, "%H:00")
-    if endtime:
-        initial_data["endtime"] = endtime
-    else:
-        endtime = starttime + timedelta(hours=1)
-        initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
-    if resource:
-        initial_data["resource"] = get_object_or_404(Resource, slug=resource)
-    return initial_data
 
 
 def cancel_booking(user, booking_slug):
@@ -291,33 +298,6 @@ def confirm_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
-def create_booking_data(user, form):
-    if isinstance(form.cleaned_data["timespan"], tuple):
-        start, end = form.cleaned_data["timespan"]
-        timespan = (start.isoformat(), end.isoformat())
-
-    booking_data = {
-        "title": form.cleaned_data["title"],
-        "resource": form.cleaned_data["resource"].slug,
-        "timespan": timespan,
-        "organization": form.cleaned_data["organization"].slug,
-        "start_date": form.cleaned_data["startdate"].isoformat(),
-        "end_date": form.cleaned_data["enddate"].isoformat(),
-        "start_time": form.cleaned_data["starttime"].isoformat(),
-        "end_time": form.cleaned_data["endtime"].isoformat(),
-        "user": user.slug,
-        "compensation": form.cleaned_data["compensation"].id,
-        "invoice_address": form.cleaned_data["invoice_address"],
-        "activity_description": form.cleaned_data["activity_description"],
-    }
-    rrule = None
-    if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
-        rrule = create_rrule(form.cleaned_data)
-        booking_data["rrule_string"] = rrule
-
-    return booking_data, rrule
-
-
 def manager_filter_bookings_list(  # noqa: PLR0913
     organization,
     show_past_bookings,
@@ -395,11 +375,11 @@ def manager_confirm_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
-def manager_confirm_rrule(user, rrule_uuid):
-    rrule = get_object_or_404(BookingSeries, uuid=rrule_uuid)
-    bookings = get_list_or_404(Booking, booking_series=rrule)
-    rrule.status = BookingStatus.CONFIRMED
-    rrule.save()
+def manager_confirm_booking_series(user, booking_series_uuid):
+    booking_series = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
+    bookings = get_list_or_404(Booking, booking_series=booking_series)
+    booking_series.status = BookingStatus.CONFIRMED
+    booking_series.save()
     for booking in bookings:
         if booking.is_confirmable():
             with set_actor(user):
@@ -407,11 +387,11 @@ def manager_confirm_rrule(user, rrule_uuid):
                 booking.save()
     async_task(
         "re_sharing.organizations.mails.recurrence_confirmation_email",
-        rrule,
+        booking_series,
         task_name="recurrence-confirmation-email",
     )
 
-    return rrule
+    return booking_series
 
 
 def collect_booking_reminder_mails():

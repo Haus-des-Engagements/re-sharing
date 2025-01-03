@@ -177,6 +177,7 @@ class BookingForm(forms.ModelForm):
             )
         )
         self.helper.layout = Layout(
+            Row(Column("import_id")),
             Row(
                 Column("title"),
                 Column("organization"),
@@ -453,4 +454,5 @@ class BookingForm(forms.ModelForm):
             "number_of_attendees",
             "invoice_address",
             "activity_description",
+            "import_id",
         ]

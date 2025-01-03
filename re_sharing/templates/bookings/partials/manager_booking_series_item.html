@@ -1,0 +1,45 @@
+{% load i18n %}
+
+<td>{{ booking_series.created|date:"d.m.Y H:i" }}</td>
+<td>{{ booking_series.first_booking_date|date:"d.m.Y" }} - {{ booking_series.last_booking_date|date:"d.m.Y" }}</td>
+<td>
+  {{ booking_series.get_first_booking.timespan.lower|date:"H:i" }}
+  - {{ booking_series.get_first_booking.timespan.upper|date:"H:i" }}
+</td>
+<td>{{ booking_series.resource }}</td>
+<td>
+  <a href="{% url "bookings:show-booking-series" booking_series.slug %}">{{ booking_series.title }}</a>
+</td>
+<td>{{ booking_series.organization }}</td>
+<td>
+  <span class="fs-6 badge text-bg-status-{{ booking_series.status }}">{{ booking_series.get_status_display }}</span>
+</td>
+<td class="text-nowrap">
+  <span class="fs-6 badge text-bg-status-1">{{ booking_series.get_pending|length }}</span>
+  <span class="fs-6 badge text-bg-status-2">{{ booking_series.get_confirmed|length }}</span>
+  <span class="fs-6 badge text-bg-status-3">{{ booking_series.get_cancelled|length }}</span>
+</td>
+<td>
+  {% if booking_series.status == 1 %}
+    <button id="confirm-button"
+            type="submit"
+            class="btn btn-sm btn-outline-success"
+            value="Submit"
+            hx-confirm="{% trans 'Are you sure you want to confirm all bookings?' %}"
+            hx-patch="{% url 'bookings:manager-confirm-booking-series' rrule_uuid=booking_series.uuid %}"
+            hx-swap="innerHTML"
+            hx-target="#tr-{{ booking_series.uuid }}">{% trans "Confirm" %}</button>
+  {% endif %}
+</td>
+<td>
+  {% if booking_series.status == 1 or booking_series.status == 2 %}
+    <button id="cancel-button"
+            type="submit"
+            class="btn btn-sm btn-outline-danger"
+            value="Submit"
+            hx-confirm="{% trans 'Are you sure you want to cancel all bookings?' %}"
+            hx-patch="{% url 'bookings:manager-cancel-booking-series' rrule_uuid=booking_series.uuid %}"
+            hx-swap="innerHTML"
+            hx-target="#tr-{{ booking_series.uuid }}">{% trans "Cancel" %}</button>
+  {% endif %}
+</td>

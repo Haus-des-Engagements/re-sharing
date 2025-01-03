@@ -18,9 +18,9 @@
     </a>
   </h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
-        action="{% url 'bookings:manager-list-recurrences' %}"
+        action="{% url 'bookings:manager-list-booking_series' %}"
         method="get"
-        hx-get="{% url 'bookings:manager-list-recurrences' %}"
+        hx-get="{% url 'bookings:manager-list-booking_series' %}"
         hx-target="#booking-list"
         hx-trigger="change"
         hx-indicator="#spinner">
@@ -42,10 +42,10 @@
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"
-             name="show_past_rrules"
+             name="show_past_booking_series"
              class="form-check-input"
-             id="id_show_past_rrules" />
-      <label for="id_show_past_rrules" class="form-check-label">{% trans "show past recurrence rules" %}</label>
+             id="id_show_past_booking_series" />
+      <label for="id_show_past_booking_series" class="form-check-label">{% trans "show past booking series" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"
@@ -53,5 +53,5 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="booking-list">{% include "bookings/partials/manager_list_rrules.html" %}</div>
+  <div id="booking-list">{% include "bookings/partials/manager_list_booking_series.html" %}</div>
 {% endblock content %}
