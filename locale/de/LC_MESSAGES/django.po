@@ -1004,7 +1004,7 @@ msgstr "Neue Buchungsanfrage"
 
 #: re_sharing/templates/bookings/create-booking.html:14
 msgid "You first need to create an organization you want to book for."
-msgstr "Du musst erst eine Organisation anlegen für die du buchen kanns."
+msgstr "Du musst erst eine Organisation anlegen für die du buchen kannst."
 
 #: re_sharing/templates/bookings/create-booking.html:15
 msgid "Create a new organization."

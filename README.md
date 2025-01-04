@@ -1,4 +1,4 @@
-# Resourcesharing
+# Re(source)-Sharing
 
 Easily share resources!
 
@@ -64,8 +64,8 @@ The used packages are listed in /requirements. When packages are added or remove
 ### Postgres
 Django connects to a Postgres Database, that runs inside vagrant. The database can be recreated with these commands:
 
-* Delete the database: `dropdb devicedb`
-* Create database: `createdb devicedb`
+* Delete the database: `dropdb re-sharing`
+* Create database: `createdb re-sharing`
 
 After creating the new (empty) database, migrations need to be applied again.
 
@@ -102,14 +102,11 @@ To help keeping a good style, GitLab is running the following pipeline after pus
 * pre-commit hook
 * pytest
 
-## Deployment
-We currently deploy automatically the main branch to https://raum.apps.haus-des-engagements.de/ via caprover.
-
 ## Production
 
 ### Sentry
 
-Sentry is an error logging aggregator service. You can sign up for a free account at <https://sentry.io/signup/?code=cookiecutter> or download and host it yourself.
+Sentry is an error logging aggregator service. You can sign up for a free account at <https://sentry.io/> or download and host it yourself.
 The system is set up with reasonable defaults, including 404 logging and integration with the WSGI application.
 
 You must set the DSN url in production.

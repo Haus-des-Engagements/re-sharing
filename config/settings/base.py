@@ -87,6 +87,8 @@ THIRD_PARTY_APPS = [
     "tinymce",
     "storages",
     "import_export",
+    "hijack",
+    "hijack.contrib.admin",
 ]
 
 LOCAL_APPS = [
@@ -154,6 +156,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
+    "hijack.middleware.HijackUserMiddleware",
 ]
 
 # STATIC
