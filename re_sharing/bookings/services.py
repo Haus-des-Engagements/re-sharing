@@ -18,7 +18,7 @@ from django_q.tasks import async_task
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
-from re_sharing.bookings.services_recurrences import create_rrule
+from re_sharing.bookings.services_booking_series import create_rrule
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,

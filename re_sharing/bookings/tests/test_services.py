@@ -31,11 +31,15 @@ from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
 from re_sharing.bookings.services import set_initial_booking_data
 from re_sharing.bookings.services import show_booking
-from re_sharing.bookings.services_recurrences import cancel_bookings_of_booking_series
-from re_sharing.bookings.services_recurrences import create_booking_series_and_bookings
-from re_sharing.bookings.services_recurrences import create_rrule
-from re_sharing.bookings.services_recurrences import manager_cancel_booking_series
-from re_sharing.bookings.services_recurrences import save_booking_series
+from re_sharing.bookings.services_booking_series import (
+    cancel_bookings_of_booking_series,
+)
+from re_sharing.bookings.services_booking_series import (
+    create_booking_series_and_bookings,
+)
+from re_sharing.bookings.services_booking_series import create_rrule
+from re_sharing.bookings.services_booking_series import manager_cancel_booking_series
+from re_sharing.bookings.services_booking_series import save_booking_series
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.organizations.models import BookingPermission

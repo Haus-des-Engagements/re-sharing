@@ -20,8 +20,8 @@ from re_sharing.utils.models import BookingStatus
 from .models import Booking
 from .models import BookingMessage
 from .models import BookingSeries
-from .services_recurrences import generate_bookings
-from .services_recurrences import max_future_booking_date
+from .services_booking_series import generate_bookings
+from .services_booking_series import max_future_booking_date
 
 
 @admin.register(Booking)

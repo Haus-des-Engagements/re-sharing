@@ -31,10 +31,10 @@ def get_recipient_booking(booking):
     return [booking.user.email]
 
 
-def get_recipient_rrule(rrule):
-    if rrule.organization.send_booking_emails_only_to_organization:
-        return [rrule.organization.email]
-    return [rrule.user.email]
+def get_recipient_booking_series(booking_series):
+    if booking_series.organization.send_booking_emails_only_to_organization:
+        return [booking_series.organization.email]
+    return [booking_series.user.email]
 
 
 def booking_ics(booking):
@@ -129,37 +129,49 @@ def manager_new_booking(booking):
     )
 
 
-def recurrence_confirmation_email(rrule):
+def booking_series_confirmation_email(booking_series):
     domain = Site.objects.get_current().domain
-    first_booking = rrule.get_first_booking()
-    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
+    first_booking = booking_series.get_first_booking()
+    context = {
+        "booking_series": booking_series,
+        "domain": domain,
+        "first_booking": first_booking,
+    }
 
     send_email_with_template(
-        EmailTemplate.EmailTypeChoices.RECURRENCE_CONFIRMATION,
+        EmailTemplate.EmailTypeChoices.BOOKING_SERIES_CONFIRMATION,
         context,
-        get_recipient_rrule(rrule),
+        get_recipient_booking_series(booking_series),
     )
 
 
-def recurrence_cancellation_email(rrule):
+def booking_series_cancellation_email(booking_series):
     domain = Site.objects.get_current().domain
-    first_booking = rrule.get_first_booking()
-    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
+    first_booking = booking_series.get_first_booking()
+    context = {
+        "booking_series": booking_series,
+        "domain": domain,
+        "first_booking": first_booking,
+    }
 
     send_email_with_template(
-        EmailTemplate.EmailTypeChoices.RECURRENCE_CANCELLATION,
+        EmailTemplate.EmailTypeChoices.BOOKING_SERIES_CANCELLATION,
         context,
-        get_recipient_rrule(rrule),
+        get_recipient_booking_series(booking_series),
     )
 
 
-def manager_new_recurrence(rrule):
+def manager_new_booking_series_email(booking_series):
     domain = Site.objects.get_current().domain
-    first_booking = rrule.get_first_booking
-    context = {"rrule": rrule, "domain": domain, "first_booking": first_booking}
+    first_booking = booking_series.get_first_booking
+    context = {
+        "booking_series": booking_series,
+        "domain": domain,
+        "first_booking": first_booking,
+    }
 
     send_email_with_template(
-        EmailTemplate.EmailTypeChoices.MANAGER_NEW_RECURRENCE,
+        EmailTemplate.EmailTypeChoices.MANAGER_NEW_BOOKING_SERIES,
         context,
         [settings.DEFAULT_MANAGER_EMAIL],
     )

@@ -60,7 +60,7 @@ def get_compensations(request):
             request, "bookings/partials/compensations.html", {"compensations": []}
         )
     resource = get_object_or_404(Resource, id=resource_id)
-    compensations = Compensation.objects.filter(resource=resource)
+    compensations = Compensation.objects.filter(resource=resource, is_active=True)
     return render(
         request,
         "bookings/partials/compensations.html",

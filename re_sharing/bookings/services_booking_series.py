@@ -184,9 +184,9 @@ def save_booking_series(user, bookings, booking_series):
         booking.save()
 
     async_task(
-        "re_sharing.organizations.mails.manager_new_recurrence",
+        "re_sharing.organizations.mails.manager_new_booking_series_email",
         rrule,
-        task_name="manager-new-recurrence",
+        task_name="manager-new-booking-series-email",
     )
 
     return bookings, booking_series
@@ -260,9 +260,9 @@ def manager_cancel_booking_series(user, booking_series_uuid):
                 booking.save()
 
     async_task(
-        "re_sharing.organizations.mails.recurrence_cancellation_email",
+        "re_sharing.organizations.mails.booking_series_cancellation_email",
         rrule,
-        task_name="recurrence-cancellation-email",
+        task_name="booking-series-cancellation-email",
     )
     return rrule
 

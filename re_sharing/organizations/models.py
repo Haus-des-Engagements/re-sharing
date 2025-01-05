@@ -272,13 +272,13 @@ class EmailTemplate(TimeStampedModel):
             "booking_reminder",
             _("Booking reminder"),
         )
-        RECURRENCE_CONFIRMATION = (
-            "recurrence_confirmation",
-            _("Recurrence confirmation"),
+        BOOKING_SERIES_CONFIRMATION = (
+            "booking_series_confirmation",
+            _("Booking series confirmation"),
         )
-        RECURRENCE_CANCELLATION = (
-            "recurrence_cancellation",
-            _("Recurrence cancellation"),
+        BOOKING_SERIES_CANCELLATION = (
+            "booking_series_cancellation",
+            _("Booking series cancellation"),
         )
         ORGANIZATION_CONFIRMATION = (
             "organization_confirmation",
@@ -292,9 +292,9 @@ class EmailTemplate(TimeStampedModel):
             "manager_new_organization",
             _("Manager new organization"),
         )
-        MANAGER_NEW_RECURRENCE = (
-            "manager_new_recurrence",
-            _("Manager new recurrence"),
+        MANAGER_NEW_BOOKING_SERIES = (
+            "manager_new_booking_series",
+            _("Manager new booking series"),
         )
         MANAGER_NEW_BOOKING = "manager_new_booking", _("Manager new booking")
         NEW_BOOKING_MESSAGE = "new_booking_message", _("New booking message")

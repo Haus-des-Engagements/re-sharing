@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
 from django.db.models import SET_NULL
+from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateTimeField
 from django.db.models import ForeignKey
@@ -156,6 +157,7 @@ class Compensation(TimeStampedModel):
     name = CharField(_("Name"), max_length=255)
     conditions = CharField(_("Conditions"), max_length=512, blank=True)
     hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
+    is_active = BooleanField(_("Active"), default=True)
 
     class Meta:
         verbose_name = _("Compensation")

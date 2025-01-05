@@ -28,13 +28,13 @@ from .services import manager_filter_invoice_bookings_list
 from .services import save_booking
 from .services import set_initial_booking_data
 from .services import show_booking
-from .services_recurrences import cancel_bookings_of_booking_series
-from .services_recurrences import create_booking_series_and_bookings
-from .services_recurrences import get_booking_series_list
-from .services_recurrences import get_bookings_of_booking_series
-from .services_recurrences import manager_cancel_booking_series
-from .services_recurrences import manager_filter_booking_series_list
-from .services_recurrences import save_booking_series
+from .services_booking_series import cancel_bookings_of_booking_series
+from .services_booking_series import create_booking_series_and_bookings
+from .services_booking_series import get_booking_series_list
+from .services_booking_series import get_bookings_of_booking_series
+from .services_booking_series import manager_cancel_booking_series
+from .services_booking_series import manager_filter_booking_series_list
+from .services_booking_series import save_booking_series
 
 
 @require_http_methods(["GET", "POST"])
