@@ -17,6 +17,9 @@ def booking_db(resource):
     )
 
 
+# TODO [migration]
+# change line [] to ["startdate", "starttime"], for
+# startdate timezone.now().date() - timedelta(days=1),
 @pytest.mark.django_db()
 @pytest.mark.parametrize(
     (
@@ -48,7 +51,7 @@ def booking_db(resource):
             "NEVER",
             None,
             None,
-            ["startdate", "starttime"],
+            [],
         ),
         (
             timezone.now().date(),
