@@ -89,6 +89,11 @@ class Resource(Model):
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
     address = CharField(_("Address"), max_length=256)
+    is_private = BooleanField(
+        _("Private"),
+        help_text=_("Only bookable with specific permissions"),
+        default=False,
+    )
 
     class Meta:
         verbose_name = _("Resource")

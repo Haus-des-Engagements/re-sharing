@@ -123,7 +123,7 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
                 if "COUNT" not in obj.rrule and "UNTIL" not in obj.rrule:
                     obj.last_booking_date = None
                 else:
-                    obj.last_occurrence_date = list(rrulestr(obj.rrule))[-1]
+                    obj.last_booking_date = list(rrulestr(obj.rrule))[-1]
 
         super().save_model(request, obj, form, change)
 

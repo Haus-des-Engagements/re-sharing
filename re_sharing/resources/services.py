@@ -90,19 +90,37 @@ def show_resource(resource_slug, date_string):
     return resource, time_slots, weekdays, dates, compensations
 
 
-def filter_resources(persons_count, start_datetime):
-    resources = Resource.objects.all()
+def filter_resources(user, persons_count, start_datetime):
+    """
+    Filters resources based on persons_count, start_datetime, and user's permissions.
 
+    Args:
+        persons_count (int): Minimum number of persons the resource must accommodate.
+        start_datetime (str): The start datetime to filter resources that are not
+        booked.
+        user (User): The user for whom the resources are being filtered.
+
+    Returns:
+        QuerySet: A filtered queryset of resources, including only the resources the
+        user is allowed to see.
+    """
+    resources = user.get_resources()
+
+    # Filter resources based on persons_count
     if persons_count:
         resources = resources.filter(max_persons__gte=persons_count)
+
+    # Exclude resources that overlap with other bookings at the specified time
     if start_datetime:
         start_datetime = timezone.make_aware(parser.parse(start_datetime))
         end_datetime = start_datetime + timedelta(minutes=30)
         overlapping_bookings = Booking.objects.filter(
-            timespan__overlap=(start_datetime, end_datetime),
+            timespan__overlap=(start_datetime, end_datetime)
         )
         booked_resource_ids = overlapping_bookings.values_list("resource_id", flat=True)
         resources = resources.exclude(id__in=booked_resource_ids)
+
+    # Prefetch related data to optimize performance
     return resources.prefetch_related(
         "resourceimages_of_resource", "compensations_of_resource"
     )
@@ -138,8 +156,9 @@ def get_access_code(resource_slug, organization_slug, timestamp):
     return access_code
 
 
-def planner_table(date_string):
-    resources = Resource.objects.all().order_by("id")
+def planner_table(user, date_string):
+    resources = user.get_resources()
+    resources = resources.order_by("id")
 
     shown_date = (
         parser.parse(date_string).date() if date_string else timezone.now().date()

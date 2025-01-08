@@ -64,6 +64,13 @@ class OrganizationGroup(TimeStampedModel):
     show_on_organization_creation_wording = CharField(
         _("This will be displayed in the form"), max_length=256, blank=True
     )
+    bookable_private_resources = ManyToManyField(
+        Resource,
+        verbose_name=_("Bookable private resources"),
+        related_name="bookableprivateressources_of_organizationgroup",
+        related_query_name="bookableprivateressource_of_organizationgroup",
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Organization group")

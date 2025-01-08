@@ -15,6 +15,7 @@ from re_sharing.resources.services import show_resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import ResourceFactory
+from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
 
@@ -151,8 +152,9 @@ def test_filter_resources(persons_count, start_datetime, expected):
     ResourceFactory.create(name="Resource1", max_persons=2)
     ResourceFactory.create(name="Resource2", max_persons=3)
     ResourceFactory.create(name="Small Resource", max_persons=1)
+    user = UserFactory()
 
-    resources = filter_resources(persons_count, start_datetime)
+    resources = filter_resources(user, persons_count, start_datetime)
     assert {resource.name for resource in resources} == set(expected)
 
 
@@ -235,7 +237,8 @@ class TestResourcePlanner(TestCase):
 
         resource1 = ResourceFactory()
         resource2 = ResourceFactory()
-        resources, timeslots, dates = planner_table(date_string)
+        user = UserFactory()
+        resources, timeslots, dates = planner_table(user, date_string)
 
         number_of_timeslots = 48
         assert len(timeslots) == number_of_timeslots
@@ -272,6 +275,7 @@ class TestResourcePlanner(TestCase):
     def test_some_bookings_exist(self):
         resource1 = ResourceFactory()
         resource2 = ResourceFactory()
+        user = UserFactory()
         booking1 = BookingFactory(
             resource=resource1,
             status=BookingStatus.CONFIRMED,
@@ -303,7 +307,7 @@ class TestResourcePlanner(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        resources, timeslots, dates = planner_table(date_string)
+        resources, timeslots, dates = planner_table(user, date_string)
 
         number_of_timeslots = 48
         assert len(timeslots) == number_of_timeslots

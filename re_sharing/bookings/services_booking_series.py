@@ -144,7 +144,7 @@ def create_booking_series_and_bookings(booking_data):
     bs.first_booking_date = next(iter(rrulestr(bs.rrule)))
     bs.invoice_address = booking_data["invoice_address"]
     bs.compensation = None
-    bs.total_amount_per_occurrence = None
+    bs.total_amount_per_booking = None
     bs.activity_description = booking_data["activity_description"]
     bs.import_id = booking_data.get("import_id")
     if booking_data["compensation"]:
@@ -153,9 +153,7 @@ def create_booking_series_and_bookings(booking_data):
         )
         if bs.compensation.hourly_rate is not None:
             duration_hours = (timespan[1] - timespan[0]).total_seconds() / 3600
-            bs.total_amount_per_occurrence = (
-                duration_hours * bs.compensation.hourly_rate
-            )
+            bs.total_amount_per_booking = duration_hours * bs.compensation.hourly_rate
 
     if "COUNT" not in bs.rrule and "UNTIL" not in bs.rrule:
         bs.last_booking_date = None
@@ -282,8 +280,7 @@ def extend_booking_series():
     )
 
     bs_set = BookingSeries.objects.filter(
-        Q(last_occurrence_date=None)
-        | Q(last_occurrence_date__gte=start_new_bookings_at)
+        Q(last_booking_date=None) | Q(last_booking_date__gte=start_new_bookings_at)
     ).filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED])
     bs_set = bs_set.order_by("created")
     new_bookings = []
@@ -336,7 +333,7 @@ def generate_bookings(booking_series, start, end):
             end_date=occurrence.date(),
             end_time=booking_series.end_time,
             compensation=booking_series.compensation,
-            total_amount=booking_series.total_amount_per_occurrence,
+            total_amount=booking_series.total_amount_per_booking,
             booking_series=booking_series,
             auto_generated_on=timezone.now(),
             invoice_address=booking_series.invoice_address,

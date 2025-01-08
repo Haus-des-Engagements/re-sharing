@@ -65,7 +65,7 @@ class BookingForm(forms.ModelForm):
         required=True,
     )
     resource = forms.ModelChoiceField(
-        queryset=Resource.objects.all(),
+        queryset=Resource.objects.none(),
         label=_("Resource"),
         widget=forms.Select(
             attrs={
@@ -337,6 +337,7 @@ class BookingForm(forms.ModelForm):
             for minute in range(0, 60, 30)
         ]
         self.fields["endtime"].choices = self.fields["starttime"].choices
+        self.fields["resource"].queryset = user.get_resources()
 
         if "resource" in self.initial:
             self.fields["compensation"].queryset = Compensation.objects.filter(

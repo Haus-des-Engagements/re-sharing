@@ -13,7 +13,7 @@ from re_sharing.resources.services import show_resource
 def list_resources_view(request):
     persons_count = request.GET.get("persons_count")
     start_datetime = request.GET.get("start_datetime")
-    resources = filter_resources(persons_count, start_datetime)
+    resources = filter_resources(request.user, persons_count, start_datetime)
     context = {"resources": resources}
     if request.headers.get("HX-Request"):
         return render(request, "resources/partials/list_filter_resources.html", context)
@@ -44,7 +44,7 @@ def show_resource_view(request, resource_slug):
 @require_http_methods(["GET"])
 def planner_view(request):
     date_string = request.GET.get("date")
-    resources, timeslots, dates = planner_table(date_string)
+    resources, timeslots, dates = planner_table(request.user, date_string)
     context = {"resources": resources, "timeslots": timeslots, "dates": dates}
 
     if request.headers.get("HX-Request"):

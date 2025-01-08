@@ -11,6 +11,7 @@ from re_sharing.resources.views import get_compensations
 from re_sharing.resources.views import list_resources_view
 from re_sharing.resources.views import planner_view
 from re_sharing.resources.views import show_resource_view
+from re_sharing.users.tests.factories import UserFactory
 
 
 class ShowResourceViewTest(TestCase):
@@ -48,9 +49,11 @@ class ResourceListViewTest(TestCase):
         self.resource1 = ResourceFactory(slug="green")
         self.resource2 = ResourceFactory(slug="blue")
         self.factory = RequestFactory()
+        self.user = UserFactory()
 
     def test_resource_list_view(self):
         request = self.factory.get(reverse("resources:list-resources"))
+        request.user = self.user
         response = list_resources_view(request)
         assert response.status_code == HTTPStatus.OK
 
@@ -60,6 +63,7 @@ class ResourceListViewTest(TestCase):
         request = self.factory.get(
             reverse("resources:list-resources"), HTTP_HX_REQUEST="true"
         )
+        request.user = self.user
         response = list_resources_view(request)
 
         # Check status code of the response
@@ -71,9 +75,11 @@ class PlannerViewTest(TestCase):
         self.resource1 = ResourceFactory(slug="green")
         self.resource2 = ResourceFactory(slug="blue")
         self.factory = RequestFactory()
+        self.user = UserFactory()
 
     def test_planner_view(self):
         request = self.factory.get(reverse("resources:planner"))
+        request.user = self.user
         response = planner_view(request)
         assert response.status_code == HTTPStatus.OK
 
@@ -81,6 +87,7 @@ class PlannerViewTest(TestCase):
     def test_planner_view_hx_request(self):
         # Send GET request to the view with 'HX-Request' in headers
         request = self.factory.get(reverse("resources:planner"), HTTP_HX_REQUEST="true")
+        request.user = self.user
         response = planner_view(request)
 
         # Check status code of the response
