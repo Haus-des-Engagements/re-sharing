@@ -33,9 +33,12 @@ class BookingStatus(IntegerChoices):
 def get_booking_status(user, organization, resource):
     if user.is_staff or user.is_superuser:
         return BookingStatus.CONFIRMED
-    if organization.organization_groups.filter(
-        auto_confirmed_resources=resource
-    ).exists():
+    if (
+        organization.organization_groups.filter(
+            auto_confirmed_resources=resource
+        ).exists()
+        and organization.status == organization.Status.CONFIRMED
+    ):
         return BookingStatus.CONFIRMED
     if user.usergroups_of_user.filter(auto_confirmed_resources=resource).exists():
         return BookingStatus.CONFIRMED

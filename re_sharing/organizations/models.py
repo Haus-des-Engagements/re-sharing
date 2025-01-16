@@ -157,11 +157,6 @@ class Organization(TimeStampedModel):
     area_of_activity = IntegerField(
         verbose_name=_("Main area of activity"), choices=ActivityArea.choices
     )
-    is_coworking = BooleanField(
-        _("Co-Worker:in"),
-        help_text=_("Only applicable if you are currently co-working in the HdE"),
-        default=False,
-    )
     is_public = BooleanField(
         _("Organization information is publicly visible"),
         default=True,

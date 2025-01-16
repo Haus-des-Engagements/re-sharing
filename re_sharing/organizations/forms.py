@@ -6,10 +6,13 @@ from crispy_forms.layout import Layout
 from crispy_forms.layout import Row
 from crispy_forms.layout import Submit
 from django import forms
+from django.forms import ModelMultipleChoiceField
+from django.forms.widgets import CheckboxSelectMultiple
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from .models import Organization
+from .models import OrganizationGroup
 
 
 class OrganizationForm(forms.ModelForm):
@@ -32,11 +35,6 @@ class OrganizationForm(forms.ModelForm):
             "Please select only if you have a valid certificate of tax exemption. "
             "Of course you can also book resources if you're not officially charitable!"
         ),
-        required=False,
-    )
-    is_coworking = forms.BooleanField(
-        label=_("We are Co-Working at the HdE."),
-        help_text=_("Please select only if you have a Co-Working contract."),
         required=False,
     )
     is_public = forms.BooleanField(
@@ -83,6 +81,12 @@ class OrganizationForm(forms.ModelForm):
         required=False,
         help_text=_("Please upload a single PDF file."),
     )
+    organization_groups = ModelMultipleChoiceField(
+        queryset=OrganizationGroup.objects.filter(show_on_organization_creation=True),
+        widget=CheckboxSelectMultiple,
+        required=False,
+        label="",
+    )
 
     class Meta:
         model = Organization
@@ -96,7 +100,6 @@ class OrganizationForm(forms.ModelForm):
             "legal_form",
             "other_legal_form",
             "is_charitable",
-            "is_coworking",
             "email",
             "phone",
             "is_public",
@@ -104,12 +107,21 @@ class OrganizationForm(forms.ModelForm):
             "entitled",
             "values_approval",
             "usage_agreement",
+            "organization_groups",
         )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["organization_groups"].label_from_instance = (
+            lambda organization_group: (
+                organization_group.show_on_organization_creation_wording
+            )
+            or organization_group.name
+        )
         self.helper = FormHelper()
         address = _("Address")
+        consent = _("Consent")
+        affiliation = _("Affiliation")
         self.helper.layout = Layout(
             Column("name", css_class="form-group col-md-8 mb-0"),
             Column("description", css_class="form-group col-md-8 mb-0"),
@@ -143,10 +155,30 @@ class OrganizationForm(forms.ModelForm):
                 css_class="form-row",
             ),
             Field("usage_agreement", css_class="custom-file-input"),
-            HTML("<h3 class='mt-5 mb-3'>Weiteres</h3>"),
-            "is_coworking",
+            HTML("<h3 class='mt-5 mb-3'>"),
+            HTML(affiliation),
+            HTML("</h3>"),
+            "organization_groups",
+            HTML("<h3 class='mt-5 mb-3'>"),
+            HTML(consent),
+            HTML("</h3>"),
             "is_public",
             "values_approval",
             "entitled",
             Submit("submit", _("Save organization")),
         )
+
+    def save(self, commit=True):  # noqa: FBT002
+        instance = super().save(commit=False)
+
+        # Save the instance if commit is True
+        if commit:
+            instance.save()
+
+        # Many-to-many fields must be added after the instance is saved
+        if (
+            instance.pk
+        ):  # Ensure the instance has been saved before accessing its M2M fields
+            instance.organization_groups.set(self.cleaned_data["organization_groups"])
+
+        return instance
