@@ -26,7 +26,7 @@
             class="btn btn-sm btn-outline-success"
             value="Submit"
             hx-confirm="{% trans 'Are you sure you want to confirm all bookings?' %}"
-            hx-patch="{% url 'bookings:manager-confirm-booking-series' rrule_uuid=booking_series.uuid %}"
+            hx-patch="{% url 'bookings:manager-confirm-booking-series' booking_series_uuid=booking_series.uuid %}"
             hx-swap="innerHTML"
             hx-target="#tr-{{ booking_series.uuid }}">{% trans "Confirm" %}</button>
   {% endif %}
@@ -38,7 +38,7 @@
             class="btn btn-sm btn-outline-danger"
             value="Submit"
             hx-confirm="{% trans 'Are you sure you want to cancel all bookings?' %}"
-            hx-patch="{% url 'bookings:manager-cancel-booking-series' rrule_uuid=booking_series.uuid %}"
+            hx-patch="{% url 'bookings:manager-cancel-booking-series' booking_series_uuid=booking_series.uuid %}"
             hx-swap="innerHTML"
             hx-target="#tr-{{ booking_series.uuid }}">{% trans "Cancel" %}</button>
   {% endif %}
