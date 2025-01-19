@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .views import add_user_view
 from .views import cancel_bookingpermission_view
 from .views import confirm_bookingpermission_view
 from .views import create_organization_view
@@ -43,6 +44,11 @@ urlpatterns = [
         request_bookingpermission_view,
         name="request-bookingpermission",
     ),  # POST bookingpermission
+    path(
+        "<slug:organization>/add-user/",
+        add_user_view,
+        name="add-user",
+    ),
     path(
         "<slug:organization>/confirm-bookingpermission/<slug:user>/",
         confirm_bookingpermission_view,

@@ -11,6 +11,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 
 from .forms import OrganizationForm
@@ -113,6 +114,47 @@ def delete_organization_view(request, organization):
         "You are not allowed to delete this organization.",
         status=HTTPStatus.UNAUTHORIZED,
     )
+
+
+@login_required
+def add_user_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
+
+    if not user_has_admin_bookingpermission(request.user, organization):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+        role = request.POST.get("role")
+
+        if not email or not role:
+            messages.error(request, "Email and role are required.")
+            return redirect(
+                "organizations:show-organization", organization=organization.slug
+            )
+
+        try:
+            # Check if user exists by email
+            user = User.objects.get(email=email)
+            # Create or get the BookingPermission
+            booking_permission, created = BookingPermission.objects.get_or_create(
+                user=user,
+                organization=organization,
+                defaults={
+                    "status": BookingPermission.Status.CONFIRMED,
+                    "role": BookingPermission.Role.ADMIN
+                    if role == "admin"
+                    else BookingPermission.Role.BOOKER,
+                },
+            )
+            if created:
+                messages.success(request, f"{user.email} was successfully added!")
+            else:
+                messages.info(request, f"{user.email} already has permissions.")
+        except User.DoesNotExist:
+            messages.error(request, f"No user found with email: {email}")
+
+    return redirect("organizations:show-organization", organization=organization.slug)
 
 
 @login_required

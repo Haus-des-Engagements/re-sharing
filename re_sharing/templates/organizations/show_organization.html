@@ -158,6 +158,38 @@
   <div class="row mt-5 mb-2">
     <h2>{% trans "Persons authorised to make bookings" %}</h2>
   </div>
+  {% if is_admin %}
+    <div class="mt-3">
+      {% trans "As administrator for this organization you can give other registered users the permission to book for this organization." %}
+      <ul>
+        <li>{% trans "'Bookers' can book and cancel bookings." %}</li>
+        <li>{% trans "'Administrators' can additionally add and remove user for this organization." %}</li>
+      </ul>
+      <form class="row align-items-center mb-5"
+            method="post"
+            action="{% url 'organizations:add-user' organization=organization.slug %}">
+        {% csrf_token %}
+        <div class="col-auto">
+          <input type="email"
+                 class="form-control"
+                 placeholder="E-Mail"
+                 aria-label="E-Mail"
+                 id="email"
+                 name="email"
+                 required />
+        </div>
+        <div class="col-auto">
+          <select class="form-select" id="role" name="role" aria-label="Role" required>
+            <option value="booker">{% trans "Booker" %}</option>
+            <option value="admin">{% trans "Admin" %}</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">{% trans "Add User" %}</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
   {% if not permitted_users %}
     <div>{% trans "Only visible for other authorised persons." %}</div>
     <div id="{{ organization.slug }}-request-bookingpermission">
@@ -209,7 +241,7 @@
                     </button>
                   </div>
                 {% endif %}
-                {% if request.user == user and user.permission_status == 2 and user != request.user %}
+                {% if is_admin and user.permission_status == 2 and user != request.user %}
                   <div id="{{ user.slug }}-cancel-bookingpermission">
                     <button class="btn btn-outline-danger"
                             hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
