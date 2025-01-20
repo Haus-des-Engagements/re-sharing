@@ -16,6 +16,7 @@ from django.db.models import DateField
 from django.db.models import DateTimeField
 from django.db.models import DecimalField
 from django.db.models import ForeignKey
+from django.db.models import Index
 from django.db.models import IntegerField
 from django.db.models import PositiveIntegerField
 from django.db.models import Q
@@ -294,7 +295,12 @@ class Booking(TimeStampedModel):
         verbose_name = _("Booking")
         verbose_name_plural = _("Bookings")
         ordering = ["timespan"]
-        indexes = [GistIndex(fields=["timespan"])]
+        indexes = [
+            GistIndex(fields=["timespan"]),
+            Index(fields=["resource"]),
+            Index(fields=["organization"]),
+            Index(fields=["booking_series"]),
+        ]
 
         constraints = [
             ExclusionConstraint(

@@ -219,7 +219,7 @@ def get_booking_series_list(user):
 
 def get_bookings_of_booking_series(user, booking_series_slug):
     bs = get_object_or_404(BookingSeries, slug=booking_series_slug)
-    bookings = get_list_or_404(Booking, booking_series=bs)
+    bookings = Booking.objects.select_related("resource").filter(booking_series=bs)
 
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
