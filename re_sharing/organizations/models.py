@@ -306,8 +306,13 @@ class EmailTemplate(TimeStampedModel):
     body = TextField()
     active = BooleanField(_("Send this email out."), default=False)
 
+    class Meta:
+        verbose_name = _("E-Mail template")
+        verbose_name_plural = _("E-Mail template")
+        ordering = ["email_type"]
+
     def __str__(self):
-        return f"{self.get_email_type_display()} - {self.subject}"
+        return self.get_email_type_display()
 
 
 auditlog.register(Organization, exclude_fields=["updated"])

@@ -8,6 +8,13 @@
   <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
 </td>
 <td>
+  {% if organization.usage_agreement %}
+    <a href="{{ organization.usage_agreement.url }}">{% trans "Usage agreement" %}</a>
+  {% else %}
+    {% trans "Not uploaded." %}
+  {% endif %}
+</td>
+<td>
   {% if organization.is_confirmable %}
     <button id="confirm-button"
             type="submit"

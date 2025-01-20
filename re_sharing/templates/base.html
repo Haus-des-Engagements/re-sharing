@@ -8,13 +8,13 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>
       {% block title %}
-        Re-Sharing
+        {% trans "HdE Räume" %}
       {% endblock title %}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Easily share Resources!" />
     <meta name="author" content="Finn Hees" />
-    <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    <link rel="icon" href="{% static 'images/favicons/favicon.png' %}" />
     {% block css %}
       <!-- Latest compiled and minified Bootstrap CSS -->
       <!-- Your stuff: Third-party CSS libraries go here -->
@@ -52,7 +52,7 @@
               <span class="navbar-toggler-icon"></span>
             </button>
             <a class="navbar-brand" href="{% url 'home' %}">
-              <img src="{% static "images/favicons/favicon-32x32.png" %}" alt="" width="30" height="24" class="d-inline-block align-text-top" />
+              <img src="{% static "images/hde_logo.svg" %}" alt="" height="60" class="d-inline-block align-text-center" />
             HdE Räume</a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav me-auto">
@@ -61,7 +61,7 @@
                 </li>
                 <li class="nav-item active">
                   <li class="nav-item">
-                    <a class="nav-link" href="{% url 'resources:list-resources' %}">{% trans "Resources" %}</a>
+                    <a class="nav-link" href="{% url 'resources:list-resources' %}">{% trans "Rooms" %}</a>
                   </li>
                   <div class="vr ms-2 me-2"></div>
                   <a class="nav-link"

@@ -14,7 +14,8 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(EmailTemplate)
 class EmailTemplateAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_filter = ["email_type"]
+    list_filter = ["email_type", "subject", "active"]
+    list_display = ["email_type", "subject", "active"]
 
 
 @admin.register(BookingPermission)
