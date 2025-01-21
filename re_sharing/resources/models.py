@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 
+from django.core.files.storage import storages
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
 from django.db.models import SET_NULL
@@ -123,6 +124,10 @@ def create_resourceimage_path(instance, filename):
     return f"resources/{resource_slug}-{filename}"
 
 
+def select_default_storage():
+    return storages["default"]
+
+
 class ResourceImage(TimeStampedModel):
     resource = ForeignKey(
         Resource,
@@ -134,6 +139,7 @@ class ResourceImage(TimeStampedModel):
     image = ImageField(
         upload_to="resource_images/",
         validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg"])],
+        storage=select_default_storage,
     )
     description = CharField(
         verbose_name=_("Description"),
