@@ -155,7 +155,9 @@ class ResourceImage(TimeStampedModel):
         return self.resource.name + ": " + self.description
 
     def get_absolute_url(self):
-        return reverse("resources:show-resource", kwargs={"slug": self.resource.slug})
+        return reverse(
+            "resources:show-resource", kwargs={"resource_slug": self.resource.slug}
+        )
 
 
 class Compensation(TimeStampedModel):
