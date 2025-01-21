@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -79,8 +80,18 @@ def booking_confirmation_email(booking):
     access_code = get_access_code(
         booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
+    send_access_code = False
+    dt_in_5_days = timezone.now() + timedelta(days=5)
+    dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
+    if booking.timespan.lower < dt_in_5_days:
+        send_access_code = True
     domain = Site.objects.get_current().domain
-    context = {"booking": booking, "access_code": access_code, "domain": domain}
+    context = {
+        "booking": booking,
+        "send_access_code": send_access_code,
+        "access_code": access_code,
+        "domain": domain,
+    }
     ical_content = booking_ics(booking)
 
     send_email_with_template(
@@ -219,7 +230,7 @@ def manager_new_organization_email(organization):
     }
 
     send_email_with_template(
-        EmailTemplate.EmailTypeChoices.ORGANIZATION_CONFIRMATION,
+        EmailTemplate.EmailTypeChoices.MANAGER_NEW_ORGANIZATION,
         context,
         [settings.DEFAULT_MANAGER_EMAIL],
     )

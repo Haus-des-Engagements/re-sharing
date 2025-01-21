@@ -75,6 +75,11 @@ def create_organization(user, form):
         role=BookingPermission.Role.ADMIN,
     )
     bookingpermission.save()
+    async_task(
+        "re_sharing.organizations.mails.manager_new_organization_email",
+        new_org,
+        task_name="manager-new-organization-email",
+    )
     return new_org
 
 

@@ -184,7 +184,7 @@ def save_booking_series(user, bookings, booking_series):
 
     async_task(
         "re_sharing.organizations.mails.manager_new_booking_series_email",
-        rrule,
+        booking_series,
         task_name="manager-new-booking-series-email",
     )
 
