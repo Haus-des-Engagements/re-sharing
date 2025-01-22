@@ -96,16 +96,19 @@
                     </li>
                   </ul>
                 {% endif %}
-                <li class="nav-item">
-                  <a class="btn btn-outline-primary"
-                     href="{% url 'bookings:create-booking' %}"
-                     role="button">
-                    <svg width="1em" height="1em">
-                      <use href="#bi-plus-lg" />
-                    </svg>
-                    {% trans "New Booking Request" %}
-                  </a>
-                </li>
+                {% if request.user.is_staff %}
+                  <!-- TODO [migration] -->
+                  <li class="nav-item">
+                    <a class="btn btn-outline-primary"
+                       href="{% url 'bookings:create-booking' %}"
+                       role="button">
+                      <svg width="1em" height="1em">
+                        <use href="#bi-plus-lg" />
+                      </svg>
+                      {% trans "New Booking Request" %}
+                    </a>
+                  </li>
+                {% endif %}
               </ul>
               <ul class="navbar-nav ms-auto">
                 {% if request.user.is_authenticated %}

@@ -53,55 +53,58 @@
       </table>
     </div>
   </div>
-  <div class="row mt-5">
-    <h2>
-      {% trans "My upcoming bookings and requests" %}
-      <a class="btn btn-outline-primary"
-         href="{% url 'bookings:create-booking' %}"
-         role="button">
-        <svg width="1em" height="1em">
-          <use href="#bi-plus-lg" />
-        </svg>
-        {% trans "New Booking Request" %}
-      </a>
-    </h2>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Date" %}</th>
-            <th scope="col">{% trans "Timespan" %}</th>
-            <th scope="col">{% trans "Resource" %}</th>
-            <th scope="col">{% trans "Title" %}</th>
-            <th scope="col">{% trans "Organization" %}</th>
-            <th scope="col">{% trans "Status" %}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
+  {% if request.user.is_staff %}
+    <!-- TODO [migration] -->
+    <div class="row mt-5">
+      <h2>
+        {% trans "My upcoming bookings and requests" %}
+        <a class="btn btn-outline-primary"
+           href="{% url 'bookings:create-booking' %}"
+           role="button">
+          <svg width="1em" height="1em">
+            <use href="#bi-plus-lg" />
+          </svg>
+          {% trans "New Booking Request" %}
+        </a>
+      </h2>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
             <tr>
-              <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
-              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>{{ booking.resource }}</td>
-              <td>
-                <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
-              </td>
-              <td>{{ booking.organization }}</td>
-              <td>
-                <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
-              </td>
-              <td>
-                <a class="btn btn-outline-primary btn-sm"
-                   href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "Details" %}</a>
-              </td>
+              <th scope="col">{% trans "Date" %}</th>
+              <th scope="col">{% trans "Timespan" %}</th>
+              <th scope="col">{% trans "Resource" %}</th>
+              <th scope="col">{% trans "Title" %}</th>
+              <th scope="col">{% trans "Organization" %}</th>
+              <th scope="col">{% trans "Status" %}</th>
+              <th></th>
             </tr>
-          {% empty %}
-            <em>{% trans "No upcoming bookings" %}</em>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+              <tr>
+                <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
+                <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
+                <td>{{ booking.resource }}</td>
+                <td>
+                  <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
+                </td>
+                <td>{{ booking.organization }}</td>
+                <td>
+                  <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                </td>
+                <td>
+                  <a class="btn btn-outline-primary btn-sm"
+                     href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "Details" %}</a>
+                </td>
+              </tr>
+            {% empty %}
+              <em>{% trans "No upcoming bookings" %}</em>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a>
     </div>
-    <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a>
-  </div>
+  {% endif %}
 {% endblock content %}

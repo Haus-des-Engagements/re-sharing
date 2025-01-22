@@ -1,3 +1,4 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -42,6 +43,8 @@ def show_resource_view(request, resource_slug):
 
 
 @require_http_methods(["GET"])
+# TODO [migration]
+@staff_member_required
 def planner_view(request):
     date_string = request.GET.get("date")
     resources, timeslots, dates = planner_table(request.user, date_string)
