@@ -24,7 +24,6 @@ class OrganizationFactory(DjangoModelFactory):
     website = Faker("url")
     legal_form = 1
     area_of_activity = Organization.ActivityArea.ENVIRONMENT_NATURE_ANIMALS
-    entitled = True
     values_approval = True
 
     class Meta:

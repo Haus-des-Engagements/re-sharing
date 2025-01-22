@@ -9,6 +9,7 @@ from django.core.files.storage import storages
 from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import DateField
 from django.db.models import EmailField
 from django.db.models import FileField
 from django.db.models import ForeignKey
@@ -19,6 +20,7 @@ from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import UUIDField
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
@@ -79,6 +81,14 @@ class OrganizationGroup(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+def custom_usage_agreement_upload_to(instance, filename):
+    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+    organization_slug = instance.slug  # Ensure `slug` is populated before saving
+    extension = Path(filename).suffix  # Get the file extension
+    new_filename = f"{timestamp}_{organization_slug}_usage_agreement{extension}"
+    return str(Path("usage_agreements") / new_filename)
 
 
 class Organization(TimeStampedModel):
@@ -166,17 +176,19 @@ class Organization(TimeStampedModel):
         ),
     )
     values_approval = BooleanField(_("Approval of values"))
-    entitled = BooleanField(_("Approval of entitlement"))
     notes = CharField(
         _("Notes"), max_length=512, blank=True, help_text=_("Internal notes")
     )
     usage_agreement = FileField(
         _("Usage agreement"),
-        upload_to="usage_agreements/",
+        upload_to=custom_usage_agreement_upload_to,
         validators=[validate_is_pdf],
         blank=True,
         null=True,
         storage=select_private_storage,
+    )
+    usage_agreement_date = DateField(
+        _("Date of the signed usage agreement"), blank=True, null=True
     )
     organization_groups = ManyToManyField(
         OrganizationGroup,
