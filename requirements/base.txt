@@ -25,8 +25,4 @@ django-storages[s3]==1.14.4  # https://github.com/jschneier/django-storages
 django-import-export==4.3.4  # https://github.com/django-import-export/django-import-export
 django-hijack==3.7.1  # https://github.com/django-hijack/django-hijack
 
-django-debug-toolbar==5.0.1
-sentry-sdk==2.20.0
-pytest==8.3.4
 psycopg==3.2.4
-pytest-django==4.9.0
