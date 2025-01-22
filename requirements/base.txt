@@ -7,6 +7,7 @@ hiredis==3.1.0  # https://github.com/redis/hiredis-py
 python-dateutil==2.9.0.post0  # https://github.com/dateutil/dateutil
 python-magic==0.4.27  # https://github.com/ahupp/python-magic
 icalendar==6.0.1  # https://github.com/collective/icalendar/
+psycopg==3.2.4
 
 # Django
 # ------------------------------------------------------------------------------
@@ -25,4 +26,9 @@ django-storages[s3]==1.14.4  # https://github.com/jschneier/django-storages
 django-import-export==4.3.4  # https://github.com/django-import-export/django-import-export
 django-hijack==3.7.1  # https://github.com/django-hijack/django-hijack
 
-psycopg==3.2.4
+
+# Issues with Hetzner object storages and boto3
+# https://github.com/jschneier/django-storages/issues/1482
+# https://status.hetzner.com/incident/b6382a74-0fd9-4789-b997-65249187fbc7
+boto3==1.35.54
+botocore==1.35.54
