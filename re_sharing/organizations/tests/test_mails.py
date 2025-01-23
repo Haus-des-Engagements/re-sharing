@@ -347,7 +347,7 @@ class OrganizationConfirmationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["admin1@example.com", "org@example.com"],
+            ["admin1@example.com"],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -384,7 +384,7 @@ class OrganizationCancellationEmailTestCase(TestCase):
             "Test Subject",
             "Test Body",
             settings.DEFAULT_FROM_EMAIL,
-            ["admin1@example.com", "org@example.com"],
+            ["admin1@example.com"],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)

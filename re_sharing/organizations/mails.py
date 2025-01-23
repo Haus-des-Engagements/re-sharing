@@ -194,15 +194,16 @@ def organization_confirmation_email(organization):
         "organization": organization,
         "domain": domain,
     }
+    recipient_list = [
+        *organization.get_confirmed_admins().values_list("email", flat=True)
+    ]
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.ORGANIZATION_CONFIRMATION,
         context,
-        [
-            *organization.get_confirmed_admins().values_list("email", flat=True),
-            organization.email,
-        ],
+        recipient_list,
     )
+    return recipient_list, organization.slug
 
 
 def organization_cancellation_email(organization):
@@ -211,15 +212,16 @@ def organization_cancellation_email(organization):
         "organization": organization,
         "domain": domain,
     }
+    recipient_list = [
+        *organization.get_confirmed_admins().values_list("email", flat=True)
+    ]
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.ORGANIZATION_CANCELLATION,
         context,
-        [
-            *organization.get_confirmed_admins().values_list("email", flat=True),
-            organization.email,
-        ],
+        recipient_list,
     )
+    return recipient_list, organization.slug
 
 
 def manager_new_organization_email(organization):
