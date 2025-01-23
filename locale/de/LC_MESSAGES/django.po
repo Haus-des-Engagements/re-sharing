@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 14:31+0100\n"
+"POT-Creation-Date: 2025-01-23 21:09+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1512,9 +1512,10 @@ msgstr "Hier kannst du bald Räume im Haus des Engagements buchen."
 
 #: re_sharing/templates/pages/home.html:16
 msgid "For now, you can create yourself an account and add you organization."
-msgstr "Derzeit kannst du dir einen Account erstellen und deine Organisation anlegen."
+msgstr ""
+"Derzeit kannst du dir einen Account erstellen und deine Organisation anlegen."
 
-#: re_sharing/templates/pages/home.html:17
+#: re_sharing/templates/pages/home.html:18
 msgid "Here you can find more detailed instructions."
 msgstr "Hier findest du eine Anleitung und weitere Infos."
 
@@ -1604,11 +1605,11 @@ msgstr "Nutzer:innen"
 msgid "This email has already been taken."
 msgstr "Diese E-Mail ist bereits vergeben."
 
-#: re_sharing/users/models.py:33
+#: re_sharing/users/forms.py:39 re_sharing/users/models.py:33
 msgid "First Name"
 msgstr "Vorname"
 
-#: re_sharing/users/models.py:34
+#: re_sharing/users/forms.py:40 re_sharing/users/models.py:34
 msgid "Last Name"
 msgstr "Nachname"
 

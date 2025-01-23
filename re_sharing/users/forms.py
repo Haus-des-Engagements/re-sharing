@@ -36,8 +36,8 @@ class UserSignupForm(SignupForm):
     Check UserSocialSignupForm for accounts created from social.
     """
 
-    first_name = CharField(max_length=16, required=True)
-    last_name = CharField(max_length=16, required=True)
+    first_name = CharField(max_length=16, required=True, label=_("First Name"))
+    last_name = CharField(max_length=16, required=True, label=_("Last Name"))
 
 
 class UserSocialSignupForm(SocialSignupForm):
