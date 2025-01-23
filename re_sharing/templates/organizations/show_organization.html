@@ -30,7 +30,7 @@
             <td>
               {{ organization.get_status_display }}.
               {% if organization.status == 1 %}
-                {% trans "We are currently checking your organization. You can already make booking requests." %}
+                {% trans "We are currently checking your organization." %}
               {% elif organization.status == 2 %}
                 {% trans "Your organization is confirmed and you are good to go." %}
               {% else %}

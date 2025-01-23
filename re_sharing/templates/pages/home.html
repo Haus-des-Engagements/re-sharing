@@ -11,17 +11,10 @@
 {% block content %}
   <div class="col-md-10 mt-5">
     <h1 class="display-4">Hi!</h1>
-    <p class="lead">{% trans "This is the new place where you can book resources for the 'Haus des Engagements'." %}</p>
+    <p class="lead">{% trans "This is the new place where you can soon book rooms for the 'Haus des Engagements'" %}</p>
     <hr class="my-4" />
-    <p>{% trans "This is how you book a resource:" %}</p>
-    <ol>
-      <li>{% trans "Look for a free resource." %}</li>
-      <li>{% trans "Create an account." %}</li>
-      <li>{% trans "Create an organization you want to book for." %}</li>
-      <li>{% trans "Make your booking requests." %}</li>
-      <li>
-        {% trans "Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!" %}
-      </li>
-    </ol>
+    {% trans "For now, you can create yourself an account and add you organization." %}
+    <br />
+    <a href="https://haus-des-engagements.de/angebote/neue-raeume/">{% trans "Here you can find more detailed instructions." %}</a>
   </div>
 {% endblock content %}
