@@ -189,86 +189,86 @@
         </div>
       </form>
     {% endif %}
-  </div>
-  {% if not permitted_users %}
-    <div>{% trans "Only visible for other authorised persons." %}</div>
-    <div id="{{ organization.slug }}-request-bookingpermission">
-      <button class="btn btn-outline-success"
-              hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
-              hx-target="#{{ organization.slug }}-request-bookingpermission">
-        {% trans "Request booking permission" %}
-      </button>
-    </div>
-  {% else %}
-    {% for user in permitted_users %}
-      <div class="card mb-3">
-        <div class="row g-0">
-          <div class="col-md-9">
-            <div class="card-body">
-              <h5 class="card-title">
-                {{ user.first_name }} {{ user.last_name }}
-                {% if user == request.user %}
-                  <em class="h6">- {% trans "that's you" %}!</em>
-                {% endif %}
-                {% if user.permission_role == 1 %}<span class="badge rounded-pill text-bg-primary">Administrator</span>{% endif %}
-              </h5>
-              <p class="card-text">
-                {% trans "Booking permission" %}:
-                {% if user.permission_status == 2 %}
-                  <span class="badge rounded-pill text-bg-success">{% trans "Approved" %}</span>
-                {% endif %}
-                {% if user.permission_status == 1 %}
-                  <span class="badge rounded-pill text-bg-warning">{% trans "Pending" %}</span>
-                {% endif %}
-              </p>
-              <p class="card-text">
-                <svg class="fs-4 me-1" width="1em" height="1em">
-                  <use href="#bi-envelope-at" />
-                </svg>
-                {{ user.email }}
-              </p>
+    {% if not permitted_users %}
+      <div>{% trans "Only visible for other authorised persons." %}</div>
+      <div id="{{ organization.slug }}-request-bookingpermission">
+        <button class="btn btn-outline-success"
+                hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
+                hx-target="#{{ organization.slug }}-request-bookingpermission">
+          {% trans "Request booking permission" %}
+        </button>
+      </div>
+    {% else %}
+      {% for user in permitted_users %}
+        <div class="card mb-3">
+          <div class="row g-0">
+            <div class="col-md-9">
+              <div class="card-body">
+                <h5 class="card-title">
+                  {{ user.first_name }} {{ user.last_name }}
+                  {% if user == request.user %}
+                    <em class="h6">- {% trans "that's you" %}!</em>
+                  {% endif %}
+                  {% if user.permission_role == 1 %}<span class="badge rounded-pill text-bg-primary">Administrator</span>{% endif %}
+                </h5>
+                <p class="card-text">
+                  {% trans "Booking permission" %}:
+                  {% if user.permission_status == 2 %}
+                    <span class="badge rounded-pill text-bg-success">{% trans "Approved" %}</span>
+                  {% endif %}
+                  {% if user.permission_status == 1 %}
+                    <span class="badge rounded-pill text-bg-warning">{% trans "Pending" %}</span>
+                  {% endif %}
+                </p>
+                <p class="card-text">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-envelope-at" />
+                  </svg>
+                  {{ user.email }}
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="col-md-3 text-end">
-            <div class="card-body">
-              <div class="d-grid gap-2">
-                {% if is_admin and user.permission_status == 1 %}
-                  <div id="{{ user.slug }}-confirm-bookingpermission">
-                    <button class="btn btn-outline-primary"
-                            hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=user.slug %}"
-                            hx-target="#{{ user.slug }}-confirm-bookingpermission">
-                      {% trans "Confirm booking permission" %}
-                    </button>
-                  </div>
-                {% endif %}
-                {% if is_admin and user.permission_status == 2 and user != request.user %}
-                  <div id="{{ user.slug }}-cancel-bookingpermission">
-                    <button class="btn btn-outline-danger"
-                            hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
-                            hx-target="#{{ user.slug }}-cancel-bookingpermission">
-                      {% trans "Cancel booking permission" %}
-                    </button>
-                  </div>
-                {% endif %}
-                {% if is_admin and user.permission_role == 2 %}
-                  <div id="{{ user.slug }}-promote-to-admin">
-                    <button class="btn btn-outline-success"
-                            hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=user.slug %}"
-                            hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
-                  </div>
-                {% endif %}
-                {% if is_admin and user.permission_role == 1 and user != request.user %}
-                  <div id="{{ user.slug }}-demote-to-booker">
-                    <button class="btn btn-outline-warning"
-                            hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"
-                            hx-target="#{{ user.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
-                  </div>
-                {% endif %}
+            <div class="col-md-3 text-end">
+              <div class="card-body">
+                <div class="d-grid gap-2">
+                  {% if is_admin and user.permission_status == 1 %}
+                    <div id="{{ user.slug }}-confirm-bookingpermission">
+                      <button class="btn btn-outline-primary"
+                              hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-confirm-bookingpermission">
+                        {% trans "Confirm booking permission" %}
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% if is_admin and user.permission_status == 2 and user != request.user %}
+                    <div id="{{ user.slug }}-cancel-bookingpermission">
+                      <button class="btn btn-outline-danger"
+                              hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-cancel-bookingpermission">
+                        {% trans "Cancel booking permission" %}
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% if is_admin and user.permission_role == 2 %}
+                    <div id="{{ user.slug }}-promote-to-admin">
+                      <button class="btn btn-outline-success"
+                              hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
+                    </div>
+                  {% endif %}
+                  {% if is_admin and user.permission_role == 1 and user != request.user %}
+                    <div id="{{ user.slug }}-demote-to-booker">
+                      <button class="btn btn-outline-warning"
+                              hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    {% endfor %}
-  {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
 {% endblock content %}
