@@ -144,11 +144,9 @@ def manager_cancel_organization(user, organization_slug):
         with set_actor(user):
             organization.status = BookingStatus.CANCELLED
             organization.save()
-        async_task(
-            "re_sharing.organizations.mails.organization_cancellation_email",
-            organization,
-            task_name="cancel-organization-email",
-        )
+        from re_sharing.organizations.mails import organization_cancellation_email
+
+        organization_cancellation_email(organization)
         return organization
 
     raise InvalidOrganizationOperationError
@@ -161,11 +159,9 @@ def manager_confirm_organization(user, organization_slug):
         with set_actor(user):
             organization.status = BookingStatus.CONFIRMED
             organization.save()
-        async_task(
-            "re_sharing.organizations.mails.organization_confirmation_email",
-            organization,
-            task_name="organization-confirmation-email",
-        )
+        from re_sharing.organizations.mails import organization_confirmation_email
+
+        organization_confirmation_email(organization)
         return organization
 
     raise InvalidOrganizationOperationError

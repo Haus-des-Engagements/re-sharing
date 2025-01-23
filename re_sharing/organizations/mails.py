@@ -203,7 +203,6 @@ def organization_confirmation_email(organization):
         context,
         recipient_list,
     )
-    return recipient_list, organization.slug
 
 
 def organization_cancellation_email(organization):
@@ -221,7 +220,6 @@ def organization_cancellation_email(organization):
         context,
         recipient_list,
     )
-    return recipient_list, organization.slug
 
 
 def manager_new_organization_email(organization):
