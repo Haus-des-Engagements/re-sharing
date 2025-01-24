@@ -171,17 +171,3 @@ class OrganizationForm(forms.ModelForm):
             "values_approval",
             Submit("submit", _("Save organization")),
         )
-
-    def save(self, commit=True):  # noqa: FBT002
-        instance = super().save(commit=False)
-
-        # Save the instance if commit is True
-        if commit:
-            instance.save()
-        # Many-to-many fields must be added after the instance is saved
-        if (
-            instance.pk
-        ):  # Ensure the instance has been saved before accessing its M2M fields
-            instance.organization_groups.set(self.cleaned_data["organization_groups"])
-
-        return instance

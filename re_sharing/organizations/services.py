@@ -4,7 +4,6 @@ from auditlog.context import set_actor
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 from django.shortcuts import get_object_or_404
-from django_q.tasks import async_task
 
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
@@ -68,6 +67,8 @@ def create_organization(user, form):
     if user.usergroups_of_user.filter(auto_confirm_organizations=True).exists():
         new_org.status = BookingStatus.CONFIRMED
     new_org.save()
+
+    new_org.organization_groups.set(form.cleaned_data["organization_groups"])
     bookingpermission = BookingPermission(
         user=user,
         organization=new_org,
@@ -75,11 +76,9 @@ def create_organization(user, form):
         role=BookingPermission.Role.ADMIN,
     )
     bookingpermission.save()
-    async_task(
-        "re_sharing.organizations.mails.manager_new_organization_email",
-        new_org,
-        task_name="manager-new-organization-email",
-    )
+    from re_sharing.organizations.mails import manager_new_organization_email
+
+    manager_new_organization_email(new_org)
     return new_org
 
 
@@ -87,6 +86,7 @@ def update_organization(user, form, organization):
     if user_has_admin_bookingpermission(user, organization):
         organization = form.save(commit=False)
         organization.save()
+        organization.organization_groups.set(form.cleaned_data["organization_groups"])
         return organization
 
     raise PermissionDenied
