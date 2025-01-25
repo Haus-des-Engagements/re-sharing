@@ -62,7 +62,6 @@ class OrganizationForm(forms.ModelForm):
         choices=Organization.ActivityArea,
         label=_("In which societal area are you mainly active?"),
     )
-    # TODO [migration]
     usage_agreement = forms.FileField(
         label=mark_safe(  # noqa: S308
             _(

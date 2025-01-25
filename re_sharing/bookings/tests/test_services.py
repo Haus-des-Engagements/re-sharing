@@ -700,7 +700,9 @@ class TestGenerateRecurrence(TestCase):
         self.resource = ResourceFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.duration = 2
-        self.start = (timezone.now() + timedelta(days=1)).replace(microsecond=0)
+        self.start = (timezone.now() + timedelta(days=1) - timedelta(hours=2)).replace(
+            microsecond=0
+        )
         self.dt_start = "DTSTART:" + self.start.strftime("%Y%m%dT%H%M%S") + "Z"
         self.end_datetime = (self.start + timedelta(hours=self.duration)).replace(
             microsecond=0
@@ -806,7 +808,7 @@ class TestSaveBookingSeries(TestCase):
         self.organization = OrganizationFactory()
         self.resource = ResourceFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
-        self.start = timezone.now() + timedelta(days=1)
+        self.start = timezone.now() + timedelta(days=1) - timedelta(hours=2)
         self.end = self.start + timedelta(hours=2)
         dtstart_string = self.start.strftime("%Y%m%dT%H%M00Z")
         self.rrule_string = f"DTSTART:{dtstart_string}\nFREQ=DAILY;COUNT=5"

@@ -39,8 +39,6 @@ from .services_booking_series import save_booking_series
 
 @require_http_methods(["GET", "POST"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def create_booking_data_form_view(request):
     if request.method == "GET":
         startdate = request.GET.get("startdate")
@@ -86,8 +84,6 @@ def create_booking_data_form_view(request):
 
 @require_http_methods(["GET", "POST"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def preview_and_save_booking_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
@@ -128,8 +124,6 @@ def preview_and_save_booking_view(request):
 
 @require_http_methods(["GET"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def show_booking_view(request, booking):
     booking, activity_stream, access_code = show_booking(request.user, booking)
 
@@ -146,8 +140,6 @@ def show_booking_view(request, booking):
 
 @require_http_methods(["GET"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def list_bookings_view(request):
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "all"
@@ -179,8 +171,6 @@ def list_bookings_view(request):
 
 @require_http_methods(["GET"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def list_booking_series_view(request):
     booking_series_list = get_booking_series_list(request.user)
 
@@ -193,8 +183,6 @@ def list_booking_series_view(request):
 
 @require_http_methods(["GET"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def show_booking_series_view(request, booking_series):
     booking_series, bookings, is_cancelable = get_bookings_of_booking_series(
         request.user, booking_series
@@ -213,8 +201,6 @@ def show_booking_series_view(request, booking_series):
 
 @require_http_methods(["PATCH"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def cancel_bookings_of_booking_series_view(request, booking_series):
     booking_series = cancel_bookings_of_booking_series(request.user, booking_series)
     booking_series, bookings, is_cancelable = get_bookings_of_booking_series(
@@ -235,8 +221,6 @@ def cancel_bookings_of_booking_series_view(request, booking_series):
 
 @require_http_methods(["POST"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def create_bookingmessage_view(request, slug):
     form = MessageForm(data=request.POST)
     bookingmessage = create_bookingmessage(slug, form, request.user)
@@ -250,8 +234,6 @@ def create_bookingmessage_view(request, slug):
 
 @require_http_methods(["PATCH"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def cancel_booking_view(request, slug):
     booking = cancel_booking(request.user, slug)
 
@@ -260,8 +242,6 @@ def cancel_booking_view(request, slug):
 
 @require_http_methods(["PATCH"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def cancel_booking_series_booking_view(request, slug):
     booking = cancel_booking(request.user, slug)
 
@@ -272,8 +252,6 @@ def cancel_booking_series_booking_view(request, slug):
 
 @require_http_methods(["GET", "POST"])
 @login_required
-# TODO [migration]
-@staff_member_required
 def preview_and_save_booking_series_view(request):
     booking_data = request.session["booking_data"]
     if not booking_data:
