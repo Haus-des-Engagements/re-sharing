@@ -37,6 +37,12 @@
          role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
+    <div class="col-auto" id="div_id_group">
+      <select name="group" class="select form-select" id="id_group">
+        <option value="all">{% trans "all groups" %}</option>
+        {% for group in groups %}<option value="{{ group.slug }}">{{ group.name }}</option>{% endfor %}
+      </select>
+    </div>
   </form>
   <div id="organization-list">{% include "organizations/partials/manager_list_organizations.html" %}</div>
 {% endblock content %}

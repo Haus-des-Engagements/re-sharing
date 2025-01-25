@@ -12,11 +12,11 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.users.models import User
-from re_sharing.utils.models import BookingStatus
 
 from .forms import OrganizationForm
 from .models import BookingPermission
 from .models import Organization
+from .models import OrganizationGroup
 from .services import create_organization
 from .services import filter_organizations
 from .services import manager_cancel_organization
@@ -264,12 +264,14 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
     Shows the organizations for a manager so that they can be confirmed or cancelled
     """
     status = request.GET.get("status") or "1"
+    group = request.GET.get("group") or "all"
 
-    organizations = manager_filter_organizations_list(status)
+    organizations = manager_filter_organizations_list(status, group)
 
     context = {
         "organizations": organizations,
-        "statuses": BookingStatus.choices,
+        "statuses": Organization.Status.choices,
+        "groups": OrganizationGroup.objects.all(),
     }
 
     if request.headers.get("HX-Request"):

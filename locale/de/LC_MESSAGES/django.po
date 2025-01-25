@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 21:09+0100\n"
+"POT-Creation-Date: 2025-01-25 16:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -449,7 +449,6 @@ msgid "Describe shortly what your organization is doing and trying to achieve."
 msgstr "Beschreibe kurz was deine Organisation macht und erreichen möchte."
 
 #: re_sharing/organizations/forms.py:32 re_sharing/organizations/models.py:158
-#: re_sharing/templates/organizations/show_organization.html:64
 msgid "We are a charitable organization."
 msgstr "Wir sind eine gemeinnützige Organisation."
 
@@ -590,11 +589,12 @@ msgid "Organization group"
 msgstr "Organisationsgruppe"
 
 #: re_sharing/organizations/models.py:79
+#: re_sharing/templates/organizations/partials/manager_list_organizations.html:11
 msgid "Organization groups"
 msgstr "Organisationsgruppen"
 
 #: re_sharing/organizations/models.py:96 re_sharing/organizations/models.py:237
-#: re_sharing/templates/organizations/show_organization.html:221
+#: re_sharing/templates/organizations/show_organization.html:220
 #: re_sharing/utils/models.py:27
 msgid "Pending"
 msgstr "Ausstehend"
@@ -758,7 +758,6 @@ msgid "Main area of activity"
 msgstr "Haupt-Engagementbereich"
 
 #: re_sharing/organizations/models.py:171
-#: re_sharing/templates/organizations/show_organization.html:96
 msgid "Organization information is publicly visible"
 msgstr "Organisationinformationen sind öffentlich sichbar."
 
@@ -783,7 +782,6 @@ msgid "Internal notes"
 msgstr "Interne Notizen"
 
 #: re_sharing/organizations/models.py:183
-#: re_sharing/templates/organizations/partials/manager_organization_item.html:12
 #: re_sharing/templates/organizations/show_organization.html:86
 #: re_sharing/templates/organizations/show_organization.html:89
 msgid "Usage agreement"
@@ -807,7 +805,7 @@ msgid "Role"
 msgstr "Rolle"
 
 #: re_sharing/organizations/models.py:267
-#: re_sharing/templates/organizations/show_organization.html:216
+#: re_sharing/templates/organizations/show_organization.html:215
 msgid "Booking permission"
 msgstr "Buchungsberechtigung"
 
@@ -1191,13 +1189,13 @@ msgstr "Keine Ergebnisse gefunden."
 
 #: re_sharing/templates/bookings/partials/manager_booking_item.html:22
 #: re_sharing/templates/bookings/partials/manager_booking_series_item.html:31
-#: re_sharing/templates/organizations/partials/manager_organization_item.html:25
+#: re_sharing/templates/organizations/partials/manager_organization_item.html:28
 msgid "Confirm"
 msgstr "Bestätigen"
 
 #: re_sharing/templates/bookings/partials/manager_booking_item.html:34
 #: re_sharing/templates/bookings/partials/manager_booking_series_item.html:43
-#: re_sharing/templates/organizations/partials/manager_organization_item.html:37
+#: re_sharing/templates/organizations/partials/manager_organization_item.html:40
 msgid "Cancel"
 msgstr "Stornieren"
 
@@ -1387,16 +1385,26 @@ msgstr "Organisationen suchen"
 msgid "Manage organizations"
 msgstr "Organisationen verwalten"
 
+#: re_sharing/templates/organizations/manager_list_organizations.html:42
+#, fuzzy
+#| msgid "all resources"
+msgid "all groups"
+msgstr "alle Ressourcen"
+
 #: re_sharing/templates/organizations/partials/manager_list_organizations.html:10
 msgid "Agreement"
 msgstr "Nutzungsvereinbarung"
 
-#: re_sharing/templates/organizations/partials/manager_organization_item.html:14
-#: re_sharing/templates/organizations/show_organization.html:92
-msgid "Not uploaded."
-msgstr "Nicht hochgeladen"
+#: re_sharing/templates/organizations/partials/manager_organization_item.html:12
+#: re_sharing/templates/organizations/show_organization.html:89
+msgid "without date"
+msgstr "ohne Datum"
 
-#: re_sharing/templates/organizations/partials/manager_organization_item.html:34
+#: re_sharing/templates/organizations/partials/manager_organization_item.html:14
+msgid "n.a."
+msgstr ""
+
+#: re_sharing/templates/organizations/partials/manager_organization_item.html:37
 msgid "Are you sure you want to cancel this organization?"
 msgstr "Möchest du die Organisation wirklich stornieren?"
 
@@ -1416,10 +1424,22 @@ msgstr "Deine Organisation wurde nicht bestätigt."
 msgid "Area of activity"
 msgstr "Haupt-Engagementbereich"
 
+#: re_sharing/templates/organizations/show_organization.html:64
+msgid "charitable"
+msgstr "gemeinnützig"
+
 #: re_sharing/templates/organizations/show_organization.html:65
 #: re_sharing/templates/organizations/show_organization.html:97
 msgid "Yes, No"
 msgstr "Ja, Nein"
+
+#: re_sharing/templates/organizations/show_organization.html:92
+msgid "Not uploaded."
+msgstr "Nicht hochgeladen"
+
+#: re_sharing/templates/organizations/show_organization.html:96
+msgid "Organization visible"
+msgstr "Organisationen ist sichtbar"
 
 #: re_sharing/templates/organizations/show_organization.html:103
 msgid "This is what others can see"
@@ -1468,35 +1488,35 @@ msgstr "Admin"
 msgid "Add User"
 msgstr "Nutzer:in hinzufügen"
 
-#: re_sharing/templates/organizations/show_organization.html:194
+#: re_sharing/templates/organizations/show_organization.html:193
 msgid "Only visible for other authorised persons."
 msgstr "Buchungsberechtigte sind nur für andere Buchungsberechtigte sichtbar."
 
-#: re_sharing/templates/organizations/show_organization.html:199
+#: re_sharing/templates/organizations/show_organization.html:198
 msgid "Request booking permission"
 msgstr "Buchungsberechtigung anfragen"
 
-#: re_sharing/templates/organizations/show_organization.html:211
+#: re_sharing/templates/organizations/show_organization.html:210
 msgid "that's you"
 msgstr "das bist du"
 
-#: re_sharing/templates/organizations/show_organization.html:218
+#: re_sharing/templates/organizations/show_organization.html:217
 msgid "Approved"
 msgstr "Bestätigt"
 
-#: re_sharing/templates/organizations/show_organization.html:240
+#: re_sharing/templates/organizations/show_organization.html:239
 msgid "Confirm booking permission"
 msgstr "Buchungsberechtigung bestätigen"
 
-#: re_sharing/templates/organizations/show_organization.html:249
+#: re_sharing/templates/organizations/show_organization.html:248
 msgid "Cancel booking permission"
 msgstr "Buchungsberechtigung beenden"
 
-#: re_sharing/templates/organizations/show_organization.html:257
+#: re_sharing/templates/organizations/show_organization.html:256
 msgid "Promote to admin"
 msgstr "Zum Admin machen"
 
-#: re_sharing/templates/organizations/show_organization.html:264
+#: re_sharing/templates/organizations/show_organization.html:263
 msgid "Demote to booker"
 msgstr "Zum Buchenden herabstufen"
 

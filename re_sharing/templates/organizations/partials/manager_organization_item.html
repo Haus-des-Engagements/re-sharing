@@ -9,11 +9,12 @@
 </td>
 <td>
   {% if organization.usage_agreement %}
-    <a href="{{ organization.usage_agreement.url }}">{% trans "Usage agreement" %}</a>
+    <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement_date|default_if_none:_("without date") }}</a>
   {% else %}
-    {% trans "Not uploaded." %}
+    {% trans "n.a." %}
   {% endif %}
 </td>
+<td>{{ organization.organization_groups.all|join:", " }}</td>
 <td>
   {% if organization.is_confirmable %}
     <button id="confirm-button"

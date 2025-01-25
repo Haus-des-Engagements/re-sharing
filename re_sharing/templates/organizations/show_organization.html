@@ -28,7 +28,7 @@
           <tr>
             <td class="first-column">{% trans "Status" %}</td>
             <td>
-              {{ organization.get_status_display }}.
+              <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
               {% if organization.status == 1 %}
                 {% trans "We are currently checking your organization." %}
               {% elif organization.status == 2 %}
@@ -61,7 +61,7 @@
             </tr>
           {% endif %}
           <tr>
-            <td class="first-column">{% trans "We are a charitable organization." %}</td>
+            <td class="first-column">{% trans "charitable" %}</td>
             <td>{{ organization.is_charitable|yesno:_("Yes, No") }}</td>
           </tr>
           <tr>
@@ -86,14 +86,14 @@
             <td class="first-column">{% trans "Usage agreement" %}</td>
             <td>
               {% if organization.usage_agreement %}
-                <a href="{{ organization.usage_agreement.url }}">{% trans "Usage agreement" %}</a>
+                <a href="{{ organization.usage_agreement.url }}">{% trans "Usage agreement" %}</a> ({{ organization.usage_agreement_date|default_if_none:_("without date") }})
               </td>
             {% else %}
               {% trans "Not uploaded." %}
             {% endif %}
           </tr>
           <tr>
-            <td class="first-column">{% trans "Organization information is publicly visible" %}</td>
+            <td class="first-column">{% trans "Organization visible" %}</td>
             <td>{{ organization.is_public|yesno:_("Yes, No") }}</td>
           </tr>
         </tbody>
