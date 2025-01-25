@@ -2,7 +2,9 @@
 
 <td>{{ organization.created|date:"d.m.Y H:i" }}</td>
 <td>
+  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 300px;"><!-- djlint:on -->
   <a href="{% url "organizations:show-organization" organization.slug %}">{{ organization.name }}</a>
+</span>
 </td>
 <td>
   <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
