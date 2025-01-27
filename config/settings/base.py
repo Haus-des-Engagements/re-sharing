@@ -83,7 +83,6 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "auditlog",
-    "django_q",
     "tinymce",
     "storages",
     "import_export",
@@ -254,7 +253,7 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.smtp.EmailBackend",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
-EMAIL_TIMEOUT = 5
+EMAIL_TIMEOUT = 1
 
 DEFAULT_MANAGER_EMAIL = env(
     "DJANGO_DEFAULT_MANAGER_EMAIL", default="Re-Sharing <noreply@re-sharing.info>"

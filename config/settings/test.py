@@ -38,8 +38,3 @@ MEDIA_URL = "http://media.testserver"
 # ------------------------------------------------------------------------------
 
 LANGUAGE_CODE = "en"
-# DJANGO-Q2
-Q_CLUSTER = {
-    "retry": 2,
-    "timeout": 1,
-}

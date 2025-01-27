@@ -104,7 +104,10 @@ def filter_resources(user, persons_count, start_datetime):
         QuerySet: A filtered queryset of resources, including only the resources the
         user is allowed to see.
     """
-    resources = user.get_resources()
+    if user.is_authenticated:
+        resources = user.get_resources()
+    else:
+        resources = Resource.objects.filter(is_private=False)
 
     # Filter resources based on persons_count
     if persons_count:

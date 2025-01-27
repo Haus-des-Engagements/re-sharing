@@ -8,17 +8,20 @@ from dateutil import parser
 from dateutil.parser import isoparse
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_q.tasks import async_task
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services_booking_series import create_rrule
+from re_sharing.organizations.mails import send_booking_cancellation_email
+from re_sharing.organizations.mails import send_booking_confirmation_email
+from re_sharing.organizations.mails import send_booking_series_confirmation_email
+from re_sharing.organizations.mails import send_manager_new_booking_email
+from re_sharing.organizations.mails import send_new_booking_message_email
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
@@ -141,17 +144,9 @@ def save_booking(user, booking):
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
     if booking.status == BookingStatus.CONFIRMED:
-        async_task(
-            "re_sharing.organizations.mails.booking_confirmation_email",
-            booking,
-            task_name="booking-confirmation-email",
-        )
+        send_booking_confirmation_email(booking)
     if booking.status == BookingStatus.PENDING:
-        async_task(
-            "re_sharing.organizations.mails.manager_new_booking",
-            booking,
-            task_name="manager-new-booking",
-        )
+        send_manager_new_booking_email(booking)
 
     return booking
 
@@ -188,11 +183,8 @@ def save_bookingmessage(booking, message, user):
         user=user,
     )
     booking_message.save()
-    async_task(
-        "re_sharing.organizations.mails.new_booking_message_email",
-        booking_message,
-        task_name="new-booking-message-email",
-    )
+    send_new_booking_message_email(booking_message)
+
     return booking_message
 
 
@@ -349,11 +341,7 @@ def manager_cancel_booking(user, booking_slug):
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
-        async_task(
-            "re_sharing.organizations.mails.booking_cancellation_email",
-            booking,
-            task_name="cancel-booking-email",
-        )
+        send_booking_cancellation_email(booking)
 
         return booking
 
@@ -366,11 +354,7 @@ def manager_confirm_booking(user, booking_slug):
         with set_actor(user):
             booking.status = BookingStatus.CONFIRMED
             booking.save()
-        async_task(
-            "re_sharing.organizations.mails.booking_confirmation_email",
-            booking,
-            task_name="booking-confirmation-email",
-        )
+        send_booking_confirmation_email(booking)
 
         return booking
 
@@ -387,35 +371,9 @@ def manager_confirm_booking_series(user, booking_series_uuid):
             with set_actor(user):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
-    async_task(
-        "re_sharing.organizations.mails.recurrence_confirmation_email",
-        booking_series,
-        task_name="recurrence-confirmation-email",
-    )
+            send_booking_series_confirmation_email(booking_series)
 
     return booking_series
-
-
-def collect_booking_reminder_mails():
-    bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
-    dt_in_5_days = timezone.now() + timedelta(days=5)
-    dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
-    dt_in_6_days = dt_in_5_days + timedelta(days=1)
-    bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
-    bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
-    bookings = bookings.filter(
-        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
-    )
-    processed_slugs = []
-
-    for booking in bookings:
-        async_task(
-            "re_sharing.organizations.mails.booking_reminder_email",
-            booking,
-            task_name="booking-reminder-email",
-        )
-        processed_slugs.append(booking.slug)
-    return processed_slugs
 
 
 def manager_filter_invoice_bookings_list(

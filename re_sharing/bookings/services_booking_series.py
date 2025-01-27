@@ -25,10 +25,11 @@ from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import make_aware
-from django_q.tasks import async_task
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingSeries
+from re_sharing.organizations.mails import send_booking_series_cancellation_email
+from re_sharing.organizations.mails import send_manager_new_booking_series_email
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
@@ -181,12 +182,7 @@ def save_booking_series(user, bookings, booking_series):
     booking_series.save()
     for booking in bookings:
         booking.save()
-
-    async_task(
-        "re_sharing.organizations.mails.manager_new_booking_series_email",
-        booking_series,
-        task_name="manager-new-booking-series-email",
-    )
+    send_manager_new_booking_series_email(booking_series)
 
     return bookings, booking_series
 
@@ -247,23 +243,18 @@ def manager_filter_booking_series_list(organization, show_past_booking_series, s
 
 
 def manager_cancel_booking_series(user, booking_series_uuid):
-    bs = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
-    bookings = get_list_or_404(Booking, booking_series=bs)
-    bs.status = BookingStatus.CANCELLED
-    bs.save()
+    booking_series = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
+    bookings = get_list_or_404(Booking, booking_series=booking_series)
+    booking_series.status = BookingStatus.CANCELLED
+    booking_series.save()
 
     for booking in bookings:
         if booking.is_cancelable():
             with set_actor(user):
                 booking.status = BookingStatus.CANCELLED
                 booking.save()
-
-    async_task(
-        "re_sharing.organizations.mails.booking_series_cancellation_email",
-        rrule,
-        task_name="booking-series-cancellation-email",
-    )
-    return rrule
+    send_booking_series_cancellation_email(booking_series)
+    return booking_series
 
 
 def extend_booking_series():

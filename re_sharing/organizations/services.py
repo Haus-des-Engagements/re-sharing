@@ -34,7 +34,7 @@ def show_organization(user, organization_slug):
     permitted_users = None
 
     if user.is_authenticated:
-        if user_has_admin_bookingpermission(user, organization):
+        if user_has_admin_bookingpermission(user, organization) or user.is_staff:
             bookingpermissions = BookingPermission.objects.filter(
                 organization=organization
             )
@@ -58,9 +58,6 @@ def show_organization(user, organization_slug):
 
     if not organization.is_public and not permitted_users:
         raise PermissionDenied
-
-    if user.is_staff:
-        is_admin = True
 
     return organization, permitted_users, is_admin
 
@@ -139,7 +136,7 @@ def manager_filter_organizations_list(status, group):
     if group != "all":
         organizations = organizations.filter(organization_groups__slug=group)
 
-    return organizations.order_by("created")
+    return organizations.order_by("name")
 
 
 def manager_cancel_organization(user, organization_slug):

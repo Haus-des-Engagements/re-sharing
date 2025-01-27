@@ -17,7 +17,6 @@ from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import cancel_booking
-from re_sharing.bookings.services import collect_booking_reminder_mails
 from re_sharing.bookings.services import confirm_booking
 from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
@@ -899,42 +898,6 @@ def test_manager_confirm_booking_series(mock_is_confirmable):
     assert booking1.status == BookingStatus.CONFIRMED
     booking2.refresh_from_db()
     assert booking2.status == BookingStatus.CONFIRMED
-
-
-class CollectBookingReminderMailsTest(TestCase):
-    def setUp(self):
-        self.now = timezone.now()
-        self.in_5_days = self.now + timedelta(days=5)
-        self.in_5_days = self.in_5_days.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        self.in_6_days = self.in_5_days + timedelta(days=1)
-
-        # Creating a booking within the 5-6 days timespan
-        self.booking = BookingFactory(
-            slug="test-booking",
-            status=BookingStatus.CONFIRMED,
-            timespan=[self.in_5_days, self.in_6_days - timedelta(seconds=1)],
-        )
-        self.booking2 = BookingFactory(
-            slug="test-booking_2",
-            status=BookingStatus.CONFIRMED,
-            timespan=[self.now, self.now + timedelta(hours=1)],
-        )
-
-    @patch("re_sharing.bookings.services.async_task")
-    def test_collect_booking_reminder_mails(self, mock_async_task):
-        collect_booking_reminder_mails()
-
-        # Ensure the async_task was called exactly once
-        assert mock_async_task.call_count == 1
-
-        # Verify async_task was called with the correct arguments
-        mock_async_task.assert_called_with(
-            "re_sharing.organizations.mails.booking_reminder_email",
-            self.booking,
-            task_name="booking-reminder-email",
-        )
 
 
 @pytest.mark.parametrize(

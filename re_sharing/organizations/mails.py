@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.template import Context
 from django.template import Template
 from django.utils import timezone
@@ -11,9 +12,11 @@ from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
 from icalendar import Event
 
+from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.services import get_access_code
+from re_sharing.utils.models import BookingStatus
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +69,6 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
 
     subject = Template(email_template.subject).render(Context(context))
     body = Template(email_template.body).render(Context(context))
-
     email = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, recipient_list)
 
     if ical_content:
@@ -76,7 +78,7 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
     email.send(fail_silently=False)
 
 
-def booking_confirmation_email(booking):
+def send_booking_confirmation_email(booking):
     access_code = get_access_code(
         booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
@@ -102,23 +104,34 @@ def booking_confirmation_email(booking):
     )
 
 
-def booking_reminder_email(booking):
-    access_code = get_access_code(
-        booking.resource.slug, booking.organization.slug, booking.timespan.lower
-    )
-    domain = Site.objects.get_current().domain
-    context = {"booking": booking, "access_code": access_code, "domain": domain}
-    ical_content = booking_ics(booking)
-
-    send_email_with_template(
-        EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
-        context,
-        get_recipient_booking(booking),
-        ical_content,
+def send_booking_reminder_emails():
+    bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
+    dt_in_5_days = timezone.now() + timedelta(days=5)
+    dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
+    dt_in_6_days = dt_in_5_days + timedelta(days=1)
+    bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
+    bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
+    bookings = bookings.filter(
+        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
     )
 
+    for booking in bookings:
+        access_code = get_access_code(
+            booking.resource.slug, booking.organization.slug, booking.timespan.lower
+        )
+        domain = Site.objects.get_current().domain
+        context = {"booking": booking, "access_code": access_code, "domain": domain}
+        ical_content = booking_ics(booking)
 
-def booking_cancellation_email(booking):
+        send_email_with_template(
+            EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
+            context,
+            get_recipient_booking(booking),
+            ical_content,
+        )
+
+
+def send_booking_cancellation_email(booking):
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}
 
@@ -129,7 +142,7 @@ def booking_cancellation_email(booking):
     )
 
 
-def manager_new_booking(booking):
+def send_manager_new_booking_email(booking):
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}
 
@@ -140,7 +153,7 @@ def manager_new_booking(booking):
     )
 
 
-def booking_series_confirmation_email(booking_series):
+def send_booking_series_confirmation_email(booking_series):
     domain = Site.objects.get_current().domain
     first_booking = booking_series.get_first_booking()
     context = {
@@ -156,7 +169,7 @@ def booking_series_confirmation_email(booking_series):
     )
 
 
-def booking_series_cancellation_email(booking_series):
+def send_booking_series_cancellation_email(booking_series):
     domain = Site.objects.get_current().domain
     first_booking = booking_series.get_first_booking()
     context = {
@@ -172,7 +185,7 @@ def booking_series_cancellation_email(booking_series):
     )
 
 
-def manager_new_booking_series_email(booking_series):
+def send_manager_new_booking_series_email(booking_series):
     domain = Site.objects.get_current().domain
     first_booking = booking_series.get_first_booking
     context = {
@@ -236,7 +249,7 @@ def manager_new_organization_email(organization):
     )
 
 
-def new_booking_message_email(booking_message):
+def send_new_booking_message_email(booking_message):
     domain = Site.objects.get_current().domain
     context = {"booking": booking_message.booking, "domain": domain}
     if not user_has_bookingpermission(booking_message.user, booking_message.booking):
