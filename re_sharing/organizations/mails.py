@@ -129,6 +129,7 @@ def send_booking_reminder_emails():
             get_recipient_booking(booking),
             ical_content,
         )
+    return list(bookings.values_list("slug", flat=True))
 
 
 def send_booking_cancellation_email(booking):

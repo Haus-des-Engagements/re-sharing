@@ -120,6 +120,8 @@ def organizations_with_confirmed_bookingpermission(user):
 
 
 def user_has_admin_bookingpermission(user, organization):
+    if user.is_staff:
+        return True
     return (
         BookingPermission.objects.filter(user=user)
         .filter(organization=organization)
