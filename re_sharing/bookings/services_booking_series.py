@@ -262,14 +262,10 @@ def extend_booking_series():
         days=max_future_booking_date + 1
     )
     first_second = time(hour=0, minute=0, second=0)
-    start_new_bookings_at = make_aware(
-        datetime.combine(max_booking_date, first_second)
-    ).astimezone(UTC)
+    start_new_bookings_at = datetime.combine(max_booking_date, first_second, tzinfo=UTC)
 
     last_second = time(hour=23, minute=59, second=59)
-    end_new_bookings_at = datetime.combine(max_booking_date, last_second).astimezone(
-        UTC
-    )
+    end_new_bookings_at = datetime.combine(max_booking_date, last_second, tzinfo=UTC)
 
     bs_set = BookingSeries.objects.filter(
         Q(last_booking_date=None) | Q(last_booking_date__gte=start_new_bookings_at)

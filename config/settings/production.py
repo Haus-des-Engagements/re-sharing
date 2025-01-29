@@ -8,7 +8,6 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 from .base import *  # noqa: F403
 from .base import DATABASES
-from .base import INSTALLED_APPS
 from .base import env
 
 # GENERAL
@@ -116,7 +115,7 @@ EMAIL_SUBJECT_PREFIX = env(
     default="[Re-Sharing] ",
 )
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND")
 SERVER_EMAIL = env("SERVER_EMAIL")
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = env("EMAIL_PORT")
@@ -129,16 +128,6 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 # ------------------------------------------------------------------------------
 # Django Admin URL regex.
 ADMIN_URL = env("DJANGO_ADMIN_URL")
-
-# Anymail
-# ------------------------------------------------------------------------------
-# https://anymail.readthedocs.io/en/stable/installation/#installing-anymail
-INSTALLED_APPS += ["anymail"]
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-# https://anymail.readthedocs.io/en/stable/installation/#anymail-settings-reference
-# https://anymail.readthedocs.io/en/stable/esps
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-ANYMAIL = {}
 
 
 # LOGGING
