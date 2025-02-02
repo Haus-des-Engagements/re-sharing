@@ -19,6 +19,7 @@ from django.db.models import ManyToManyField
 from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import UUIDField
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -201,7 +202,7 @@ class Organization(TimeStampedModel):
     class Meta:
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
-        ordering = ["name"]
+        ordering = [Lower("name")]
 
     def __str__(self):
         return self.name

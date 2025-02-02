@@ -1,0 +1,72 @@
+{% load i18n %}
+
+<div id="planner-table" class="row g-2 d-flex">
+  <form class="row gx-3 gy-2 align-items-center mt-3"
+        hx-get="{% url 'resources:multi-planner' %}"
+        hx-target="#planner-table"
+        hx-indicator="#spinner"
+        hx-push-url="true"
+        hx-swap="outerHTML"
+        hx-trigger="change">
+    <div id="div_date" class="col-auto">
+      <label for="date" class="form-label">Date</label>
+      <input type="date"
+             name="date"
+             class="form-control textinput"
+             placeholder="{% trans 'Date' %}"
+             id="date"
+             value="{{ dates.shown_date|date:'Y-m-d' }}" />
+    </div>
+    <div class="col-auto" id="div_id_selected_nb_of_days">
+      <label for="id_selected_nb_of_days" class="form-label">Number of days</label>
+      <select name="selected_nb_of_days"
+              class="select form-select"
+              id="id_selected_nb_of_days">
+        {% for number in nb_of_days %}
+          <option value={{ number }} {% if number == selected_nb_of_days %}selected{% endif %}>{{ number }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </form>
+  <div class="table-responsive">
+    <!-- Iterate through each weekday group -->
+    {% for day, day_data in planner_data.items %}
+      <table class="table table-sm table-sm-little-padding mb-0 table-bordered border-secondary small">
+        <thead>
+          <tr class="table-light">
+            <th>{{ day|date:"l, d.m.y" }}</th>
+            {% for timeslot in day_data.resources.0.timeslots %}
+              {% if not forloop.counter|divisibleby:2 %}<th colspan="2">{{ timeslot.time }}</th>{% endif %}
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Iterate through resources -->
+          {% for resource in day_data.resources %}
+            <tr>
+              <td class="table-light">{{ resource.name }}</td>
+              {% for timeslot in resource.timeslots %}
+                {% if timeslot.booked %}
+                  <td class="table-danger">&nbsp</td>
+                {% elif not timeslot.bookable %}
+                  <td class="table-secondary"></td>
+                {% else %}
+                  <td class="table-success">
+                    <a href="{% url 'bookings:create-booking' %}{{ timeslot.link }}"
+                       class="cover-link">&nbsp</a>
+                  </td>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </div>
+</div>

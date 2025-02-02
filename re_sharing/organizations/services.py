@@ -2,7 +2,9 @@ from http import HTTPStatus
 
 from auditlog.context import set_actor
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count
 from django.db.models import F
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from re_sharing.users.models import User
@@ -132,7 +134,14 @@ def user_has_admin_bookingpermission(user, organization):
 
 
 def manager_filter_organizations_list(status, group):
-    organizations = Organization.objects.all()
+    organizations = Organization.objects.annotate(
+        confirmed_users_count=Count(
+            "organization_of_bookingpermission",
+            filter=Q(
+                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
+            ),
+        )
+    )
     if status != "all":
         organizations = organizations.filter(status__in=status)
     if group != "all":

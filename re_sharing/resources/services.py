@@ -159,6 +159,94 @@ def get_access_code(resource_slug, organization_slug, timestamp):
     return access_code
 
 
+def multi_planner_day(user, date_string, resources):
+    resources = resources.order_by("id")
+
+
+def multi_planner(user, date_string, nb_of_days, resources):
+    resources = resources.order_by("id")
+
+    shown_date = parser.parse(date_string) if date_string else timezone.now()
+    start_of_day = timezone.make_aware(
+        datetime.combine(
+            shown_date - timedelta(days=shown_date.weekday()), time(hour=6)
+        ),
+    )
+    weekdays = [shown_date + timedelta(days=i) for i in range(nb_of_days)]
+
+    slots_start = 7  # Start at 6 AM
+    number_of_slots = 34  # 16 hours (6 AM - 10 PM), 30-minute intervals
+    slot_interval_minutes = 30
+
+    # Fetch bookings
+    bookings = Booking.objects.filter(
+        resource__in=resources,
+        status=BookingStatus.CONFIRMED,
+        timespan__overlap=(
+            shown_date,
+            shown_date + timedelta(days=nb_of_days),
+        ),
+    )
+
+    # Prepare planner_data
+    planner_data = {}
+    for day in weekdays:
+        day_data = {"weekday": day, "resources": []}
+
+        for resource in resources:
+            resource_data = {"name": resource.name, "timeslots": []}
+            start_time = timezone.make_aware(
+                datetime.combine(day, time(hour=slots_start))
+            )
+            for i in range(number_of_slots):
+                slot_time = start_time + timedelta(minutes=slot_interval_minutes * i)
+                timeslot = {
+                    "time": slot_time,
+                    "booked": False,
+                    "bookable": slot_time > timezone.now(),
+                    "link": (
+                        f"?starttime={slot_time.strftime('%H:%M')}"
+                        f"&endtime="
+                        f"{(slot_time + timedelta(minutes=90)).strftime('%H:%M')}"
+                        f"&startdate={day.date()}&resource={resource.slug}"
+                    ),
+                }
+                resource_data["timeslots"].append(timeslot)
+
+            # Check bookings for this resource and day
+            for booking in bookings:
+                if (
+                    booking.resource == resource
+                    and booking.timespan.lower.date() == day.date()
+                ):
+                    booking_start = booking.timespan.lower
+                    booking_end = booking.timespan.upper
+
+                    for timeslot in resource_data["timeslots"]:
+                        slot_time = timeslot["time"].time()
+                        slot_datetime = timezone.make_aware(
+                            datetime.combine(day.date(), slot_time)
+                        )
+                        if booking_start <= slot_datetime < booking_end:
+                            timeslot["booked"] = True
+                            timeslot["link"] = None
+                            timeslot["organization"] = booking.organization.name
+
+            day_data["resources"].append(resource_data)
+
+        planner_data[day] = day_data
+    timeslots = [
+        {"time": start_of_day + timedelta(minutes=30) * i}
+        for i in range(number_of_slots)
+    ]
+    dates = {
+        "previous_day": shown_date - timedelta(days=1),
+        "shown_date": shown_date,
+        "next_day": shown_date + timedelta(days=1),
+    }
+    return resources, timeslots, weekdays, dates, planner_data
+
+
 def planner_table(user, date_string):
     resources = user.get_resources()
     resources = resources.order_by("id")

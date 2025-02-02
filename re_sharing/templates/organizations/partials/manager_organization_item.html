@@ -9,6 +9,7 @@
 <td>
   <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
 </td>
+<td>{{ organization.confirmed_users_count }}</td>
 <td>
   {% if organization.usage_agreement %}
     <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement_date|default_if_none:_("without date") }}</a>

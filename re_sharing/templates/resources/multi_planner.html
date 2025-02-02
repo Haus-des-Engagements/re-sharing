@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Planner" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "Planner" %}</h1>
+  <div class="mt-3 mb-4">
+    <p>
+      {% trans "In this view, you can see the free times for all resources. Click on a free slot to go directly to the booking page." %}
+    </p>
+  </div>
+  <div class="mt-4 mb-3">
+    <label for="resources" class="form-label">{% trans "Filter by Resources" %}</label>
+    <div id="resources">
+      {% for resource in resources %}
+        <div class="form-check">
+          <input class="form-check-input"
+                 type="checkbox"
+                 id="resource-{{ resource.slug }}"
+                 name="resources"
+                 value="{{ resource.slug }}"
+                 {% if resource.slug in selected_resources %}checked{% endif %}
+                 hx-get="{% url 'resources:multi-planner' %}"
+                 hx-target="#planner-table"
+                 hx-include="[name=resources]"
+                 hx-indicator="#spinner"
+                 hx-push-url="true"
+                 hx-swap="outerHTML" />
+          <label for="resource-{{ resource.slug }}" class="form-check-label">{{ resource.name }}</label>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% include "resources/partials/multi_planner_table.html" %}
+{% endblock content %}
