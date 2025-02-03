@@ -112,7 +112,6 @@ def generate_booking(booking_data):
             total_amount = (
                 (end - start).total_seconds() / 3600 * compensation.hourly_rate
             )
-
     user = get_object_or_404(User, slug=booking_data["user"])
 
     return Booking(
@@ -139,8 +138,19 @@ def save_booking(user, booking):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
 
-    booking.save()
+    if user.is_staff:
+        confirmed_admins = booking.organization.get_confirmed_admins()
+        if confirmed_admins.filter(id=user.id).exists():
+            booking.user = user
+        else:
+            admin_user = confirmed_admins.first()
+            if admin_user:
+                booking.user = admin_user
+            else:
+                error_msg = "No confirmed admins available."
+                raise ValueError(error_msg)
 
+    booking.save()
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
     if booking.status == BookingStatus.PENDING:

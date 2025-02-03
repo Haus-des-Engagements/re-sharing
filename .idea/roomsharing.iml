@@ -31,7 +31,7 @@
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
     <option name="TEMPLATE_FOLDERS">
       <list>
-        <option value="$MODULE_DIR$/../roomsharing/roomsharing/templates" />
+        <option value="$MODULE_DIR$/re_sharing/templates" />
       </list>
     </option>
   </component>
