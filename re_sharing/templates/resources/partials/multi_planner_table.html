@@ -42,7 +42,7 @@
           <tr class="table-light">
             <th>{{ day|date:"l, d.m.y" }}</th>
             {% for timeslot in day_data.resources.0.timeslots %}
-              {% if not forloop.counter|divisibleby:2 %}<th colspan="2">{{ timeslot.time }}</th>{% endif %}
+              {% if not forloop.counter|divisibleby:2 %}<th colspan="2">{{ timeslot.time|date:"H:i" }}</th>{% endif %}
             {% endfor %}
           </tr>
         </thead>

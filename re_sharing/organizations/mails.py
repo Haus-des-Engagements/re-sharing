@@ -104,13 +104,13 @@ def send_booking_confirmation_email(booking):
     )
 
 
-def send_booking_reminder_emails():
+def send_booking_reminder_emails(days=5):
     bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
-    dt_in_5_days = timezone.now() + timedelta(days=5)
-    dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
-    dt_in_6_days = dt_in_5_days + timedelta(days=1)
-    bookings = bookings.filter(timespan__startswith__gte=dt_in_5_days)
-    bookings = bookings.filter(timespan__startswith__lt=dt_in_6_days)
+    dt_in_days = timezone.now() + timedelta(days=days)
+    dt_in_days = dt_in_days.replace(hour=0, minute=0, second=0, microsecond=0)
+    dt_in_next_day = dt_in_days + timedelta(days=1)
+    bookings = bookings.filter(timespan__startswith__gte=dt_in_days)
+    bookings = bookings.filter(timespan__startswith__lt=dt_in_next_day)
     bookings = bookings.filter(
         Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
     )
@@ -129,7 +129,7 @@ def send_booking_reminder_emails():
             get_recipient_booking(booking),
             ical_content,
         )
-    return list(bookings.values_list("slug", flat=True))
+    return list(bookings.values_list("slug", flat=True)), dt_in_days.date()
 
 
 def send_booking_cancellation_email(booking):

@@ -143,8 +143,6 @@ def save_booking(user, booking):
 
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
-    if booking.status == BookingStatus.CONFIRMED:
-        send_booking_confirmation_email(booking)
     if booking.status == BookingStatus.PENDING:
         send_manager_new_booking_email(booking)
 

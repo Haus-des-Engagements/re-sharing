@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.db.models import F
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 
 from re_sharing.users.models import User
@@ -147,7 +148,7 @@ def manager_filter_organizations_list(status, group):
     if group != "all":
         organizations = organizations.filter(organization_groups__slug=group)
 
-    return organizations.order_by("name")
+    return organizations.order_by(Lower("name"))
 
 
 def manager_cancel_organization(user, organization_slug):
