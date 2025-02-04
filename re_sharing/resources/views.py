@@ -5,8 +5,7 @@ from django.views.decorators.http import require_http_methods
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
 from re_sharing.resources.services import filter_resources
-from re_sharing.resources.services import multi_planner
-from re_sharing.resources.services import planner_table
+from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
 
 
@@ -45,31 +44,28 @@ def show_resource_view(request, resource_slug):
 @require_http_methods(["GET"])
 def planner_view(request):
     date_string = request.GET.get("date")
-    resources, timeslots, dates = planner_table(request.user, date_string)
-    context = {"resources": resources, "timeslots": timeslots, "dates": dates}
-
-    if request.headers.get("HX-Request"):
-        return render(request, "resources/partials/planner_table.html", context)
-    return render(request, "resources/planner.html", context)
-
-
-@require_http_methods(["GET"])
-def multi_planner_view(request):
-    date_string = request.GET.get("date")
     selected_nb_of_days = int(request.GET.get("selected_nb_of_days", "7"))
     selected_resources_slugs = request.GET.getlist("resources")
-    resources = request.user.get_resources()
+    if request.user.is_authenticated:
+        resources = request.user.get_resources()
+    else:
+        resources = Resource.objects.filter(is_private=False)
     if selected_resources_slugs:
         selected_resources = resources.filter(slug__in=selected_resources_slugs)
     else:
         selected_resources = resources
 
-    resource, timeslots, weekdays, dates, planner_data = multi_planner(
+    grouped_resources = {}
+    for access_type in resources.values_list("access__name", flat=True).distinct():
+        grouped_resources[access_type] = resources.filter(access__name=access_type)
+
+    resource, timeslots, weekdays, dates, planner_data = planner(
         request.user, date_string, selected_nb_of_days, selected_resources
     )
     context = {
         "resources": resources,
-        "selected_resources": selected_resources_slugs,
+        "grouped_resources": grouped_resources,
+        "selected_resources": selected_resources,
         "timeslots": timeslots,
         "dates": dates,
         "weekdays": weekdays,

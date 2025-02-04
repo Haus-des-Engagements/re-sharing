@@ -159,11 +159,7 @@ def get_access_code(resource_slug, organization_slug, timestamp):
     return access_code
 
 
-def multi_planner_day(user, date_string, resources):
-    resources = resources.order_by("id")
-
-
-def multi_planner(user, date_string, nb_of_days, resources):
+def planner(user, date_string, nb_of_days, resources):
     resources = resources.order_by("id")
 
     shown_date = parser.parse(date_string) if date_string else timezone.now()
@@ -245,72 +241,3 @@ def multi_planner(user, date_string, nb_of_days, resources):
         "next_day": shown_date + timedelta(days=1),
     }
     return resources, timeslots, weekdays, dates, planner_data
-
-
-def planner_table(user, date_string):
-    resources = user.get_resources()
-    resources = resources.order_by("id")
-
-    shown_date = (
-        parser.parse(date_string).date() if date_string else timezone.now().date()
-    )
-    start_of_day = timezone.make_aware(
-        datetime.combine(shown_date, time(hour=0)),
-    )
-    end_of_day = timezone.make_aware(
-        datetime.combine(shown_date, time(hour=23, minute=59)),
-    )
-
-    # Calculate the time slots for each day
-    number_of_slots = 48
-    timeslots = [
-        {
-            "timeslot": i,
-            "time": start_of_day + timedelta(minutes=30) * i,
-            "slot": [
-                {"booked": False, "booking_link": None}
-                for _ in range(resources.count())
-            ],
-        }
-        for i in range(number_of_slots)
-    ]
-    daily_bookings = (
-        Booking.objects.filter(resource__in=resources)
-        .filter(status=BookingStatus.CONFIRMED)
-        .filter(timespan__overlap=(start_of_day, end_of_day))
-    )
-
-    resource_ids = [resource.id for resource in resources]
-
-    for booking in daily_bookings:
-        booking_start = max(booking.timespan.lower, start_of_day)
-        booking_end = min(booking.timespan.upper, end_of_day)
-
-        # Convert booking start and end times to time slot indices
-        start_index = int((booking_start - start_of_day).total_seconds() // 1800)
-        end_index = int((booking_end - start_of_day).total_seconds() // 1800)
-
-        resource_index = resource_ids.index(booking.resource.id)
-
-        # Mark corresponding time slots as booked
-        for i in range(start_index, end_index):
-            timeslots[i]["slot"][resource_index]["booked"] = True
-
-    for timeslot in timeslots:
-        for i, resource in enumerate(timeslot["slot"]):
-            if not resource["booked"]:
-                resource["booking_link"] = (
-                    f"?starttime={timeslot['time'].strftime('%H:%M')}"
-                    f"&endtime="
-                    f"{(timeslot['time']+ relativedelta(minutes=90)).strftime('%H:%M')}"
-                    f"&startdate={shown_date.strftime('%Y-%m-%d')}&resource={resources[i].slug}"
-                )
-
-    previous_day = shown_date - timedelta(days=1)
-    next_day = shown_date + timedelta(days=1)
-    dates = {
-        "previous_day": previous_day,
-        "shown_date": shown_date,
-        "next_day": next_day,
-    }
-    return resources, timeslots, dates
