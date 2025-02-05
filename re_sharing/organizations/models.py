@@ -228,6 +228,17 @@ class Organization(TimeStampedModel):
             user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
         )
 
+    def get_confirmed_users(self):
+        """
+        Fetch all users who are confirmed users of this organization.
+        """
+        from re_sharing.users.models import User
+
+        return User.objects.filter(
+            user_of_bookingpermission__organization=self,
+            user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        )
+
 
 class BookingPermission(TimeStampedModel):
     class Role(IntegerChoices):

@@ -40,7 +40,6 @@ EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend",
 )
-DEFAULT_FROM_EMAIL = "raum@haus-des-engagements.de"
 
 # WhiteNoise
 # ------------------------------------------------------------------------------

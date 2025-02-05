@@ -14,7 +14,6 @@ from icalendar import Event
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import EmailTemplate
-from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.services import get_access_code
 from re_sharing.utils.models import BookingStatus
 
@@ -69,7 +68,13 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
 
     subject = Template(email_template.subject).render(Context(context))
     body = Template(email_template.body).render(Context(context))
-    email = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, recipient_list)
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=recipient_list,
+        bcc=[settings.DEFAULT_BCC_EMAIL],
+    )
 
     if ical_content:
         ical_filename = f"booking_{context['booking'].slug}.ics"
@@ -253,11 +258,13 @@ def manager_new_organization_email(organization):
 def send_new_booking_message_email(booking_message):
     domain = Site.objects.get_current().domain
     context = {"booking": booking_message.booking, "domain": domain}
-    if not user_has_bookingpermission(booking_message.user, booking_message.booking):
+    if (
+        booking_message.user
+        in booking_message.booking.organization.get_confirmed_users()
+    ):
         recipient = [settings.DEFAULT_MANAGER_EMAIL]
     else:
         recipient = get_recipient_booking(booking_message.booking)
-
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.NEW_BOOKING_MESSAGE, context, recipient
     )

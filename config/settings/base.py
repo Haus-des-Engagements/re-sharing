@@ -252,14 +252,17 @@ EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
     default="django.core.mail.backends.smtp.EmailBackend",
 )
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 1
-
-DEFAULT_MANAGER_EMAIL = env(
-    "DJANGO_DEFAULT_MANAGER_EMAIL", default="Re-Sharing <noreply@re-sharing.info>"
-)
-
-
+DEFAULT_MANAGER_EMAIL = env("DJANGO_DEFAULT_MANAGER_EMAIL", default=None)
+# https://docs.djangoproject.com/en/dev/ref/settings/#default-from-email
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default=None)
+# Send a copy of sent mails to this address
+DEFAULT_BCC_EMAIL = env("DJANGO_DEFAULT_BCC_EMAIL", default=None)
+EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[Re-Sharing]")
+# https://docs.djangoproject.com/en/dev/ref/settings/#server-email
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.

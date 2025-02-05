@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.mails import get_recipient_booking
-from re_sharing.organizations.mails import get_recipient_booking_series
 from re_sharing.organizations.mails import organization_cancellation_email
 from re_sharing.organizations.mails import organization_confirmation_email
 from re_sharing.organizations.mails import send_booking_cancellation_email
@@ -24,6 +23,7 @@ from re_sharing.utils.models import BookingStatus
 
 class BookingConfirmationEmailTestCase(TestCase):
     @patch("re_sharing.organizations.mails.EmailMessage")
+    @patch("re_sharing.organizations.mails.get_email_template")
     @patch("re_sharing.organizations.mails.EmailTemplate")
     @patch("re_sharing.organizations.mails.Site")
     @patch("re_sharing.organizations.mails.get_access_code")
@@ -36,9 +36,16 @@ class BookingConfirmationEmailTestCase(TestCase):
         mock_timezone_now,
         mock_get_access_code,
         mock_site,
+        mock_get_email_template,
         mock_email_template,
         mock_email_message,
     ):
+        # Mock the get_email_template behavior
+        email_template_instance = MagicMock()
+        email_template_instance.subject = "Test Subject"
+        email_template_instance.body = "Test Body"
+        email_template_instance.active = True
+        mock_get_email_template.return_value = email_template_instance
         mock_site.objects.get_current.return_value.domain = "example.com"
         mock_email_template.EmailTypeChoices.BOOKING_CONFIRMATION = (
             "booking_confirmation"
@@ -120,10 +127,11 @@ class BookingCancellationEmailTestCase(TestCase):
             email_type="booking_cancellation"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            get_recipient_booking(mock_booking),
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=get_recipient_booking(mock_booking),
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -171,12 +179,15 @@ class BookingReminderEmailTestCase(TestCase):
         mock_email_template.objects.get.assert_called_once_with(
             email_type="booking_reminder"
         )
+
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            get_recipient_booking(mock_booking),
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=get_recipient_booking(mock_booking),
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
+
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.attach.assert_called_once_with(
             "booking_test-booking.ics", "ICS_CONTENT", "text/calendar"
@@ -207,10 +218,11 @@ class ManagerNewBookingTestCase(TestCase):
             email_type="manager_new_booking"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            [settings.DEFAULT_MANAGER_EMAIL],
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_MANAGER_EMAIL],
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -241,10 +253,11 @@ class BookingSeriesConfirmationEmailTestCase(TestCase):
             email_type="booking_series_confirmation"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            get_recipient_booking_series(mock_rrule),
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=get_recipient_booking(mock_rrule),
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -275,10 +288,11 @@ class BookingSeriesCancellationEmailTestCase(TestCase):
             email_type="booking_series_cancellation"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            get_recipient_booking_series(mock_rrule),
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=get_recipient_booking(mock_rrule),
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -310,10 +324,11 @@ class ManagerNewBookingSeriesTestCase(TestCase):
             email_type="manager_new_booking_series"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            [settings.DEFAULT_MANAGER_EMAIL],
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_MANAGER_EMAIL],
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -348,10 +363,11 @@ class OrganizationConfirmationEmailTestCase(TestCase):
             email_type="organization_confirmation"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            ["admin1@example.com"],
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=["admin1@example.com"],
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
@@ -385,11 +401,13 @@ class OrganizationCancellationEmailTestCase(TestCase):
             email_type="organization_cancellation"
         )
         mock_email_message.assert_called_once_with(
-            "Test Subject",
-            "Test Body",
-            settings.DEFAULT_FROM_EMAIL,
-            ["admin1@example.com"],
+            subject="Test Subject",
+            body="Test Body",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=["admin1@example.com"],
+            bcc=[settings.DEFAULT_BCC_EMAIL],
         )
+
         mock_email_instance = mock_email_message.return_value
         mock_email_instance.send.assert_called_once_with(fail_silently=False)
 
