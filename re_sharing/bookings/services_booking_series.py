@@ -177,10 +177,24 @@ def create_booking_series_and_bookings(booking_data):
 def save_booking_series(user, bookings, booking_series):
     if not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
+
+    if user.is_staff:
+        confirmed_admins = booking_series.organization.get_confirmed_admins()
+        if confirmed_admins.filter(id=user.id).exists():
+            booking_series.user = user
+        else:
+            admin_user = confirmed_admins.first()
+            if admin_user:
+                booking_series.user = admin_user
+            else:
+                error_msg = "No confirmed admins available."
+                raise ValueError(error_msg)
+
     if user.is_staff:
         booking_series.status = BookingStatus.CONFIRMED
     booking_series.save()
     for booking in bookings:
+        booking.user = booking_series.user
         booking.save()
     send_manager_new_booking_series_email(booking_series)
 

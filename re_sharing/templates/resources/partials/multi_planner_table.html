@@ -26,7 +26,8 @@
                 {% else %}
                   <td class="table-success">
                     <a href="{% url 'bookings:create-booking' %}{{ timeslot.link }}"
-                       class="cover-link">&nbsp</a>
+                       class="cover-link">&nbsp
+                      <span class="visually-hidden">Book resource on {{ timeslot.time|date:"d.m.y H:i" }}</span></a>
                   </td>
                 {% endif %}
               {% endfor %}

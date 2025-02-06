@@ -16,6 +16,7 @@ from django.db.models import Model
 from django.db.models import PositiveIntegerField
 from django.db.models import TextField
 from django.db.models import UUIDField
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -175,6 +176,7 @@ class Compensation(TimeStampedModel):
     class Meta:
         verbose_name = _("Compensation")
         verbose_name_plural = _("Compensations")
+        ordering = [Lower("name")]
 
     def __str__(self):
         if self.hourly_rate is None:

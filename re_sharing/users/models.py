@@ -9,6 +9,7 @@ from django.db.models import CharField
 from django.db.models import EmailField
 from django.db.models import ManyToManyField
 from django.db.models import UUIDField
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
@@ -55,7 +56,7 @@ class User(AbstractUser, TimeStampedModel):
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-        ordering = ["email"]
+        ordering = [Lower("first_name"), Lower("last_name")]
 
     def __str__(self):
         return self.first_name + " " + self.last_name
