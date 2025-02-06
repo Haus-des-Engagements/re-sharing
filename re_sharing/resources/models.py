@@ -109,7 +109,9 @@ class Resource(Model):
         return reverse("resources:show-resource", kwargs={"resource_slug": self.slug})
 
     def is_booked(self, timespan):
-        return self.bookings_of_resource.filter(timespan__overlap=timespan).exists()
+        return self.bookings_of_resource.filter(
+            timespan__overlap=timespan, status=BookingStatus.CONFIRMED
+        ).exists()
 
     def is_bookable(self, start_datetime):
         end_datetime = start_datetime + timedelta(minutes=30)
