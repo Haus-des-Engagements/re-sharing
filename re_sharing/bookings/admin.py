@@ -13,8 +13,13 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
+from import_export import fields
+from import_export import resources
 from import_export.admin import ImportExportMixin
+from import_export.admin import ImportExportModelAdmin
+from import_export.widgets import ForeignKeyWidget
 
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 from .models import Booking
@@ -24,8 +29,42 @@ from .services_booking_series import generate_bookings
 from .services_booking_series import max_future_booking_date
 
 
+# avoid namespacing problems by renaming resource to booked_resource
+class BookingResource(resources.ModelResource):
+    booked_resource = fields.Field(
+        column_name="resource",
+        attribute="resource",
+        widget=ForeignKeyWidget(Resource, "id"),
+    )
+
+    class Meta:
+        model = Booking
+        fields = (
+            "id",
+            "title",
+            "booked_resource",
+            "organization",
+            "user",
+            "import_id",
+            "booking_series",
+            "start_date",
+            "start_time",
+            "end_date",
+            "end_time",
+            "timespan",
+            "compensation",
+            "status",
+            "total_amount",
+            "activity_description",
+            "invoice_number",
+            "invoice_address",
+            "number_of_attendees",
+            "slug",
+        )
+
+
 @admin.register(Booking)
-class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
+class BookingAdmin(ImportExportModelAdmin):
     list_display = [
         "id",
         "resource",
@@ -40,6 +79,7 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
     list_filter = ["status", "organization", "resource", "booking_series"]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
+    resource_classes = [BookingResource]
 
     @admin.action(description=_("Confirm selected bookings"))
     def confirm_bookings(self, request, queryset):
@@ -78,6 +118,40 @@ class BookingAdmin(ImportExportMixin, admin.ModelAdmin):
         )
 
 
+# avoid namespacing problems by renaming resource to booked_resource
+class BookingSeriesResource(resources.ModelResource):
+    booked_resource = fields.Field(
+        column_name="resource",
+        attribute="resource",
+        widget=ForeignKeyWidget(Resource, "id"),
+    )
+
+    class Meta:
+        model = BookingSeries
+        fields = (
+            "id",
+            "title",
+            "booked_resource",
+            "organization",
+            "user",
+            "import_id",
+            "rrule",
+            "first_booking_date",
+            "start_time",
+            "last_booking_date",
+            "end_time",
+            "compensation",
+            "status",
+            "total_amount_per_booking",
+            "reminder_emails",
+            "activity_description",
+            "invoice_number",
+            "invoice_address",
+            "number_of_attendees",
+            "slug",
+        )
+
+
 @admin.register(BookingSeries)
 class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = [
@@ -92,6 +166,7 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "booking_count_link",
         "import_id",
     ]
+    resource_classes = [BookingSeriesResource]
     search_fields = ["id", "title", "slug", "import_id", "user", "organization"]
     list_filter = ["status", "organization"]
     readonly_fields = ["booking_count_link"]
@@ -117,7 +192,8 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
 
             for booking in bookings:
                 booking.organization = obj.organization
-            Booking.objects.bulk_update(bookings, ["organization"])
+                booking.user = obj.user
+            Booking.objects.bulk_update(bookings, ["organization", "user"])
 
             if previous.rrule != obj.rrule:
                 if "COUNT" not in obj.rrule and "UNTIL" not in obj.rrule:

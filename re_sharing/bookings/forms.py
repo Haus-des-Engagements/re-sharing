@@ -328,6 +328,8 @@ class BookingForm(forms.ModelForm):
 
         if organizations.exists():
             self.fields["organization"].initial = organizations.first()
+            if "organization" in self.initial:
+                self.fields["organization"].initial = self.initial["organization"]
 
         self.fields["starttime"].choices = [
             (

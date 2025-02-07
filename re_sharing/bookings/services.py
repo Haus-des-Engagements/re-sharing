@@ -41,7 +41,17 @@ class InvalidBookingOperationError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
-def set_initial_booking_data(endtime, startdate, starttime, resource):
+def set_initial_booking_data(**kwargs):
+    endtime = kwargs.get("endtime")
+    startdate = kwargs.get("startdate")
+    starttime = kwargs.get("starttime")
+    resource = kwargs.get("resource")
+    organization = kwargs.get("organization")
+    title = kwargs.get("title")
+    activity_description = kwargs.get("activity_description")
+    attendees = kwargs.get("attendees")
+    import_id = kwargs.get("import_id")
+
     initial_data = {}
     if startdate:
         initial_data["startdate"] = startdate
@@ -62,6 +72,19 @@ def set_initial_booking_data(endtime, startdate, starttime, resource):
         initial_data["endtime"] = datetime.strftime(endtime, "%H:00")
     if resource:
         initial_data["resource"] = get_object_or_404(Resource, slug=resource)
+    if organization:
+        initial_data["organization"] = get_object_or_404(
+            Organization, slug=organization
+        )
+    if title:
+        initial_data["title"] = title
+    if activity_description:
+        initial_data["activity_description"] = activity_description
+    if attendees:
+        initial_data["number_of_attendees"] = attendees
+    if import_id:
+        initial_data["import_id"] = import_id
+
     return initial_data
 
 

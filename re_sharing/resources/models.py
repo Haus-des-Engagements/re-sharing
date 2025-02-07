@@ -171,6 +171,9 @@ class Compensation(TimeStampedModel):
         related_query_name="compensation_of_resource",
     )
     name = CharField(_("Name"), max_length=255)
+    slug = AutoSlugField(
+        _("Slug"), populate_from=("name", "hourly_rate"), editable=True
+    )
     conditions = CharField(_("Conditions"), max_length=512, blank=True)
     hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
     is_active = BooleanField(_("Active"), default=True)

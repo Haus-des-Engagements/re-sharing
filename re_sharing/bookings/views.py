@@ -41,11 +41,19 @@ from .services_booking_series import save_booking_series
 @login_required
 def create_booking_data_form_view(request):
     if request.method == "GET":
-        startdate = request.GET.get("startdate")
-        starttime = request.GET.get("starttime")
-        endtime = request.GET.get("endtime")
-        resource = request.GET.get("resource")
-        initial_data = set_initial_booking_data(endtime, startdate, starttime, resource)
+        request_data = {
+            "startdate": request.GET.get("startdate"),
+            "starttime": request.GET.get("starttime"),
+            "endtime": request.GET.get("endtime"),
+            "resource": request.GET.get("resource"),
+            "organization": request.GET.get("organization"),
+            "attendees": request.GET.get("attendees"),
+            "title": request.GET.get("title"),
+            "activity_description": request.GET.get("activity_description"),
+            "import_id": request.GET.get("import_id"),
+        }
+
+        initial_data = set_initial_booking_data(**request_data)
         # user needs at least to be confirmed for one organization
         user_has_bookingpermission = (
             BookingPermission.objects.filter(user=request.user)
