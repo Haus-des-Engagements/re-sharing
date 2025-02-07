@@ -19,6 +19,7 @@ from import_export.admin import ImportExportMixin
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ForeignKeyWidget
 
+from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
@@ -31,6 +32,36 @@ from .services_booking_series import max_future_booking_date
 
 # avoid namespacing problems by renaming resource to booked_resource
 class BookingResource(resources.ModelResource):
+    def before_import(self, dataset, **kwargs):
+        # mimic a 'dynamic field' - i.e. append field which exists on
+        # Book model, but not in dataset
+        dataset.headers.append("timespan")
+        dataset.headers.append("user")
+        super().before_import(dataset, **kwargs)
+
+    def before_import_row(self, row, **kwargs):
+        row["start_date"] = datetime.strptime(row["start_date"], "%Y-%m-%d").date()  # noqa: DTZ007
+        row["start_time"] = datetime.strptime(row["start_time"], "%H:%M").time()  # noqa: DTZ007
+        row["end_date"] = datetime.strptime(row["end_date"], "%Y-%m-%d").date()  # noqa: DTZ007
+        row["end_time"] = datetime.strptime(row["end_time"], "%H:%M").time()  # noqa: DTZ007
+
+        start = timezone.make_aware(
+            datetime.combine(row["start_date"], row["start_time"])
+        ).astimezone(UTC)
+        end = timezone.make_aware(
+            datetime.combine(row["end_date"], row["end_time"])
+        ).astimezone(UTC)
+        row["timespan"] = [start, end]
+
+        organization = Organization.objects.get(id=row["organization"])
+        confirmed_admins = organization.get_confirmed_admins()
+        if confirmed_admins.exists():
+            user = confirmed_admins.first()
+            user = user.id
+        else:
+            user = 1
+        row["user"] = user
+
     booked_resource = fields.Field(
         column_name="resource",
         attribute="resource",
@@ -145,7 +176,6 @@ class BookingSeriesResource(resources.ModelResource):
             "total_amount_per_booking",
             "reminder_emails",
             "activity_description",
-            "invoice_number",
             "invoice_address",
             "number_of_attendees",
             "slug",
