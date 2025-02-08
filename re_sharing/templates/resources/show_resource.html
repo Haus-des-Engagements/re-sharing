@@ -89,14 +89,11 @@
   {{ resource.access.instructions }}
   <h2 class="mt-5">{% trans "Accessibility" %}</h2>
   {{ resource.accessibility|safe }}
-  {% if request.user.is_staff %}
-    <!-- TODO [migration] -->
-    <h2 class="mt-5">{% trans "Bookings" %}</h2>
-    <div class="mt-3 mb-4">
-      <p>
-        {% trans "In this view, you can see the free times for this resource. Click on a free slot to go directly to the booking page." %}
-      </p>
-    </div>
-    <div id="results">{% include "resources/partials/weekly_bookings_table.html" %}</div>
-  {% endif %}
+  <h2 class="mt-5">{% trans "Bookings" %}</h2>
+  <div class="mt-3 mb-4">
+    <p>
+      {% trans "In this view, you can see the free times for this resource. Click on a free slot to go directly to the booking page." %}
+    </p>
+  </div>
+  <div id="results">{% include "resources/partials/weekly_bookings_table.html" %}</div>
 {% endblock content %}

@@ -160,7 +160,7 @@ def get_access_code(resource_slug, organization_slug, timestamp):
 
 
 def planner(user, date_string, nb_of_days, resources):
-    resources = resources.order_by("id")
+    resources = resources.order_by("access__id", "name")
 
     shown_date = parser.parse(date_string) if date_string else timezone.now()
     start_of_day = timezone.make_aware(
@@ -190,7 +190,11 @@ def planner(user, date_string, nb_of_days, resources):
         day_data = {"weekday": day, "resources": []}
 
         for resource in resources:
-            resource_data = {"name": resource.name, "timeslots": []}
+            resource_data = {
+                "name": resource.name,
+                "timeslots": [],
+                "slug": resource.slug,
+            }
             start_time = timezone.make_aware(
                 datetime.combine(day, time(hour=slots_start))
             )
@@ -229,7 +233,9 @@ def planner(user, date_string, nb_of_days, resources):
                                 timeslot["link"] = f"/bookings/{booking.slug}/"
                             else:
                                 timeslot["link"] = None
-                            if booking.organization.is_public or user.is_staff:
+                            if (
+                                user.is_authenticated and booking.organization.is_public
+                            ) or user.is_staff:
                                 timeslot["organization"] = booking.organization.name
 
             day_data["resources"].append(resource_data)

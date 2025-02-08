@@ -17,7 +17,14 @@
           <!-- Iterate through resources -->
           {% for resource in day_data.resources %}
             <tr class="w-25">
-              <td class="table-light w-25 text-truncate">{{ resource.name }}</td>
+              <td class="table-light w-25 text-truncate">
+                {{ resource.name }}
+                <a href="{% url 'resources:show-resource' resource_slug=resource.slug %}">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-link" />
+                  </svg>
+                </a>
+              </td>
               {% for timeslot in resource.timeslots %}
                 {% if timeslot.booked %}
                   <td class="table-danger" title="{{ timeslot.organization }}">

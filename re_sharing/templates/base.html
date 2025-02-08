@@ -96,21 +96,13 @@
                     </li>
                   </ul>
                 {% endif %}
-                {% if request.user.is_staff %}
-                  <!-- TODO [migration] -->
-                  <li class="nav-item">
-                    <a class="btn btn-outline-primary"
-                       href="{% url 'bookings:create-booking' %}"
-                       role="button">
-                      <svg width="1em" height="1em">
-                        <use href="#bi-plus-lg" />
-                      </svg>
-                      {% trans "New Booking Request" %}
-                    </a>
-                  </li>
-                {% endif %}
+                <li class="nav-item">
+                  <a class="btn btn-outline-primary"
+                     href="{% url 'resources:planner' %}"
+                     role="button">{% trans "Find a free room" %}</a>
+                </li>
               </ul>
-              <ul class="navbar-nav ms-auto">
+              <ul class="navbar-nav me-auto">
                 {% if request.user.is_authenticated %}
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle"

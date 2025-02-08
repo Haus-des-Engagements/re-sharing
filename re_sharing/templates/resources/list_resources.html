@@ -7,22 +7,19 @@
 {% endblock title %}
 {% block content %}
   <h1 class="mt-4">{% trans "Rooms" %}</h1>
-  {% if request.user.is_staff %}
-    <!-- TODO [migration] -->
-    <div class="col-auto">
-      <svg class="fs-4 me-1" width="1em" height="1em">
-        <use href="#bi-calendar4-week" />
-      </svg>
-      {% url 'resources:planner' as planner_url %}
-      {% blocktrans %}You can also find free slots in the <a href="{{ planner_url }}">planner overview</a>.{% endblocktrans %}
-    </div>
-  {% endif %}
+  <div class="col-auto">
+    <svg class="fs-4 me-1" width="1em" height="1em">
+      <use href="#bi-calendar4-week" />
+    </svg>
+    {% url 'resources:planner' as planner_url %}
+    {% blocktrans %}You can also find free slots in the <a href="{{ planner_url }}">planner overview</a>.{% endblocktrans %}
+  </div>
   <form class="row g-2 mt-2"
         hx-get="{% url 'resources:list-resources' %}"
         hx-target="#resource-list"
         hx-trigger="input change"
         hx-indicator="#spinner">
-    <div id="div_start_datetime" class="form-floating mb-3 col-3">
+    <div id="div_start_datetime" class="form-floating mb-3 col-auto">
       <input type="datetime-local"
              name="start_datetime"
              class="form-control textinput"
@@ -30,7 +27,7 @@
              id="start_datetime" />
       <label for="start_datetime">{% trans "Find a free resource" %}</label>
     </div>
-    <div id="div_persons_count" class="form-floating mb-3 col-3">
+    <div id="div_persons_count" class="form-floating mb-3 col-auto">
       <input type="number"
              name="persons_count"
              class="form-control textinput"

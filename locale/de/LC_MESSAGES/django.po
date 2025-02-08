@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-08 21:24+0100\n"
+"POT-Creation-Date: 2025-02-08 23:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,7 +53,7 @@ msgstr[1] "%d Buchungen erfolgreich storniert."
 #: re_sharing/templates/bookings/list_booking_series.html:60
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:14
 #: re_sharing/templates/bookings/preview-booking-series.html:42
-#: re_sharing/templates/resources/show_resource.html:94
+#: re_sharing/templates/resources/show_resource.html:92
 msgid "Bookings"
 msgstr "Buchungen"
 
@@ -68,8 +68,8 @@ msgstr "Buchungen löschen"
 #: re_sharing/bookings/forms.py:47
 #: re_sharing/templates/bookings/show_booking_series.html:91
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:74
-#: re_sharing/templates/resources/multi_planner.html:28
-#: re_sharing/templates/resources/multi_planner.html:32
+#: re_sharing/templates/resources/multi_planner.html:45
+#: re_sharing/templates/resources/multi_planner.html:49
 #: re_sharing/templates/resources/partials/planner_table.html:20
 #: re_sharing/templates/resources/partials/weekly_bookings_table.html:20
 msgid "Date"
@@ -202,10 +202,8 @@ msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
 #: re_sharing/bookings/forms.py:378
-#, fuzzy
-#| msgid "The end must be after the start."
 msgid "The start must be in the future."
-msgstr "Das Ende muss nach dem Beginn sein."
+msgstr "Der Start muss in der Zukunft liegen."
 
 #: re_sharing/bookings/forms.py:382
 msgid "The end must be after the start."
@@ -403,11 +401,11 @@ msgstr "Nachrichten zur Buchung"
 msgid "only shown when confirmed"
 msgstr "erst nach Bestätigung sichtbar"
 
-#: re_sharing/bookings/views.py:119
+#: re_sharing/bookings/views.py:120
 msgid "Booking created successfully!"
 msgstr "Buchungen erfolgreich erstellt!"
 
-#: re_sharing/bookings/views.py:124
+#: re_sharing/bookings/views.py:125
 msgid ""
 "Booking request created successfully! Please await our confirmation. You "
 "will be notified by mail."
@@ -415,15 +413,15 @@ msgstr ""
 "Buchungsanfrage erfolgreich erstellt. Bitte warte auf unsere Bestätigung. Du "
 "wirst per E-Mail informiert"
 
-#: re_sharing/bookings/views.py:130 re_sharing/bookings/views.py:292
+#: re_sharing/bookings/views.py:131 re_sharing/bookings/views.py:293
 msgid "Sorry, something went wrong. Please try again."
 msgstr "Entschuldige, etwas ist schief gelaufen. Bitte probiere es erneut."
 
-#: re_sharing/bookings/views.py:218
+#: re_sharing/bookings/views.py:219
 msgid "Successfully cancelled all future bookings."
 msgstr "Alle zukünftigen Buchungen erfolgreich storniert."
 
-#: re_sharing/bookings/views.py:289
+#: re_sharing/bookings/views.py:290
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
 
@@ -879,7 +877,7 @@ msgid "E-Mail template"
 msgstr "E-Mail Vorlage"
 
 #: re_sharing/resources/apps.py:7 re_sharing/resources/models.py:102
-#: re_sharing/templates/base.html:182
+#: re_sharing/templates/base.html:179
 msgid "Resources"
 msgstr "Ressourcen"
 
@@ -974,7 +972,7 @@ msgid "Compensations"
 msgstr "Gegenleistung"
 
 #: re_sharing/templates/allauth/layouts/entrance.html:13
-#: re_sharing/templates/base.html:146
+#: re_sharing/templates/base.html:143
 msgid "Sign In"
 msgstr "Anmelden"
 
@@ -982,7 +980,7 @@ msgstr "Anmelden"
 msgid "HdE Räume"
 msgstr ""
 
-#: re_sharing/templates/base.html:60 re_sharing/templates/base.html:178
+#: re_sharing/templates/base.html:60 re_sharing/templates/base.html:175
 msgid "Home"
 msgstr "Startseite"
 
@@ -991,7 +989,7 @@ msgstr "Startseite"
 msgid "Rooms"
 msgstr "Räume"
 
-#: re_sharing/templates/base.html:68 re_sharing/templates/base.html:186
+#: re_sharing/templates/base.html:68 re_sharing/templates/base.html:183
 #: re_sharing/templates/bookings/list_booking_series.html:12
 #: re_sharing/templates/bookings/list_bookings.html:13
 #: re_sharing/templates/bookings/show-booking.html:12
@@ -1009,28 +1007,27 @@ msgstr "Verwaltung"
 msgid "Invoices"
 msgstr "Rechnungen"
 
-#: re_sharing/templates/base.html:108
-#: re_sharing/templates/dashboards/users_bookings_and_permissions.html:67
-msgid "New Booking Request"
-msgstr "Neue Buchungsanfrage"
+#: re_sharing/templates/base.html:105
+msgid "Find a free room"
+msgstr "Finde einen freien Raum"
 
-#: re_sharing/templates/base.html:124
+#: re_sharing/templates/base.html:121
 msgid "Pofile"
 msgstr "Profil"
 
-#: re_sharing/templates/base.html:129
+#: re_sharing/templates/base.html:126
 msgid "My Profile"
 msgstr "Mein Profil"
 
-#: re_sharing/templates/base.html:135
+#: re_sharing/templates/base.html:132
 msgid "Sign Out"
 msgstr "Abmelden"
 
-#: re_sharing/templates/base.html:142
+#: re_sharing/templates/base.html:139
 msgid "Sign Up"
 msgstr "Registrieren"
 
-#: re_sharing/templates/base.html:190
+#: re_sharing/templates/base.html:187
 msgid "Imprint and Data Privacy"
 msgstr "Impressum und Datenschutz"
 
@@ -1042,7 +1039,8 @@ msgstr "Neue Buchungsanfrage"
 msgid ""
 "You first need to create an organization you want to book for and wait for "
 "us to confirm it."
-msgstr "Du musst erst eine Organisation und warten bis wir sie bestätigt haben."
+msgstr ""
+"Du musst erst eine Organisation und warten bis wir sie bestätigt haben."
 
 #: re_sharing/templates/bookings/create-booking.html:15
 msgid "Create a new organization."
@@ -1366,6 +1364,10 @@ msgstr "Bisher keine Organisation. Füge Deine hinzu!"
 msgid "My upcoming bookings and requests"
 msgstr "Meine kommenden Buchungen und Anfragen"
 
+#: re_sharing/templates/dashboards/users_bookings_and_permissions.html:67
+msgid "New Booking Request"
+msgstr "Neue Buchungsanfrage"
+
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:98
 msgid "Details"
 msgstr "Details"
@@ -1566,7 +1568,7 @@ msgstr "Hier findest du eine Anleitung und weitere Infos."
 msgid "HdE | Rooms"
 msgstr "HdE | Räume"
 
-#: re_sharing/templates/resources/list_resources.html:17
+#: re_sharing/templates/resources/list_resources.html:15
 #, python-format
 msgid ""
 "You can also find free slots in the <a href=\"%(planner_url)s\">planner "
@@ -1575,13 +1577,13 @@ msgstr ""
 "Du kannst verfügbare Zeiträume auch im <a href=\"%(planner_url)s\">Planer</"
 "a> finden."
 
-#: re_sharing/templates/resources/list_resources.html:29
-#: re_sharing/templates/resources/list_resources.html:31
+#: re_sharing/templates/resources/list_resources.html:26
+#: re_sharing/templates/resources/list_resources.html:28
 msgid "Find a free resource"
 msgstr "Finde eine freie Ressource"
 
-#: re_sharing/templates/resources/list_resources.html:37
-#: re_sharing/templates/resources/list_resources.html:39
+#: re_sharing/templates/resources/list_resources.html:34
+#: re_sharing/templates/resources/list_resources.html:36
 msgid "Number of persons"
 msgstr "Anzahl an Personen"
 
@@ -1600,8 +1602,12 @@ msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
 "auf einen freien (grünen) Zeitraum, um direkt zur Buchung zu gelangen."
 
-#: re_sharing/templates/resources/multi_planner.html:37
+#: re_sharing/templates/resources/multi_planner.html:54
 msgid "Days to display"
+msgstr "Tage"
+
+#: re_sharing/templates/resources/multi_planner.html:59
+msgid "days"
 msgstr "Tage"
 
 #: re_sharing/templates/resources/partials/list_filter_resources.html:27
@@ -1625,7 +1631,7 @@ msgstr ""
 msgid "HdE | Room"
 msgstr "HdE | Räume"
 
-#: re_sharing/templates/resources/show_resource.html:97
+#: re_sharing/templates/resources/show_resource.html:95
 msgid ""
 "In this view, you can see the free times for this resource. Click on a free "
 "slot to go directly to the booking page."
