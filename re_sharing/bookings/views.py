@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.organizations.models import BookingPermission
+from re_sharing.organizations.models import Organization
 from re_sharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -54,10 +55,11 @@ def create_booking_data_form_view(request):
         }
 
         initial_data = set_initial_booking_data(**request_data)
-        # user needs at least to be confirmed for one organization
+        # user needs at least to be confirmed for one confirmed organization
         user_has_bookingpermission = (
             BookingPermission.objects.filter(user=request.user)
             .filter(status=BookingPermission.Status.CONFIRMED)
+            .filter(organization__status=Organization.Status.CONFIRMED)
             .exists()
         )
 

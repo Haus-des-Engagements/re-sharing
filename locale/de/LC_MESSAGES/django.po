@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-08 16:29+0100\n"
+"POT-Creation-Date: 2025-02-08 21:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,29 +26,29 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-#: re_sharing/bookings/admin.py:117
+#: re_sharing/bookings/admin.py:84
 msgid "Confirm selected bookings"
 msgstr "Ausgewählte Buchungen bestätigen"
 
-#: re_sharing/bookings/admin.py:127
+#: re_sharing/bookings/admin.py:94
 #, python-format
 msgid "%d booking was successfully confirmed."
 msgid_plural "%d bookings were successfully confirmed."
 msgstr[0] "%d Buchung erfolgreich bestätigt!"
 msgstr[1] "%d Buchungen erfolgreich bestätigt!"
 
-#: re_sharing/bookings/admin.py:135
+#: re_sharing/bookings/admin.py:102
 msgid "Cancel selected bookings"
 msgstr "Ausgewählte Buchungen stornieren"
 
-#: re_sharing/bookings/admin.py:145
+#: re_sharing/bookings/admin.py:112
 #, python-format
 msgid "%d booking was successfully cancelled."
 msgid_plural "%d bookings were successfully cancelled."
 msgstr[0] "%d Buchung erfolgreich storniert."
 msgstr[1] "%d Buchungen erfolgreich storniert."
 
-#: re_sharing/bookings/admin.py:211 re_sharing/bookings/apps.py:7
+#: re_sharing/bookings/admin.py:178 re_sharing/bookings/apps.py:7
 #: re_sharing/bookings/models.py:296 re_sharing/templates/base.html:81
 #: re_sharing/templates/bookings/list_booking_series.html:60
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:14
@@ -57,11 +57,11 @@ msgstr[1] "%d Buchungen erfolgreich storniert."
 msgid "Bookings"
 msgstr "Buchungen"
 
-#: re_sharing/bookings/admin.py:240
+#: re_sharing/bookings/admin.py:211
 msgid "Generate bookings"
 msgstr "Buchungen generieren"
 
-#: re_sharing/bookings/admin.py:269
+#: re_sharing/bookings/admin.py:240
 msgid "Delete bookings"
 msgstr "Buchungen löschen"
 
@@ -197,19 +197,25 @@ msgstr "Vorschau"
 msgid "Have a look at the <a href='{url}'>planner</a> for free slots."
 msgstr ""
 
-#: re_sharing/bookings/forms.py:368
+#: re_sharing/bookings/forms.py:366
 msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: re_sharing/bookings/forms.py:387
+#: re_sharing/bookings/forms.py:378
+#, fuzzy
+#| msgid "The end must be after the start."
+msgid "The start must be in the future."
+msgstr "Das Ende muss nach dem Beginn sein."
+
+#: re_sharing/bookings/forms.py:382
 msgid "The end must be after the start."
 msgstr "Das Ende muss nach dem Beginn sein."
 
-#: re_sharing/bookings/forms.py:395
+#: re_sharing/bookings/forms.py:390
 msgid "You can only book for the next 2 years."
 msgstr "Du kannst nur für die nächsten zwei Jahre buchen."
 
-#: re_sharing/bookings/forms.py:447
+#: re_sharing/bookings/forms.py:442
 msgid "The resource is already booked during your selected timeslot."
 msgstr "Die Ressource ist zu der Zeit (zumindest teilweise) belegt."
 
@@ -393,15 +399,15 @@ msgstr "Nachricht zur Buchung"
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: re_sharing/bookings/services.py:201
+#: re_sharing/bookings/services.py:197
 msgid "only shown when confirmed"
 msgstr "erst nach Bestätigung sichtbar"
 
-#: re_sharing/bookings/views.py:118
+#: re_sharing/bookings/views.py:119
 msgid "Booking created successfully!"
 msgstr "Buchungen erfolgreich erstellt!"
 
-#: re_sharing/bookings/views.py:123
+#: re_sharing/bookings/views.py:124
 msgid ""
 "Booking request created successfully! Please await our confirmation. You "
 "will be notified by mail."
@@ -409,15 +415,15 @@ msgstr ""
 "Buchungsanfrage erfolgreich erstellt. Bitte warte auf unsere Bestätigung. Du "
 "wirst per E-Mail informiert"
 
-#: re_sharing/bookings/views.py:129 re_sharing/bookings/views.py:291
+#: re_sharing/bookings/views.py:130 re_sharing/bookings/views.py:292
 msgid "Sorry, something went wrong. Please try again."
 msgstr "Entschuldige, etwas ist schief gelaufen. Bitte probiere es erneut."
 
-#: re_sharing/bookings/views.py:217
+#: re_sharing/bookings/views.py:218
 msgid "Successfully cancelled all future bookings."
 msgstr "Alle zukünftigen Buchungen erfolgreich storniert."
 
-#: re_sharing/bookings/views.py:288
+#: re_sharing/bookings/views.py:289
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
 
@@ -1033,8 +1039,10 @@ msgid "New booking request"
 msgstr "Neue Buchungsanfrage"
 
 #: re_sharing/templates/bookings/create-booking.html:14
-msgid "You first need to create an organization you want to book for."
-msgstr "Du musst erst eine Organisation anlegen für die du buchen kannst."
+msgid ""
+"You first need to create an organization you want to book for and wait for "
+"us to confirm it."
+msgstr "Du musst erst eine Organisation und warten bis wir sie bestätigt haben."
 
 #: re_sharing/templates/bookings/create-booking.html:15
 msgid "Create a new organization."

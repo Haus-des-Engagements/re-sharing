@@ -225,8 +225,12 @@ def planner(user, date_string, nb_of_days, resources):
                         )
                         if booking_start <= slot_datetime < booking_end:
                             timeslot["booked"] = True
-                            timeslot["link"] = None
-                            timeslot["organization"] = booking.organization.name
+                            if user.is_staff:
+                                timeslot["link"] = f"/bookings/{booking.slug}/"
+                            else:
+                                timeslot["link"] = None
+                            if booking.organization.is_public or user.is_staff:
+                                timeslot["organization"] = booking.organization.name
 
             day_data["resources"].append(resource_data)
 

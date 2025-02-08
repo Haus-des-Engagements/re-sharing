@@ -20,7 +20,13 @@
               <td class="table-light w-25 text-truncate">{{ resource.name }}</td>
               {% for timeslot in resource.timeslots %}
                 {% if timeslot.booked %}
-                  <td class="table-danger">&nbsp</td>
+                  <td class="table-danger" title="{{ timeslot.organization }}">
+                    {% if timeslot.link %}
+                      <a href="{{ timeslot.link }}" class="cover-link">&nbsp</a>
+                    {% else %}
+                      &nbsp
+                    {% endif %}
+                  </td>
                 {% elif not timeslot.bookable %}
                   <td class="table-secondary"></td>
                 {% else %}

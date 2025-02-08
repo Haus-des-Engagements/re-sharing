@@ -11,7 +11,7 @@
   </div>
   {% if not user_has_bookingpermission %}
     <div class="alert alert-warning" role="alert">
-      {% trans "You first need to create an organization you want to book for." %}
+      {% trans "You first need to create an organization you want to book for and wait for us to confirm it." %}
       <a href="{% url 'organizations:create-organization' %}">{% trans "Create a new organization." %}</a>
     </div>
   {% else %}
