@@ -86,7 +86,7 @@ class BookingSeries(TimeStampedModel):
         blank=True,
     )
     total_amount_per_booking = DecimalField(
-        _("Total amount"),
+        _("Total amount per booking"),
         max_digits=8,
         decimal_places=2,
         null=True,

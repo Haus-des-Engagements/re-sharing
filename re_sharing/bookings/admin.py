@@ -40,6 +40,8 @@ class BookingResource(resources.ModelResource):
         super().before_import(dataset, **kwargs)
 
     def before_import_row(self, row, **kwargs):
+        # we keep the "wall time" as is, because it can lead to date changes if make it
+        # aware before combining with the date
         row["start_date"] = datetime.strptime(row["start_date"], "%Y-%m-%d").date()  # noqa: DTZ007
         row["start_time"] = datetime.strptime(row["start_time"], "%H:%M").time()  # noqa: DTZ007
         row["end_date"] = datetime.strptime(row["end_date"], "%Y-%m-%d").date()  # noqa: DTZ007
@@ -223,7 +225,11 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
             for booking in bookings:
                 booking.organization = obj.organization
                 booking.user = obj.user
-            Booking.objects.bulk_update(bookings, ["organization", "user"])
+                booking.compensation = obj.compensation
+                booking.total_amount = obj.total_amount_per_booking
+            Booking.objects.bulk_update(
+                bookings, ["organization", "user", "compensation", "total_amount"]
+            )
 
             if previous.rrule != obj.rrule:
                 if "COUNT" not in obj.rrule and "UNTIL" not in obj.rrule:
