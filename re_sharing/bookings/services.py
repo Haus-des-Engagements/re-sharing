@@ -106,8 +106,6 @@ def create_booking_data(user, form):
         "compensation": form.cleaned_data["compensation"].id,
         "invoice_address": form.cleaned_data["invoice_address"],
         "activity_description": form.cleaned_data["activity_description"],
-        # TODO [migration]: remove import_id
-        "import_id": form.cleaned_data["import_id"],
     }
     rrule = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
@@ -152,8 +150,6 @@ def generate_booking(booking_data):
         total_amount=total_amount,
         invoice_address=booking_data["invoice_address"],
         activity_description=booking_data["activity_description"],
-        # TODO [migration]: remove import_id
-        import_id=booking_data["import_id"],
     )
 
 

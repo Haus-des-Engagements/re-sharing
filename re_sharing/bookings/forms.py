@@ -177,8 +177,6 @@ class BookingForm(forms.ModelForm):
             )
         )
         self.helper.layout = Layout(
-            # TODO [migration]: remove import_id
-            Row(Column("import_id")),
             Row(
                 Column("title"),
                 Column("organization"),
@@ -376,13 +374,10 @@ class BookingForm(forms.ModelForm):
             endtime = convert_time(endtime)
             cleaned_data["endtime"] = endtime
             end = timezone.make_aware(datetime.datetime.combine(startdate, endtime))
-            # TODO [migration]: uncomment code
-            """
             if start < timezone.now():
                 msg = _("The start must be in the future.")
                 for field in ["starttime", "startdate"]:
                     self.add_error(field, msg)
-            """
             if end <= start:
                 msg = _("The end must be after the start.")
                 for field in ["endtime", "starttime"]:
@@ -461,6 +456,4 @@ class BookingForm(forms.ModelForm):
             "number_of_attendees",
             "invoice_address",
             "activity_description",
-            # TODO [migration]: remove import_id
-            "import_id",
         ]
