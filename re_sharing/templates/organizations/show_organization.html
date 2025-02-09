@@ -30,7 +30,7 @@
             <td>
               <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
               {% if organization.status == 1 %}
-                {% trans "We are currently checking your organization." %}
+                {% trans "We are currently checking your organization. You can't yet book or make booking request." %}
               {% elif organization.status == 2 %}
                 {% trans "Your organization is confirmed and you are good to go." %}
               {% else %}

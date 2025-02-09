@@ -36,15 +36,17 @@
               <br />
               -
               <br />
-              {{ booking_series.last_booking_date }}
+              {% if booking_series.last_booking_date %}
+                {{ booking_series.last_booking_date|date:"d.m.Y" }}
+              {% else %}
+                {% trans "(without end)" %}
+              {% endif %}
             </p>
             <p class="h6">{{ booking_series.start_time|date:"H:i" }} - {{ booking_series.end_time|date:"H:i" }}</p>
           </div>
           <div class="col-md-8">
             <div class="card-body">
-              <h5 class="card-title">
-                <a href="{% url 'bookings:show-booking-series' booking_series.slug %}">{{ booking_series.title }}</a>
-              </h5>
+              <h5 class="card-title">{{ booking_series.title }}</h5>
               <p class="card-text">
                 <svg width="1em" height="1em">
                   <use href="#bi-door-closed" />
@@ -57,15 +59,17 @@
                 <em>{{ booking_series.user }}</em> {% trans "for" %}
                 <em>{{ booking_series.organization }}</em>
                 <br />
-                {% trans "Bookings" %}: {{ booking_series.number_of_occurrences }}
+                {% trans "Occurrences" %}: {{ booking_series.number_of_occurrences }}
               </p>
             </div>
           </div>
           <div class="col-md-2">
             <div class="card-body">
               <div class="d-grid gap-2">
-                <a class="btn btn-outline-primary"
-                   href="{% url 'bookings:show-booking-series' booking_series.slug %}">{% trans "View Details" %}</a>
+                <div class="d-grid gap-2">
+                  <a class="btn btn-outline-primary"
+                     href="{% url 'bookings:show-booking-series' booking_series.slug %}">{% trans "View Details" %}</a>
+                </div>
               </div>
             </div>
           </div>
@@ -75,6 +79,7 @@
             <use href="#bi-arrow-repeat" />
           </svg>
           {{ booking_series.get_human_readable_rule }}
+          <br />
         </div>
       </div>
     {% endfor %}

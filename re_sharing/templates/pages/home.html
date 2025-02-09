@@ -11,9 +11,24 @@
 {% block content %}
   <div class="col-md-10 mt-5">
     <h1 class="display-4">Hi!</h1>
-    <p class="lead">{% trans "This is the new place where you can soon book rooms for the 'Haus des Engagements'" %}</p>
+    <p class="lead">{% trans "This is the new place where you can book rooms for the 'Haus des Engagements'." %}</p>
     <hr class="my-4" />
-    {% trans "For now, you can create yourself an account and add you organization." %}
+    <p>{% trans "This is how you book a room:" %}</p>
+    <ol>
+      <li>
+        {% url 'resources:planner' as planner_url %}
+        {% blocktrans with planner_url=planner_url %}Look for a <a href="{{ planner_url }}">free room</a>.{% endblocktrans %}
+      </li>
+      <li>
+        {% url 'account_signup' as signup_url %}
+        {% blocktrans with planner_url=planner_url %}Create an <a href="{{ signup_url }}">account</a>.{% endblocktrans %}
+      </li>
+      <li>{% trans "Create an organization you want to book for and wait for our approval." %}</li>
+      <li>{% trans "Make your booking requests." %}</li>
+      <li>
+        {% trans "Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!" %}
+      </li>
+    </ol>
     <br />
     <a href="https://haus-des-engagements.de/angebote/neue-raeume/">{% trans "Here you can find more detailed instructions." %}</a>
   </div>
