@@ -398,8 +398,8 @@ def manager_confirm_booking_series(user, booking_series_uuid):
             with set_actor(user):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
-            send_booking_series_confirmation_email(booking_series)
 
+    send_booking_series_confirmation_email(booking_series)
     return booking_series
 
 
