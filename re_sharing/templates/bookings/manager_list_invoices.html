@@ -6,17 +6,7 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-  <h1 class="mt-4">
-    {% trans "Manage bookings" %}
-    <a class="btn btn-outline-primary"
-       href="{% url 'bookings:create-booking' %}"
-       role="button">
-      <svg width="1em" height="1em">
-        <use href="#bi-plus-lg" />
-      </svg>
-      {% trans "New Booking" %}
-    </a>
-  </h1>
+  <h1 class="mt-4">{% trans "Manage invoices" %}</h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
         action="{% url 'bookings:manager-list-bookings' %}"
         method="get"

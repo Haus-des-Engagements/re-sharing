@@ -194,7 +194,7 @@ msgstr "Vorschau"
 #: re_sharing/bookings/forms.py:175
 #, python-brace-format
 msgid "Have a look at the <a href='{url}'>planner</a> for free slots."
-msgstr ""
+msgstr "Hier findest <a href='{url}'>freie Zeitslots</a>."
 
 #: re_sharing/bookings/forms.py:366
 msgid "Start time must be selected in 30-minute intervals."

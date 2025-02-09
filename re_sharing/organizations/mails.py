@@ -99,13 +99,11 @@ def send_booking_confirmation_email(booking):
         "access_code": access_code,
         "domain": domain,
     }
-    ical_content = booking_ics(booking)
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_CONFIRMATION,
         context,
         get_recipient_booking(booking),
-        ical_content,
     )
 
 
@@ -126,13 +124,11 @@ def send_booking_reminder_emails(days=5):
         )
         domain = Site.objects.get_current().domain
         context = {"booking": booking, "access_code": access_code, "domain": domain}
-        ical_content = booking_ics(booking)
 
         send_email_with_template(
             EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
             context,
             get_recipient_booking(booking),
-            ical_content,
         )
     return list(bookings.values_list("slug", flat=True)), dt_in_days.date()
 
@@ -258,10 +254,8 @@ def manager_new_organization_email(organization):
 def send_new_booking_message_email(booking_message):
     domain = Site.objects.get_current().domain
     context = {"booking": booking_message.booking, "domain": domain}
-    if (
-        booking_message.user
-        in booking_message.booking.organization.get_confirmed_users()
-    ):
+    confirmed_users = booking_message.booking.organization.get_confirmed_users()
+    if confirmed_users.filter(id=booking_message.user.id).exists():
         recipient = [settings.DEFAULT_MANAGER_EMAIL]
     else:
         recipient = get_recipient_booking(booking_message.booking)
