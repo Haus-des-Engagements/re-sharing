@@ -22,7 +22,7 @@ django-extensions==3.2.3  # https://github.com/django-extensions/django-extensio
 django-auditlog==3.0.0  # https://github.com/jazzband/django-auditlog
 django-tinymce==4.1.0  # https://github.com/jazzband/django-tinymce
 django-storages[s3]==1.14.4  # https://github.com/jschneier/django-storages
-django-import-export==4.3.4  # https://github.com/django-import-export/django-import-export
+django-import-export==4.3.5  # https://github.com/django-import-export/django-import-export
 django-hijack==3.7.1  # https://github.com/django-hijack/django-hijack
 
 
