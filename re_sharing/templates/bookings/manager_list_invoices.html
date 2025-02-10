@@ -8,13 +8,15 @@
 {% block content %}
   <h1 class="mt-4">{% trans "Manage invoices" %}</h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
-        action="{% url 'bookings:manager-list-bookings' %}"
+        action="{% url 'bookings:manager-list-invoices' %}"
         method="get"
         hx-get="{% url 'bookings:manager-list-invoices' %}"
         hx-target="#booking-list"
         hx-trigger="change"
+        hx-sync="closest form:replace"
+        hx-push-url="true"
         hx-indicator="#spinner">
-    <div id="div_id_organization" class="col-auto">
+    <div id="div_id_organization" class="col-3">
       <select name="organization" class="form-select" id="id_organization">
         <option selected value="all">{% trans "all organizations" %}</option>
         {% for organization in organizations %}
@@ -28,12 +30,20 @@
         {% for resource in resources %}<option value="{{ resource.slug }}">{{ resource }}</option>{% endfor %}
       </select>
     </div>
+    <div id="div_invoice_number" class="col-auto">
+      <input type="text"
+             name="invoice_number"
+             class="form-control textinput"
+             placeholder="{% trans 'Invoice number' %}"
+             id="invoice_number"
+             {% if invoice_number %}value="{{ invoice_number }}"{% endif %} />
+    </div>
     <div class="col-auto form-check">
       <input type="checkbox"
              name="only_with_invoice_number"
              class="form-check-input"
              id="id_only_with_invoice_number" />
-      <label for="id_show_past_bookings" class="form-check-label">{% trans "only with invoice number" %}</label>
+      <label for="id_only_with_invoice_number" class="form-check-label">{% trans "only with invoice number" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

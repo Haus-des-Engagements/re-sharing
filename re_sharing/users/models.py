@@ -142,5 +142,5 @@ class UserGroup(TimeStampedModel):
         return self.name
 
 
-auditlog.register(User, exclude_fields=["updated"])
+auditlog.register(User, exclude_fields=["updated", "last_login"])
 auditlog.register(UserGroup, exclude_fields=["updated"])

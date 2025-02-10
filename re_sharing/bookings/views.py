@@ -422,6 +422,7 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         "bookings": bookings,
         "organizations": organizations,
         "resources": resources,
+        "invoice_number": invoice_number,
     }
 
     if request.headers.get("HX-Request"):

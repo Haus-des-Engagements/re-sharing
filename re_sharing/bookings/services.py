@@ -423,7 +423,7 @@ def manager_filter_invoice_bookings_list(
     if organization != "all":
         bookings = bookings.filter(organization__slug=organization)
     if invoice_number:
-        bookings = bookings.filter(invoice_number=invoice_number)
+        bookings = bookings.filter(invoice_number__icontains=invoice_number)
     if resource != "all":
         bookings = bookings.filter(resource__slug=resource)
     if only_with_invoice_number:
