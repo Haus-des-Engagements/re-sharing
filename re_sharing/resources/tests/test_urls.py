@@ -25,8 +25,11 @@ def test_resource_planner():
 
 
 def test_get_compensations():
-    assert reverse("resources:get-compensations") == "/resources/get-compensations/"
     assert (
-        resolve("/resources/get-compensations/").view_name
+        reverse("resources:get-compensations", kwargs={"selected_compensation": 1})
+        == "/resources/get-compensations/1"
+    )
+    assert (
+        resolve("/resources/get-compensations/1").view_name
         == "resources:get-compensations"
     )

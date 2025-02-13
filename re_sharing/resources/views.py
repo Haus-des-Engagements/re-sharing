@@ -80,7 +80,7 @@ def planner_view(request):
 
 
 @require_http_methods(["POST"])
-def get_compensations(request):
+def get_compensations(request, selected_compensation=None):
     resource_id = request.POST.get("resource")
     if not resource_id:
         return render(
@@ -88,8 +88,20 @@ def get_compensations(request):
         )
     resource = get_object_or_404(Resource, id=resource_id)
     compensations = Compensation.objects.filter(resource=resource, is_active=True)
+    if Compensation.objects.filter(
+        id=selected_compensation, resource=resource
+    ).exists():
+        selected_compensation = get_object_or_404(
+            Compensation, id=selected_compensation, resource=resource
+        )
+    else:
+        selected_compensation = compensations.first()
+
     return render(
         request,
         "bookings/partials/compensations.html",
-        {"compensations": compensations},
+        {
+            "compensations": compensations,
+            "selected_compensation": selected_compensation,
+        },
     )

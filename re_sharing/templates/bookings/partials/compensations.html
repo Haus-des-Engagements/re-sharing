@@ -6,7 +6,6 @@
   <label for="id_compensation" class="form-label requiredField">
     {% trans "Donation / Billing" %}<span class="asteriskField">*</span>
   </label>
-  {{ selected_compensation }}
   {% for compensation in compensations %}
     <div class="form-check">
       <input class="form-check-input"
@@ -14,8 +13,9 @@
              name="compensation"
              id="{{ compensation.id }}"
              value="{{ compensation.id }}"
+             required
              x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}"
-             {% if forloop.first %}required checked{% endif %} />
+             {% if compensation == selected_compensation %}checked{% endif %} />
       <label class="form-check-label" for="{{ compensation.id }}">
         {{ compensation.name }}
         {% if compensation.hourly_rate is not None %}

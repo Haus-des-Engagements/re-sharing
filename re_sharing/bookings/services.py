@@ -106,6 +106,7 @@ def create_booking_data(user, form):
         "compensation": form.cleaned_data["compensation"].id,
         "invoice_address": form.cleaned_data["invoice_address"],
         "activity_description": form.cleaned_data["activity_description"],
+        "number_of_attendees": form.cleaned_data["number_of_attendees"],
     }
     rrule = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
@@ -122,35 +123,58 @@ def generate_booking(booking_data):
     )
     organization = get_object_or_404(Organization, slug=booking_data["organization"])
     resource = get_object_or_404(Resource, slug=booking_data["resource"])
+    user = get_object_or_404(User, slug=booking_data["user"])
 
     start = timespan[0]
     end = timespan[1]
-    compensation = None
-    total_amount = None
-    if booking_data["compensation"] != "":
-        compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
-        if compensation.hourly_rate is not None:
-            total_amount = (
-                (end - start).total_seconds() / 3600 * compensation.hourly_rate
-            )
-    user = get_object_or_404(User, slug=booking_data["user"])
+    compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
+    if compensation.hourly_rate is not None:
+        total_amount = (end - start).total_seconds() / 3600 * compensation.hourly_rate
+    else:
+        total_amount = None
 
-    return Booking(
-        user=user,
-        title=booking_data["title"],
-        resource=resource,
-        organization=organization,
-        status=get_booking_status(user, organization, resource),
-        timespan=timespan,
-        start_date=booking_data["start_date"],
-        end_date=booking_data["end_date"],
-        start_time=booking_data["start_time"],
-        end_time=booking_data["end_time"],
-        compensation=compensation,
-        total_amount=total_amount,
-        invoice_address=booking_data["invoice_address"],
-        activity_description=booking_data["activity_description"],
-    )
+    if booking_data.get("booking_id"):
+        # Retrieve the existing booking object
+        booking = get_object_or_404(Booking, id=booking_data["booking_id"])
+        if booking.total_amount != total_amount:
+            booking.total_amount = total_amount
+
+        # Update the existing object's fields
+        booking.user = user
+        booking.title = booking_data["title"]
+        booking.number_of_attendees = booking_data["number_of_attendees"]
+        booking.resource = resource
+        booking.organization = organization
+        booking.status = get_booking_status(user, organization, resource)
+        booking.timespan = timespan
+        booking.start_date = booking_data["start_date"]
+        booking.end_date = booking_data["end_date"]
+        booking.start_time = booking_data["start_time"]
+        booking.end_time = booking_data["end_time"]
+        booking.compensation = compensation
+        booking.invoice_address = booking_data["invoice_address"]
+        booking.activity_description = booking_data["activity_description"]
+
+    else:
+        # Create a new booking object
+        booking = Booking(
+            user=user,
+            title=booking_data["title"],
+            resource=resource,
+            organization=organization,
+            status=get_booking_status(user, organization, resource),
+            timespan=timespan,
+            start_date=booking_data["start_date"],
+            end_date=booking_data["end_date"],
+            start_time=booking_data["start_time"],
+            end_time=booking_data["end_time"],
+            compensation=compensation,
+            total_amount=total_amount,
+            invoice_address=booking_data["invoice_address"],
+            activity_description=booking_data["activity_description"],
+        )
+
+    return booking
 
 
 def save_booking(user, booking):
@@ -168,7 +192,6 @@ def save_booking(user, booking):
             else:
                 error_msg = "No confirmed admins available."
                 raise ValueError(error_msg)
-
     booking.save()
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
@@ -244,25 +267,114 @@ def cancel_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
+def process_field_changes(field, values):
+    """Process specific field changes and return formatted details."""
+    old_value, new_value = values
+
+    # Generic structure for change details:
+    change_details = {
+        "field": field,
+        "old_value": old_value,
+        "new_value": new_value,
+    }
+
+    # Handle field-specific cases
+    if field == "user":
+        old_user = get_object_or_404(User, id=int(old_value))
+        new_user = get_object_or_404(User, id=int(new_value))
+        change_details.update(
+            {
+                "field": _("User"),
+                "old_value": f"{old_user.first_name} {old_user.last_name}",
+                "new_value": f"{new_user.first_name} {new_user.last_name}",
+            }
+        )
+    elif field == "start_date":
+        change_details.update(
+            {
+                "field": _("Start Date"),
+                "old_value": datetime.strptime(old_value, "%Y-%m-%d").strftime(  # noqa: DTZ007
+                    "%d.%m.%Y"
+                ),
+                "new_value": datetime.strptime(new_value, "%Y-%m-%d").strftime(  # noqa: DTZ007
+                    "%d.%m.%Y"
+                ),
+            }
+        )
+    elif field == "resource":
+        old_resource = get_object_or_404(Resource, id=int(old_value))
+        new_resource = get_object_or_404(Resource, id=int(new_value))
+        change_details.update(
+            {
+                "field": _("Resource"),
+                "old_value": old_resource.name,
+                "new_value": new_resource.name,
+            }
+        )
+    elif field == "compensation":
+        old_compensation = get_object_or_404(Compensation, id=int(old_value))
+        new_compensation = get_object_or_404(Compensation, id=int(new_value))
+        change_details.update(
+            {
+                "field": _("Compensation"),
+                "old_value": old_compensation.name,
+                "new_value": new_compensation.name,
+            }
+        )
+    elif field == "status":
+        old_value_text = dict(BookingStatus.choices).get(int(old_value))
+        new_value_text = dict(BookingStatus.choices).get(int(new_value))
+        change_details.update(
+            {
+                "field": _("Status"),
+                "old_value": old_value_text,
+                "new_value": new_value_text,
+            }
+        )
+    elif field in ("start_time", "end_time"):
+        change_details.update(
+            {
+                "field": _(field.replace("_", " ").capitalize()),
+                "old_value": datetime.strptime(old_value, "%H:%M:%S").strftime("%H:%M"),  # noqa: DTZ007
+                "new_value": datetime.strptime(new_value, "%H:%M:%S").strftime("%H:%M"),  # noqa: DTZ007
+            }
+        )
+    else:
+        change_details.update(
+            {
+                "field": _(field.replace("_", " ").capitalize()),
+                "old_value": old_value,
+                "new_value": new_value,
+            }
+        )
+
+    return change_details
+
+
 def get_booking_activity_stream(booking):
     activity_stream = []
-    booking_logs = booking.history.filter(changes__has_key="status").exclude(
-        changes__status__contains="None"
-    )
+    booking_logs = booking.history.filter(action=1)
     for log_entry in booking_logs:
-        status_integer_old = int(log_entry.changes["status"][0])
-        status_text_old = dict(BookingStatus.choices).get(status_integer_old)
+        changes = log_entry.changes  # Access all changes
+        change_details = []
 
-        status_integer_new = int(log_entry.changes["status"][1])
-        status_text_new = dict(BookingStatus.choices).get(status_integer_new)
-        status_change_dict = {
-            "date": log_entry.timestamp,
-            "type": "status_change",
-            "old_status": [status_integer_old, status_text_old],
-            "new_status": [status_integer_new, status_text_new],
-            "user": get_object_or_404(User, id=log_entry.actor_id),
-        }
-        activity_stream.append(status_change_dict)
+        for field, values in changes.items():
+            if field in {"end_date", "timespan"}:
+                continue
+            processed_change = process_field_changes(field, values)
+            change_details.append(processed_change)
+
+        # Append information for this log entry to the activity stream
+        activity_stream.append(
+            {
+                "date": log_entry.timestamp,
+                "type": "change",
+                "user": get_object_or_404(User, id=log_entry.actor_id),
+                "changes": change_details,
+            }
+        )
+
+    # Retrieve associated booking messages
     messages = BookingMessage.objects.filter(booking=booking)
     for message in messages:
         message_dict = {

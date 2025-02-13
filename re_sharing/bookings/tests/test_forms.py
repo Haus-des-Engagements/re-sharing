@@ -48,7 +48,7 @@ def booking_db(resource):
             "NEVER",
             None,
             None,
-            ["startdate", "starttime"],
+            ["startdate", "endtime"],
         ),
         (
             timezone.now().date(),
@@ -112,6 +112,7 @@ def test_clean_method(  # noqa: PLR0913
         "number_of_attendees": 20,
         "message": "Test message",
         "compensation": compensation.id,
+        "activity_description": "Test activity description",
     }
     form = BookingForm(user=user, data=form_data)
 

@@ -91,16 +91,31 @@
                   <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
                   {% if activity.type == "message" %}
                     <h5 class="card-title">{% trans "Message" %}</h5>
-                    <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <p>{% trans "by" %}  {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
                     <p class="fst-italic">{{ activity.text }}</p>
-                  {% elif activity.type == "status_change" %}
-                    <h5 class="card-title">{% trans "Status Change" %}</h5>
-                    <p>from {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
-                    <span class="fs-6 badge text-bg-status-{{ activity.old_status.0 }}">{{ activity.old_status.1 }}</span>
-                    <svg class="fs-4 me-1" width="1em" height="1em">
-                      <use href="#bi-arrow-right" />
-                    </svg>
-                    <span class="fs-6 badge text-bg-status-{{ activity.new_status.0 }}">{{ activity.new_status.1 }}</span>
+                  {% else %}
+                    <h5 class="card-title">{% trans "Booking has been changed" %}</h5>
+                    <p>{% trans "by" %} {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <ul class="list-unstyled">
+                      {% for change in activity.changes %}
+                        <li>
+                          <strong>{{ change.field|capfirst }}</strong>:
+                          {% if change.field == "status" %}
+                            <span class="fs-6 badge text-bg-status-{{ change.old_value.0 }}">{{ change.old_value.1 }}</span>
+                            <svg class="fs-4 me-1" width="1em" height="1em">
+                              <use href="#bi-arrow-right" />
+                            </svg>
+                            <span class="fs-6 badge text-bg-status-{{ change.new_value.0 }}">{{ change.new_value.1 }}</span>
+                          {% else %}
+                            <span class="text-muted fst-italic">{{ change.old_value }}</span>
+                            <svg class="fs-4 me-1" width="1em" height="1em">
+                              <use href="#bi-arrow-right" />
+                            </svg>
+                            {{ change.new_value }}
+                          {% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
                   {% endif %}
                 </div>
               </div>

@@ -18,6 +18,7 @@ from .views import preview_and_save_booking_series_view
 from .views import preview_and_save_booking_view
 from .views import show_booking_series_view
 from .views import show_booking_view
+from .views import update_booking_view
 
 app_name = "bookings"
 urlpatterns = [
@@ -46,6 +47,11 @@ urlpatterns = [
         "manage-bookings/<uuid:booking_series_uuid>/confirm-booking-series/",
         manager_confirm_booking_series_view,
         name="manager-confirm-booking-series",
+    ),
+    path(
+        "<slug:booking_slug>/edit/",
+        update_booking_view,
+        name="update-booking",
     ),
     path(
         "manage-bookings/<slug:booking_slug>/cancel-booking/",

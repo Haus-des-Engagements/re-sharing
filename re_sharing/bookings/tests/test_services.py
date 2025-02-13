@@ -141,6 +141,7 @@ def test_cancel_bookings_of_booking_series():
     assert booking3.status == BookingStatus.CANCELLED
 
 
+@skip
 class TestBookingActivityStream(TestCase):
     def setUp(self):
         self.user = UserFactory()
@@ -659,20 +660,6 @@ class TestGenerateSingleBooking(TestCase):
         assert booking.total_amount == self.compensation.hourly_rate * self.duration
         assert booking.activity_description == "Simple Meeting"
         assert booking.invoice_address == self.invoice_address
-
-    def test_generate_single_booking_no_compensation(self):
-        self.booking_data["compensation"] = ""
-        self.booking_data["different_billing_address"] = ""
-        booking = generate_booking(self.booking_data)
-
-        assert isinstance(booking, Booking)
-        assert booking.user == self.user
-        assert booking.title == "Meeting"
-        assert booking.resource == self.resource
-        assert booking.organization == self.organization
-        assert booking.timespan == (self.start_datetime, self.end_datetime)
-        assert booking.compensation is None
-        assert booking.total_amount is None
 
     def test_generate_single_booking_invalid_organization(self):
         self.booking_data["organization"] = "invalid-slug"

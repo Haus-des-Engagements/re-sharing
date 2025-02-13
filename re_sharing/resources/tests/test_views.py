@@ -103,14 +103,17 @@ class GetCompensationsViewTest(TestCase):
         self.compensation.resource.add(self.resource)
 
     def test_get_compensations_empty_resource(self):
-        request = self.factory.post(reverse("resources:get-compensations"))
+        request = self.factory.post(
+            reverse("resources:get-compensations", kwargs={"selected_compensation": 1})
+        )
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK
         self.assertContains(response, "Please select a resource first.", html=True)
 
     def test_get_compensations_with_resource(self):
         request = self.factory.post(
-            reverse("resources:get-compensations"), {"resource": self.resource.id}
+            reverse("resources:get-compensations", kwargs={"selected_compensation": 1}),
+            {"resource": self.resource.id},
         )
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK

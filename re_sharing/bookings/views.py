@@ -1,9 +1,10 @@
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils import timezone
@@ -12,10 +13,12 @@ from django.views.decorators.http import require_http_methods
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.utils.models import BookingStatus
 
 from .forms import BookingForm
 from .forms import MessageForm
+from .models import Booking
 from .services import cancel_booking
 from .services import create_booking_data
 from .services import create_bookingmessage
@@ -108,12 +111,7 @@ def preview_and_save_booking_view(request):
         )
 
     if request.method == "POST":
-        try:
-            booking = save_booking(request.user, booking)
-        except IntegrityError:
-            return HttpResponse(
-                "Booking not possible at the given date(s).", status=400
-            )
+        booking = save_booking(request.user, booking)
 
         request.session.pop("booking_data", None)
         if booking.status == BookingStatus.CONFIRMED:
@@ -130,6 +128,35 @@ def preview_and_save_booking_view(request):
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
+
+
+@login_required
+def update_booking_view(request, booking_slug):
+    booking = get_object_or_404(Booking, slug=booking_slug)
+    if user_has_bookingpermission(request.user, booking.organization):
+        initial_data = {
+            "starttime": booking.start_time.strftime("%H:%M"),
+            "endtime": booking.end_time.strftime("%H:%M"),
+            "startdate": booking.start_date.strftime("%Y-%m-%d"),
+            "enddate": booking.end_date.strftime("%Y-%m-%d"),
+        }
+        form = BookingForm(instance=booking, user=request.user, initial=initial_data)
+    else:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = BookingForm(data=request.POST, user=request.user, instance=booking)
+        if form.is_valid():
+            booking_data, rrule = create_booking_data(request.user, form)
+            booking_data["booking_id"] = booking.id
+            request.session["booking_data"] = booking_data
+            return redirect("bookings:preview-booking")
+
+    return render(
+        request,
+        "bookings/create-booking.html",
+        {"form": form, "user_has_bookingpermission": True},
+    )
 
 
 @require_http_methods(["GET"])

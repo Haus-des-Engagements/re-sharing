@@ -249,10 +249,10 @@ class Booking(TimeStampedModel):
         blank=True,
     )
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
-    start_date = DateField(_("Start Date"))
-    end_date = DateField(_("End Date"))
-    start_time = TimeField(_("Start Time"))
-    end_time = TimeField(_("End Time"))
+    start_date = DateField(_("Start date"))
+    end_date = DateField(_("End date"))
+    start_time = TimeField(_("Start time"))
+    end_time = TimeField(_("End time"))
 
     compensation = ForeignKey(
         Compensation,
@@ -323,17 +323,26 @@ class Booking(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("bookings:show-booking", kwargs={"booking": self.slug})
 
-    def is_in_the_past(self):
+    def end_is_in_the_past(self):
+        return self.timespan.upper < timezone.now()
+
+    def start_is_in_the_past(self):
         return self.timespan.lower < timezone.now()
 
     def is_cancelable(self):
-        return not self.is_in_the_past() and self.status not in [
+        return not self.start_is_in_the_past() and self.status not in [
+            BookingStatus.CANCELLED,
+            BookingStatus.UNAVAILABLE,
+        ]
+
+    def is_editable(self):
+        return not self.end_is_in_the_past() and self.status not in [
             BookingStatus.CANCELLED,
             BookingStatus.UNAVAILABLE,
         ]
 
     def is_confirmable(self):
-        return not self.is_in_the_past() and self.status == BookingStatus.PENDING
+        return not self.end_is_in_the_past() and self.status == BookingStatus.PENDING
 
 
 class BookingMessage(TimeStampedModel):

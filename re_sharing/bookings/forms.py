@@ -70,7 +70,10 @@ class BookingForm(forms.ModelForm):
         widget=forms.Select(
             attrs={
                 "hx-trigger": "change, load",
-                "hx-post": reverse_lazy("resources:get-compensations"),
+                "hx-post": reverse_lazy(
+                    "resources:get-compensations", kwargs={"selected_compensation": 0}
+                ),
+                "hx-params": "resource, compensation",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -176,6 +179,20 @@ class BookingForm(forms.ModelForm):
                 url=planner_url
             )
         )
+        if self.instance and self.instance.pk:
+            rrule_repetitions_style = "display: none"
+            compensation_id = self.instance.compensation.id
+            self.fields["resource"].widget.attrs.update(
+                {
+                    "hx-post": reverse_lazy(
+                        "resources:get-compensations",
+                        kwargs={"selected_compensation": compensation_id},
+                    )
+                }
+            )
+        else:
+            rrule_repetitions_style = "display: block"
+
         self.helper.layout = Layout(
             Row(
                 Column("title"),
@@ -191,6 +208,7 @@ class BookingForm(forms.ModelForm):
                 Column(
                     "rrule_repetitions",
                     css_class="col-md-4",
+                    style=rrule_repetitions_style,
                 ),
             ),
             Div(
@@ -340,12 +358,7 @@ class BookingForm(forms.ModelForm):
         self.fields["endtime"].choices = self.fields["starttime"].choices
         self.fields["resource"].queryset = user.get_resources()
 
-        if "resource" in self.initial:
-            self.fields["compensation"].queryset = Compensation.objects.filter(
-                resource=self.initial["resource"]
-            )
-
-    def clean(self):  # noqa: C901
+    def clean(self):  # noqa: C901, PLR0912
         cleaned_data = super().clean()
         resource = cleaned_data.get("resource")
         startdate = cleaned_data.get("startdate")
@@ -374,9 +387,9 @@ class BookingForm(forms.ModelForm):
             endtime = convert_time(endtime)
             cleaned_data["endtime"] = endtime
             end = timezone.make_aware(datetime.datetime.combine(startdate, endtime))
-            if start < timezone.now():
-                msg = _("The start must be in the future.")
-                for field in ["starttime", "startdate"]:
+            if end < timezone.now() and not self.instance.pk:
+                msg = _("The end must be in the future.")
+                for field in ["endtime", "startdate"]:
                     self.add_error(field, msg)
             if end <= start:
                 msg = _("The end must be after the start.")
@@ -434,11 +447,14 @@ class BookingForm(forms.ModelForm):
                 self.add_error(field, _(msg))
 
         if rrule_repetitions == "NO_REPETITIONS" and end > start:
-            if Booking.objects.filter(
+            bookings = Booking.objects.filter(
                 status=BookingStatus.CONFIRMED,
                 resource=resource,
                 timespan__overlap=(start, end),
-            ).exists():
+            )
+            if self.instance.id:
+                bookings = bookings.exclude(id=self.instance.id)
+            if bookings.exists():
                 msg = _("The resource is already booked during your selected timeslot.")
                 self.add_error("resource", msg)
 
@@ -456,4 +472,5 @@ class BookingForm(forms.ModelForm):
             "number_of_attendees",
             "invoice_address",
             "activity_description",
+            "compensation",
         ]
