@@ -219,7 +219,7 @@ def show_booking(user, booking_slug):
     ]:
         access_code = _("only shown when confirmed")
     elif access_code and booking.status == BookingStatus.CONFIRMED:
-        if booking.timespan.lower() > (timezone.now() + timedelta(days=7)):
+        if booking.timespan.lower > (timezone.now() + timedelta(days=7)):
             access_code = _("only shown 7 days before booking")
         else:
             access_code = access_code.code
