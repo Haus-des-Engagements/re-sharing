@@ -18,7 +18,13 @@ class OrganizationForm(forms.ModelForm):
     name = forms.CharField(
         label=_("Name of the organization"),
         required=True,
-        help_text=_("e.g. Accordion Club Gundelfinden e.V."),
+        help_text=mark_safe(  # noqa: S308
+            _(
+                "e.g. Accordion Club Gundelfinden e.V. <a href='/organizations'>Please "
+                "check here"
+                " first</a> if your organization has already been created: "
+            ),
+        ),
     )
     description = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),

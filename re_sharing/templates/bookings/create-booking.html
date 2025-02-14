@@ -16,6 +16,7 @@
     </div>
   {% else %}
     <form method="post">
+      {% csrf_token %}
       {% crispy form form.helper %}
     </form>
     <script type="text/javascript">
