@@ -74,9 +74,16 @@ class BookingAdmin(ImportExportModelAdmin):
         "title",
         "user",
         "import_id",
+        "compensation",
     ]
     search_fields = ["id", "title", "slug", "import_id"]
-    list_filter = ["status", "organization", "resource", "booking_series"]
+    list_filter = [
+        "status",
+        "organization",
+        "resource",
+        "booking_series",
+        "compensation",
+    ]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
     resource_classes = [BookingResource]

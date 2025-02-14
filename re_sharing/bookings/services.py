@@ -219,7 +219,10 @@ def show_booking(user, booking_slug):
     ]:
         access_code = _("only shown when confirmed")
     elif access_code and booking.status == BookingStatus.CONFIRMED:
-        access_code = access_code.code
+        if booking.timespan.lower() > (timezone.now() + timedelta(days=7)):
+            access_code = _("only shown 7 days before booking")
+        else:
+            access_code = access_code.code
     else:
         access_code = "not necessary"
 
@@ -312,7 +315,10 @@ def process_field_changes(field, values):
             }
         )
     elif field == "compensation":
-        old_compensation = get_object_or_404(Compensation, id=int(old_value))
+        if old_value is not None:
+            old_compensation = get_object_or_404(Compensation, id=int(old_value))
+        else:
+            old_compensation = 1
         new_compensation = get_object_or_404(Compensation, id=int(new_value))
         change_details.update(
             {
