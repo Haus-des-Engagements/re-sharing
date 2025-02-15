@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-12 21:53+0100\n"
+"POT-Creation-Date: 2025-02-15 20:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,29 +26,29 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-#: re_sharing/bookings/admin.py:84
+#: re_sharing/bookings/admin.py:91
 msgid "Confirm selected bookings"
 msgstr "Ausgewählte Buchungen bestätigen"
 
-#: re_sharing/bookings/admin.py:94
+#: re_sharing/bookings/admin.py:101
 #, python-format
 msgid "%d booking was successfully confirmed."
 msgid_plural "%d bookings were successfully confirmed."
 msgstr[0] "%d Buchung erfolgreich bestätigt!"
 msgstr[1] "%d Buchungen erfolgreich bestätigt!"
 
-#: re_sharing/bookings/admin.py:102
+#: re_sharing/bookings/admin.py:109
 msgid "Cancel selected bookings"
 msgstr "Ausgewählte Buchungen stornieren"
 
-#: re_sharing/bookings/admin.py:112
+#: re_sharing/bookings/admin.py:119
 #, python-format
 msgid "%d booking was successfully cancelled."
 msgid_plural "%d bookings were successfully cancelled."
 msgstr[0] "%d Buchung erfolgreich storniert."
 msgstr[1] "%d Buchungen erfolgreich storniert."
 
-#: re_sharing/bookings/admin.py:178 re_sharing/bookings/apps.py:7
+#: re_sharing/bookings/admin.py:185 re_sharing/bookings/apps.py:7
 #: re_sharing/bookings/models.py:296 re_sharing/templates/base.html:81
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:14
 #: re_sharing/templates/bookings/preview-booking-series.html:42
@@ -56,19 +56,19 @@ msgstr[1] "%d Buchungen erfolgreich storniert."
 msgid "Bookings"
 msgstr "Buchungen"
 
-#: re_sharing/bookings/admin.py:211
+#: re_sharing/bookings/admin.py:218
 msgid "Generate bookings"
 msgstr "Buchungen generieren"
 
-#: re_sharing/bookings/admin.py:240
+#: re_sharing/bookings/admin.py:247
 msgid "Delete bookings"
 msgstr "Buchungen löschen"
 
 #: re_sharing/bookings/forms.py:47
 #: re_sharing/templates/bookings/show_booking_series.html:91
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:72
-#: re_sharing/templates/resources/multi_planner.html:45
-#: re_sharing/templates/resources/multi_planner.html:49
+#: re_sharing/templates/resources/multi_planner.html:44
+#: re_sharing/templates/resources/multi_planner.html:48
 #: re_sharing/templates/resources/partials/planner_table.html:20
 #: re_sharing/templates/resources/partials/weekly_bookings_table.html:20
 msgid "Date"
@@ -111,7 +111,7 @@ msgid "Please describe shortly what you are planning to do."
 msgstr "Beschreibe bitte kurz was ihr vorhabt."
 
 #: re_sharing/bookings/forms.py:69 re_sharing/bookings/models.py:67
-#: re_sharing/bookings/models.py:236 re_sharing/bookings/services.py:311
+#: re_sharing/bookings/models.py:236 re_sharing/bookings/services.py:312
 #: re_sharing/resources/models.py:101 re_sharing/resources/models.py:137
 #: re_sharing/resources/models.py:169
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:10
@@ -122,99 +122,98 @@ msgstr "Beschreibe bitte kurz was ihr vorhabt."
 msgid "Resource"
 msgstr "Ressourcen"
 
-#: re_sharing/bookings/forms.py:87
+#: re_sharing/bookings/forms.py:90
 #: re_sharing/templates/bookings/partials/compensations.html:22
 #: re_sharing/templates/resources/show_resource.html:82
 msgid "hour"
 msgstr "Stunde"
 
-#: re_sharing/bookings/forms.py:92 re_sharing/bookings/models.py:81
-#: re_sharing/bookings/models.py:259 re_sharing/bookings/services.py:321
-#: re_sharing/resources/models.py:182
+#: re_sharing/bookings/forms.py:95 re_sharing/bookings/models.py:81
+#: re_sharing/bookings/models.py:259 re_sharing/resources/models.py:182
 msgid "Compensation"
 msgstr "Gegenleistung"
 
-#: re_sharing/bookings/forms.py:105
+#: re_sharing/bookings/forms.py:108
 msgid "No repetitions"
 msgstr "Keine Wiederholungen"
 
-#: re_sharing/bookings/forms.py:106
+#: re_sharing/bookings/forms.py:109
 msgid "Daily"
 msgstr "Täglich"
 
-#: re_sharing/bookings/forms.py:107
+#: re_sharing/bookings/forms.py:110
 msgid "Weekly"
 msgstr "Wöchentlich"
 
-#: re_sharing/bookings/forms.py:108
+#: re_sharing/bookings/forms.py:111
 msgid "Monthly by weekday"
 msgstr "Monatlich nach Wochentag"
 
-#: re_sharing/bookings/forms.py:109
+#: re_sharing/bookings/forms.py:112
 msgid "Monthly by date"
 msgstr "Monatlich nach Datum"
 
-#: re_sharing/bookings/forms.py:111
+#: re_sharing/bookings/forms.py:114
 msgid "Repeat"
 msgstr "Wiederholen"
 
-#: re_sharing/bookings/forms.py:113
+#: re_sharing/bookings/forms.py:116
 msgid "after"
 msgstr "nach"
 
-#: re_sharing/bookings/forms.py:114
+#: re_sharing/bookings/forms.py:117
 msgid "at"
 msgstr "am"
 
-#: re_sharing/bookings/forms.py:115
+#: re_sharing/bookings/forms.py:118
 msgid "never"
 msgstr "endet nie"
 
-#: re_sharing/bookings/forms.py:120
+#: re_sharing/bookings/forms.py:123
 msgid "ends"
 msgstr "endet"
 
-#: re_sharing/bookings/forms.py:124
+#: re_sharing/bookings/forms.py:127
 msgid "End Date"
 msgstr "Enddatum"
 
-#: re_sharing/bookings/forms.py:132 re_sharing/bookings/forms.py:135
-#: re_sharing/bookings/forms.py:144
+#: re_sharing/bookings/forms.py:135 re_sharing/bookings/forms.py:138
+#: re_sharing/bookings/forms.py:147
 msgid "Repetition frequency"
 msgstr "Wiederholungshäufigkeit"
 
-#: re_sharing/bookings/forms.py:141 re_sharing/bookings/forms.py:150
-#: re_sharing/bookings/forms.py:156
+#: re_sharing/bookings/forms.py:144 re_sharing/bookings/forms.py:153
+#: re_sharing/bookings/forms.py:159
 msgid "Repeat on these days"
 msgstr "Wiederhole an diesen Tagen"
 
-#: re_sharing/bookings/forms.py:163
+#: re_sharing/bookings/forms.py:166
 #: re_sharing/templates/bookings/preview-booking.html:9
 msgid "Preview"
 msgstr "Vorschau"
 
-#: re_sharing/bookings/forms.py:175
+#: re_sharing/bookings/forms.py:178
 #, python-brace-format
 msgid "Have a look at the <a href='{url}'>planner</a> for free slots."
 msgstr "Hier findest <a href='{url}'>freie Zeitslots</a>."
 
-#: re_sharing/bookings/forms.py:372
+#: re_sharing/bookings/forms.py:379
 msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: re_sharing/bookings/forms.py:384
+#: re_sharing/bookings/forms.py:391
 msgid "The end must be in the future."
 msgstr "Das Ende muss in der Zukunft liegen."
 
-#: re_sharing/bookings/forms.py:388
+#: re_sharing/bookings/forms.py:395
 msgid "The end must be after the start."
 msgstr "Das Ende muss nach dem Beginn sein."
 
-#: re_sharing/bookings/forms.py:396
+#: re_sharing/bookings/forms.py:403
 msgid "You can only book for the next 2 years."
 msgstr "Du kannst nur für die nächsten zwei Jahre buchen."
 
-#: re_sharing/bookings/forms.py:451
+#: re_sharing/bookings/forms.py:458
 msgid "The resource is already booked during your selected timeslot."
 msgstr "Die Ressource ist zu der Zeit (zumindest teilweise) belegt."
 
@@ -232,7 +231,7 @@ msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
 #: re_sharing/bookings/models.py:72 re_sharing/bookings/models.py:241
-#: re_sharing/bookings/services.py:331 re_sharing/organizations/models.py:166
+#: re_sharing/bookings/services.py:322 re_sharing/organizations/models.py:166
 #: re_sharing/organizations/models.py:274
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:13
 #: re_sharing/templates/bookings/partials/manager_list_bookings.html:12
@@ -398,7 +397,7 @@ msgstr ""
 msgid "Message"
 msgstr "Nachricht"
 
-#: re_sharing/bookings/models.py:361 re_sharing/bookings/services.py:291
+#: re_sharing/bookings/models.py:361 re_sharing/bookings/services.py:290
 #: re_sharing/organizations/models.py:256 re_sharing/users/models.py:57
 msgid "User"
 msgstr "Nutzer:in"
@@ -411,11 +410,15 @@ msgstr "Nachricht zur Buchung"
 msgid "Booking Messages"
 msgstr "Nachrichten zur Buchung"
 
-#: re_sharing/bookings/services.py:224
+#: re_sharing/bookings/services.py:220
 msgid "only shown when confirmed"
 msgstr "erst nach Bestätigung sichtbar"
 
-#: re_sharing/bookings/services.py:299
+#: re_sharing/bookings/services.py:223
+msgid "only shown 7 days before booking"
+msgstr "wird erst 7 Tage vor Beginn angezeigt"
+
+#: re_sharing/bookings/services.py:298
 msgid "Start Date"
 msgstr "Startdatum"
 
@@ -431,15 +434,15 @@ msgstr ""
 "Buchungsanfrage erfolgreich erstellt. Bitte warte auf unsere Bestätigung. Du "
 "wirst per E-Mail informiert"
 
-#: re_sharing/bookings/views.py:129 re_sharing/bookings/views.py:321
+#: re_sharing/bookings/views.py:129 re_sharing/bookings/views.py:320
 msgid "Sorry, something went wrong. Please try again."
 msgstr "Entschuldige, etwas ist schief gelaufen. Bitte probiere es erneut."
 
-#: re_sharing/bookings/views.py:247
+#: re_sharing/bookings/views.py:246
 msgid "Successfully cancelled all future bookings."
 msgstr "Alle zukünftigen Buchungen erfolgreich storniert."
 
-#: re_sharing/bookings/views.py:318
+#: re_sharing/bookings/views.py:317
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
 
@@ -459,11 +462,13 @@ msgstr "Organisationen"
 msgid "Name of the organization"
 msgstr "Name der Organisation"
 
-#: re_sharing/organizations/forms.py:21
-msgid "e.g. Accordion Club Gundelfinden e.V."
-msgstr "z.B. Akkordeon Club Gundelfingen e.V."
+#: re_sharing/organizations/forms.py:23
+msgid ""
+"e.g. Accordion Club Gundelfinden e.V. <a href='/organizations'>Please check "
+"here first</a> if your organization has already been created: "
+msgstr ""
 
-#: re_sharing/organizations/forms.py:26 re_sharing/organizations/models.py:55
+#: re_sharing/organizations/forms.py:32 re_sharing/organizations/models.py:55
 #: re_sharing/organizations/models.py:138 re_sharing/resources/models.py:87
 #: re_sharing/resources/models.py:148
 #: re_sharing/templates/organizations/show_organization.html:46
@@ -472,15 +477,15 @@ msgstr "z.B. Akkordeon Club Gundelfingen e.V."
 msgid "Description"
 msgstr "Beschreibung"
 
-#: re_sharing/organizations/forms.py:28
+#: re_sharing/organizations/forms.py:34
 msgid "Describe shortly what your organization is doing and trying to achieve."
 msgstr "Beschreibe kurz was deine Organisation macht und erreichen möchte."
 
-#: re_sharing/organizations/forms.py:32 re_sharing/organizations/models.py:159
+#: re_sharing/organizations/forms.py:38 re_sharing/organizations/models.py:159
 msgid "We are a charitable organization."
 msgstr "Wir sind eine gemeinnützige Organisation."
 
-#: re_sharing/organizations/forms.py:34
+#: re_sharing/organizations/forms.py:40
 msgid ""
 "Please select only if you have a valid certificate of tax exemption. Of "
 "course you can also book resources if you're not officially charitable!"
@@ -489,12 +494,12 @@ msgstr ""
 "Du kannst natürlich auch ohne steuerlich anerkannter Gemeinnützigkeit "
 "Ressourcen buchen!"
 
-#: re_sharing/organizations/forms.py:40
+#: re_sharing/organizations/forms.py:46
 msgid "This organization may be listed publicly on this website."
 msgstr ""
 "Unsere Organisation darf öffentlich auf dieser Webseite angezeigt werden."
 
-#: re_sharing/organizations/forms.py:42
+#: re_sharing/organizations/forms.py:48
 msgid ""
 "Only organization name, description, city, website and area of activity will "
 "be displayed."
@@ -502,11 +507,11 @@ msgstr ""
 "Nur Name der Organisation, Beschreibung, Ort, Webseite und Engagementbereich "
 "werden angezeigt."
 
-#: re_sharing/organizations/forms.py:47
+#: re_sharing/organizations/forms.py:53
 msgid "E-mail address of the organization"
 msgstr "E-mail der Organisation"
 
-#: re_sharing/organizations/forms.py:51
+#: re_sharing/organizations/forms.py:57
 msgid ""
 "I have read <a href='https://haus-des-engagements.de/wp-content/"
 "uploads/2024/08/Unsere-Werte-im-HdE.pdf' target='_blank'>Our Values in the "
@@ -522,11 +527,11 @@ msgstr ""
 "target='_blank'>Prozess</a> gelesen. Ich informiere die gesamte Gruppe "
 "darüber. Wir stimmen den Werten zu."
 
-#: re_sharing/organizations/forms.py:63
+#: re_sharing/organizations/forms.py:69
 msgid "In which societal area are you mainly active?"
 msgstr "In welchem gesellschaftlichen Bereich seid ihr vor allem aktiv?"
 
-#: re_sharing/organizations/forms.py:68
+#: re_sharing/organizations/forms.py:74
 msgid ""
 "Upload your existing usage agreement or add a <a href='https://haus-des-"
 "engagements.de/wp-content/uploads/2025/01/"
@@ -539,37 +544,37 @@ msgstr ""
 "target='_blank'>Nutzungsvereinbarung</a> hoch (nicht notwendig für Co-Worker:"
 "innen)."
 
-#: re_sharing/organizations/forms.py:75
+#: re_sharing/organizations/forms.py:81
 msgid "Please upload a single PDF file."
 msgstr "Lade bitte eine einzelne PDF-Datei hoch."
 
-#: re_sharing/organizations/forms.py:78
+#: re_sharing/organizations/forms.py:84
 msgid "Signing date of the usage agreement"
 msgstr "Unterschriftsdatum der Nutzungsvereinbarung"
 
-#: re_sharing/organizations/forms.py:81
+#: re_sharing/organizations/forms.py:87
 msgid "When did you sign the usage agreement?"
 msgstr "Wann wurde die Nutzungsvereinbarung unterschrieben?"
 
-#: re_sharing/organizations/forms.py:121 re_sharing/resources/models.py:93
+#: re_sharing/organizations/forms.py:127 re_sharing/resources/models.py:93
 #: re_sharing/templates/organizations/show_organization.html:68
 msgid "Address"
 msgstr "Adresse"
 
-#: re_sharing/organizations/forms.py:122
+#: re_sharing/organizations/forms.py:128
 msgid "Consent"
 msgstr "Einverständnis"
 
-#: re_sharing/organizations/forms.py:123
+#: re_sharing/organizations/forms.py:129
 msgid "Affiliation"
 msgstr "Zugehörigkeit"
 
-#: re_sharing/organizations/forms.py:124
+#: re_sharing/organizations/forms.py:130
 msgid "An affiliation is not needed to book resources."
 msgstr ""
 "Eine Zugehörigkeit ist nicht notwendig um eine Ressource buchen zu können."
 
-#: re_sharing/organizations/forms.py:140
+#: re_sharing/organizations/forms.py:146
 msgid ""
 "We need some more information of your organization. If you don'thave an "
 "official address yet, you can also enter your personal address."
@@ -578,7 +583,7 @@ msgstr ""
 "Organisation noch keine Adresse u.ä. hat, kannst du auch deine private "
 "Adresse angeben."
 
-#: re_sharing/organizations/forms.py:171
+#: re_sharing/organizations/forms.py:177
 msgid "Save organization"
 msgstr "Organisation speichern"
 
@@ -1205,24 +1210,24 @@ msgstr "gebucht von"
 msgid "Differing billing address"
 msgstr "Abweichende Rechnungsadresse"
 
-#: re_sharing/templates/bookings/partials/booking_item.html:61
-msgid "View"
-msgstr ""
-
 #: re_sharing/templates/bookings/partials/booking_item.html:65
+msgid "View"
+msgstr "Anzeigen"
+
+#: re_sharing/templates/bookings/partials/booking_item.html:73
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: re_sharing/templates/bookings/partials/booking_item.html:77
 #: re_sharing/templates/bookings/partials/manager_booking_item.html:31
 msgid "Are you sure you want to cancel this booking?"
 msgstr "Möchest du diese Buchung wirklich stornieren?"
 
-#: re_sharing/templates/bookings/partials/booking_item.html:68
+#: re_sharing/templates/bookings/partials/booking_item.html:84
 msgid "Cancel "
 msgstr "Stornieren"
 
-#: re_sharing/templates/bookings/partials/booking_item.html:72
-msgid "Edit"
-msgstr "Bearbeiten"
-
-#: re_sharing/templates/bookings/partials/booking_item.html:82
+#: re_sharing/templates/bookings/partials/booking_item.html:94
 msgid "show all occurrences"
 msgstr "alle Wiederholungen ansehen"
 
@@ -1440,7 +1445,8 @@ msgstr ""
 msgid ""
 "Here you can find all organizations, that decided to share some information "
 "publicly."
-msgstr ""
+msgstr "Du findest hier alle Organisationen, die ihr Profil öffentlich sichtbar "
+"anzeigen lassen."
 
 #: re_sharing/templates/organizations/list_organizations.html:32
 msgid "Search organizations"
@@ -1670,11 +1676,11 @@ msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
 "auf einen freien (grünen) Zeitraum, um direkt zur Buchung zu gelangen."
 
-#: re_sharing/templates/resources/multi_planner.html:54
+#: re_sharing/templates/resources/multi_planner.html:53
 msgid "Days to display"
 msgstr "Tage"
 
-#: re_sharing/templates/resources/multi_planner.html:59
+#: re_sharing/templates/resources/multi_planner.html:58
 msgid "days"
 msgstr "Tage"
 
@@ -2256,33 +2262,3 @@ msgstr "Storniert"
 #: re_sharing/utils/models.py:30
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
-
-#, fuzzy
-#~| msgid "Status Change"
-#~ msgid "Change"
-#~ msgstr "Statusänderung"
-
-#~ msgid ""
-#~ "For now, you can create yourself an account and add you organization."
-#~ msgstr ""
-#~ "Derzeit kannst du dir einen Account erstellen und deine Organisation "
-#~ "anlegen."
-
-#~ msgid "Look for a free resource."
-#~ msgstr "Finde eine freie Ressource."
-
-#~ msgid "Create an account."
-#~ msgstr "Erstelle einen Account."
-
-#~ msgid "Pricing"
-#~ msgstr "Preisgestaltung"
-
-#~ msgid ""
-#~ "I'm entitled by my organization to create this profile and make booking "
-#~ "requests in its name."
-#~ msgstr ""
-#~ "Ich bin von der Organisation berechtigt, dieses Profil anzulegen und "
-#~ "Buchungen in  ihrem Namen durchzuführen."
-
-#~ msgid "Approval of entitlement"
-#~ msgstr "Bestätigung der Berechtigung"

@@ -257,11 +257,9 @@ class Booking(TimeStampedModel):
     compensation = ForeignKey(
         Compensation,
         verbose_name=_("Compensation"),
-        on_delete=SET_NULL,
+        on_delete=PROTECT,
         related_name="bookings_of_compensation",
         related_query_name="booking_of_compensation",
-        null=True,
-        blank=True,
     )
     total_amount = DecimalField(
         _("Total amount"),

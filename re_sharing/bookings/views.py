@@ -133,7 +133,7 @@ def preview_and_save_booking_view(request):
 @login_required
 def update_booking_view(request, booking_slug):
     booking = get_object_or_404(Booking, slug=booking_slug)
-    if user_has_bookingpermission(request.user, booking.organization):
+    if user_has_bookingpermission(request.user, booking):
         initial_data = {
             "starttime": booking.start_time.strftime("%H:%M"),
             "endtime": booking.end_time.strftime("%H:%M"),

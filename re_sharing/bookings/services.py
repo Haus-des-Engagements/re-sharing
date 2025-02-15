@@ -314,6 +314,19 @@ def process_field_changes(field, values):
                 "new_value": new_resource.name,
             }
         )
+    elif field == "compensation":
+        if old_value != "None":
+            old_compensation = get_object_or_404(Compensation, id=int(old_value))
+        else:
+            old_compensation = 2
+        new_compensation = get_object_or_404(Compensation, id=int(new_value))
+        change_details.update(
+            {
+                "field": _("Compensation"),
+                "old_value": old_compensation,
+                "new_value": new_compensation.name,
+            }
+        )
     elif field == "status":
         old_value_text = dict(BookingStatus.choices).get(int(old_value))
         new_value_text = dict(BookingStatus.choices).get(int(new_value))
