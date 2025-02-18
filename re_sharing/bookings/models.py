@@ -9,7 +9,6 @@ from django.contrib.postgres.fields import RangeOperators
 from django.contrib.postgres.indexes import GistIndex
 from django.db.models import CASCADE
 from django.db.models import PROTECT
-from django.db.models import SET_NULL
 from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateField
@@ -79,11 +78,9 @@ class BookingSeries(TimeStampedModel):
     compensation = ForeignKey(
         Compensation,
         verbose_name=_("Compensation"),
-        on_delete=SET_NULL,
+        on_delete=PROTECT,
         related_name="bookingseries_set_of_compensation",
         related_query_name="bookingseries_of_compensation",
-        null=True,
-        blank=True,
     )
     total_amount_per_booking = DecimalField(
         _("Total amount per booking"),
@@ -345,7 +342,6 @@ class Booking(TimeStampedModel):
 
 class BookingMessage(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
-    history = AuditlogHistoryField()
     booking = ForeignKey(
         Booking,
         verbose_name=_("Booking"),
@@ -372,5 +368,4 @@ class BookingMessage(TimeStampedModel):
 
 
 auditlog.register(Booking, exclude_fields=["created, updated"])
-auditlog.register(BookingMessage, exclude_fields=["created, updated"])
 auditlog.register(BookingSeries, exclude_fields=["created, updated"])

@@ -30,7 +30,6 @@ class User(AbstractUser, TimeStampedModel):
 
     # First and last name do not cover name patterns around the globe
     uuid = UUIDField(default=uuid.uuid4, editable=False)
-    history = AuditlogHistoryField()
     first_name = CharField(_("First Name"))
     last_name = CharField(_("Last Name"))
     slug = AutoSlugField(populate_from=["first_name", "last_name"], editable=False)
@@ -142,5 +141,4 @@ class UserGroup(TimeStampedModel):
         return self.name
 
 
-auditlog.register(User, exclude_fields=["updated", "last_login"])
 auditlog.register(UserGroup, exclude_fields=["updated"])

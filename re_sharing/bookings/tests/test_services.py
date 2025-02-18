@@ -189,7 +189,7 @@ class TestShowBooking(TestCase):
         self.resource = ResourceFactory(access=self.access)
         self.user = UserFactory()
         self.organization = OrganizationFactory()
-        self.start_datetime = timezone.now() + timedelta(days=10)
+        self.start_datetime = timezone.now() + timedelta(days=6)
         self.booking = BookingFactory(
             organization=self.organization,
             status=BookingStatus.PENDING,
@@ -247,6 +247,25 @@ class TestShowBooking(TestCase):
             self.user, self.booking.slug
         )
         assert str(access_code) == str(self.access_code.code)
+
+    def test_access_code_for_confirmed_booking_but_not_yet_shown(self):
+        self.start_datetime = timezone.now() + timedelta(days=8)
+        self.booking = BookingFactory(
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            resource=self.resource,
+            timespan=(self.start_datetime, self.start_datetime + timedelta(hours=2)),
+        )
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        confirm_booking(self.user, self.booking.slug)
+        booking, activity_stream, access_code = show_booking(
+            self.user, self.booking.slug
+        )
+        assert str(access_code) == "only shown 7 days before booking"
 
 
 class TestSaveBooking(TestCase):
@@ -738,34 +757,6 @@ class TestGenerateRecurrence(TestCase):
         assert isinstance(rrule, BookingSeries)
         rrule_occurrences = list(rrulestr(self.rrule_string))
         assert rrule.rrule == self.rrule_string
-        assert rrule.first_booking_date == rrule_occurrences[0]
-        assert rrule.last_booking_date == rrule_occurrences[-1]
-        assert bookable is True
-
-    def test_generate_recurrence_no_compensation(self):
-        self.booking_data["compensation"] = ""
-        self.booking_data["invoice_address"] = ""
-
-        bookings, rrule, bookable = create_booking_series_and_bookings(
-            self.booking_data
-        )
-
-        assert len(bookings) == self.count
-        for booking in bookings:
-            assert isinstance(booking, Booking)
-            assert booking.user == self.user
-            assert booking.title == "Recurring Meeting"
-            assert booking.resource == self.resource
-            assert booking.organization == self.organization
-            assert booking.compensation is None
-            assert booking.total_amount is None
-            assert booking.invoice_address == ""
-
-        assert isinstance(rrule, BookingSeries)
-        rrule_occurrences = list(rrulestr(self.rrule_string))
-        assert rrule.rrule == self.rrule_string
-        assert rrule.start_time == self.start.time()
-        assert rrule.end_time == self.end_datetime.time()
         assert rrule.first_booking_date == rrule_occurrences[0]
         assert rrule.last_booking_date == rrule_occurrences[-1]
         assert bookable is True

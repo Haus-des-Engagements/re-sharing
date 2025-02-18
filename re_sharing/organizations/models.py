@@ -50,7 +50,6 @@ def validate_is_pdf(file):
 
 
 class OrganizationGroup(TimeStampedModel):
-    history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
     description = CharField(_("Description"), max_length=2048)
     slug = AutoSlugField(populate_from="name", unique=True, editable=False)
@@ -341,5 +340,3 @@ class EmailTemplate(TimeStampedModel):
 
 auditlog.register(Organization, exclude_fields=["updated"])
 auditlog.register(BookingPermission, exclude_fields=["updated"])
-auditlog.register(EmailTemplate, exclude_fields=["updated"])
-auditlog.register(OrganizationGroup, exclude_fields=["updated"])

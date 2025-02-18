@@ -15,6 +15,7 @@ from psycopg.types.range import Range
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
+from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -44,6 +45,7 @@ class BookingFactory(DjangoModelFactory):
         date_end=timezone.now().date() + timedelta(days=300),
     )
     end_date = start_date
+    compensation = SubFactory(CompensationFactory)
 
     @LazyAttribute
     def start_time(self):
@@ -97,6 +99,7 @@ class BookingSeriesFactory(DjangoModelFactory):
     resource = SubFactory("re_sharing.resources.tests.factories.ResourceFactory")
     status = BookingStatus.CONFIRMED
     import_id = ""
+    compensation = SubFactory(CompensationFactory)
 
     @LazyAttribute
     def start_time(self):
