@@ -315,10 +315,7 @@ def process_field_changes(field, values):
             }
         )
     elif field == "compensation":
-        if old_value != "None":
-            old_compensation = get_object_or_404(Compensation, id=int(old_value))
-        else:
-            old_compensation = get_object_or_404(Compensation, id=2)
+        old_compensation = get_object_or_404(Compensation, id=int(old_value))
         new_compensation = get_object_or_404(Compensation, id=int(new_value))
         change_details.update(
             {
