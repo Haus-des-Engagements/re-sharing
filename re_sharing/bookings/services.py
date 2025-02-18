@@ -320,8 +320,18 @@ def process_field_changes(field, values):
         change_details.update(
             {
                 "field": _("Compensation"),
-                "old_value": old_compensation,
+                "old_value": old_compensation.name,
                 "new_value": new_compensation.name,
+            }
+        )
+    elif field == "organization":
+        old_organization = get_object_or_404(Organization, id=int(old_value))
+        new_organization = get_object_or_404(Organization, id=int(new_value))
+        change_details.update(
+            {
+                "field": _("Organization"),
+                "old_value": old_organization.name,
+                "new_value": new_organization.name,
             }
         )
     elif field == "status":

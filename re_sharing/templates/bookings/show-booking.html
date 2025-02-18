@@ -144,9 +144,6 @@
               <div class="card-body">
                 <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
                 <h5 class="card-title">{% trans "Booking created" %}</h5>
-                <p class="card-text">
-                  {% trans "by" %} {{ booking.user.first_name }} {{ booking.user.last_name }} ({{ booking.user.email }})
-                </p>
               </div>
             </div>
           </div>
