@@ -19,6 +19,7 @@ from re_sharing.utils.models import BookingStatus
 from .forms import BookingForm
 from .forms import MessageForm
 from .models import Booking
+from .services import bookings_webview
 from .services import cancel_booking
 from .services import create_booking_data
 from .services import create_bookingmessage
@@ -319,6 +320,19 @@ def preview_and_save_booking_series_view(request):
 
     messages.error(request, _("Sorry, something went wrong. Please try again."))
     return redirect("bookings:create-booking")
+
+
+@require_http_methods(["GET"])
+@login_required
+def list_bookings_webview(request: HttpRequest) -> HttpResponse:
+    date_string = request.GET.get("date") or None
+    bookings, date = bookings_webview(date_string)
+
+    return render(
+        request,
+        "bookings/list-bookings-webview.html",
+        {"bookings": bookings, "date": date},
+    )
 
 
 @require_http_methods(["GET"])

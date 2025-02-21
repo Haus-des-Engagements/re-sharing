@@ -14,6 +14,7 @@ from django.db.models import IntegerField
 from django.db.models import ManyToManyField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
+from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import UUIDField
 from django.db.models.functions import Lower
@@ -72,6 +73,10 @@ class AccessCode(TimeStampedModel):
 
 
 class Resource(Model):
+    class ResourceTypeChoices(TextChoices):
+        ROOM = "room", _("Room")
+        PARKING_LOT = "parking_lot", _("Parking lot")
+
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     name = CharField(_("Title"), max_length=160)
     slug = AutoSlugField(populate_from="name")
@@ -96,6 +101,7 @@ class Resource(Model):
         help_text=_("Only bookable with specific permissions"),
         default=False,
     )
+    type = CharField(max_length=50, choices=ResourceTypeChoices)
 
     class Meta:
         verbose_name = _("Resource")

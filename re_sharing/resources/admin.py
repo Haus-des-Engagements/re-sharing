@@ -10,7 +10,7 @@ from .models import ResourceImage
 
 @admin.register(Resource)
 class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name", "square_meters", "max_persons"]
+    list_display = ["id", "name", "square_meters", "max_persons", "type"]
     search_fields = ["id", "name"]
     ordering = ["id"]
 

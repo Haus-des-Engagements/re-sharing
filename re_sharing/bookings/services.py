@@ -444,6 +444,28 @@ def confirm_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
+def bookings_webview(date_string):
+    bookings = Booking.objects.filter(
+        resource__type=Resource.ResourceTypeChoices.ROOM, status=BookingStatus.CONFIRMED
+    )
+    if date_string:
+        shown_date = parser.parse(date_string).date()
+    else:
+        shown_date = timezone.now().date()
+
+    start_of_day = timezone.make_aware(
+        datetime.combine(shown_date, time(hour=0)),
+    )
+    end_of_day = timezone.make_aware(
+        datetime.combine(shown_date, time(hour=23, minute=59)),
+    )
+    bookings = bookings.filter(timespan__overlap=(start_of_day, end_of_day))
+
+    bookings = bookings.order_by("timespan")
+
+    return bookings, shown_date
+
+
 def manager_filter_bookings_list(  # noqa: PLR0913
     organization,
     show_past_bookings,

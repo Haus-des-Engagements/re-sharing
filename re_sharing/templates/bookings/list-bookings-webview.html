@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <h1 class="mt-4">{% trans "Bookings" %}</h1>
+  <form class="row gx-3 gy-2 align-items-center mt-3"
+        method="get"
+        action="{% url 'bookings:list-bookings-webview' %}">
+    <div class="col-auto">
+      <input type="date"
+             name="date"
+             class="form-control textinput"
+             id="id_date"
+             value="{{ date|date:'Y-m-d' }}" />
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary mb-2">{% trans "Submit" %}</button>
+    </div>
+  </form>
+  <div id="booking-list">
+    <div class="table-responsive mt-5">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Timespan" %}</th>
+            <th scope="col">{% trans "Organization" %}</th>
+            <th scope="col">{% trans "Room" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
+              <td>{{ booking.organization }}</td>
+              <td>{{ booking.resource }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock content %}

@@ -7,6 +7,7 @@ from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import list_booking_series_view
 from .views import list_bookings_view
+from .views import list_bookings_webview
 from .views import manager_cancel_booking_series_view
 from .views import manager_cancel_booking_view
 from .views import manager_confirm_booking_series_view
@@ -23,6 +24,9 @@ from .views import update_booking_view
 app_name = "bookings"
 urlpatterns = [
     path("", list_bookings_view, name="list-bookings"),  # GET bookings list
+    path(
+        "webview/", list_bookings_webview, name="list-bookings-webview"
+    ),  # GET bookings list
     path(
         "manage-bookings/",
         manager_list_bookings_view,
