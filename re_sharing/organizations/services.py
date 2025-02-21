@@ -135,18 +135,24 @@ def user_has_admin_bookingpermission(user, organization):
 
 
 def manager_filter_organizations_list(status, group):
-    organizations = Organization.objects.annotate(
+    organizations = Organization.objects.all()
+    if status != "all":
+        organizations = organizations.filter(status__in=status)
+    if group != "all":
+        organizations = organizations.filter(organization_groups__slug=group)
+
+    organizations = organizations.annotate(
+        bookings_count=Count("booking_of_organization", distinct=True)
+    ).prefetch_related()
+    organizations = organizations.annotate(
         confirmed_users_count=Count(
             "organization_of_bookingpermission",
             filter=Q(
                 organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
             ),
-        )
-    )
-    if status != "all":
-        organizations = organizations.filter(status__in=status)
-    if group != "all":
-        organizations = organizations.filter(organization_groups__slug=group)
+            distinct=True,
+        ),
+    ).prefetch_related("organization_groups")
 
     return organizations.order_by(Lower("name"))
 

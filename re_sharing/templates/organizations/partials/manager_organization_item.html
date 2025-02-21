@@ -1,8 +1,8 @@
 {% load i18n %}
 
-<td>{{ organization.created|date:"d.m.Y H:i" }}</td>
+<td sorttable_customkey="{{ organization.created|date:"YmdHi" }}">{{ organization.created|date:"d.m.Y" }}</td>
 <td>
-  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 300px;"><!-- djlint:on -->
+  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 200px;"><!-- djlint:on -->
   <a href="{% url "organizations:show-organization" organization.slug %}">{{ organization.name }}</a>
 </span>
 </td>
@@ -11,6 +11,9 @@
 </td>
 <td>{{ organization.confirmed_users_count }}</td>
 <td>
+  <a href="{% url "bookings:manager-list-bookings" %}?organization={{ organization.slug }}&show_past_bookings=on">{{ organization.bookings_count }}</a>
+</td>
+<td sorttable_customkey="{{ organization.usage_agreement_date|date:"Ymd" }}">
   {% if organization.usage_agreement %}
     <a href="{{ organization.usage_agreement.url }}">{{ organization.usage_agreement_date|default_if_none:_("without date") }}</a>
   {% else %}

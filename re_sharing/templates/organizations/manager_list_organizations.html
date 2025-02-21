@@ -23,7 +23,8 @@
         hx-get="{% url 'organizations:manager-list-organizations' %}"
         hx-target="#organization-list"
         hx-trigger="change"
-        hx-indicator="#spinner">
+        hx-indicator="#spinner"
+        hx-push-url="true">
     <div class="col-auto" id="div_id_status">
       <select name="status" class="select form-select" id="id_status">
         <option value="all">{% trans "all statuses" %}</option>

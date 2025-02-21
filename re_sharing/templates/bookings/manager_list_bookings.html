@@ -18,12 +18,12 @@
     </a>
   </h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
-        action="{% url 'bookings:manager-list-bookings' %}"
         method="get"
         hx-get="{% url 'bookings:manager-list-bookings' %}"
         hx-target="#booking-list"
         hx-trigger="change"
-        hx-indicator="#spinner">
+        hx-indicator="#spinner"
+        hx-sync="closest form:replace">
     <div id="div_id_organization" class="col-3">
       <select name="organization" class="form-select" id="id_organization">
         <option selected value="all">{% trans "all organizations" %}</option>
