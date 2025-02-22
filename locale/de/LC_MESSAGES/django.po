@@ -1037,7 +1037,7 @@ msgid "Find a free room"
 msgstr "Finde einen freien Raum"
 
 #: re_sharing/templates/base.html:116
-msgid "Pofile"
+msgid "Profile"
 msgstr "Profil"
 
 #: re_sharing/templates/base.html:121
