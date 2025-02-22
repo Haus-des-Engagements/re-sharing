@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Report" %}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Reports" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <div class="row mt-4">
+    <h1>{% trans "Report 2025" %}</h1>
+  </div>
+  {{ yearly_totals.bookings_count }} {% trans "bookings" %} {% trans "and" %} {{ yearly_totals.amount }}€ {% trans "so far" %}.
+  <table class="table table-bordered table-sm text-end">
+    <thead>
+      <tr>
+        <th></th>
+        {% for month in months %}<th colspan="2">{{ month }}/2025</th>{% endfor %}
+      </tr>
+      <tr>
+        <th>Resource</th>
+        {% for month in months %}
+          <th>#</th>
+          <th>€</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% regroup bookings by resource__name as resource_list %}
+      {% for resource in resource_list %}
+        <tr>
+          <td class="w-25 text-truncate">{{ resource.grouper }}</td>
+          {% for key in resource.list %}
+            <td>{{ key.bookings_count }}</td>
+            <td>{{ key.amount|default_if_none:"" }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      <tr class="table-light">
+        <td>Total</td>
+        {% for total in monthly_totals %}
+          <td>{{ total.bookings_count }}</td>
+          <td>{{ total.amount|default_if_none:"0,00" }}</td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+{% endblock content %}
