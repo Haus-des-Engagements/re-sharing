@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.dashboards.services import get_users_bookings_and_permissions
@@ -36,7 +37,7 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     """
     View that renders a reporting dashboard.
     """
-    bookings = (
+    bookings_by_resource = (
         Booking.objects.filter(start_date__year=2025)
         .values("resource__name", "start_date__month")
         .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
@@ -51,15 +52,19 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     yearly_totals = Booking.objects.filter(start_date__year=2025).aggregate(
         bookings_count=Count("id"), amount=Sum("total_amount")
     )
+    realized_yearly_totals = Booking.objects.filter(
+        start_date__year=2025, start_date__lt=timezone.now()
+    ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
     # Render to the template
     return render(
         request,
         "dashboards/reporting.html",
         context={
-            "bookings": bookings,
+            "bookings_by_resource": bookings_by_resource,
             "months": range(1, 13),
             "monthly_totals": monthly_totals,
             "yearly_totals": yearly_totals,
+            "realized_yearly_totals": realized_yearly_totals,
         },
     )
