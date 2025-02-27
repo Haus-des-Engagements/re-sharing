@@ -82,7 +82,6 @@ class OrganizationForm(forms.ModelForm):
     )
     usage_agreement_date = forms.DateField(
         label=_("Signing date of the usage agreement"),
-        widget=forms.DateInput(attrs={"type": "date"}),
         required=False,
         help_text=_("When did you sign the usage agreement?"),
     )
