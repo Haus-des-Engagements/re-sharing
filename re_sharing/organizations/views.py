@@ -227,10 +227,12 @@ def demote_to_booker_view(request, organization, user):
 
 @login_required
 def create_organization_view(request):
-    form = OrganizationForm()
+    form = OrganizationForm(user=request.user)
 
     if request.method == "POST":
-        form = OrganizationForm(request.POST, request.FILES)
+        form = OrganizationForm(
+            data=request.POST, files=request.FILES, user=request.user
+        )
 
         if form.is_valid():
             organization = create_organization(request.user, form)
@@ -242,13 +244,19 @@ def create_organization_view(request):
 @login_required
 def update_organization_view(request, organization):
     organization = get_object_or_404(Organization, slug=organization)
-    if user_has_admin_bookingpermission(request.user, organization):
-        form = OrganizationForm(instance=organization)
-    else:
-        raise PermissionDenied
+    if request.method == "GET":
+        if user_has_admin_bookingpermission(request.user, organization):
+            form = OrganizationForm(instance=organization, user=request.user)
+        else:
+            raise PermissionDenied
 
     if request.method == "POST":
-        form = OrganizationForm(request.POST, request.FILES, instance=organization)
+        form = OrganizationForm(
+            files=request.FILES,
+            data=request.POST,
+            instance=organization,
+            user=request.user,
+        )
         if form.is_valid():
             organization = update_organization(request.user, form, organization)
             messages.success(request, "Organization updated successfully.")
@@ -263,7 +271,7 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the organizations for a manager so that they can be confirmed or cancelled
     """
-    status = request.GET.get("status") or "1"
+    status = request.GET.get("status") or "all"
     group = request.GET.get("group") or "all"
 
     organizations = manager_filter_organizations_list(status, group)

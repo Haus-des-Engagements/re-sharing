@@ -115,7 +115,7 @@ class OrganizationForm(forms.ModelForm):
             "usage_agreement_date",
         )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["organization_groups"].label_from_instance = (
             lambda organization_group: (
@@ -123,6 +123,14 @@ class OrganizationForm(forms.ModelForm):
             )
             or organization_group.name
         )
+        if user.is_staff:
+            organization_groups = OrganizationGroup.objects.all()
+        else:
+            organization_groups = OrganizationGroup.objects.filter(
+                show_on_organization_creation=True
+            )
+        self.fields["organization_groups"].queryset = organization_groups
+
         self.helper = FormHelper()
         address = _("Address")
         consent = _("Consent")

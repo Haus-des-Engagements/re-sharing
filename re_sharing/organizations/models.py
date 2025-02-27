@@ -52,7 +52,7 @@ def validate_is_pdf(file):
 class OrganizationGroup(TimeStampedModel):
     name = CharField(_("Name"), max_length=160)
     description = CharField(_("Description"), max_length=2048)
-    slug = AutoSlugField(populate_from="name", unique=True, editable=False)
+    slug = AutoSlugField(populate_from="name", unique=True, editable=True)
     auto_confirmed_resources = ManyToManyField(
         Resource,
         verbose_name=_("Auto confirmed resources"),

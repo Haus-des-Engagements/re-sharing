@@ -107,7 +107,7 @@ def test_create_organization():
         "entitled": True,
         "values_approval": True,
     }
-    form = OrganizationForm(data=form_data)
+    form = OrganizationForm(data=form_data, user=test_user)
 
     # Ensure form is valid
     assert form.is_valid(), form.errors
