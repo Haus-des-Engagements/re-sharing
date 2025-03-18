@@ -14,6 +14,7 @@ from django.db.models import IntegerField
 from django.db.models import ManyToManyField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
+from django.db.models import Q
 from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import UUIDField
@@ -126,6 +127,22 @@ class Resource(Model):
             status=BookingStatus.CONFIRMED,
         ).exists()
 
+    def is_bookable_by_organization(self, organization):
+        if not self.is_private:
+            return True
+        # if the organization is in an OrganizationGroup that has the permission to
+        # book the private ressource
+        if self.bookableprivateressources_of_organizationgroup.filter(
+            organization_of_organizationgroups=organization
+        ).exists():
+            return True
+        return False
+
+    def get_bookable_compensations(self, organization):
+        return Compensation.objects.filter(resource=self).filter(
+            Q(organization_groups=None) | Q(organizationgroups=organization)
+        )
+
 
 def create_resourceimage_path(instance, filename):
     resource_slug = instance.resource.slug
@@ -175,6 +192,11 @@ class Compensation(TimeStampedModel):
         verbose_name=_("Resource"),
         related_name="compensations_of_resource",
         related_query_name="compensation_of_resource",
+        blank=True,
+        help_text=_(
+            "If no resource is selected, the compensation is bookable "
+            "for all resources."
+        ),
     )
     name = CharField(_("Name"), max_length=255)
     slug = AutoSlugField(
@@ -183,6 +205,17 @@ class Compensation(TimeStampedModel):
     conditions = CharField(_("Conditions"), max_length=512, blank=True)
     hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
     is_active = BooleanField(_("Active"), default=True)
+    organization_groups = ManyToManyField(
+        "organizations.OrganizationGroup",
+        verbose_name=_("Organization group"),
+        related_name="compensations_of_organizationgroup",
+        related_query_name="compensation_of_organizationgroup",
+        blank=True,
+        help_text=_(
+            "If no group is selected, the compensation is bookable "
+            "for all organizations."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Compensation")
@@ -193,3 +226,15 @@ class Compensation(TimeStampedModel):
         if self.hourly_rate is None:
             return self.name
         return self.name + " (" + str(self.hourly_rate) + " €)"
+
+    def is_bookable_by_organization(self, organization):
+        # if no OrganizationGroup is specified for the Compensation, anyone can book it
+        if not self.organization_groups.exists():
+            return True
+        # if an OrganizationGroups are specified for the Compensation, the organization
+        # has to be in one of these OrganizationGroups
+        if self.organization_groups.filter(
+            organization_of_organizationgroups=organization
+        ).exists():
+            return True
+        return False

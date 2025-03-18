@@ -41,6 +41,28 @@ class InvalidBookingOperationError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
+def is_bookable_by_organization(user, organization, resource, compensation):
+    # staff users are allowed to book any combination
+    if user.is_staff:
+        return True
+
+    # check if organization is confirmed
+    if organization.status != Organization.Status.CONFIRMED:
+        return False
+
+    # check if user is allowed to book for that organization
+    if not organization.has_confirmed_user(user):
+        return False
+
+    # check if resource and compensations are bookable
+    if resource.is_bookable_by_organization(
+        organization
+    ) and compensation.is_bookable_by_organization(organization):
+        return True
+
+    return False
+
+
 def set_initial_booking_data(**kwargs):
     endtime = kwargs.get("endtime")
     startdate = kwargs.get("startdate")
@@ -179,6 +201,10 @@ def generate_booking(booking_data):
 
 def save_booking(user, booking):
     if not user_has_bookingpermission(user, booking):
+        raise PermissionDenied
+    if not is_bookable_by_organization(
+        user, booking.organization, booking.resource, booking.compensation
+    ):
         raise PermissionDenied
 
     if user.is_staff:
@@ -427,21 +453,6 @@ def filter_bookings_list(  # noqa: PLR0913
     bookings = page_objects
 
     return bookings, organizations
-
-
-def confirm_booking(user, booking_slug):
-    booking = get_object_or_404(Booking, slug=booking_slug)
-
-    if not user_has_bookingpermission(user, booking):
-        raise PermissionDenied
-
-    if booking.is_confirmable():
-        with set_actor(user):
-            booking.status = BookingStatus.CONFIRMED
-            booking.save()
-            return booking
-
-    raise InvalidBookingOperationError
 
 
 def bookings_webview(date_string):

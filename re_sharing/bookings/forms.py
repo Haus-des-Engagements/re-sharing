@@ -53,6 +53,17 @@ class BookingForm(forms.ModelForm):
     organization = forms.ModelChoiceField(
         queryset=None,
         label=_("Organization"),
+        widget=forms.Select(
+            attrs={
+                "hx-trigger": "change",
+                "hx-post": reverse_lazy(
+                    "resources:get-compensations", kwargs={"selected_compensation": 0}
+                ),
+                "hx-params": "resource, compensation, organization",
+                "hx-target": "#compensations-container",
+                "hx-swap": "outerHTML",
+            }
+        ),
     )
     title = forms.CharField(
         label=_("Booking title"),
@@ -73,7 +84,7 @@ class BookingForm(forms.ModelForm):
                 "hx-post": reverse_lazy(
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
-                "hx-params": "resource, compensation",
+                "hx-params": "resource, compensation, organization",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }

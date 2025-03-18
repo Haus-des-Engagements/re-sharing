@@ -18,7 +18,6 @@ from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import cancel_booking
-from re_sharing.bookings.services import confirm_booking
 from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
 from re_sharing.bookings.services import generate_booking
@@ -242,7 +241,7 @@ class TestShowBooking(TestCase):
             user=self.user,
             status=BookingPermission.Status.CONFIRMED,
         )
-        confirm_booking(self.user, self.booking.slug)
+        manager_confirm_booking(self.user, self.booking.slug)
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
@@ -261,7 +260,7 @@ class TestShowBooking(TestCase):
             user=self.user,
             status=BookingPermission.Status.CONFIRMED,
         )
-        confirm_booking(self.user, self.booking.slug)
+        manager_confirm_booking(self.user, self.booking.slug)
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
@@ -271,7 +270,7 @@ class TestShowBooking(TestCase):
 class TestSaveBooking(TestCase):
     def setUp(self):
         self.user = UserFactory()
-        self.organization = OrganizationFactory()
+        self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
         self.resource = ResourceFactory()
         self.booking = BookingFactory(
             status=BookingStatus.PENDING, organization=self.organization

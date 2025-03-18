@@ -37,6 +37,7 @@ class ResourceFactory(DjangoModelFactory):
     accessibility = Faker("sentence", nb_words=6)
     access = SubFactory(AccessFactory)
     address = Faker("address")
+    is_private = False
 
     class Meta:
         model = Resource

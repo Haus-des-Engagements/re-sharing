@@ -1,7 +1,9 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
 from re_sharing.resources.services import filter_resources
@@ -82,20 +84,25 @@ def planner_view(request):
 @require_http_methods(["POST"])
 def get_compensations(request, selected_compensation=None):
     resource_id = request.POST.get("resource")
-    if not resource_id:
+    organization_id = request.POST.get("organization")
+    if not resource_id or not organization_id:
         return render(
             request, "bookings/partials/compensations.html", {"compensations": []}
         )
     resource = get_object_or_404(Resource, id=resource_id)
-    compensations = Compensation.objects.filter(resource=resource, is_active=True)
-    if Compensation.objects.filter(
-        id=selected_compensation, resource=resource
-    ).exists():
+    organization = get_object_or_404(Organization, id=organization_id)
+    org_groups = organization.organization_groups.all()
+    compensations = (
+        Compensation.objects.filter(is_active=True)
+        .filter(Q(resource=resource) | Q(resource=None))
+        .filter(Q(organization_groups__in=org_groups) | Q(organization_groups=None))
+    )
+    if selected_compensation in compensations.values_list("id", flat=True):
         selected_compensation = get_object_or_404(
             Compensation, id=selected_compensation, resource=resource
         )
     else:
-        selected_compensation = compensations.first()
+        selected_compensation = 1
 
     return render(
         request,

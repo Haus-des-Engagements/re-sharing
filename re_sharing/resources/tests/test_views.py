@@ -5,6 +5,7 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
+from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.resources.views import get_compensations
@@ -98,6 +99,7 @@ class GetCompensationsViewTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.resource = ResourceFactory(name="Test Resource")
+        self.organization = OrganizationFactory()
         self.compensation_name = "For Free"
         self.compensation = CompensationFactory(name=self.compensation_name)
         self.compensation.resource.add(self.resource)
@@ -113,7 +115,7 @@ class GetCompensationsViewTest(TestCase):
     def test_get_compensations_with_resource(self):
         request = self.factory.post(
             reverse("resources:get-compensations", kwargs={"selected_compensation": 1}),
-            {"resource": self.resource.id},
+            {"resource": self.resource.id, "organization": self.organization.id},
         )
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK

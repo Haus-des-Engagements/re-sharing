@@ -238,6 +238,15 @@ class Organization(TimeStampedModel):
             user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
         )
 
+    def has_confirmed_user(self, user):
+        """
+        Check if a user is confirmed for an organization
+        """
+
+        return BookingPermission.objects.filter(
+            organization=self, user=user, status=BookingPermission.Status.CONFIRMED
+        ).exists()
+
 
 class BookingPermission(TimeStampedModel):
     class Role(IntegerChoices):
