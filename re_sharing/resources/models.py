@@ -136,6 +136,12 @@ class Resource(Model):
             organization_of_organizationgroups=organization
         ).exists():
             return True
+        # if the organization is in an OrganizationGroup that has auto-confirmation for
+        # the resource
+        if self.autoconfirmedresources_of_organizationgroup.filter(
+            organization_of_organizationgroups=organization
+        ).exists():
+            return True
         return False
 
     def get_bookable_compensations(self, organization):
