@@ -30,4 +30,4 @@ django-hijack==3.7.1  # https://github.com/django-hijack/django-hijack
 # https://github.com/jschneier/django-storages/issues/1482
 # https://status.hetzner.com/incident/b6382a74-0fd9-4789-b997-65249187fbc7
 boto3==1.35.54
-botocore==1.35.54
+botocore==1.37.21
