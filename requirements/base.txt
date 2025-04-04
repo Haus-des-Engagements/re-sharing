@@ -8,6 +8,7 @@ python-dateutil==2.9.0.post0  # https://github.com/dateutil/dateutil
 python-magic==0.4.27  # https://github.com/ahupp/python-magic
 icalendar==6.0.1  # https://github.com/collective/icalendar/
 psycopg==3.2.4
+requests==2.32.3  # https://github.com/psf/requests
 
 # Django
 # ------------------------------------------------------------------------------
