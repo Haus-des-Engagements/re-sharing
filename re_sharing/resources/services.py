@@ -182,7 +182,7 @@ def planner(user, date_string, nb_of_days, resources):
             shown_date,
             shown_date + timedelta(days=nb_of_days),
         ),
-    )
+    ).prefetch_related("resource", "organization")
 
     # Prepare planner_data
     planner_data = {}

@@ -85,6 +85,21 @@ class OrganizationForm(forms.ModelForm):
         required=False,
         help_text=_("When did you sign the usage agreement?"),
     )
+    hde_newsletter = forms.BooleanField(
+        required=False,
+        label=_(
+            "I want to subscribe my organization to the monthly newsletter of"
+            "the Haus des Engagements."
+        ),
+    )
+    hde_newsletter_for_actives = forms.BooleanField(
+        required=False,
+        label=_(
+            "I would like to subscribe my organization to the monthly newsletter "
+            "for actives (with tips on further training, events, and funding "
+            "opportunities in Freiburg and the surrounding area)."
+        ),
+    )
     organization_groups = ModelMultipleChoiceField(
         queryset=OrganizationGroup.objects.filter(show_on_organization_creation=True),
         widget=CheckboxSelectMultiple,
@@ -129,6 +144,11 @@ class OrganizationForm(forms.ModelForm):
                 show_on_organization_creation=True
             )
         self.fields["organization_groups"].queryset = organization_groups
+
+        if self.instance.pk is not None:  # Existing instance (update form)
+            # Remove 'hde_newsletter' and 'hde_newsletter_for_actives' for an update
+            self.fields.pop("hde_newsletter", None)
+            self.fields.pop("hde_newsletter_for_actives", None)
 
         self.helper = FormHelper()
         address = _("Address")
@@ -181,5 +201,7 @@ class OrganizationForm(forms.ModelForm):
             ),
             "is_public",
             "values_approval",
+            "hde_newsletter",
+            "hde_newsletter_for_actives",
             Submit("submit", _("Save organization")),
         )

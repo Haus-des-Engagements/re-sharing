@@ -1,6 +1,8 @@
 from http import HTTPStatus
 
+import requests
 from auditlog.context import set_actor
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.db.models import F
@@ -79,6 +81,26 @@ def create_organization(user, form):
         role=BookingPermission.Role.ADMIN,
     )
     bookingpermission.save()
+
+    # Subscribe the given email to the newsletter via the Newsletter plugin API.
+    if (
+        form.cleaned_data["hde_newsletter"]
+        or form.cleaned_data["hde_newsletter_for_actives"]
+    ):
+        newsletters = []
+        if form.cleaned_data["hde_newsletter"]:
+            newsletters.append(2)
+        if form.cleaned_data["hde_newsletter_for_actives"]:
+            newsletters.append(6)
+        requests.post(
+            settings.NEWSLETTER_API_URL,
+            json={
+                "email": form.cleaned_data["email"],
+                "lists": newsletters,
+            },
+            timeout=15,
+        )
+
     from re_sharing.organizations.mails import manager_new_organization_email
 
     manager_new_organization_email(new_org)
