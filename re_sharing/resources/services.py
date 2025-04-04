@@ -203,7 +203,7 @@ def planner(user, date_string, nb_of_days, resources):
                 timeslot = {
                     "time": slot_time,
                     "booked": False,
-                    "bookable": slot_time > timezone.now(),
+                    "bookable": slot_time > (timezone.now() - timedelta(minutes=29)),
                     "link": (
                         f"?starttime={slot_time.strftime('%H:%M')}"
                         f"&endtime="
