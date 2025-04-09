@@ -159,10 +159,14 @@ def get_access_code(resource_slug, organization_slug, timestamp):
     return access_code
 
 
-def planner(user, date_string, nb_of_days, resources):
+def planner(user, date_string, nb_of_days, resources):  # noqa: C901
     resources = resources.order_by("access__id", "name")
 
-    shown_date = parser.parse(date_string) if date_string else timezone.now()
+    shown_date = (
+        parser.parse(date_string)
+        if date_string
+        else timezone.now().replace(hour=0, minute=0, second=0)
+    )
     start_of_day = timezone.make_aware(
         datetime.combine(
             shown_date - timedelta(days=shown_date.weekday()), time(hour=6)
@@ -186,6 +190,9 @@ def planner(user, date_string, nb_of_days, resources):
 
     # Prepare planner_data
     planner_data = {}
+    organizations_of_user = (
+        user.get_organizations_of_user() if user.is_authenticated else []
+    )
     for day in weekdays:
         day_data = {"weekday": day, "resources": []}
 
@@ -200,10 +207,13 @@ def planner(user, date_string, nb_of_days, resources):
             )
             for i in range(number_of_slots):
                 slot_time = start_time + timedelta(minutes=slot_interval_minutes * i)
+                if slot_time > (timezone.now() - timedelta(minutes=29)):
+                    status = "bookable"
+                else:
+                    status = "past"
                 timeslot = {
                     "time": slot_time,
-                    "booked": False,
-                    "bookable": slot_time > (timezone.now() - timedelta(minutes=29)),
+                    "status": status,
                     "link": (
                         f"?starttime={slot_time.strftime('%H:%M')}"
                         f"&endtime="
@@ -228,16 +238,18 @@ def planner(user, date_string, nb_of_days, resources):
                             datetime.combine(day.date(), slot_time)
                         )
                         if booking_start <= slot_datetime < booking_end:
-                            timeslot["booked"] = True
+                            timeslot["status"] = "booked"
+                            timeslot["link"] = None
+                            if booking.organization in organizations_of_user:
+                                timeslot["status"] = "booked by me"
+                                timeslot["link"] = f"/bookings/{booking.slug}/"
+                                timeslot["title"] = booking.title
                             if user.is_staff:
                                 timeslot["link"] = f"/bookings/{booking.slug}/"
-                            else:
-                                timeslot["link"] = None
                             if (
                                 user.is_authenticated and booking.organization.is_public
                             ) or user.is_staff:
                                 timeslot["organization"] = booking.organization.name
-
             day_data["resources"].append(resource_data)
 
         planner_data[day] = day_data

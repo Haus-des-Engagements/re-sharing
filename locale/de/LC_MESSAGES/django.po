@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-04 11:51+0200\n"
+"POT-Creation-Date: 2025-04-09 20:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,8 +69,8 @@ msgstr "Buchungen löschen"
 #: re_sharing/bookings/forms.py:47
 #: re_sharing/templates/bookings/show_booking_series.html:91
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:72
-#: re_sharing/templates/resources/multi_planner.html:44
-#: re_sharing/templates/resources/multi_planner.html:48
+#: re_sharing/templates/resources/multi_planner.html:45
+#: re_sharing/templates/resources/multi_planner.html:49
 #: re_sharing/templates/resources/partials/planner_table.html:20
 #: re_sharing/templates/resources/partials/weekly_bookings_table.html:20
 msgid "Date"
@@ -477,7 +477,7 @@ msgstr ""
 #: re_sharing/resources/models.py:177
 #: re_sharing/templates/organizations/show_organization.html:46
 #: re_sharing/templates/resources/show_resource.html:74
-#: re_sharing/users/models.py:116
+#: re_sharing/users/models.py:119
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -565,8 +565,8 @@ msgid ""
 "I want to subscribe my organization to the monthly newsletter ofthe Haus des "
 "Engagements."
 msgstr ""
-"Ich möchte meine Organisation für den monatlichen Newsletter des Haus des Engagements "
-"anmelden."
+"Ich möchte meine Organisation für den monatlichen Newsletter des Haus des "
+"Engagements anmelden."
 
 #: re_sharing/organizations/forms.py:98
 msgid ""
@@ -574,9 +574,9 @@ msgid ""
 "actives (with tips on further training, events, and funding opportunities in "
 "Freiburg and the surrounding area)."
 msgstr ""
-"Ich möchte meine Organisation für den monatlichen Newsletter für Engagierte anmelden "
-"(enthält Tipps zu Fortbildungen, Veranstaltungen, Fördermitteln und Stellenanzeigen im"
- "Bereich Engagement in Freiburg"
+"Ich möchte meine Organisation für den monatlichen Newsletter für Engagierte "
+"anmelden (enthält Tipps zu Fortbildungen, Veranstaltungen, Fördermitteln und "
+"Stellenanzeigen imBereich Engagement in Freiburg"
 
 #: re_sharing/organizations/forms.py:154 re_sharing/resources/models.py:99
 #: re_sharing/templates/organizations/show_organization.html:68
@@ -619,11 +619,11 @@ msgstr "Finde alle Informationen dazu hier: %s%s"
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:35
 #: re_sharing/templates/organizations/partials/manager_list_organizations.html:8
 #: re_sharing/templates/organizations/show_organization.html:42
-#: re_sharing/users/models.py:115
+#: re_sharing/users/models.py:118
 msgid "Name"
 msgstr "Name"
 
-#: re_sharing/organizations/models.py:58 re_sharing/users/models.py:126
+#: re_sharing/organizations/models.py:58 re_sharing/users/models.py:129
 msgid "Auto confirmed resources"
 msgstr "Automatisch bestätigte Ressourcen"
 
@@ -1539,7 +1539,7 @@ msgstr "alle Gruppen"
 
 #: re_sharing/templates/organizations/partials/manager_list_organizations.html:10
 #: re_sharing/users/apps.py:9 re_sharing/users/models.py:57
-#: re_sharing/users/models.py:120
+#: re_sharing/users/models.py:123
 msgid "Users"
 msgstr "Nutzer:innen"
 
@@ -1748,18 +1748,34 @@ msgstr "Anzahl an Personen"
 #: re_sharing/templates/resources/multi_planner.html:12
 msgid ""
 "In this view, you can see the free times for all resources. Click on a free "
-"(green) slot to go directly to the booking page."
+"(white) slot to go directly to the booking page."
 msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
-"auf einen freien (grünen) Zeitraum, um direkt zur Buchung zu gelangen."
+"auf einen freien (weißen) Zeitraum, um direkt zur Buchung zu gelangen."
 
-#: re_sharing/templates/resources/multi_planner.html:53
+#: re_sharing/templates/resources/multi_planner.html:54
 msgid "Days to display"
 msgstr "Tage"
 
-#: re_sharing/templates/resources/multi_planner.html:58
+#: re_sharing/templates/resources/multi_planner.html:59
 msgid "days"
 msgstr "Tage"
+
+#: re_sharing/templates/resources/multi_planner.html:71
+msgid "bookable"
+msgstr "buchbar"
+
+#: re_sharing/templates/resources/multi_planner.html:72
+msgid "booked"
+msgstr "gebucht"
+
+#: re_sharing/templates/resources/multi_planner.html:73
+msgid "booked by me"
+msgstr "von mir gebucht"
+
+#: re_sharing/templates/resources/multi_planner.html:74
+msgid "past"
+msgstr "vergangen"
 
 #: re_sharing/templates/resources/partials/list_filter_resources.html:27
 #: re_sharing/templates/resources/show_resource.html:30
@@ -1831,15 +1847,15 @@ msgstr "Nachname"
 msgid "email address"
 msgstr "E-Mail Adresse"
 
-#: re_sharing/users/models.py:132
+#: re_sharing/users/models.py:135
 msgid "Auto confirm organizations on creation"
 msgstr "Neu erstellte Organisationen automatisch bestätigen"
 
-#: re_sharing/users/models.py:136
+#: re_sharing/users/models.py:139
 msgid "User group"
 msgstr "Nutzer:innengruppe"
 
-#: re_sharing/users/models.py:137
+#: re_sharing/users/models.py:140
 msgid "User groups"
 msgstr "Nutzer:innengruppe"
 

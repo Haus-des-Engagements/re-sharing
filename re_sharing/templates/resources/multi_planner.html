@@ -9,7 +9,7 @@
   <h1 class="mt-4">{% trans "Find a free room" %}</h1>
   <div class="mt-3 mb-4">
     <p>
-      {% trans "In this view, you can see the free times for all resources. Click on a free (green) slot to go directly to the booking page." %}
+      {% trans "In this view, you can see the free times for all resources. Click on a free (white) slot to go directly to the booking page." %}
     </p>
   </div>
   <div class="mt-4 mb-3">
@@ -39,31 +39,41 @@
           </div>
         {% endfor %}
       </div>
-      <div class="row g-2 mt-4">
-        <div id="div_date" class="col-auto">
-          <label for="date" class="form-label visually-hidden">{% trans "Date" %}</label>
-          <input type="date"
-                 name="date"
-                 class="form-control textinput form-control-sm"
-                 placeholder="{% trans 'Date' %}"
-                 id="date"
-                 value="{{ dates.shown_date|date:'Y-m-d' }}" />
+      <div class="row g-2 mt-4 justify-content-between">
+        <div class="row g-2 col-auto">
+          <div id="div_date" class="col-auto">
+            <label for="date" class="form-label visually-hidden">{% trans "Date" %}</label>
+            <input type="date"
+                   name="date"
+                   class="form-control textinput form-control"
+                   placeholder="{% trans 'Date' %}"
+                   id="date"
+                   value="{{ dates.shown_date|date:'Y-m-d' }}" />
+          </div>
+          <div class="col-auto" id="div_id_selected_nb_of_days">
+            <label for="id_selected_nb_of_days" class="form-label visually-hidden">{% trans "Days to display" %}</label>
+            <select name="selected_nb_of_days"
+                    class="select form-select form-select"
+                    id="id_selected_nb_of_days">
+              {% for number in nb_of_days %}
+                <option value={{ number }} {% if number == selected_nb_of_days %}selected{% endif %}>{{ number }} {% trans "days" %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div id="spinner"
+               class="spinner-border col-auto htmx-indicator d-flex align-self-center ms-4"
+               role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
         </div>
-        <div class="col-auto" id="div_id_selected_nb_of_days">
-          <label for="id_selected_nb_of_days" class="form-label visually-hidden">{% trans "Days to display" %}</label>
-          <select name="selected_nb_of_days"
-                  class="select form-select form-select-sm"
-                  id="id_selected_nb_of_days">
-            {% for number in nb_of_days %}
-              <option value={{ number }} {% if number == selected_nb_of_days %}selected{% endif %}>{{ number }} {% trans "days" %}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div id="spinner"
-             class="spinner-border col-auto htmx-indicator d-flex align-self-center ms-4"
-             role="status">
-          <span class="visually-hidden">Loading...</span>
+        <div class="col-auto hstack gap-3">
+          <div class="p-2 border small bookable">{% trans "bookable" %}</div>
+          <div class="p-2 border small booked">{% trans "booked" %}</div>
+          {% if request.user.is_authenticated %}
+            <div class="p-2 border small booked-by-me">{% trans "booked by me" %}</div>
+          {% endif %}
+          <div class="p-2 border small past">{% trans "past" %}</div>
         </div>
       </div>
     </form>

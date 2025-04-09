@@ -81,3 +81,27 @@ body, html { height: 100%; margin: 0; display: flex; flex-direction: column; }
 .first-column {
     width: 25%;
   }
+
+/* background colors for planner: Paul tol brigth
+/* https://cran.r-project.org/web/packages/khroma/vignettes/tol.html
+blue: #4477AA, salmon: #EE6677 green:#228833, yellow:#CCBB44, bright-blue:#66CCEE
+violet: #AA3377, grey: #BBBBBB
+ */
+
+.table-booked {
+    --bs-table-bg: #EE6677;
+}
+.table-booked-by-me {
+    --bs-table-bg: #CCBB44;
+}
+.table-bookable {
+    --bs-table-bg: #f8f9fa;
+}
+.table-past {
+    --bs-table-bg: #BBBBBB;
+}
+
+.booked { background-color: #EE6677;}
+.booked-by-me { background-color: #CCBB44; }
+.bookable { background-color: #f8f9fa;}
+.past { background-color: #bbbbbb;}

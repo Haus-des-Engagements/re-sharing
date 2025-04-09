@@ -69,14 +69,17 @@ class User(AbstractUser, TimeStampedModel):
         """
         return reverse("users:detail", kwargs={"slug": self.slug})
 
+    def get_organizations_of_user(self):
+        return Organization.objects.filter(
+            organization_of_bookingpermission__user=self,
+            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        )
+
     def get_resources(self):
         resources = Resource.objects.all()
         if self.is_authenticated:
             # Get all organizations the user is part of with confirmed permissions
-            user_organizations = Organization.objects.filter(
-                organization_of_bookingpermission__user=self,
-                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
-            )
+            user_organizations = self.get_organizations_of_user()
 
             # Fetch private resources explicitly bookable by the user's organization
             # groups

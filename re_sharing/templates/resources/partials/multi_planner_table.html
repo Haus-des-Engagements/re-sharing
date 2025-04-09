@@ -26,21 +26,29 @@
                 </a>
               </td>
               {% for timeslot in resource.timeslots %}
-                {% if timeslot.booked %}
-                  <td class="table-danger" title="{{ timeslot.organization }}">
+                {% if timeslot.status == "booked" %}
+                  <td class="table-booked" title="{{ timeslot.organization }}">
                     {% if timeslot.link %}
                       <a href="{{ timeslot.link }}" class="cover-link">&nbsp</a>
                     {% else %}
                       &nbsp
                     {% endif %}
                   </td>
-                {% elif not timeslot.bookable %}
-                  <td class="table-secondary"></td>
-                {% else %}
-                  <td class="table-success">
+                {% elif timeslot.status == "booked by me" %}
+                  <td class="table-booked-by-me"
+                      title="{{ timeslot.organization }} - {{ timeslot.title }}">
+                    <a href="{{ timeslot.link }}" class="cover-link">&nbsp</a>
+                  </td>
+                {% elif timeslot.status == "bookable" %}
+                  <td class="table-light">
                     <a href="{% url 'bookings:create-booking' %}{{ timeslot.link }}"
                        class="cover-link">&nbsp
                       <span class="visually-hidden">Book resource on {{ timeslot.time|date:"d.m.y H:i" }}</span></a>
+                  </td>
+                {% elif timeslot.status == "past" %}
+                  <td class="table-past">
+                    &nbsp
+                    <span class="visually-hidden">past</span>
                   </td>
                 {% endif %}
               {% endfor %}
