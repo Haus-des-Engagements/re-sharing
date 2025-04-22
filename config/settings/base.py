@@ -48,7 +48,7 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres:///re-sharing",
+        default="postgres://postgres:password@localhost:5432/postgres",
     ),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True

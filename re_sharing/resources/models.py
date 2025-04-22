@@ -146,14 +146,15 @@ class Resource(Model):
 
     def get_bookable_compensations(self, organization):
         return Compensation.objects.filter(resource=self).filter(
-            Q(organization_groups=None) | Q(organizationgroups=organization)
+            Q(organization_groups=None)
+            | Q(organization_groups__organization_of_organizationgroups=organization)
         )
 
 
 def create_resourceimage_path(instance, filename):
     resource_slug = instance.resource.slug
 
-    return f"resources/{resource_slug}-{filename}"
+    return f"resource_images/{resource_slug}-{filename}"
 
 
 def select_default_storage():
