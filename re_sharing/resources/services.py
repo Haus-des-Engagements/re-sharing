@@ -86,7 +86,7 @@ def show_resource(resource_slug, date_string):
         "shown_date": shown_date,
         "next_week": shown_date + timedelta(days=7),
     }
-    compensations = Compensation.objects.filter(resource=resource)
+    compensations = Compensation.objects.filter(resource=resource, is_active=True)
     return resource, time_slots, weekdays, dates, compensations
 
 

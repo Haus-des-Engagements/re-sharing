@@ -11,7 +11,6 @@ from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
 from django.db.models import IntegerField
-from django.db.models import Manager
 from django.db.models import ManyToManyField
 from django.db.models import Model
 from django.db.models import PositiveIntegerField
@@ -194,16 +193,6 @@ class ResourceImage(TimeStampedModel):
         )
 
 
-class CompensationManager(Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
-
-
-class CompensationWithInactiveManager(Manager):
-    def get_queryset(self):
-        return super().get_queryset()
-
-
 class Compensation(TimeStampedModel):
     resource = ManyToManyField(
         Resource,
@@ -234,9 +223,6 @@ class Compensation(TimeStampedModel):
             "for all organizations."
         ),
     )
-
-    objects = CompensationManager()
-    all_objects = CompensationWithInactiveManager()
 
     class Meta:
         verbose_name = _("Compensation")
