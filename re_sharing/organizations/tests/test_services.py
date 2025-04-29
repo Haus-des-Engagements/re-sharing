@@ -1,9 +1,11 @@
 from unittest.mock import patch
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from re_sharing.organizations.forms import OrganizationForm
 from re_sharing.organizations.models import BookingPermission
@@ -93,6 +95,12 @@ def test_create_organization():
     # Create a test user
     test_user = UserFactory()
 
+    # Create a dummy PDF file
+    dummy_pdf_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type%%EOF"
+    uploaded_file = SimpleUploadedFile(
+        "test_usage_agreement.pdf", dummy_pdf_content, content_type="application/pdf"
+    )
+
     # Mock form data
     form_data = {
         "name": "Test Organization",
@@ -104,10 +112,15 @@ def test_create_organization():
         "email": "test@hde.fr",
         "phone": "015839",
         "area_of_activity": Organization.ActivityArea.ENVIRONMENT_NATURE_ANIMALS,
-        "entitled": True,
+        "is_charitable": True,
         "values_approval": True,
+        "usage_agreement_date": timezone.now().date(),
     }
-    form = OrganizationForm(data=form_data, user=test_user)
+
+    # For file uploads, we need to pass files separately from data
+    form = OrganizationForm(
+        data=form_data, files={"usage_agreement": uploaded_file}, user=test_user
+    )
 
     # Ensure form is valid
     assert form.is_valid(), form.errors
