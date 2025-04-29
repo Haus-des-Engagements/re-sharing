@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-09 20:29+0200\n"
+"POT-Creation-Date: 2025-04-29 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,8 +115,8 @@ msgstr "Beschreibe bitte kurz was ihr vorhabt."
 
 #: re_sharing/bookings/forms.py:80 re_sharing/bookings/models.py:66
 #: re_sharing/bookings/models.py:233 re_sharing/bookings/services.py:338
-#: re_sharing/resources/models.py:108 re_sharing/resources/models.py:166
-#: re_sharing/resources/models.py:198
+#: re_sharing/resources/models.py:108 re_sharing/resources/models.py:167
+#: re_sharing/resources/models.py:199
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:10
 #: re_sharing/templates/bookings/partials/manager_list_bookings.html:9
 #: re_sharing/templates/bookings/partials/manager_list_invoices.html:9
@@ -133,7 +133,7 @@ msgstr "Stunde"
 
 #: re_sharing/bookings/forms.py:106 re_sharing/bookings/models.py:80
 #: re_sharing/bookings/models.py:256 re_sharing/bookings/services.py:348
-#: re_sharing/resources/models.py:227
+#: re_sharing/resources/models.py:228
 msgid "Compensation"
 msgstr "Gegenleistung"
 
@@ -474,7 +474,7 @@ msgstr ""
 
 #: re_sharing/organizations/forms.py:32 re_sharing/organizations/models.py:54
 #: re_sharing/organizations/models.py:137 re_sharing/resources/models.py:93
-#: re_sharing/resources/models.py:177
+#: re_sharing/resources/models.py:178
 #: re_sharing/templates/organizations/show_organization.html:46
 #: re_sharing/templates/resources/show_resource.html:74
 #: re_sharing/users/models.py:119
@@ -540,13 +540,12 @@ msgid ""
 "Upload your existing usage agreement or add a <a href='https://haus-des-"
 "engagements.de/wp-content/uploads/2025/01/"
 "Vereinbarung_Raumnutzung_HdE_Formular_2025_reduziert.pdf' "
-"target='_blank'>new one</a> (not needed for Co-Workers)."
+"target='_blank'>new one</a> (or your coworking-contract)."
 msgstr ""
 "Lade hier eine bestehende oder neue <a href='https://haus-des-engagements.de/"
 "wp-content/uploads/2025/01/"
 "Vereinbarung_Raumnutzung_HdE_Formular_2025_reduziert.pdf' "
-"target='_blank'>Nutzungsvereinbarung</a> hoch (nicht notwendig für Co-Worker:"
-"innen)."
+"target='_blank'>Nutzungsvereinbarung</a> hoch (oder deinen Coworking-Vertrag)."
 
 #: re_sharing/organizations/forms.py:81
 msgid "Please upload a single PDF file."
@@ -615,7 +614,7 @@ msgid "Find all related information here: %s%s"
 msgstr "Finde alle Informationen dazu hier: %s%s"
 
 #: re_sharing/organizations/models.py:53 re_sharing/organizations/models.py:135
-#: re_sharing/resources/models.py:33 re_sharing/resources/models.py:207
+#: re_sharing/resources/models.py:33 re_sharing/resources/models.py:208
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:35
 #: re_sharing/templates/organizations/partials/manager_list_organizations.html:8
 #: re_sharing/templates/organizations/show_organization.html:42
@@ -640,7 +639,7 @@ msgid "Bookable private resources"
 msgstr "Buchbare private Ressourcen"
 
 #: re_sharing/organizations/models.py:78 re_sharing/organizations/models.py:195
-#: re_sharing/resources/models.py:216
+#: re_sharing/resources/models.py:217
 msgid "Organization group"
 msgstr "Organisationsgruppe"
 
@@ -927,7 +926,7 @@ msgstr "E-Mail Vorlage"
 msgid "Resources"
 msgstr "Ressourcen"
 
-#: re_sharing/resources/models.py:34 re_sharing/resources/models.py:209
+#: re_sharing/resources/models.py:34 re_sharing/resources/models.py:210
 msgid "Slug"
 msgstr "Kurzbezeichnung"
 
@@ -965,10 +964,8 @@ msgstr "Zugangscodes"
 
 #: re_sharing/resources/models.py:78
 #: re_sharing/templates/bookings/list-bookings-webview.html:31
-#, fuzzy
-#| msgid "Rooms"
 msgid "Room"
-msgstr "Räume"
+msgstr "Raum"
 
 #: re_sharing/resources/models.py:79
 msgid "Parking lot"
@@ -1003,37 +1000,37 @@ msgstr ""
 msgid "Only bookable with specific permissions"
 msgstr "Nur buchbar mit Berechtigung"
 
-#: re_sharing/resources/models.py:183
+#: re_sharing/resources/models.py:184
 msgid "Resource Image"
 msgstr "Bild der Ressource"
 
-#: re_sharing/resources/models.py:184
+#: re_sharing/resources/models.py:185
 msgid "Resource Images"
 msgstr "Bilder der Ressource"
 
-#: re_sharing/resources/models.py:203
+#: re_sharing/resources/models.py:204
 msgid ""
 "If no resource is selected, the compensation is bookable for all resources."
 msgstr ""
 
-#: re_sharing/resources/models.py:211
+#: re_sharing/resources/models.py:212
 msgid "Conditions"
 msgstr "Voraussetzungen"
 
-#: re_sharing/resources/models.py:212
+#: re_sharing/resources/models.py:213
 msgid "Hourly Rate"
 msgstr "Preis pro Stunde"
 
-#: re_sharing/resources/models.py:213
+#: re_sharing/resources/models.py:214
 msgid "Active"
 msgstr "Aktiv"
 
-#: re_sharing/resources/models.py:221
+#: re_sharing/resources/models.py:222
 msgid ""
 "If no group is selected, the compensation is bookable for all organizations."
 msgstr ""
 
-#: re_sharing/resources/models.py:228
+#: re_sharing/resources/models.py:229
 #: re_sharing/templates/resources/show_resource.html:76
 msgid "Compensations"
 msgstr "Gegenleistung"
@@ -1769,11 +1766,11 @@ msgstr "buchbar"
 msgid "booked"
 msgstr "gebucht"
 
-#: re_sharing/templates/resources/multi_planner.html:73
+#: re_sharing/templates/resources/multi_planner.html:74
 msgid "booked by me"
 msgstr "von mir gebucht"
 
-#: re_sharing/templates/resources/multi_planner.html:74
+#: re_sharing/templates/resources/multi_planner.html:76
 msgid "past"
 msgstr "vergangen"
 
@@ -1782,7 +1779,7 @@ msgstr "vergangen"
 msgid "Persons"
 msgstr "Personen"
 
-#: re_sharing/templates/resources/partials/list_filter_resources.html:73
+#: re_sharing/templates/resources/partials/list_filter_resources.html:75
 msgid "No resource matches your filter."
 msgstr "Es wurde keine passende Ressource gefunden."
 

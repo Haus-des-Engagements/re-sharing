@@ -74,7 +74,7 @@ class OrganizationForm(forms.ModelForm):
                 "Upload your existing usage agreement or add a <a href='https://haus-"
                 "des-engagements.de/wp-content/uploads/2025/01/Vereinbarung_Raumnutzung"
                 "_HdE_Formular_2025_reduziert.pdf' target='_blank'>new one</a> "
-                "(not needed for Co-Workers)."
+                "(or your coworking-contract)."
             )
         ),
         required=True,
