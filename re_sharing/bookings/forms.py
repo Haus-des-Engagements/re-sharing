@@ -45,9 +45,35 @@ class MessageForm(forms.ModelForm):
 class BookingForm(forms.ModelForm):
     startdate = forms.DateField(
         label=_("Date"),
-        widget=forms.DateInput(attrs={"type": "date"}),
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "hx-trigger": "change",
+                "hx-post": reverse_lazy(
+                    "resources:get-compensations", kwargs={"selected_compensation": 0}
+                ),
+                "hx-params": "resource, compensation, organization, starttime, "
+                "startdate",
+                "hx-target": "#compensations-container",
+                "hx-swap": "outerHTML",
+            }
+        ),
     )
-    starttime = forms.ChoiceField(label=_("from"))
+    starttime = forms.ChoiceField(
+        label=_("from"),
+        widget=forms.Select(
+            attrs={
+                "hx-trigger": "change",
+                "hx-post": reverse_lazy(
+                    "resources:get-compensations", kwargs={"selected_compensation": 0}
+                ),
+                "hx-params": "resource, compensation, organization, starttime, "
+                "startdate",
+                "hx-target": "#compensations-container",
+                "hx-swap": "outerHTML",
+            }
+        ),
+    )
     endtime = forms.ChoiceField(label=_("until"))
 
     organization = forms.ModelChoiceField(
@@ -59,7 +85,8 @@ class BookingForm(forms.ModelForm):
                 "hx-post": reverse_lazy(
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
-                "hx-params": "resource, compensation, organization",
+                "hx-params": "resource, compensation, organization, starttime, "
+                "startdate",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -84,7 +111,8 @@ class BookingForm(forms.ModelForm):
                 "hx-post": reverse_lazy(
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
-                "hx-params": "resource, compensation, organization",
+                "hx-params": "resource, compensation, organization, starttime, "
+                "startdate",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }

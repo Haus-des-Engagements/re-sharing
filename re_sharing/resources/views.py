@@ -1,9 +1,13 @@
+from datetime import date
+from datetime import time
+
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.models import OrganizationGroup
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
 from re_sharing.resources.services import filter_resources
@@ -85,13 +89,33 @@ def planner_view(request):
 def get_compensations(request, selected_compensation=None):
     resource_id = request.POST.get("resource")
     organization_id = request.POST.get("organization")
+    starttime = request.POST.get("starttime")
+    startdate = request.POST.get("startdate")
+    bookable = True
     if not resource_id or not organization_id:
         return render(
-            request, "bookings/partials/compensations.html", {"compensations": []}
+            request,
+            "bookings/partials/compensations.html",
+            {"compensations": [], "bookable": bookable},
         )
     resource = get_object_or_404(Resource, id=resource_id)
     organization = get_object_or_404(Organization, id=organization_id)
     org_groups = organization.organization_groups.all()
+
+    # TODO: remove this hack and make it more generic
+    coworker = get_object_or_404(OrganizationGroup, id=1)
+    hde_intern = get_object_or_404(OrganizationGroup, id=2)
+    start_time = time.fromisoformat(starttime)
+    start_date = date.fromisoformat(startdate)
+
+    if (
+        start_time < time.fromisoformat("18:00")
+        and resource.id in [2, 3, 4, 6]
+        and not (coworker in org_groups or hde_intern in org_groups)
+        and start_date.weekday() < 5  # noqa: PLR2004
+    ):
+        bookable = False
+
     compensations = (
         Compensation.objects.filter(is_active=True)
         .filter(Q(resource=resource) | Q(resource=None))
@@ -110,5 +134,6 @@ def get_compensations(request, selected_compensation=None):
         {
             "compensations": compensations,
             "selected_compensation": selected_compensation,
+            "bookable": bookable,
         },
     )

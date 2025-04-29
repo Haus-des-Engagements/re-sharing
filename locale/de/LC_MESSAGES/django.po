@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-29 11:16+0200\n"
+"POT-Creation-Date: 2025-04-29 12:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,15 +76,15 @@ msgstr "Buchungen löschen"
 msgid "Date"
 msgstr "Datum"
 
-#: re_sharing/bookings/forms.py:50
+#: re_sharing/bookings/forms.py:58
 msgid "from"
 msgstr "vom"
 
-#: re_sharing/bookings/forms.py:51
+#: re_sharing/bookings/forms.py:71
 msgid "until"
 msgstr "bis"
 
-#: re_sharing/bookings/forms.py:55 re_sharing/bookings/models.py:52
+#: re_sharing/bookings/forms.py:75 re_sharing/bookings/models.py:52
 #: re_sharing/bookings/services.py:358 re_sharing/organizations/models.py:202
 #: re_sharing/organizations/models.py:272 re_sharing/resources/models.py:59
 #: re_sharing/templates/bookings/list-bookings-webview.html:30
@@ -95,25 +95,25 @@ msgstr "bis"
 msgid "Organization"
 msgstr "Organisation"
 
-#: re_sharing/bookings/forms.py:69
+#: re_sharing/bookings/forms.py:89
 msgid "Booking title"
 msgstr "Name der Buchung"
 
-#: re_sharing/bookings/forms.py:70
+#: re_sharing/bookings/forms.py:90
 msgid "e.g. internal meeting, workshop XY, public talk about ZY..."
 msgstr "z.B. internes Treffen, Workshop XY, Vortrag ZY..."
 
-#: re_sharing/bookings/forms.py:72 re_sharing/bookings/models.py:98
+#: re_sharing/bookings/forms.py:92 re_sharing/bookings/models.py:98
 #: re_sharing/bookings/models.py:270
 msgid "Number of attendees"
 msgstr "Anzahl an Teilnehmer:innen"
 
-#: re_sharing/bookings/forms.py:75 re_sharing/bookings/models.py:95
+#: re_sharing/bookings/forms.py:95 re_sharing/bookings/models.py:95
 #: re_sharing/bookings/models.py:273
 msgid "Please describe shortly what you are planning to do."
 msgstr "Beschreibe bitte kurz was ihr vorhabt."
 
-#: re_sharing/bookings/forms.py:80 re_sharing/bookings/models.py:66
+#: re_sharing/bookings/forms.py:100 re_sharing/bookings/models.py:66
 #: re_sharing/bookings/models.py:233 re_sharing/bookings/services.py:338
 #: re_sharing/resources/models.py:108 re_sharing/resources/models.py:167
 #: re_sharing/resources/models.py:199
@@ -125,99 +125,99 @@ msgstr "Beschreibe bitte kurz was ihr vorhabt."
 msgid "Resource"
 msgstr "Ressourcen"
 
-#: re_sharing/bookings/forms.py:101
-#: re_sharing/templates/bookings/partials/compensations.html:22
+#: re_sharing/bookings/forms.py:121
+#: re_sharing/templates/bookings/partials/compensations.html:27
 #: re_sharing/templates/resources/show_resource.html:82
 msgid "hour"
 msgstr "Stunde"
 
-#: re_sharing/bookings/forms.py:106 re_sharing/bookings/models.py:80
+#: re_sharing/bookings/forms.py:126 re_sharing/bookings/models.py:80
 #: re_sharing/bookings/models.py:256 re_sharing/bookings/services.py:348
 #: re_sharing/resources/models.py:228
 msgid "Compensation"
 msgstr "Gegenleistung"
 
-#: re_sharing/bookings/forms.py:119
+#: re_sharing/bookings/forms.py:139
 msgid "No repetitions"
 msgstr "Keine Wiederholungen"
 
-#: re_sharing/bookings/forms.py:120
+#: re_sharing/bookings/forms.py:140
 msgid "Daily"
 msgstr "Täglich"
 
-#: re_sharing/bookings/forms.py:121
+#: re_sharing/bookings/forms.py:141
 msgid "Weekly"
 msgstr "Wöchentlich"
 
-#: re_sharing/bookings/forms.py:122
+#: re_sharing/bookings/forms.py:142
 msgid "Monthly by weekday"
 msgstr "Monatlich nach Wochentag"
 
-#: re_sharing/bookings/forms.py:123
+#: re_sharing/bookings/forms.py:143
 msgid "Monthly by date"
 msgstr "Monatlich nach Datum"
 
-#: re_sharing/bookings/forms.py:125
+#: re_sharing/bookings/forms.py:145
 msgid "Repeat"
 msgstr "Wiederholen"
 
-#: re_sharing/bookings/forms.py:127
+#: re_sharing/bookings/forms.py:147
 msgid "after"
 msgstr "nach"
 
-#: re_sharing/bookings/forms.py:128
+#: re_sharing/bookings/forms.py:148
 msgid "at"
 msgstr "am"
 
-#: re_sharing/bookings/forms.py:129
+#: re_sharing/bookings/forms.py:149
 msgid "never"
 msgstr "endet nie"
 
-#: re_sharing/bookings/forms.py:134
+#: re_sharing/bookings/forms.py:154
 msgid "ends"
 msgstr "endet"
 
-#: re_sharing/bookings/forms.py:138
+#: re_sharing/bookings/forms.py:158
 msgid "End Date"
 msgstr "Enddatum"
 
-#: re_sharing/bookings/forms.py:146 re_sharing/bookings/forms.py:149
-#: re_sharing/bookings/forms.py:158
+#: re_sharing/bookings/forms.py:166 re_sharing/bookings/forms.py:169
+#: re_sharing/bookings/forms.py:178
 msgid "Repetition frequency"
 msgstr "Wiederholungshäufigkeit"
 
-#: re_sharing/bookings/forms.py:155 re_sharing/bookings/forms.py:164
-#: re_sharing/bookings/forms.py:170
+#: re_sharing/bookings/forms.py:175 re_sharing/bookings/forms.py:184
+#: re_sharing/bookings/forms.py:190
 msgid "Repeat on these days"
 msgstr "Wiederhole an diesen Tagen"
 
-#: re_sharing/bookings/forms.py:177
+#: re_sharing/bookings/forms.py:197
 #: re_sharing/templates/bookings/preview-booking.html:9
 msgid "Preview"
 msgstr "Vorschau"
 
-#: re_sharing/bookings/forms.py:189
+#: re_sharing/bookings/forms.py:209
 #, python-brace-format
 msgid "Have a look at the <a href='{url}'>planner</a> for free slots."
 msgstr "Hier findest <a href='{url}'>freie Zeitslots</a>."
 
-#: re_sharing/bookings/forms.py:390
+#: re_sharing/bookings/forms.py:410
 msgid "Start time must be selected in 30-minute intervals."
 msgstr "Die Startzeit muss in 30-Minuten-Intervallen ausgewählt werden."
 
-#: re_sharing/bookings/forms.py:402
+#: re_sharing/bookings/forms.py:422
 msgid "The end must be in the future."
 msgstr "Das Ende muss in der Zukunft liegen."
 
-#: re_sharing/bookings/forms.py:406
+#: re_sharing/bookings/forms.py:426
 msgid "The end must be after the start."
 msgstr "Das Ende muss nach dem Beginn sein."
 
-#: re_sharing/bookings/forms.py:414
+#: re_sharing/bookings/forms.py:434
 msgid "You can only book for the next 2 years."
 msgstr "Du kannst nur für die nächsten zwei Jahre buchen."
 
-#: re_sharing/bookings/forms.py:469
+#: re_sharing/bookings/forms.py:489
 msgid "The resource is already booked during your selected timeslot."
 msgstr "Die Ressource ist zu der Zeit (zumindest teilweise) belegt."
 
@@ -545,7 +545,8 @@ msgstr ""
 "Lade hier eine bestehende oder neue <a href='https://haus-des-engagements.de/"
 "wp-content/uploads/2025/01/"
 "Vereinbarung_Raumnutzung_HdE_Formular_2025_reduziert.pdf' "
-"target='_blank'>Nutzungsvereinbarung</a> hoch (oder deinen Coworking-Vertrag)."
+"target='_blank'>Nutzungsvereinbarung</a> hoch (oder deinen Coworking-"
+"Vertrag)."
 
 #: re_sharing/organizations/forms.py:81
 msgid "Please upload a single PDF file."
@@ -1257,7 +1258,7 @@ msgid "booked by:"
 msgstr "gebucht von"
 
 #: re_sharing/templates/bookings/partials/booking_item.html:43
-#: re_sharing/templates/bookings/partials/compensations.html:38
+#: re_sharing/templates/bookings/partials/compensations.html:43
 #: re_sharing/templates/bookings/preview-booking-series.html:45
 #: re_sharing/templates/bookings/preview-booking.html:39
 msgid "Differing billing address"
@@ -1288,7 +1289,14 @@ msgstr "alle Wiederholungen ansehen"
 msgid "Donation / Billing"
 msgstr "Spende / Rechnung"
 
-#: re_sharing/templates/bookings/partials/compensations.html:29
+#: re_sharing/templates/bookings/partials/compensations.html:11
+msgid ""
+"This resource is only available to CoWorkers on weekdays (Monday-Friday) "
+"before 18:00."
+msgstr ""
+"Diese Ressource ist wochentags vor 18:00 Uhr nur für CoWorker buchbar."
+
+#: re_sharing/templates/bookings/partials/compensations.html:34
 msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
 
@@ -1567,7 +1575,7 @@ msgstr ""
 
 #: re_sharing/templates/organizations/show_organization.html:35
 msgid "Your organization is confirmed and you are good to go."
-msgstr "Deine Organisation ist bestätigt. Du kannst ab dem 10.02 Räume buchen."
+msgstr "Deine Organisation ist bestätigt. Du kannst Räume buchen bzw. anfragen."
 
 #: re_sharing/templates/organizations/show_organization.html:37
 msgid "Your organization has been cancelled."
@@ -2352,3 +2360,6 @@ msgstr "Storniert"
 #: re_sharing/utils/models.py:30
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Only bookable for CoWorkers before 18:00."
+#~ msgstr "Nur für CoWorker:innen vor 18:00 Uhr buchbar."

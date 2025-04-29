@@ -6,39 +6,45 @@
   <label for="id_compensation" class="form-label requiredField">
     {% trans "Donation / Billing" %}<span class="asteriskField">*</span>
   </label>
-  {% for compensation in compensations %}
-    <div class="form-check">
-      <input class="form-check-input"
-             type="radio"
-             name="compensation"
-             id="{{ compensation.id }}"
-             value="{{ compensation.id }}"
-             required
-             x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}"
-             {% if compensation == selected_compensation %}checked{% endif %} />
-      <label class="form-check-label" for="{{ compensation.id }}">
-        {{ compensation.name }}
-        {% if compensation.hourly_rate is not None %}
-          ({{ compensation.hourly_rate }} € /{% trans "hour" %})
-        {% endif %}
-        {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
-      </label>
+  {% if not bookable %}
+    <div>
+      <span class="text-danger">{% trans "This resource is only available to CoWorkers on weekdays (Monday-Friday) before 18:00." %}</span>
     </div>
-  {% empty %}
-    <p>
-      <em>{% trans "Please select a resource first." %}</em>
-    </p>
-  {% endfor %}
-  {# djlint:off H021 #}
-  <div id="div_id_invoice_address"
-       class="mb-3 col-8 mt-2"
-       x-show="showBilling"
-       style="display: none">
-    {# djlint:on #}
-    <label for="id_invoice_address" class="form-label">{% trans "Differing billing address" %}</label>
-    <input type="text"
-           name="invoice_address"
-           class="form-control textinput"
-           id="id_invoice_address" />
-  </div>
+  {% else %}
+    {% for compensation in compensations %}
+      <div class="form-check">
+        <input class="form-check-input"
+               type="radio"
+               name="compensation"
+               id="{{ compensation.id }}"
+               value="{{ compensation.id }}"
+               required
+               x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}"
+               {% if compensation == selected_compensation %}checked{% endif %} />
+        <label class="form-check-label" for="{{ compensation.id }}">
+          {{ compensation.name }}
+          {% if compensation.hourly_rate is not None %}
+            ({{ compensation.hourly_rate }} € /{% trans "hour" %})
+          {% endif %}
+          {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
+        </label>
+      </div>
+    {% empty %}
+      <p>
+        <em>{% trans "Please select a resource first." %}</em>
+      </p>
+    {% endfor %}
+    {# djlint:off H021 #}
+    <div id="div_id_invoice_address"
+         class="mb-3 col-8 mt-2"
+         x-show="showBilling"
+         style="display: none">
+      {# djlint:on #}
+      <label for="id_invoice_address" class="form-label">{% trans "Differing billing address" %}</label>
+      <input type="text"
+             name="invoice_address"
+             class="form-control textinput"
+             id="id_invoice_address" />
+    </div>
+  {% endif %}
 </div>
