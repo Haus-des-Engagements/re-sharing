@@ -8,7 +8,13 @@
   </label>
   {% if not bookable %}
     <div>
-      <span class="text-danger">{% trans "This resource is only available to CoWorkers on weekdays (Monday-Friday) before 18:00." %}</span>
+      <span class="text-danger">
+        {% if restriction_message %}
+          {{ restriction_message }}
+        {% else %}
+          {% trans "This resource is not available at the selected time." %}
+        {% endif %}
+      </span>
     </div>
   {% else %}
     {% for compensation in compensations %}

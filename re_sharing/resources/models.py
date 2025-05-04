@@ -17,6 +17,7 @@ from django.db.models import PositiveIntegerField
 from django.db.models import Q
 from django.db.models import TextChoices
 from django.db.models import TextField
+from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -191,6 +192,75 @@ class ResourceImage(TimeStampedModel):
         return reverse(
             "resources:show-resource", kwargs={"resource_slug": self.resource.slug}
         )
+
+
+class ResourceRestriction(TimeStampedModel):
+    resources = ManyToManyField(
+        Resource,
+        verbose_name=_("Resources"),
+        related_name="restrictions_of_resource",
+        related_query_name="restriction_of_resource",
+        help_text=_("Select the resources this restriction applies to."),
+    )
+    exempt_organization_groups = ManyToManyField(
+        "organizations.OrganizationGroup",
+        verbose_name=_("Exempt organization groups"),
+        related_name="exempt_restrictions_of_organizationgroup",
+        related_query_name="exempt_restriction_of_organizationgroup",
+        blank=True,
+        help_text=_("Organizations in these groups are exempt from this restriction."),
+    )
+    start_time = TimeField(
+        _("Start time"), help_text=_("Start time of the restriction.")
+    )
+    end_time = TimeField(_("End time"), help_text=_("End time of the restriction."))
+    days_of_week = CharField(
+        _("Days of week"),
+        max_length=13,
+        help_text=_("Comma-separated list of weekday numbers (0=Monday, 6=Sunday)."),
+    )
+    message = CharField(
+        _("Message"),
+        max_length=512,
+        help_text=_("Message to display when the restriction applies."),
+    )
+    is_active = BooleanField(_("Active"), default=True)
+
+    class Meta:
+        verbose_name = _("Resource restriction")
+        verbose_name_plural = _("Resource restrictions")
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"Restriction: {self.message}"
+
+    def applies_to_organization(self, organization):
+        """
+        Check if this restriction applies to the given organization.
+        """
+        # If the organization is in an exempt group, the restriction doesn't apply
+        if self.exempt_organization_groups.filter(
+            organization_of_organizationgroups=organization
+        ).exists():
+            return False
+        return True
+
+    def applies_to_datetime(self, dt):
+        """
+        Check if this restriction applies to the given datetime.
+        """
+        # Check if the day of week is in the restriction's days of week
+        weekday = dt.weekday()
+        days = [int(d.strip()) for d in self.days_of_week.split(",")]
+        if weekday not in days:
+            return False
+
+        # Check if the time is between start_time and end_time
+        time = dt.time()
+        if not (self.start_time <= time < self.end_time):
+            return False
+
+        return True
 
 
 class Compensation(TimeStampedModel):

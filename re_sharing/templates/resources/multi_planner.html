@@ -69,6 +69,7 @@
         </div>
         <div class="col-auto hstack gap-3">
           <div class="p-2 border small bookable">{% trans "bookable" %}</div>
+          <div class="p-2 border small restricted">{% trans "restricted" %}</div>
           <div class="p-2 border small booked">{% trans "booked" %}</div>
           {% if request.user.is_authenticated %}
             <div class="p-2 border small booked-by-me">{% trans "booked by me" %}</div>

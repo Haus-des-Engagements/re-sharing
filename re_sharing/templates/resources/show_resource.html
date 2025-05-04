@@ -85,6 +85,10 @@
       </li>
     {% endfor %}
   </ul>
+  <span><strong>{% trans "Restrictions" %}</strong></span>
+  <ul>
+    {% for restriction in restrictions %}<li>{{ restriction.message }}</li>{% endfor %}
+  </ul>
   <h2 class="mt-5">{% trans "Access" %}</h2>
   {{ resource.access.instructions }}
   <h2 class="mt-5">{% trans "Accessibility" %}</h2>

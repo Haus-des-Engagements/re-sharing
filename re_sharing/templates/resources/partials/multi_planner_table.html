@@ -39,6 +39,12 @@
                       title="{{ timeslot.organization }} - {{ timeslot.title }}">
                     <a href="{{ timeslot.link }}" class="cover-link">&nbsp</a>
                   </td>
+                {% elif timeslot.status == "restricted" %}
+                  <td class="table-restricted" title="{{ timeslot.restriction_message }}">
+                    <a href="{% url 'bookings:create-booking' %}{{ timeslot.link }}"
+                       class="cover-link">&nbsp
+                      <span class="visually-hidden">Restricted booking on {{ timeslot.time|date:"d.m.y H:i" }}</span></a>
+                  </td>
                 {% elif timeslot.status == "bookable" %}
                   <td class="table-light">
                     <a href="{% url 'bookings:create-booking' %}{{ timeslot.link }}"

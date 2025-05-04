@@ -101,7 +101,12 @@ violet: #AA3377, grey: #BBBBBB
     --bs-table-bg: #BBBBBB;
 }
 
+.table-restricted {
+    --bs-table-bg: #fff3cd;
+}
+
 .booked { background-color: #EE6677;}
 .booked-by-me { background-color: #CCBB44; }
 .bookable { background-color: #f8f9fa;}
-.past { background-color: #bbbbbb;}
+.past { background-color: #BBBBBB;}
+.restricted { background-color: #fff3cd;}

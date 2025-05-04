@@ -7,9 +7,9 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.organizations.models import Organization
-from re_sharing.organizations.models import OrganizationGroup
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
+from re_sharing.resources.models import ResourceRestriction
 from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
@@ -30,7 +30,7 @@ def list_resources_view(request):
 @require_http_methods(["GET"])
 def show_resource_view(request, resource_slug):
     date_string = request.GET.get("date")
-    resource, timeslots, weekdays, dates, compensations = show_resource(
+    resource, timeslots, weekdays, dates, compensations, restrictions = show_resource(
         resource_slug, date_string
     )
 
@@ -40,6 +40,7 @@ def show_resource_view(request, resource_slug):
         "timeslots": timeslots,
         "dates": dates,
         "compensations": compensations,
+        "restrictions": restrictions,
     }
     if request.headers.get("HX-Request"):
         return render(request, "resources/partials/weekly_bookings_table.html", context)
@@ -102,19 +103,29 @@ def get_compensations(request, selected_compensation=None):
     organization = get_object_or_404(Organization, id=organization_id)
     org_groups = organization.organization_groups.all()
 
-    # TODO: remove this hack and make it more generic
-    coworker = get_object_or_404(OrganizationGroup, id=1)
-    hde_intern = get_object_or_404(OrganizationGroup, id=2)
     start_time = time.fromisoformat(starttime)
     start_date = date.fromisoformat(startdate)
 
-    if (
-        start_time < time.fromisoformat("18:00")
-        and resource.id in [2, 3, 4, 6]
-        and not (coworker in org_groups or hde_intern in org_groups)
-        and start_date.weekday() < 5  # noqa: PLR2004
-    ):
-        bookable = False
+    # Check if there are any active restrictions that apply to this resource,
+    # organization, and datetime
+    from datetime import datetime
+
+    booking_datetime = datetime.combine(start_date, start_time)
+
+    # Get all active restrictions that apply to this resource
+    restrictions = ResourceRestriction.objects.filter(
+        is_active=True, resources=resource
+    )
+
+    # Check if any of the restrictions apply to this organization and datetime
+    restriction_message = None
+    for restriction in restrictions:
+        if restriction.applies_to_organization(
+            organization
+        ) and restriction.applies_to_datetime(booking_datetime):
+            bookable = False
+            restriction_message = restriction.message
+            break
 
     compensations = (
         Compensation.objects.filter(is_active=True)
@@ -135,5 +146,6 @@ def get_compensations(request, selected_compensation=None):
             "compensations": compensations,
             "selected_compensation": selected_compensation,
             "bookable": bookable,
+            "restriction_message": restriction_message,
         },
     )

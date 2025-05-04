@@ -26,8 +26,8 @@ class GetWeeklyBookingsTest(TestCase):
 
         resource = ResourceFactory()
         date_string = date.strftime("%Y-%m-%d")
-        resource, time_slots, weekdays, dates, compensations = show_resource(
-            resource.slug, date_string
+        resource, time_slots, weekdays, dates, compensations, restrictions = (
+            show_resource(resource.slug, date_string)
         )
 
         # Check the length of returned lists
@@ -93,8 +93,8 @@ class GetWeeklyBookingsTest(TestCase):
         date = timezone.make_aware(timezone.datetime(2024, 6, 5))
 
         date_string = date.strftime("%Y-%m-%d")
-        resource, time_slots, weekdays, dates, compensations = show_resource(
-            resource.slug, date_string
+        resource, time_slots, weekdays, dates, compensations, restrictions = (
+            show_resource(resource.slug, date_string)
         )
 
         number_of_timeslots = 36
@@ -115,8 +115,8 @@ class GetWeeklyBookingsTest(TestCase):
     def test_without_date(self):
         date_string = None
         resource = ResourceFactory()
-        resource, time_slots, weekdays, dates, compensations = show_resource(
-            resource.slug, date_string
+        resource, time_slots, weekdays, dates, compensations, restrictions = (
+            show_resource(resource.slug, date_string)
         )
         today = timezone.now().date()
         start_of_week = today - datetime.timedelta(days=today.weekday())

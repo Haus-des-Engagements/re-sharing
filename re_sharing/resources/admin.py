@@ -6,6 +6,7 @@ from .models import AccessCode
 from .models import Compensation
 from .models import Resource
 from .models import ResourceImage
+from .models import ResourceRestriction
 
 
 @admin.register(Resource)
@@ -38,3 +39,18 @@ class AccessAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 admin.site.register(ResourceImage)
+
+
+@admin.register(ResourceRestriction)
+class ResourceRestrictionAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "message",
+        "start_time",
+        "end_time",
+        "days_of_week",
+        "is_active",
+    ]
+    search_fields = ["id", "message"]
+    filter_horizontal = ["resources", "exempt_organization_groups"]
+    ordering = ["id"]

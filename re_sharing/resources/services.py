@@ -13,6 +13,7 @@ from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
+from re_sharing.resources.models import ResourceRestriction
 from re_sharing.utils.models import BookingStatus
 
 
@@ -87,7 +88,8 @@ def show_resource(resource_slug, date_string):
         "next_week": shown_date + timedelta(days=7),
     }
     compensations = Compensation.objects.filter(resource=resource, is_active=True)
-    return resource, time_slots, weekdays, dates, compensations
+    restrictions = ResourceRestriction.objects.filter(resources=resource)
+    return resource, time_slots, weekdays, dates, compensations, restrictions
 
 
 def filter_resources(user, persons_count, start_datetime):
@@ -159,7 +161,114 @@ def get_access_code(resource_slug, organization_slug, timestamp):
     return access_code
 
 
-def planner(user, date_string, nb_of_days, resources):  # noqa: C901
+def _get_timeslot_status(slot_time, resource_restrictions):
+    """
+    Determine the status of a timeslot based on time and restrictions.
+
+    Args:
+        slot_time: The datetime of the slot
+        resource_restrictions: List of restrictions for the resource
+
+    Returns:
+        tuple: (status, restriction_message)
+    """
+    # Check if the slot is in the past
+    if slot_time <= (timezone.now() - timedelta(minutes=29)):
+        return "past", None
+
+    # Default status is bookable
+    status = "bookable"
+    restriction_message = None
+
+    # Check if any restrictions apply
+    for restriction in resource_restrictions:
+        if restriction.applies_to_datetime(slot_time):
+            status = "restricted"
+            restriction_message = restriction.message
+            break
+
+    return status, restriction_message
+
+
+def _create_timeslot(slot_time, status, day, resource_slug, restriction_message=None):
+    """
+    Create a timeslot data structure.
+
+    Args:
+        slot_time: The datetime of the slot
+        status: Status of the timeslot (bookable, restricted, past)
+        day: The day this timeslot belongs to
+        resource_slug: Slug of the resource
+        restriction_message: Optional message for restricted slots
+
+    Returns:
+        dict: Timeslot data structure
+    """
+    timeslot = {
+        "time": slot_time,
+        "status": status,
+        "link": None
+        if status in {"past", "booked"}
+        else (
+            f"?starttime={slot_time.strftime('%H:%M')}"
+            f"&endtime="
+            f"{(slot_time + timedelta(minutes=90)).strftime('%H:%M')}"
+            f"&startdate={day.date()}&resource={resource_slug}"
+        ),
+    }
+
+    if restriction_message and status == "restricted":
+        timeslot["restriction_message"] = restriction_message
+
+    return timeslot
+
+
+def _process_bookings(resource_data, bookings, resource, day, user_context):
+    """
+    Process bookings for a resource and day, updating timeslot statuses.
+
+    Args:
+        resource_data: Resource data structure containing timeslots
+        bookings: QuerySet of bookings
+        resource: The resource being processed
+        day: The day being processed
+        user_context: Dictionary containing user and their organizations
+    """
+    user = user_context.get("user")
+    organizations_of_user = user_context.get("organizations", [])
+    for booking in bookings:
+        if booking.resource != resource or booking.timespan.lower.date() != day.date():
+            continue
+
+        booking_start = booking.timespan.lower
+        booking_end = booking.timespan.upper
+
+        for timeslot in resource_data["timeslots"]:
+            slot_time = timeslot["time"].time()
+            slot_datetime = timezone.make_aware(datetime.combine(day.date(), slot_time))
+
+            if booking_start <= slot_datetime < booking_end:
+                timeslot["status"] = "booked"
+                timeslot["link"] = None
+
+                if booking.organization in organizations_of_user:
+                    timeslot["status"] = "booked by me"
+                    timeslot["link"] = f"/bookings/{booking.slug}/"
+                    timeslot["title"] = booking.title
+
+                if user.is_staff:
+                    timeslot["link"] = f"/bookings/{booking.slug}/"
+
+                if (
+                    user.is_authenticated and booking.organization.is_public
+                ) or user.is_staff:
+                    timeslot["organization"] = booking.organization.name
+
+
+def planner(user, date_string, nb_of_days, resources):
+    """
+    Generate planner data for resources over a specified number of days.
+    """
     resources = resources.order_by("access__id", "name")
 
     shown_date = (
@@ -188,78 +297,81 @@ def planner(user, date_string, nb_of_days, resources):  # noqa: C901
         ),
     ).prefetch_related("resource", "organization")
 
+    # Fetch all active restrictions for all resources at once
+    all_restrictions = ResourceRestriction.objects.filter(
+        is_active=True, resources__in=resources
+    ).prefetch_related("resources", "exempt_organization_groups")
+
+    # Create a dictionary to store restrictions by resource
+    restrictions_by_resource = {}
+    for resource in resources:
+        restrictions_by_resource[resource.id] = [
+            restriction
+            for restriction in all_restrictions
+            if resource in restriction.resources.all()
+        ]
+
     # Prepare planner_data
     planner_data = {}
     organizations_of_user = (
         user.get_organizations_of_user() if user.is_authenticated else []
     )
+
+    # Process each day
     for day in weekdays:
         day_data = {"weekday": day, "resources": []}
 
+        # Process each resource
         for resource in resources:
             resource_data = {
                 "name": resource.name,
                 "timeslots": [],
                 "slug": resource.slug,
             }
+
+            # Get start time for this day
             start_time = timezone.make_aware(
                 datetime.combine(day, time(hour=slots_start))
             )
+
+            # Get restrictions for this resource
+            resource_restrictions = restrictions_by_resource.get(resource.id, [])
+
+            # Create timeslots
             for i in range(number_of_slots):
                 slot_time = start_time + timedelta(minutes=slot_interval_minutes * i)
-                if slot_time > (timezone.now() - timedelta(minutes=29)):
-                    status = "bookable"
-                else:
-                    status = "past"
-                timeslot = {
-                    "time": slot_time,
-                    "status": status,
-                    "link": (
-                        f"?starttime={slot_time.strftime('%H:%M')}"
-                        f"&endtime="
-                        f"{(slot_time + timedelta(minutes=90)).strftime('%H:%M')}"
-                        f"&startdate={day.date()}&resource={resource.slug}"
-                    ),
-                }
+
+                # Determine status and restriction message
+                status, restriction_message = _get_timeslot_status(
+                    slot_time, resource_restrictions
+                )
+
+                # Create timeslot
+                timeslot = _create_timeslot(
+                    slot_time, status, day, resource.slug, restriction_message
+                )
+
                 resource_data["timeslots"].append(timeslot)
 
-            # Check bookings for this resource and day
-            for booking in bookings:
-                if (
-                    booking.resource == resource
-                    and booking.timespan.lower.date() == day.date()
-                ):
-                    booking_start = booking.timespan.lower
-                    booking_end = booking.timespan.upper
+            # Process bookings for this resource and day
+            user_context = {"user": user, "organizations": organizations_of_user}
+            _process_bookings(resource_data, bookings, resource, day, user_context)
 
-                    for timeslot in resource_data["timeslots"]:
-                        slot_time = timeslot["time"].time()
-                        slot_datetime = timezone.make_aware(
-                            datetime.combine(day.date(), slot_time)
-                        )
-                        if booking_start <= slot_datetime < booking_end:
-                            timeslot["status"] = "booked"
-                            timeslot["link"] = None
-                            if booking.organization in organizations_of_user:
-                                timeslot["status"] = "booked by me"
-                                timeslot["link"] = f"/bookings/{booking.slug}/"
-                                timeslot["title"] = booking.title
-                            if user.is_staff:
-                                timeslot["link"] = f"/bookings/{booking.slug}/"
-                            if (
-                                user.is_authenticated and booking.organization.is_public
-                            ) or user.is_staff:
-                                timeslot["organization"] = booking.organization.name
             day_data["resources"].append(resource_data)
 
         planner_data[day] = day_data
+
+    # Create timeslots for return value
     timeslots = [
         {"time": start_of_day + timedelta(minutes=30) * i}
         for i in range(number_of_slots)
     ]
+
+    # Create dates for return value
     dates = {
         "previous_day": shown_date - timedelta(days=1),
         "shown_date": shown_date,
         "next_day": shown_date + timedelta(days=1),
     }
+
     return resources, timeslots, weekdays, dates, planner_data

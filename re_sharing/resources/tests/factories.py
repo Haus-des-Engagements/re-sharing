@@ -12,6 +12,7 @@ from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
+from re_sharing.resources.models import ResourceRestriction
 
 
 class AccessFactory(DjangoModelFactory):
@@ -76,4 +77,38 @@ class CompensationFactory(DjangoModelFactory):
 
     class Meta:
         model = Compensation
+        skip_postgeneration_save = True
+
+
+class ResourceRestrictionFactory(DjangoModelFactory):
+    start_time = Faker("time_object")
+    end_time = Faker("time_object")
+    days_of_week = "0,1,2,3,4"  # Monday to Friday
+    message = Faker("sentence")
+    is_active = True
+
+    @post_generation
+    def resources(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing
+            return
+
+        if extracted:
+            # A list of resources was passed in, use it
+            for resource in extracted:
+                self.resources.add(resource)
+
+    @post_generation
+    def exempt_organization_groups(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing
+            return
+
+        if extracted:
+            # A list of organization groups was passed in, use it
+            for org_group in extracted:
+                self.exempt_organization_groups.add(org_group)
+
+    class Meta:
+        model = ResourceRestriction
         skip_postgeneration_save = True
