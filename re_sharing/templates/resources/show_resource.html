@@ -52,12 +52,14 @@
                 <use href="#bi-piggy-bank" />
               </svg>
               {% for compensation in resource.compensations_of_resource.all %}
-                {% if compensation.hourly_rate %}
-                  {{ compensation.hourly_rate }}€/h
-                {% else %}
-                  {{ compensation.name }}
+                {% if compensation.is_active %}
+                  {% if compensation.hourly_rate %}
+                    {{ compensation.hourly_rate }}€/h
+                  {% else %}
+                    {{ compensation.name }}
+                  {% endif %}
+                  {% if not forloop.last %}//{% endif %}
                 {% endif %}
-                {% if not forloop.last %}//{% endif %}
               {% endfor %}
             </li>
             <li class="list-group-item">
@@ -87,7 +89,11 @@
   </ul>
   <span><strong>{% trans "Restrictions" %}</strong></span>
   <ul>
-    {% for restriction in restrictions %}<li>{{ restriction.message }}</li>{% endfor %}
+    {% for restriction in restrictions %}
+      <li>{{ restriction.message }}</li>
+    {% empty %}
+      <li>{% trans "There are no specific restrictions for this resource." %}</li>
+    {% endfor %}
   </ul>
   <h2 class="mt-5">{% trans "Access" %}</h2>
   {{ resource.access.instructions }}
