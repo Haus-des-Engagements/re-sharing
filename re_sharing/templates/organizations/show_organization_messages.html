@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {{ organization.name }} - {% trans "Messages" %}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav"  aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url "dashboards:users_bookings_and_permissions" %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url "organizations:show-organization" organization=organization.slug %}">{{ organization.name }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Messages" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <div class="row mt-5 mb-2">
+    <h1>{{ organization.name }} - {% trans "Messages" %}</h1>
+  </div>
+  {% trans "You can find all messages that address your organization. Messages for are single booking can only be found in that booking itself." %}
+  <div class="container py-4" id="messages">
+    <h2 class="font-weight-light">{% trans "Write a message" %}</h2>
+    <p>{% trans "You will get notified by e-mail when receiving an answer." %}</p>
+    <div class="row" id="message-form">
+      <form hx-post="{% url 'organizations:create-organizationmessage' organization.slug %}"
+            hx-target="#timeline-heading"
+            hx-swap="afterend"
+            hx-on::after-request="if(event.detail.successful) this.reset()">
+        {% csrf_token %}
+        <div class="mb-3">
+          <textarea class="form-control" name="text" rows="3" required="true"></textarea>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary" value="Submit">{% trans "Send new message" %}</button>
+          </div>
+          <div class="col-auto" id="confirmation"></div>
+        </div>
+      </form>
+      <div class="container py-4">
+        <h2 class="font-weight-light py-3" id="timeline-heading">{% trans "Messages" %}</h2>
+        {% for message in organization_messages %}
+          {% include "organizations/partials/show_organizationmessage.html" %}
+        {% empty %}
+          <p>{% trans "No messages yet." %}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock content %}

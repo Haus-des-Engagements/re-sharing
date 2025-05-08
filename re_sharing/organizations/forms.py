@@ -12,6 +12,18 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import Organization
 from .models import OrganizationGroup
+from .models import OrganizationMessage
+
+
+class OrganizationMessageForm(forms.ModelForm):
+    text = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": "5"}),
+        required=True,
+    )
+
+    class Meta:
+        model = OrganizationMessage
+        fields = ["text"]
 
 
 class OrganizationForm(forms.ModelForm):

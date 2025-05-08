@@ -7,6 +7,7 @@ from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
 from django.core.files.storage import storages
 from django.db.models import CASCADE
+from django.db.models import PROTECT
 from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateField
@@ -332,6 +333,10 @@ class EmailTemplate(TimeStampedModel):
         )
         MANAGER_NEW_BOOKING = "manager_new_booking", _("Manager new booking")
         NEW_BOOKING_MESSAGE = "new_booking_message", _("New booking message")
+        NEW_ORGANIZATION_MESSAGE = (
+            "new_organization_message",
+            _("New organization message"),
+        )
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)
@@ -347,5 +352,36 @@ class EmailTemplate(TimeStampedModel):
         return self.get_email_type_display()
 
 
+class OrganizationMessage(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Organization"),
+        on_delete=CASCADE,
+        related_name="organizationmessages_of_organization",
+        related_query_name="organizationmessage_of_organization",
+    )
+    text = CharField(_("Message"), max_length=800)
+    user = ForeignKey(
+        "users.User",
+        verbose_name=_("User"),
+        on_delete=PROTECT,
+        related_name="organizationmessages_of_user",
+        related_query_name="organizationmessage_of_user",
+    )
+
+    class Meta:
+        verbose_name = _("Organization Message")
+        verbose_name_plural = _("Organization Messages")
+        ordering = ["created"]
+
+    def get_absolute_url(self):
+        return reverse(
+            "organizations:show-organization-messages",
+            args=[str(self.organization.slug)],
+        )
+
+
 auditlog.register(Organization, exclude_fields=["updated"])
 auditlog.register(BookingPermission, exclude_fields=["updated"])
+auditlog.register(OrganizationMessage, exclude_fields=["created, updated"])

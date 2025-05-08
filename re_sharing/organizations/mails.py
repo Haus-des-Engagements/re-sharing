@@ -7,6 +7,7 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.template import Context
 from django.template import Template
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
@@ -261,4 +262,25 @@ def send_new_booking_message_email(booking_message):
         recipient = get_recipient_booking(booking_message.booking)
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.NEW_BOOKING_MESSAGE, context, recipient
+    )
+
+
+def send_new_organization_message_email(organization_message):
+    domain = Site.objects.get_current().domain
+    context = {
+        "organization": organization_message.organization,
+        "domain": domain,
+        "messages_url": reverse(
+            "organizations:show-organization-messages",
+            args=[str(organization_message.organization.slug)],
+        ),
+    }
+    # Send email to all confirmed admins of the organization
+    recipient_list = [
+        *organization_message.organization.get_confirmed_admins().values_list(
+            "email", flat=True
+        )
+    ]
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.NEW_ORGANIZATION_MESSAGE, context, recipient_list
     )

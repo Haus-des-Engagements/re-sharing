@@ -12,8 +12,10 @@ from django.urls import reverse
 from config.settings.base import ADMIN_URL
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.models import OrganizationMessage
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.organizations.tests.factories import OrganizationMessageFactory
 from re_sharing.organizations.views import list_organizations_view
 from re_sharing.organizations.views import manager_list_organizations_view
 from re_sharing.users.tests.factories import UserFactory
@@ -558,3 +560,121 @@ class TestManagerActionsOrganizationView(TestCase):
             == f"/{ADMIN_URL}login/?next=/organizations/manage-organizations/"
             f"{self.organization.slug}/confirm-organization/"
         )
+
+
+class TestShowOrganizationMessagesView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.organization_message = OrganizationMessageFactory(
+            organization=self.organization, user=self.user
+        )
+        self.show_organization_messages_url = reverse(
+            "organizations:show-organization-messages",
+            kwargs={"organization": self.organization.slug},
+        )
+
+    def test_show_organization_messages_authenticated_with_permission(self):
+        # Create booking permission for the user
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(self.show_organization_messages_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(
+            response, "organizations/show_organization_messages.html"
+        )
+
+        # Check that the organization message is in the context
+        organization_messages = response.context.get("organization_messages")
+        assert self.organization_message in organization_messages
+
+    def test_show_organization_messages_authenticated_without_permission(self):
+        # User without permission should get a 403 Forbidden
+        other_user = UserFactory()
+        self.client.force_login(other_user)
+
+        response = self.client.get(self.show_organization_messages_url)
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_show_organization_messages_unauthenticated(self):
+        # Unauthenticated user should be redirected to login
+        response = self.client.get(self.show_organization_messages_url)
+        assert response.status_code == HTTPStatus.FOUND  # 302 redirect
+        assert "/accounts/login/" in response.url
+
+    def test_show_organization_messages_staff_user(self):
+        # Staff user should be able to see messages even without permission
+        staff_user = UserFactory(is_staff=True)
+        self.client.force_login(staff_user)
+
+        response = self.client.get(self.show_organization_messages_url)
+        assert response.status_code == HTTPStatus.OK
+        self.assertTemplateUsed(
+            response, "organizations/show_organization_messages.html"
+        )
+
+
+class TestCreateOrganizationMessageView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.create_organizationmessage_url = reverse(
+            "organizations:create-organizationmessage",
+            kwargs={"slug": self.organization.slug},
+        )
+
+    def test_create_organization_message_authenticated_with_permission(self):
+        self.client.force_login(self.user)
+
+        # Count messages before
+        message_count_before = OrganizationMessage.objects.count()
+
+        # Post a new message
+        response = self.client.post(
+            self.create_organizationmessage_url,
+            {"text": "Test message content"},
+        )
+
+        # Check response
+        assert response.status_code == HTTPStatus.OK
+
+        # Check that a new message was created
+        assert OrganizationMessage.objects.count() == message_count_before + 1
+
+        # Check the message content
+        new_message = OrganizationMessage.objects.latest("created")
+        assert new_message.text == "Test message content"
+        assert new_message.user == self.user
+        assert new_message.organization == self.organization
+
+    def test_create_organization_message_authenticated_without_permission(self):
+        # User without permission should get a 403 Forbidden
+        other_user = UserFactory()
+        self.client.force_login(other_user)
+
+        response = self.client.post(
+            self.create_organizationmessage_url,
+            {"text": "Test message content"},
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_create_organization_message_unauthenticated(self):
+        # Unauthenticated user should be redirected to login
+        response = self.client.post(
+            self.create_organizationmessage_url,
+            {"text": "Test message content"},
+        )
+        assert response.status_code == HTTPStatus.FOUND  # 302 redirect
+        assert "/accounts/login/" in response.url

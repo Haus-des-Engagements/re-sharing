@@ -4,6 +4,7 @@ from .views import add_user_view
 from .views import cancel_bookingpermission_view
 from .views import confirm_bookingpermission_view
 from .views import create_organization_view
+from .views import create_organizationmessage_view
 from .views import delete_organization_view
 from .views import demote_to_booker_view
 from .views import list_organizations_view
@@ -12,6 +13,7 @@ from .views import manager_confirm_organization_view
 from .views import manager_list_organizations_view
 from .views import promote_to_admin_view
 from .views import request_bookingpermission_view
+from .views import show_organization_messages_view
 from .views import show_organization_view
 from .views import update_organization_view
 
@@ -74,6 +76,16 @@ urlpatterns = [
         delete_organization_view,
         name="delete-organization",
     ),  # DELETE organization
+    path(
+        "<slug:slug>/create-message/",
+        create_organizationmessage_view,
+        name="create-organizationmessage",
+    ),  # POST organization message
+    path(
+        "<slug:organization>/messages/",
+        show_organization_messages_view,
+        name="show-organization-messages",
+    ),  # GET organization messages
     path(
         "<slug:organization>/", show_organization_view, name="show-organization"
     ),  # GET organization

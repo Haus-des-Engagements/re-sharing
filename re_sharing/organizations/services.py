@@ -15,6 +15,7 @@ from re_sharing.utils.models import BookingStatus
 
 from .models import BookingPermission
 from .models import Organization
+from .models import OrganizationMessage
 
 
 class InvalidOrganizationOperationError(Exception):
@@ -205,5 +206,33 @@ def manager_confirm_organization(user, organization_slug):
 
         organization_confirmation_email(organization)
         return organization
+
+    raise InvalidOrganizationOperationError
+
+
+def save_organizationmessage(organization, message, user):
+    organization_message = OrganizationMessage(
+        organization=organization,
+        text=message,
+        user=user,
+    )
+    organization_message.save()
+
+    from re_sharing.organizations.mails import send_new_organization_message_email
+
+    send_new_organization_message_email(organization_message)
+
+    return organization_message
+
+
+def create_organizationmessage(organization_slug, form, user):
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    if not user_has_normal_bookingpermission(user, organization) and not user.is_staff:
+        raise PermissionDenied
+
+    if form.is_valid():
+        message = form.cleaned_data["text"]
+        return save_organizationmessage(organization, message, user)
 
     raise InvalidOrganizationOperationError

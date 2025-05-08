@@ -1663,7 +1663,7 @@ msgstr "Organisation bearbeiten"
 
 #: re_sharing/templates/organizations/show_organization.html:153
 msgid "Are you sure you want to delete the organization?"
-msgstr "Möchest du Orghanisation wirklich stornieren?"
+msgstr "Möchest du Organisation wirklich löschen?"
 
 #: re_sharing/templates/organizations/show_organization.html:153
 msgid "Delete Organization"

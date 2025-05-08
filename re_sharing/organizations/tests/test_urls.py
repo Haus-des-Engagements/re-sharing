@@ -117,3 +117,31 @@ def test_manager_confirm_organization(organization: Organization):
         == f"/organizations/manage-organizations/{organization.slug}/confirm"
         f"-organization/"
     )
+
+
+def test_show_organization_messages(organization: Organization):
+    assert (
+        reverse(
+            "organizations:show-organization-messages",
+            kwargs={"organization": organization.slug},
+        )
+        == f"/organizations/{organization.slug}/messages/"
+    )
+    assert (
+        resolve(f"/organizations/{organization.slug}/messages/").view_name
+        == "organizations:show-organization-messages"
+    )
+
+
+def test_create_organizationmessage(organization: Organization):
+    assert (
+        reverse(
+            "organizations:create-organizationmessage",
+            kwargs={"slug": organization.slug},
+        )
+        == f"/organizations/{organization.slug}/create-message/"
+    )
+    assert (
+        resolve(f"/organizations/{organization.slug}/create-message/").view_name
+        == "organizations:create-organizationmessage"
+    )

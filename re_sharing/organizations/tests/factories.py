@@ -8,6 +8,7 @@ from factory.django import DjangoModelFactory
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.models import OrganizationGroup
+from re_sharing.organizations.models import OrganizationMessage
 from re_sharing.users.tests.factories import UserFactory
 
 
@@ -60,3 +61,13 @@ class OrganizationGroupFactory(DjangoModelFactory):
     class Meta:
         model = OrganizationGroup
         skip_postgeneration_save = True
+
+
+class OrganizationMessageFactory(DjangoModelFactory):
+    uuid = Faker("uuid4")
+    organization = SubFactory(OrganizationFactory)
+    text = Faker("text", max_nb_chars=500)
+    user = SubFactory(UserFactory)
+
+    class Meta:
+        model = OrganizationMessage

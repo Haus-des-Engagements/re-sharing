@@ -14,10 +14,13 @@ from django.views.decorators.http import require_http_methods
 from re_sharing.users.models import User
 
 from .forms import OrganizationForm
+from .forms import OrganizationMessageForm
 from .models import BookingPermission
 from .models import Organization
 from .models import OrganizationGroup
+from .models import OrganizationMessage
 from .services import create_organization
+from .services import create_organizationmessage
 from .services import filter_organizations
 from .services import manager_cancel_organization
 from .services import manager_confirm_organization
@@ -44,10 +47,20 @@ def show_organization_view(request, organization):
     organization, permitted_users, is_admin = show_organization(
         request.user, organization_slug=organization
     )
+
+    # Get organization messages
+    organization_messages = OrganizationMessage.objects.filter(
+        organization=organization
+    ).order_by("-created")
+
     context = {
         "organization": organization,
         "permitted_users": permitted_users,
         "is_admin": is_admin,
+        "organization_messages": organization_messages,
+        "message_form": OrganizationMessageForm()
+        if request.user.is_authenticated
+        else None,
     }
     return render(request, "organizations/show_organization.html", context)
 
@@ -310,4 +323,41 @@ def manager_confirm_organization_view(request, organization_slug):
         request,
         "organizations/partials/manager_organization_item.html",
         {"organization": organization},
+    )
+
+
+@require_http_methods(["GET"])
+@login_required
+def show_organization_messages_view(request, organization):
+    organization = get_object_or_404(Organization, slug=organization)
+
+    if (
+        not user_has_admin_bookingpermission(request.user, organization)
+        and not request.user.is_staff
+    ):
+        raise PermissionDenied
+
+    # Get organization messages
+    organization_messages = OrganizationMessage.objects.filter(
+        organization=organization
+    ).order_by("-created")
+
+    context = {
+        "organization": organization,
+        "organization_messages": organization_messages,
+        "message_form": OrganizationMessageForm(),
+    }
+    return render(request, "organizations/show_organization_messages.html", context)
+
+
+@require_http_methods(["POST"])
+@login_required
+def create_organizationmessage_view(request, slug):
+    form = OrganizationMessageForm(data=request.POST)
+    organizationmessage = create_organizationmessage(slug, form, request.user)
+
+    return render(
+        request,
+        "organizations/partials/show_organizationmessage.html",
+        {"message": organizationmessage},
     )

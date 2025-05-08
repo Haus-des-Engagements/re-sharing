@@ -1,0 +1,27 @@
+{% load i18n %}
+
+<div class="row">
+  <div class="col-auto text-center flex-column d-none d-sm-flex">
+    <div class="row h-50">
+      <div class="col border-end">&nbsp;</div>
+      <div class="col">&nbsp;</div>
+    </div>
+    <h5 class="m-2">
+      <span class="badge rounded-pill bg-light border">&nbsp;</span>
+    </h5>
+    <div class="row h-50">
+      <div class="col border-end">&nbsp;</div>
+      <div class="col">&nbsp;</div>
+    </div>
+  </div>
+  <div class="col py-2">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted">{{ message.created|date:"l, d.m.Y - H:i" }}</div>
+        <h5 class="card-title">{% trans "Message" %}</h5>
+        <p>from {{ message.user.first_name }} {{ message.user.last_name }} ({{ message.user.email }}):</p>
+        <p class="fst-italic">{{ message.text }}</p>
+      </div>
+    </div>
+  </div>
+</div>
