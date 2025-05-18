@@ -10,8 +10,47 @@
 {% endblock content_title %}
 {% block content %}
   <div class="col-md-10 mt-5">
-    <h1 class="display-4">Hi!</h1>
-    <p class="lead">{% trans "This is the new place where you can book rooms for the 'Haus des Engagements'." %}</p>
+    <h1 class="display-4 text-center">{% trans "Haus des Engagements room bookings" %}</h1>
+    <p class="lead text-center">
+      {% trans "This is the new place where you can book rooms for the 'Haus des Engagements'." %}
+    </p>
+    <!-- Statistics Section -->
+    <div class="row mb-4 mt-5">
+      <div class="col">
+        <div class="card text-center bg-light">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Organizations" %}</h5>
+            <p class="card-text display-4">{{ registered_organizations }}</p>
+            <p class="card-text text-muted">{% trans "Registered in total" %}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card text-center bg-light">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Meetings" %}</h5>
+            <p class="card-text display-4">{{ confirmed_bookings }}</p>
+            <p class="card-text text-muted">{% trans "This year until today *" %}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card text-center bg-light">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Hours for free" %}</h5>
+            <p class="card-text display-4">{{ total_hours_comp1 }}</p>
+            <p class="card-text text-muted">{% trans "amounting to " %}{{ free_bookings_value }} € {% trans "so far" %} **</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <p class="card-text text-muted">
+        * {% trans "including CoWorking, paying guests and ourselves" %}
+        <br />
+        ** {% trans "this is what it would cost charitables to use our rooms, if they would pay the cost-covering price" %}
+      </p>
+    </div>
     <hr class="my-4" />
     <p>{% trans "This is how you book a room:" %}</p>
     <ol>

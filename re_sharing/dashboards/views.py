@@ -1,5 +1,9 @@
+from datetime import datetime
+from datetime import timedelta
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.models import Count
 from django.db.models import Sum
 from django.http import HttpRequest
@@ -9,6 +13,9 @@ from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.dashboards.services import get_users_bookings_and_permissions
+from re_sharing.organizations.models import Organization
+from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Resource
 
 
 @login_required
@@ -29,6 +36,90 @@ def users_bookings_and_permissions_dashboard_view(request: HttpRequest) -> HttpR
             "booking_permissions": booking_permissions,
             "user": request.user,
         },
+    )
+
+
+def home_view(request: HttpRequest) -> HttpResponse:
+    """
+    View that renders the home page with statistics.
+    """
+    # Cache key for the statistics
+    cache_key = "home_statistics"
+
+    # Try to get statistics from cache
+    statistics = cache.get(cache_key)
+
+    # If not in cache, calculate and cache for 24 hours
+    if statistics is None:
+        yesterday = timezone.now().date() - timedelta(days=1)
+        current_year_start = datetime(
+            yesterday.year, 1, 1, 0, 0, 0, tzinfo=timezone.get_current_timezone()
+        )
+
+        # Get non-parking resources
+        non_parking_resources = Resource.objects.exclude(
+            type=Resource.ResourceTypeChoices.PARKING_LOT
+        )
+
+        # Get IDs of non-parking resources
+        non_parking_resource_ids = non_parking_resources.values_list("id", flat=True)
+
+        # Total confirmed bookings this year until yesterday
+        confirmed_bookings = Booking.objects.filter(
+            status=2,  # CONFIRMED
+            start_date__gte=current_year_start,
+            start_date__lte=yesterday,
+            resource_id__in=non_parking_resource_ids,
+        ).count()
+
+        bookings_with_comp1 = Booking.objects.filter(
+            compensation_id=1,
+            start_date__gte=current_year_start,
+            start_date__lte=yesterday,
+            resource_id__in=non_parking_resource_ids,
+            status=2,
+        )
+
+        total_hours = 0
+        free_bookings_value = 0
+        for booking in bookings_with_comp1:
+            duration = (
+                booking.timespan.upper - booking.timespan.lower
+            ).total_seconds() / 3600
+            total_hours += duration
+
+            most_expensive_comp = (
+                Compensation.objects.filter(
+                    resource=booking.resource, hourly_rate__isnull=False
+                )
+                .order_by("-hourly_rate")
+                .first()
+            )
+
+            if most_expensive_comp:
+                free_bookings_value += duration * most_expensive_comp.hourly_rate
+
+        # Number of registered organizations
+        registered_organizations = Organization.objects.filter(
+            status=Organization.Status.CONFIRMED
+        ).count()
+
+        # Create statistics dictionary
+        statistics = {
+            "confirmed_bookings": confirmed_bookings,
+            "total_hours_comp1": round(total_hours),
+            "registered_organizations": registered_organizations,
+            "free_bookings_value": round(free_bookings_value),
+        }
+
+        # Cache for 24 hours
+        cache.set(cache_key, statistics, 60 * 60 * 24)
+
+    # Render the home template with statistics
+    return render(
+        request,
+        "pages/home.html",
+        context=statistics,
     )
 
 
