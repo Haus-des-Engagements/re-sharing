@@ -10,6 +10,7 @@ Welcome to Resourcesharing's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   user_guide
    howto
    pycharm/configuration
    users

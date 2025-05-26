@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = ./_build
-APP = ../resourcesharing
+APP = ../re_sharing
 
 
 .PHONY: help livehtml apidocs Makefile
