@@ -1,4 +1,5 @@
-# Re(source)-Sharing User Guide
+Re(source)-Sharing User Guide
+======================================================================
 
 ## Introduction
 
@@ -209,7 +210,7 @@ If you have trouble accessing a booked resource:
 For additional assistance:
 1. Check the FAQ section
 2. Use the "Contact Support" form
-3. Email support at support@resourcesharing.org
+3. Email support at support@re-sharing.org
 
 ## Privacy and Data Protection
 

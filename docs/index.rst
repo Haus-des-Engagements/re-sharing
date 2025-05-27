@@ -1,9 +1,9 @@
-.. Resourcesharing documentation master file, created by
+.. Re-Sharing documentation master file, created by
    sphinx-quickstart.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Resourcesharing's documentation!
+Welcome to Re-Sharing's documentation!
 ======================================================================
 
 .. toctree::
@@ -12,8 +12,10 @@ Welcome to Resourcesharing's documentation!
 
    user_guide
    howto
-   pycharm/configuration
    users
+   building_docs
+   coding-conventions
+   adr
 
 
 

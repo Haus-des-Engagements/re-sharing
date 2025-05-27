@@ -76,7 +76,6 @@ def home_view(request: HttpRequest) -> HttpResponse:
             compensation_id=1,
             start_date__gte=current_year_start,
             start_date__lte=yesterday,
-            resource_id__in=non_parking_resource_ids,
             status=2,
         )
 
@@ -99,6 +98,22 @@ def home_view(request: HttpRequest) -> HttpResponse:
             if most_expensive_comp:
                 free_bookings_value += duration * most_expensive_comp.hourly_rate
 
+        # Caluclate the value of the reduced compensation (id=14 and id=6)
+        # for the event room
+        total_amount_reduced_bookings = Booking.objects.filter(
+            compensation_id__in=[6, 14],
+            start_date__gte=current_year_start,
+            start_date__lte=yesterday,
+            resource_id__in=non_parking_resource_ids,
+            status=2,
+        ).aggregate(total_amount=Sum("total_amount"))
+
+        total_amount_reduced_bookings = (
+            total_amount_reduced_bookings["total_amount"] or 0 * 2
+        )
+
+        free_total = free_bookings_value + int(total_amount_reduced_bookings)
+
         # Number of registered organizations
         registered_organizations = Organization.objects.filter(
             status=Organization.Status.CONFIRMED
@@ -109,7 +124,7 @@ def home_view(request: HttpRequest) -> HttpResponse:
             "confirmed_bookings": confirmed_bookings,
             "total_hours_comp1": round(total_hours),
             "registered_organizations": registered_organizations,
-            "free_bookings_value": round(free_bookings_value),
+            "free_bookings_value": round(free_total),
         }
 
         # Cache for 24 hours

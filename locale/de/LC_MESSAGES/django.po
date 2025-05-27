@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-18 12:19+0200\n"
+"POT-Creation-Date: 2025-05-27 08:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -462,7 +462,7 @@ msgstr "Dashboards"
 #: re_sharing/templates/base.html:94
 #: re_sharing/templates/organizations/list_organizations.html:6
 #: re_sharing/templates/organizations/list_organizations.html:12
-#: re_sharing/templates/pages/home.html:20 re_sharing/users/models.py:41
+#: re_sharing/templates/pages/home.html:22 re_sharing/users/models.py:41
 msgid "Organizations"
 msgstr "Organisationen"
 
@@ -1771,73 +1771,73 @@ msgstr "HdE Räume | Start"
 msgid "Haus des Engagements room bookings"
 msgstr "Raumbuchungen im Haus des Engagements"
 
-#: re_sharing/templates/pages/home.html:14
+#: re_sharing/templates/pages/home.html:15
 msgid ""
 "This is the new place where you can book rooms for the 'Haus des "
 "Engagements'."
 msgstr "Hier kannst du Räume im Haus des Engagements buchen."
 
-#: re_sharing/templates/pages/home.html:22
+#: re_sharing/templates/pages/home.html:24
 msgid "Registered in total"
 msgstr "insgesamt registriert"
 
-#: re_sharing/templates/pages/home.html:29
+#: re_sharing/templates/pages/home.html:31
 msgid "Meetings"
 msgstr "Meetings"
 
-#: re_sharing/templates/pages/home.html:31
+#: re_sharing/templates/pages/home.html:33
 msgid "This year until today *"
 msgstr "Diese Jahr bis heute *"
 
-#: re_sharing/templates/pages/home.html:38
+#: re_sharing/templates/pages/home.html:40
 msgid "Hours for free"
 msgstr "Kostenfreie Stunden"
 
-#: re_sharing/templates/pages/home.html:40
+#: re_sharing/templates/pages/home.html:42
 msgid "amounting to "
-msgstr "das wären "
+msgstr "oder "
 
-#: re_sharing/templates/pages/home.html:40
-msgid "so far"
-msgstr "bisher"
+#: re_sharing/templates/pages/home.html:42
+msgid "this year"
+msgstr "dieses Jahr"
 
-#: re_sharing/templates/pages/home.html:46
-msgid "including CoWorking, paying guests and ourselves"
-msgstr "beinhaltet Coworking, zahlende Gäste und uns selbst"
+#: re_sharing/templates/pages/home.html:49
+msgid "including user groups, CoWorking, paying guests and ourselves"
+msgstr "beinhaltet Nutzergruppen, Coworking, zahlende Gäste und uns selbst"
 
-#: re_sharing/templates/pages/home.html:47
+#: re_sharing/templates/pages/home.html:51
 msgid ""
 "this is what it would cost charitables to use our rooms, if they would pay "
 "the cost-covering price"
 msgstr ""
-"so viel würde es gemeinnützige Nutzergruppen kosten, "
-"wenn sie den kostendeckenden Preis zahlen würden"
+"so viel würde es gemeinnützige Nutzergruppen kosten, wenn sie den "
+"kostendeckenden Preis zahlen würden"
 
-#: re_sharing/templates/pages/home.html:53
+#: re_sharing/templates/pages/home.html:55
 msgid "This is how you book a room:"
 msgstr "So buchst du einen Raum:"
 
-#: re_sharing/templates/pages/home.html:57
+#: re_sharing/templates/pages/home.html:59
 #, python-format
 msgid "Look for a <a href=\"%(planner_url)s\">free room</a>."
 msgstr "Suche nach einem <a href=\"%(planner_url)s\">freien Raum</a>."
 
-#: re_sharing/templates/pages/home.html:61
+#: re_sharing/templates/pages/home.html:63
 #, python-format
 msgid "Create an <a href=\"%(signup_url)s\">account</a>."
 msgstr "Erstelle dir einen <a href=\"%(signup_url)s\">Account</a>."
 
-#: re_sharing/templates/pages/home.html:63
+#: re_sharing/templates/pages/home.html:65
 msgid "Create an organization you want to book for and wait for our approval."
 msgstr ""
 "Erstelle die Organisation, für die du buchen möchtest und warte auf unsere "
 "Bestätigung."
 
-#: re_sharing/templates/pages/home.html:64
+#: re_sharing/templates/pages/home.html:66
 msgid "Make your booking requests."
 msgstr "Stelle deine Buchungsanfrage."
 
-#: re_sharing/templates/pages/home.html:66
+#: re_sharing/templates/pages/home.html:68
 msgid ""
 "Await our confirmation with all the necessary stuff (like doorcodes and "
 "instructions) and your good to go!"
@@ -1845,7 +1845,7 @@ msgstr ""
 "Warte auf unsere Bestätigung mit all den wichtigen Informationen (Türcode, "
 "Anleitungen, etc.) und los gehts!"
 
-#: re_sharing/templates/pages/home.html:70
+#: re_sharing/templates/pages/home.html:72
 msgid "Here you can find more detailed instructions."
 msgstr "Hier findest du eine ausführlichere Anleitung und weitere Infos."
 
@@ -2494,6 +2494,9 @@ msgstr "Storniert"
 #: re_sharing/utils/models.py:30
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "so far"
+#~ msgstr "bisher"
 
 #~ msgid "Edit Organization"
 #~ msgstr "Organisation bearbeiten"

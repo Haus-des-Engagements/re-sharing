@@ -4,7 +4,7 @@ A comprehensive platform for organizations to share and book resources efficient
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![codecov](https://codecov.io/gh/Haus-des-Engagements/resourcesharing/branch/main/graph/badge.svg?token=JDD51UPVQ8)](https://codecov.io/gh/Haus-des-Engagements/resourcesharing)
+[![codecov](https://codecov.io/gh/Haus-des-Engagements/re-sharing/branch/main/graph/badge.svg?token=JDD51UPVQ8)](https://codecov.io/gh/Haus-des-Engagements/re-sharing)
 
 License: GPLv3
 
@@ -43,8 +43,8 @@ The project is organized into several Django apps:
 ### Local Development Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Haus-des-Engagements/resourcesharing.git
-   cd resourcesharing
+   git clone https://github.com/Haus-des-Engagements/re-sharing.git
+   cd re-sharing
    ```
 
 2. Set up a virtual environment:
@@ -105,7 +105,7 @@ Currently, we have the following apps:
 - resources
 - organizations
 
-To create a new app, first create the new folder, then run: `django-admin startapp newappname ./resourcesharing/newappname`.
+To create a new app, first create the new folder, then run: `django-admin startapp newappname ./re-sharing/newappname`.
 
 ### Translations
 To make strings available for translations in Django:

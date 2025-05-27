@@ -10,7 +10,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=_source
 set BUILDDIR=_build
-set APP=..\resourcesharing
+set APP=..\re_sharing
 
 if "%1" == "" goto help
 
