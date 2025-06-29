@@ -332,6 +332,10 @@ class EmailTemplate(TimeStampedModel):
             _("Manager new booking series"),
         )
         MANAGER_NEW_BOOKING = "manager_new_booking", _("Manager new booking")
+        MANAGER_NEW_ORGANIZATION_MESSAGE = (
+            "manager_new_organization_message",
+            _("Manager new organization message"),
+        )
         NEW_BOOKING_MESSAGE = "new_booking_message", _("New booking message")
         NEW_ORGANIZATION_MESSAGE = (
             "new_organization_message",

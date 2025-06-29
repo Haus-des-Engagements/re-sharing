@@ -275,12 +275,23 @@ def send_new_organization_message_email(organization_message):
             args=[str(organization_message.organization.slug)],
         ),
     }
-    # Send email to all confirmed admins of the organization
-    recipient_list = [
-        *organization_message.organization.get_confirmed_admins().values_list(
-            "email", flat=True
+    confirmed_users = organization_message.organization.get_confirmed_users()
+    if confirmed_users.filter(id=organization_message.user.id).exists():
+        recipient_list = [settings.DEFAULT_MANAGER_EMAIL]
+        send_email_with_template(
+            EmailTemplate.EmailTypeChoices.MANAGER_NEW_ORGANIZATION_MESSAGE,
+            context,
+            recipient_list,
         )
-    ]
-    send_email_with_template(
-        EmailTemplate.EmailTypeChoices.NEW_ORGANIZATION_MESSAGE, context, recipient_list
-    )
+    else:
+        # Send email to all confirmed admins of the organization
+        recipient_list = [
+            *organization_message.organization.get_confirmed_admins().values_list(
+                "email", flat=True
+            )
+        ]
+        send_email_with_template(
+            EmailTemplate.EmailTypeChoices.NEW_ORGANIZATION_MESSAGE,
+            context,
+            recipient_list,
+        )

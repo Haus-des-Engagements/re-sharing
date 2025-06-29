@@ -119,7 +119,7 @@ To make strings available for translations in Django:
 ### Python packages
 The used packages are listed in /requirements. When packages are added or removed, execute this command to make the needed packages available and remove the unneeded:
 
-`pip install --upgrade pip && pip install -r /vagrant/requirements/local.txt`
+`pip install --upgrade pip && pip install -r requirements/local.txt`
 
 ## Database
 
