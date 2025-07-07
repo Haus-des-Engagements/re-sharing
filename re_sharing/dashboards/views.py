@@ -16,6 +16,7 @@ from re_sharing.dashboards.services import get_users_bookings_and_permissions
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
+from re_sharing.utils.models import BookingStatus
 
 
 @login_required
@@ -144,22 +145,24 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     View that renders a reporting dashboard.
     """
     bookings_by_resource = (
-        Booking.objects.filter(start_date__year=2025)
+        Booking.objects.filter(start_date__year=2025, status=BookingStatus.CONFIRMED)
         .values("resource__name", "start_date__month")
         .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
         .order_by("resource__name", "start_date__month")
     )
     monthly_totals = (
-        Booking.objects.filter(start_date__year=2025)
+        Booking.objects.filter(start_date__year=2025, status=BookingStatus.CONFIRMED)
         .values("start_date__month")
         .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
         .order_by("start_date__month")
     )
-    yearly_totals = Booking.objects.filter(start_date__year=2025).aggregate(
-        bookings_count=Count("id"), amount=Sum("total_amount")
-    )
+    yearly_totals = Booking.objects.filter(
+        start_date__year=2025, status=BookingStatus.CONFIRMED
+    ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
     realized_yearly_totals = Booking.objects.filter(
-        start_date__year=2025, start_date__lt=timezone.now()
+        start_date__year=2025,
+        start_date__lt=timezone.now(),
+        status=BookingStatus.CONFIRMED,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
     # Render to the template
