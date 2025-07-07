@@ -11,6 +11,7 @@ from factory.django import DjangoModelFactory
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
 
@@ -26,6 +27,14 @@ class AccessFactory(DjangoModelFactory):
         django_get_or_create = ["slug"]
 
 
+class LocationFactory(DjangoModelFactory):
+    name = Faker("word")
+    address = Faker("address")
+
+    class Meta:
+        model = Location
+
+
 class ResourceFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     name = Faker("word")
@@ -37,7 +46,7 @@ class ResourceFactory(DjangoModelFactory):
     included_equipment = Faker("sentence", nb_words=6)
     accessibility = Faker("sentence", nb_words=6)
     access = SubFactory(AccessFactory)
-    address = Faker("address")
+    location = SubFactory(LocationFactory)
     is_private = False
 
     class Meta:

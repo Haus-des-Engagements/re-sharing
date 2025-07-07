@@ -62,7 +62,9 @@ class BookingConfirmationEmailTestCase(TestCase):
         mock_booking.timespan.lower = timezone.now()
         mock_booking.timespan.upper = timezone.now() + timezone.timedelta(hours=1)
         mock_booking.resource.name = "Test Resource"
-        mock_booking.resource.address = "123 Test St"
+        mock_location = MagicMock()
+        mock_location.address = "123 Test St"
+        mock_booking.resource.location = mock_location
         mock_booking.resource.slug = "test-resource"
         mock_booking.organization.slug = "test-org"
         mock_booking.get_absolute_url.return_value = "/booking/123-url"

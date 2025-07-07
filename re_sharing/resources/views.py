@@ -11,6 +11,7 @@ from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
 from re_sharing.resources.services import filter_resources
+from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
 
@@ -19,8 +20,15 @@ from re_sharing.resources.services import show_resource
 def list_resources_view(request):
     persons_count = request.GET.get("persons_count")
     start_datetime = request.GET.get("start_datetime")
-    resources = filter_resources(request.user, persons_count, start_datetime)
-    context = {"resources": resources}
+    location_slug = request.GET.get("location")
+    resources = filter_resources(
+        request.user, persons_count, start_datetime, location_slug
+    )
+    locations = get_user_accessible_locations(request.user)
+    context = {
+        "resources": resources,
+        "locations": locations,
+    }
     if request.headers.get("HX-Request"):
         return render(request, "resources/partials/list_filter_resources.html", context)
 
@@ -53,18 +61,28 @@ def planner_view(request):
     date_string = request.GET.get("date")
     selected_nb_of_days = int(request.GET.get("selected_nb_of_days", "7"))
     selected_resources_slugs = request.GET.getlist("resources")
+    location_slug = request.GET.get("location")
+
     if request.user.is_authenticated:
         resources = request.user.get_resources()
     else:
         resources = Resource.objects.filter(is_private=False)
+
+    # Filter resources by location if specified
+    if location_slug:
+        resources = resources.filter(location__slug=location_slug)
+
     if selected_resources_slugs:
         selected_resources = resources.filter(slug__in=selected_resources_slugs)
     else:
-        selected_resources = resources
+        selected_resources = resources.filter(type=Resource.ResourceTypeChoices.ROOM)
 
     grouped_resources = {}
     for access_type in resources.values_list("access__name", flat=True).distinct():
         grouped_resources[access_type] = resources.filter(access__name=access_type)
+
+    # Get locations that the user has access to
+    locations = get_user_accessible_locations(request.user)
 
     resource, timeslots, weekdays, dates, planner_data = planner(
         request.user, date_string, selected_nb_of_days, selected_resources
@@ -79,9 +97,19 @@ def planner_view(request):
         "planner_data": planner_data,
         "nb_of_days": range(1, 15),
         "selected_nb_of_days": selected_nb_of_days,
+        "locations": locations,
+        "location_slug": location_slug,
     }
 
-    if request.headers.get("HX-Request"):
+    if (
+        request.headers.get("HX-Request")
+        and request.headers.get("partial") == "selection_and_table"
+    ):
+        return render(request, "resources/partials/selection_and_table.html", context)
+    if (
+        request.headers.get("HX-Request")
+        and request.headers.get("partial") == "planner-table"
+    ):
         return render(request, "resources/partials/multi_planner_table.html", context)
     return render(request, "resources/multi_planner.html", context)
 

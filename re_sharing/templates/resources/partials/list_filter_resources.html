@@ -36,7 +36,7 @@
               <svg class="fs-4 me-1" width="1em" height="1em">
                 <use href="#bi-geo-alt" />
               </svg>
-              {{ resource.address }}
+              {% if resource.location %}{{ resource.location.address }}{% endif %}
             </li>
           </ul>
         </div>

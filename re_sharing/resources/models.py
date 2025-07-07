@@ -29,6 +29,20 @@ from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import TimeStampedModel
 
 
+class Location(TimeStampedModel):
+    name = CharField(_("Name"), max_length=255)
+    address = CharField(_("Address"), max_length=256)
+    slug = AutoSlugField(_("Slug"), populate_from="name", editable=True)
+
+    class Meta:
+        verbose_name = _("Location")
+        verbose_name_plural = _("Locations")
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.address})"
+
+
 class Access(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = CharField(_("Name"), max_length=255)
@@ -97,7 +111,15 @@ class Resource(Model):
     max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
-    address = CharField(_("Address"), max_length=256)
+    location = ForeignKey(
+        Location,
+        verbose_name=_("Location"),
+        on_delete=SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resources_of_location",
+        related_query_name="resource_of_location",
+    )
     is_private = BooleanField(
         _("Private"),
         help_text=_("Only bookable with specific permissions"),

@@ -12,6 +12,7 @@ from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
 from re_sharing.utils.models import BookingStatus
@@ -92,15 +93,17 @@ def show_resource(resource_slug, date_string):
     return resource, time_slots, weekdays, dates, compensations, restrictions
 
 
-def filter_resources(user, persons_count, start_datetime):
+def filter_resources(user, persons_count, start_datetime, location_slug=None):
     """
-    Filters resources based on persons_count, start_datetime, and user's permissions.
+    Filters resources based on persons_count, start_datetime, location,
+    and user's permissions.
 
     Args:
         persons_count (int): Minimum number of persons the resource must accommodate.
         start_datetime (str): The start datetime to filter resources that are not
         booked.
         user (User): The user for whom the resources are being filtered.
+        location_slug (str, optional): Slug of the location to filter by.
 
     Returns:
         QuerySet: A filtered queryset of resources, including only the resources the
@@ -114,6 +117,10 @@ def filter_resources(user, persons_count, start_datetime):
     # Filter resources based on persons_count
     if persons_count:
         resources = resources.filter(max_persons__gte=persons_count)
+
+    # Filter resources by location
+    if location_slug:
+        resources = resources.filter(location__slug=location_slug)
 
     # Exclude resources that overlap with other bookings at the specified time
     if start_datetime:
@@ -375,3 +382,49 @@ def planner(user, date_string, nb_of_days, resources):
     }
 
     return resources, timeslots, weekdays, dates, planner_data
+
+
+def get_user_accessible_locations(user):
+    """
+    Get locations that the user has access to through organization groups.
+
+    A location is accessible if the user is in an organization group that can see
+    at least one resource of that location (either bookable_private_resource or
+    auto-confirmed_resources).
+
+    Args:
+        user (User): The user for whom to get accessible locations.
+
+    Returns:
+        QuerySet: A queryset of Location objects that the user has access to.
+    """
+    # TODO: change to user.is_authenticated after migration
+    if not user.is_staff:
+        # For unauthenticated users, return locations of public resources
+        return (
+            Location.objects.filter(resource_of_location__is_private=False)
+            .distinct()
+            .order_by("name")
+        )
+
+    # Get the user's organizations
+    user_organizations = user.get_organizations_of_user()
+
+    # Get organization groups of the user's organizations
+    org_groups = user_organizations.values_list("organization_groups", flat=True)
+
+    # Get locations of resources that the user can access through organization groups
+    # (either bookable_private_resource or auto-confirmed_resources)
+    return (
+        Location.objects.filter(
+            Q(resource_of_location__is_private=False)  # Public resources
+            | Q(
+                resource_of_location__bookableprivateressource_of_organizationgroup__in=org_groups
+            )  # Private resources via org groups
+            | Q(
+                resource_of_location__autoconfirmedresource_of_organizationgroup__in=org_groups
+            )  # Auto-confirmed resources via org groups
+        )
+        .distinct()
+        .order_by("name")
+    )

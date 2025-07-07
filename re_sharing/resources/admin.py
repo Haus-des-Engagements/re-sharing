@@ -4,6 +4,7 @@ from import_export.admin import ImportExportMixin
 from .models import Access
 from .models import AccessCode
 from .models import Compensation
+from .models import Location
 from .models import Resource
 from .models import ResourceImage
 from .models import ResourceRestriction
@@ -11,7 +12,7 @@ from .models import ResourceRestriction
 
 @admin.register(Resource)
 class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name", "square_meters", "max_persons", "type"]
+    list_display = ["id", "name", "square_meters", "max_persons", "type", "location"]
     search_fields = ["id", "name"]
     ordering = ["id"]
 
@@ -35,6 +36,13 @@ class AccessCodeAdmin(ImportExportMixin, admin.ModelAdmin):
 class AccessAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "name", "slug"]
     search_fields = ["id", "name", "slug"]
+    ordering = ["id"]
+
+
+@admin.register(Location)
+class LocationAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ["id", "name", "address"]
+    search_fields = ["id", "name", "address"]
     ordering = ["id"]
 
 

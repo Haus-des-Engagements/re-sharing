@@ -50,7 +50,12 @@ def booking_ics(booking):
     event.add("dtstart", booking.timespan.lower)
     event.add("dtend", booking.timespan.upper)
     event.add("dtstamp", timezone.now())
-    event.add("location", f"{booking.resource.name}, {booking.resource.address}")
+    event.add(
+        "location",
+        f"{booking.resource.name}, {booking.resource.location.address}"
+        if booking.resource.location
+        else booking.resource.name,
+    )
     event["description"] = _("Find all related information here: %s%s") % (
         domain,
         booking.get_absolute_url(),
