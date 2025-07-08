@@ -134,6 +134,15 @@ class Organization(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
     name = CharField(_("Name"), max_length=160)
+    public_name = CharField(
+        _("Public name"),
+        max_length=160,
+        blank=True,
+        help_text=_(
+            "This is the name that appears on the public timetables. "
+            "Only relevant if you wish to hide your official name publicly."
+        ),
+    )
     description = CharField(
         _("Description"),
         max_length=2048,

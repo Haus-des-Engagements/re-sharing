@@ -34,7 +34,17 @@ class OrganizationForm(forms.ModelForm):
             _(
                 "e.g. Accordion Club Gundelfinden e.V. <a href='/organizations'>Please "
                 "check here"
-                " first</a> if your organization has already been created: "
+                " first</a> if your organization has already been created."
+            ),
+        ),
+    )
+    public_name = forms.CharField(
+        required=False,
+        label=_("Public display name (optional)"),
+        help_text=mark_safe(  # noqa: S308
+            _(
+                "This name will be displayed on the screen inside the HdE (not in "
+                "the internet)."
             ),
         ),
     )
@@ -83,9 +93,9 @@ class OrganizationForm(forms.ModelForm):
     usage_agreement = forms.FileField(
         label=mark_safe(  # noqa: S308
             _(
-                "Upload your existing usage agreement or add a <a href='https://haus-"
-                "des-engagements.de/wp-content/uploads/2025/01/Vereinbarung_Raumnutzung"
-                "_HdE_Formular_2025_reduziert.pdf' target='_blank'>new one</a> "
+                "Upload your existing usage agreement or add a <a href='https://"
+                "haus-des-engagements.de/wp-content/uploads/2025/07/2025-07-08_"
+                "Vereinbarung_Raumnutzung_HdE.pdf' target='_blank'>new one</a> "
                 "(or your coworking-contract)."
             )
         ),
@@ -123,6 +133,7 @@ class OrganizationForm(forms.ModelForm):
         model = Organization
         fields = (
             "name",
+            "public_name",
             "description",
             "street_and_housenb",
             "area_of_activity",
@@ -169,6 +180,7 @@ class OrganizationForm(forms.ModelForm):
         affiliation_description = _("An affiliation is not needed to book resources.")
         self.helper.layout = Layout(
             Column("name", css_class="form-group col-md-8 mb-0"),
+            Column("public_name", css_class="form-group col-md-8 mb-0"),
             Column("description", css_class="form-group col-md-8 mb-0"),
             Column("area_of_activity", css_class="form-group col-md-8 mb-0"),
             Row(

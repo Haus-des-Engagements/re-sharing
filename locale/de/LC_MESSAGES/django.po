@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-07 10:36+0200\n"
+"POT-Creation-Date: 2025-07-08 23:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,9 +85,9 @@ msgid "until"
 msgstr "bis"
 
 #: re_sharing/bookings/forms.py:81 re_sharing/bookings/models.py:52
-#: re_sharing/bookings/services.py:358 re_sharing/organizations/models.py:203
-#: re_sharing/organizations/models.py:273
-#: re_sharing/organizations/models.py:363 re_sharing/resources/models.py:74
+#: re_sharing/bookings/services.py:358 re_sharing/organizations/models.py:209
+#: re_sharing/organizations/models.py:279
+#: re_sharing/organizations/models.py:369 re_sharing/resources/models.py:74
 #: re_sharing/templates/bookings/list-bookings-webview.html:30
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:12
 #: re_sharing/templates/bookings/partials/manager_list_bookings.html:11
@@ -236,8 +236,8 @@ msgid "Initial Booking User"
 msgstr "Buchende:r Nutzer:in"
 
 #: re_sharing/bookings/models.py:71 re_sharing/bookings/models.py:238
-#: re_sharing/bookings/services.py:368 re_sharing/organizations/models.py:166
-#: re_sharing/organizations/models.py:283
+#: re_sharing/bookings/services.py:368 re_sharing/organizations/models.py:172
+#: re_sharing/organizations/models.py:289
 #: re_sharing/templates/bookings/partials/manager_list_booking_series.html:13
 #: re_sharing/templates/bookings/partials/manager_list_bookings.html:12
 #: re_sharing/templates/bookings/show_booking_series.html:93
@@ -395,7 +395,7 @@ msgstr ""
 "Der angefragte Zeitraum überlappt mit einer bestehenden Buchung für diese "
 "Ressource. Bitte wähle einen anderen Zeitraum."
 
-#: re_sharing/bookings/models.py:352 re_sharing/organizations/models.py:368
+#: re_sharing/bookings/models.py:352 re_sharing/organizations/models.py:374
 #: re_sharing/resources/models.py:245
 #: re_sharing/templates/bookings/partials/show_bookingmessage.html:21
 #: re_sharing/templates/bookings/preview-booking.html:49
@@ -405,8 +405,8 @@ msgid "Message"
 msgstr "Nachricht"
 
 #: re_sharing/bookings/models.py:355 re_sharing/bookings/services.py:316
-#: re_sharing/organizations/models.py:265
-#: re_sharing/organizations/models.py:371 re_sharing/users/models.py:56
+#: re_sharing/organizations/models.py:271
+#: re_sharing/organizations/models.py:377 re_sharing/users/models.py:56
 msgid "User"
 msgstr "Nutzer:in"
 
@@ -458,7 +458,7 @@ msgstr "Serienbuchung erfolgreich erstellt!"
 msgid "Dashboards"
 msgstr "Dashboards"
 
-#: re_sharing/organizations/apps.py:7 re_sharing/organizations/models.py:204
+#: re_sharing/organizations/apps.py:7 re_sharing/organizations/models.py:210
 #: re_sharing/templates/base.html:94
 #: re_sharing/templates/organizations/list_organizations.html:6
 #: re_sharing/templates/organizations/list_organizations.html:12
@@ -473,11 +473,25 @@ msgstr "Name der Organisation"
 #: re_sharing/organizations/forms.py:35
 msgid ""
 "e.g. Accordion Club Gundelfinden e.V. <a href='/organizations'>Please check "
-"here first</a> if your organization has already been created: "
+"here first</a> if your organization has already been created."
 msgstr ""
+"z.B. Akkordeon Club Gundelfingen e.V. <a href='/organizations'>Bitte "
+"überprüfe hier</a> zunächst ob deine Organisation bereits angelegt wurde."
 
-#: re_sharing/organizations/forms.py:44 re_sharing/organizations/models.py:55
-#: re_sharing/organizations/models.py:138 re_sharing/resources/models.py:108
+#: re_sharing/organizations/forms.py:43
+msgid "Public display name (optional)"
+msgstr "Öffentlicher Anzeigename (optional)"
+
+#: re_sharing/organizations/forms.py:45
+msgid ""
+"This name will be displayed on the screen inside the HdE (not in the "
+"internet)."
+msgstr ""
+"Dieser Name erscheint öffentlich auf der Anzeigetafel im HDE, jedoch nicht "
+"im Internet."
+
+#: re_sharing/organizations/forms.py:52 re_sharing/organizations/models.py:55
+#: re_sharing/organizations/models.py:144 re_sharing/resources/models.py:108
 #: re_sharing/resources/models.py:201
 #: re_sharing/templates/organizations/show_organization.html:70
 #: re_sharing/templates/resources/show_resource.html:76
@@ -485,15 +499,15 @@ msgstr ""
 msgid "Description"
 msgstr "Beschreibung"
 
-#: re_sharing/organizations/forms.py:46
+#: re_sharing/organizations/forms.py:54
 msgid "Describe shortly what your organization is doing and trying to achieve."
 msgstr "Beschreibe kurz was deine Organisation macht und erreichen möchte."
 
-#: re_sharing/organizations/forms.py:50 re_sharing/organizations/models.py:159
+#: re_sharing/organizations/forms.py:58 re_sharing/organizations/models.py:165
 msgid "We are a charitable organization."
 msgstr "Wir sind eine gemeinnützige Organisation."
 
-#: re_sharing/organizations/forms.py:52
+#: re_sharing/organizations/forms.py:60
 msgid ""
 "Please select only if you have a valid certificate of tax exemption. Of "
 "course you can also book resources if you're not officially charitable!"
@@ -502,12 +516,12 @@ msgstr ""
 "Du kannst natürlich auch ohne steuerlich anerkannter Gemeinnützigkeit "
 "Ressourcen buchen!"
 
-#: re_sharing/organizations/forms.py:58
+#: re_sharing/organizations/forms.py:66
 msgid "This organization may be listed publicly on this website."
 msgstr ""
 "Unsere Organisation darf öffentlich auf dieser Webseite angezeigt werden."
 
-#: re_sharing/organizations/forms.py:60
+#: re_sharing/organizations/forms.py:68
 msgid ""
 "Only organization name, description, city, website and area of activity will "
 "be displayed."
@@ -515,11 +529,11 @@ msgstr ""
 "Nur Name der Organisation, Beschreibung, Ort, Webseite und Engagementbereich "
 "werden angezeigt."
 
-#: re_sharing/organizations/forms.py:65
+#: re_sharing/organizations/forms.py:73
 msgid "E-mail address of the organization"
 msgstr "E-mail der Organisation"
 
-#: re_sharing/organizations/forms.py:69
+#: re_sharing/organizations/forms.py:77
 msgid ""
 "I have read <a href='https://haus-des-engagements.de/wp-content/"
 "uploads/2024/08/Unsere-Werte-im-HdE.pdf' target='_blank'>Our Values in the "
@@ -535,36 +549,35 @@ msgstr ""
 "target='_blank'>Prozess</a> gelesen. Ich informiere die gesamte Gruppe "
 "darüber. Wir stimmen den Werten zu."
 
-#: re_sharing/organizations/forms.py:81
+#: re_sharing/organizations/forms.py:89
 msgid "In which societal area are you mainly active?"
 msgstr "In welchem gesellschaftlichen Bereich seid ihr vor allem aktiv?"
 
-#: re_sharing/organizations/forms.py:86
+#: re_sharing/organizations/forms.py:94
 msgid ""
 "Upload your existing usage agreement or add a <a href='https://haus-des-"
-"engagements.de/wp-content/uploads/2025/01/"
-"Vereinbarung_Raumnutzung_HdE_Formular_2025_reduziert.pdf' "
+"engagements.de/wp-content/"
+"uploads/2025/07/2025-07-08_Vereinbarung_Raumnutzung_HdE.pdf' "
 "target='_blank'>new one</a> (or your coworking-contract)."
 msgstr ""
 "Lade hier eine bestehende oder neue <a href='https://haus-des-engagements.de/"
-"wp-content/uploads/2025/01/"
-"Vereinbarung_Raumnutzung_HdE_Formular_2025_reduziert.pdf' "
+"wp-content/uploads//2025/07/2025-07-08_Vereinbarung_Raumnutzung_HdE.pdf' "
 "target='_blank'>Nutzungsvereinbarung</a> hoch (oder deinen Coworking-"
 "Vertrag)."
 
-#: re_sharing/organizations/forms.py:93
+#: re_sharing/organizations/forms.py:101
 msgid "Please upload a single PDF file."
 msgstr "Lade bitte eine einzelne PDF-Datei hoch."
 
-#: re_sharing/organizations/forms.py:96
+#: re_sharing/organizations/forms.py:104
 msgid "Signing date of the usage agreement"
 msgstr "Unterschriftsdatum der Nutzungsvereinbarung"
 
-#: re_sharing/organizations/forms.py:98
+#: re_sharing/organizations/forms.py:106
 msgid "When did you sign the usage agreement?"
 msgstr "Wann wurde die Nutzungsvereinbarung unterschrieben?"
 
-#: re_sharing/organizations/forms.py:103
+#: re_sharing/organizations/forms.py:111
 msgid ""
 "I want to subscribe my organization to the monthly newsletter ofthe Haus des "
 "Engagements."
@@ -572,7 +585,7 @@ msgstr ""
 "Ich möchte meine Organisation für den monatlichen Newsletter des Haus des "
 "Engagements anmelden."
 
-#: re_sharing/organizations/forms.py:110
+#: re_sharing/organizations/forms.py:118
 msgid ""
 "I would like to subscribe my organization to the monthly newsletter for "
 "actives (with tips on further training, events, and funding opportunities in "
@@ -582,25 +595,25 @@ msgstr ""
 "anmelden (enthält Tipps zu Fortbildungen, Veranstaltungen, Fördermitteln und "
 "Stellenanzeigen imBereich Engagement in Freiburg"
 
-#: re_sharing/organizations/forms.py:166 re_sharing/resources/models.py:34
+#: re_sharing/organizations/forms.py:175 re_sharing/resources/models.py:34
 #: re_sharing/templates/organizations/show_organization.html:92
 msgid "Address"
 msgstr "Adresse"
 
-#: re_sharing/organizations/forms.py:167
+#: re_sharing/organizations/forms.py:176
 msgid "Consent"
 msgstr "Einverständnis"
 
-#: re_sharing/organizations/forms.py:168
+#: re_sharing/organizations/forms.py:177
 msgid "Affiliation"
 msgstr "Zugehörigkeit"
 
-#: re_sharing/organizations/forms.py:169
+#: re_sharing/organizations/forms.py:178
 msgid "An affiliation is not needed to book resources."
 msgstr ""
 "Eine Zugehörigkeit ist nicht notwendig um eine Ressource buchen zu können."
 
-#: re_sharing/organizations/forms.py:185
+#: re_sharing/organizations/forms.py:195
 msgid ""
 "We need some more information of your organization. If you don'thave an "
 "official address yet, you can also enter your personal address."
@@ -609,11 +622,11 @@ msgstr ""
 "Organisation noch keine Adresse u.ä. hat, kannst du auch deine private "
 "Adresse angeben."
 
-#: re_sharing/organizations/forms.py:218
+#: re_sharing/organizations/forms.py:228
 msgid "Save organization"
 msgstr "Organisation speichern"
 
-#: re_sharing/organizations/mails.py:54
+#: re_sharing/organizations/mails.py:59
 #, python-format
 msgid "Find all related information here: %s%s"
 msgstr "Finde alle Informationen dazu hier: %s%s"
@@ -644,7 +657,7 @@ msgstr "Das wird im Formular angezeigt"
 msgid "Bookable private resources"
 msgstr "Buchbare private Ressourcen"
 
-#: re_sharing/organizations/models.py:79 re_sharing/organizations/models.py:196
+#: re_sharing/organizations/models.py:79 re_sharing/organizations/models.py:202
 #: re_sharing/resources/models.py:309
 msgid "Organization group"
 msgstr "Organisationsgruppe"
@@ -654,18 +667,18 @@ msgstr "Organisationsgruppe"
 msgid "Organization groups"
 msgstr "Organisationsgruppen"
 
-#: re_sharing/organizations/models.py:97 re_sharing/organizations/models.py:258
+#: re_sharing/organizations/models.py:97 re_sharing/organizations/models.py:264
 #: re_sharing/templates/organizations/show_organization.html:232
 #: re_sharing/utils/models.py:27
 msgid "Pending"
 msgstr "Ausstehend"
 
-#: re_sharing/organizations/models.py:98 re_sharing/organizations/models.py:259
+#: re_sharing/organizations/models.py:98 re_sharing/organizations/models.py:265
 #: re_sharing/utils/models.py:28
 msgid "Confirmed"
 msgstr "Bestätigt"
 
-#: re_sharing/organizations/models.py:99 re_sharing/organizations/models.py:260
+#: re_sharing/organizations/models.py:99 re_sharing/organizations/models.py:266
 msgid "Rejected"
 msgstr "Abgelehnt"
 
@@ -761,28 +774,38 @@ msgstr "Einzelunternehmer:in"
 msgid "Other"
 msgstr "Andere"
 
-#: re_sharing/organizations/models.py:140
+#: re_sharing/organizations/models.py:138
+msgid "Public name"
+msgstr "Öffentlicher Name"
+
+#: re_sharing/organizations/models.py:141
+msgid ""
+"This is the name that appears on the public timetables. Only relevant if you "
+"wish to hide your official name publicly."
+msgstr ""
+
+#: re_sharing/organizations/models.py:146
 msgid "Describe shortly what your organization does."
 msgstr "Beschreibe kurz was deine Organisation macht."
 
-#: re_sharing/organizations/models.py:143
+#: re_sharing/organizations/models.py:149
 msgid "Street and housenumber"
 msgstr "Straße und Hausnummer"
 
-#: re_sharing/organizations/models.py:144
+#: re_sharing/organizations/models.py:150
 msgid "Zip Code"
 msgstr "Postleitzahl"
 
-#: re_sharing/organizations/models.py:145
+#: re_sharing/organizations/models.py:151
 msgid "City"
 msgstr "Ort"
 
-#: re_sharing/organizations/models.py:146
+#: re_sharing/organizations/models.py:152
 #: re_sharing/templates/organizations/show_organization.html:96
 msgid "E-Mail"
 msgstr "E-Mail"
 
-#: re_sharing/organizations/models.py:149
+#: re_sharing/organizations/models.py:155
 msgid ""
 "All mails for bookings will be send to the organization and not to the "
 "booking user."
@@ -790,39 +813,39 @@ msgstr ""
 "Alle buchungsbezogenen E-Mails werden an die Organisation und nicht an den "
 "buchenden Nutzer gesendet."
 
-#: re_sharing/organizations/models.py:154
+#: re_sharing/organizations/models.py:160
 #: re_sharing/templates/organizations/show_organization.html:100
 msgid "Phone number"
 msgstr "Telefonnummer"
 
-#: re_sharing/organizations/models.py:155
+#: re_sharing/organizations/models.py:161
 #: re_sharing/templates/organizations/show_organization.html:104
 msgid "Website"
 msgstr "Webseite"
 
-#: re_sharing/organizations/models.py:156
+#: re_sharing/organizations/models.py:162
 #: re_sharing/templates/organizations/show_organization.html:78
 msgid "Legal form"
 msgstr "Rechtsform"
 
-#: re_sharing/organizations/models.py:157
+#: re_sharing/organizations/models.py:163
 #: re_sharing/templates/organizations/show_organization.html:83
 msgid "Other legal form"
 msgstr "andere Rechtsform"
 
-#: re_sharing/organizations/models.py:161
+#: re_sharing/organizations/models.py:167
 msgid "Only applicable if you have a valid certificate of tax exemption."
 msgstr "Nur anwendbar wenn ein gültiger Freistellungsbescheid vorhanden ist."
 
-#: re_sharing/organizations/models.py:169
+#: re_sharing/organizations/models.py:175
 msgid "Main area of activity"
 msgstr "Haupt-Engagementbereich"
 
-#: re_sharing/organizations/models.py:172
+#: re_sharing/organizations/models.py:178
 msgid "Organization information is publicly visible"
 msgstr "Organisationinformationen sind öffentlich sichbar."
 
-#: re_sharing/organizations/models.py:175
+#: re_sharing/organizations/models.py:181
 msgid ""
 "If checked, we'll show the following information to others: name, "
 "description, city, website, area of activity"
@@ -830,116 +853,116 @@ msgstr ""
 "Auch wenn du zustimmst zeigen wir ledigliche diese Informationen: Name, "
 "Beschreibung, Gemeinde, Webseite, Engagementbereich."
 
-#: re_sharing/organizations/models.py:179
+#: re_sharing/organizations/models.py:185
 msgid "Approval of values"
 msgstr "Bestätigung der Werte"
 
-#: re_sharing/organizations/models.py:181
+#: re_sharing/organizations/models.py:187
 msgid "Notes"
 msgstr "Notizen"
 
-#: re_sharing/organizations/models.py:181
+#: re_sharing/organizations/models.py:187
 msgid "Internal notes"
 msgstr "Interne Notizen"
 
-#: re_sharing/organizations/models.py:184
+#: re_sharing/organizations/models.py:190
 #: re_sharing/templates/organizations/show_organization.html:110
 #: re_sharing/templates/organizations/show_organization.html:113
 msgid "Usage agreement"
 msgstr "Nutzungsvereinbarung"
 
-#: re_sharing/organizations/models.py:192
+#: re_sharing/organizations/models.py:198
 msgid "Date of the signed usage agreement"
 msgstr "Datum der Unterzeichnung"
 
-#: re_sharing/organizations/models.py:254
+#: re_sharing/organizations/models.py:260
 msgid "Administrator"
 msgstr "Administrator"
 
-#: re_sharing/organizations/models.py:255
+#: re_sharing/organizations/models.py:261
 #: re_sharing/templates/organizations/show_organization.html:195
 msgid "Booker"
 msgstr "Buchende:r"
 
-#: re_sharing/organizations/models.py:280
+#: re_sharing/organizations/models.py:286
 msgid "Role"
 msgstr "Rolle"
 
-#: re_sharing/organizations/models.py:288
+#: re_sharing/organizations/models.py:294
 #: re_sharing/templates/organizations/show_organization.html:227
 msgid "Booking permission"
 msgstr "Buchungsberechtigung"
 
-#: re_sharing/organizations/models.py:289
+#: re_sharing/organizations/models.py:295
 msgid "Booking permissions"
 msgstr "Buchungsberechtigungen"
 
-#: re_sharing/organizations/models.py:300
+#: re_sharing/organizations/models.py:306
 msgid "Booking confirmation"
 msgstr "Buchungsbestätigung"
 
-#: re_sharing/organizations/models.py:304
+#: re_sharing/organizations/models.py:310
 msgid "Booking cancellation"
 msgstr "Buchungsstornierung"
 
-#: re_sharing/organizations/models.py:308
+#: re_sharing/organizations/models.py:314
 msgid "Booking reminder"
 msgstr "Buchungserinnerung"
 
-#: re_sharing/organizations/models.py:312
+#: re_sharing/organizations/models.py:318
 msgid "Booking series confirmation"
 msgstr "Serienbuchungstätigung"
 
-#: re_sharing/organizations/models.py:316
+#: re_sharing/organizations/models.py:322
 msgid "Booking series cancellation"
 msgstr "Serienbuchungsstornierung"
 
-#: re_sharing/organizations/models.py:320
+#: re_sharing/organizations/models.py:326
 msgid "Organization confirmation"
 msgstr "Organisation bestätigen"
 
-#: re_sharing/organizations/models.py:324
+#: re_sharing/organizations/models.py:330
 msgid "Organization cancellation"
 msgstr "Organisation stornieren"
 
-#: re_sharing/organizations/models.py:328
+#: re_sharing/organizations/models.py:334
 msgid "Manager new organization"
 msgstr "Manager neue Organisation"
 
-#: re_sharing/organizations/models.py:332
+#: re_sharing/organizations/models.py:338
 msgid "Manager new booking series"
 msgstr "Manager neue Serienbuchungen"
 
-#: re_sharing/organizations/models.py:334
+#: re_sharing/organizations/models.py:340
 msgid "Manager new booking"
 msgstr "Manager neue Buchung"
 
-#: re_sharing/organizations/models.py:337
+#: re_sharing/organizations/models.py:343
 msgid "Manager new organization message"
 msgstr "Manager neue Nachricht für eine Organisation"
 
-#: re_sharing/organizations/models.py:339
+#: re_sharing/organizations/models.py:345
 msgid "New booking message"
 msgstr "Neue Buchungsnachricht"
 
-#: re_sharing/organizations/models.py:342
+#: re_sharing/organizations/models.py:348
 msgid "New organization message"
 msgstr "Neue Nachricht für die Organisation"
 
-#: re_sharing/organizations/models.py:348
+#: re_sharing/organizations/models.py:354
 msgid "Send this email out."
 msgstr "Sende diese E-Mails"
 
-#: re_sharing/organizations/models.py:351
-#: re_sharing/organizations/models.py:352
+#: re_sharing/organizations/models.py:357
+#: re_sharing/organizations/models.py:358
 msgid "E-Mail template"
 msgstr "E-Mail Vorlage"
 
-#: re_sharing/organizations/models.py:378
+#: re_sharing/organizations/models.py:384
 msgid "Organization Message"
 msgstr "Nachricht für Organisation"
 
-#: re_sharing/organizations/models.py:379
+#: re_sharing/organizations/models.py:385
 msgid "Organization Messages"
 msgstr "Nachrichten für Organisation"
 
@@ -954,8 +977,8 @@ msgid "Slug"
 msgstr "Kurzbezeichnung"
 
 #: re_sharing/resources/models.py:38 re_sharing/resources/models.py:116
-#: re_sharing/templates/resources/list_resources.html:49
-#: re_sharing/templates/resources/multi_planner.html:30
+#: re_sharing/templates/resources/list_resources.html:50
+#: re_sharing/templates/resources/multi_planner.html:27
 msgid "Location"
 msgstr "Standort"
 
@@ -1888,8 +1911,8 @@ msgstr "Finde eine freie Ressource"
 msgid "Number of persons"
 msgstr "Anzahl an Personen"
 
-#: re_sharing/templates/resources/list_resources.html:44
-#: re_sharing/templates/resources/multi_planner.html:34
+#: re_sharing/templates/resources/list_resources.html:42
+#: re_sharing/templates/resources/multi_planner.html:31
 msgid "All locations"
 msgstr "Alle Standorte"
 
@@ -1901,7 +1924,7 @@ msgstr ""
 "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
 "auf einen freien (weißen) Zeitraum, um direkt zur Buchung zu gelangen."
 
-#: re_sharing/templates/resources/multi_planner.html:18
+#: re_sharing/templates/resources/multi_planner.html:17
 msgid "We provide rooms at different locations, please select accordingly:"
 msgstr ""
 "Wir haben Räume an unterschiedliche Standorten, bitte wähle den gewünschten:"
@@ -2520,6 +2543,16 @@ msgstr "Storniert"
 #: re_sharing/utils/models.py:30
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Public name of the organization"
+#~ msgstr "Öffentlicher Name der Organisation"
+
+#~ msgid ""
+#~ "only necessary if you don't want to display your real organization name "
+#~ "publicly"
+#~ msgstr ""
+#~ "Dieser Name erscheint öffentlich auf der Anzeigetafel im HDE, jedoch "
+#~ "nicht im Internet."
 
 #~ msgid "so far"
 #~ msgstr "bisher"
