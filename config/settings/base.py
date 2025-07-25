@@ -96,6 +96,7 @@ LOCAL_APPS = [
     "re_sharing.bookings",
     "re_sharing.organizations",
     "re_sharing.dashboards",
+    "re_sharing.providers",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

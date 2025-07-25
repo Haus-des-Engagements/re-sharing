@@ -69,7 +69,7 @@
                      href="{% url 'dashboards:users_bookings_and_permissions' %}">{% trans "My Dashboard" %}<span class="visually-hidden">(current)</span></a>
                 </li>
                 <ul class="navbar-nav ms-auto">
-                  {% if request.user.is_staff %}
+                  {% if request.user.is_manager %}
                     <li class="nav-item dropdown dropdown-menu-end">
                       <a class="nav-link dropdown-toggle"
                          href="#"

@@ -1,0 +1,80 @@
+from auditlog.registry import auditlog
+from django.db.models import CASCADE
+from django.db.models import ManyToManyField
+from django.db.models import OneToOneField
+from django.utils.translation import gettext_lazy as _
+
+from re_sharing.resources.models import Resource
+from re_sharing.utils.models import TimeStampedModel
+
+
+class Manager(TimeStampedModel):
+    """
+    Model for managers who can manage bookings and organizations.
+    A manager can be restricted to only manage bookings and organizations
+    for specified organization groups.
+    """
+
+    user = OneToOneField(
+        "users.User",
+        verbose_name=_("User"),
+        on_delete=CASCADE,
+        related_name="manager",
+    )
+    resources = ManyToManyField(
+        Resource,
+        verbose_name=_("Resources"),
+        related_name="managers_of_resource",
+        related_query_name="manager_of_resource",
+    )
+    organization_groups = ManyToManyField(
+        "organizations.OrganizationGroup",
+        verbose_name=_("Organization groups"),
+        related_name="managers_of_organizationgroup",
+        related_query_name="manager_of_organizationgroup",
+        blank=True,
+        help_text=_(
+            "If no organization group is specified, the user can manage"
+            "all bookings and organizations."
+        ),
+    )
+
+    class Meta:
+        verbose_name = _("Manager")
+        verbose_name_plural = _("Manager")
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"Manager: {self.user}"
+
+    def can_manage_organization(self, organization):
+        """
+        Check if this manager can manage the given organization.
+        If no organization groups are specified, the manager can manage all
+        organizations.Otherwise, the organization must be part of at least
+        one of the specified groups.
+        """
+        # If no organization groups are specified, the manager can
+        # manage all organizations
+        if not self.organization_groups.exists():
+            return True
+
+        # Check if the organization is part of any of the manager's organization groups
+        return organization.organization_groups.filter(
+            managers_of_organizationgroup=self
+        ).exists()
+
+    def can_manage_booking(self, booking):
+        """
+        Check if this resource manager can manage the given booking.
+        The manager must be able to manage the booking's organization and resource.
+        """
+        # Check if the manager can manage the organization
+        if not self.can_manage_organization(booking.organization):
+            return False
+
+        # Check if the manager can manage the resource
+        return self.resources.filter(id=booking.resource.id).exists()
+
+
+auditlog.register(Manager, exclude_fields=["updated"])

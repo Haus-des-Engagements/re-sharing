@@ -16,6 +16,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
+from re_sharing.providers.models import Manager
 from re_sharing.resources.models import Resource
 from re_sharing.users.managers import UserManager
 from re_sharing.utils.models import TimeStampedModel
@@ -111,6 +112,14 @@ class User(AbstractUser, TimeStampedModel):
             resources = resources.filter(is_private=False)
 
         return resources
+
+    def is_manager(self):
+        try:
+            Manager.objects.get(user=self)
+        except Manager.DoesNotExist:
+            return False
+        else:
+            return True
 
 
 class UserGroup(TimeStampedModel):
