@@ -162,8 +162,9 @@ class OrganizationForm(forms.ModelForm):
         )
         if user.is_manager():
             manager = user.get_manager()
-            organization_groups = manager.organization_groups.all().union(
+            organization_groups = (
                 OrganizationGroup.objects.filter(show_on_organization_creation=True)
+                | manager.organization_groups.all()
             )
 
         else:
