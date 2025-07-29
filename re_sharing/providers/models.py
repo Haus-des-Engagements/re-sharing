@@ -35,7 +35,7 @@ class Manager(TimeStampedModel):
         blank=True,
         help_text=_(
             "If no organization group is specified, the user can manage"
-            "all bookings and organizations."
+            " all bookings and organizations."
         ),
     )
 

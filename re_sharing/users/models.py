@@ -1,10 +1,7 @@
 import uuid
 from typing import ClassVar
 
-from auditlog.models import AuditlogHistoryField
-from auditlog.registry import auditlog
 from django.contrib.auth.models import AbstractUser
-from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import EmailField
 from django.db.models import ManyToManyField
@@ -121,36 +118,7 @@ class User(AbstractUser, TimeStampedModel):
         else:
             return True
 
-
-class UserGroup(TimeStampedModel):
-    history = AuditlogHistoryField()
-    name = CharField(_("Name"), max_length=160)
-    description = CharField(_("Description"), max_length=2048)
-    slug = AutoSlugField(populate_from="name", unique=True, editable=False)
-    users = ManyToManyField(
-        User,
-        verbose_name=_("Users"),
-        related_name="usergroups_of_user",
-        related_query_name="usergroup_of_user",
-    )
-    auto_confirmed_resources = ManyToManyField(
-        Resource,
-        verbose_name=_("Auto confirmed resources"),
-        related_name="autoconfirmedresources_of_usergroup",
-        related_query_name="autoconfirmedresource_of_usergroup",
-        blank=True,
-    )
-    auto_confirm_organizations = BooleanField(
-        _("Auto confirm organizations on creation"), default=False
-    )
-
-    class Meta:
-        verbose_name = _("User group")
-        verbose_name_plural = _("User groups")
-        ordering = ["id"]
-
-    def __str__(self):
-        return self.name
-
-
-auditlog.register(UserGroup, exclude_fields=["updated"])
+    def get_manager(self):
+        if self.is_manager():
+            return Manager.objects.get(user=self)
+        return None

@@ -51,7 +51,6 @@ from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
-from re_sharing.users.tests.factories import UserGroupFactory
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import get_booking_status
 
@@ -953,8 +952,6 @@ class TestGetBookingStatus(TestCase):
         self.organization = OrganizationFactory()
 
         self.user = UserFactory()
-        self.user_group = UserGroupFactory()
-        self.user_group.auto_confirmed_resources.add(self.resource)
 
     def test_pending_by_not_confirmed_organization(self):
         self.organization.organization_groups.add(self.organization_group)
@@ -973,10 +970,5 @@ class TestGetBookingStatus(TestCase):
 
     def test_confirmed_by_is_staff(self):
         self.user.is_staff = True
-        status = get_booking_status(self.user, self.organization, self.resource)
-        assert status == BookingStatus.CONFIRMED
-
-    def test_confirmed_by_usergroup(self):
-        self.user_group.users.add(self.user)
         status = get_booking_status(self.user, self.organization, self.resource)
         assert status == BookingStatus.CONFIRMED

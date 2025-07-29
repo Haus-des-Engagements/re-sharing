@@ -1,14 +1,11 @@
 from collections.abc import Sequence
 from typing import Any
 
-from django.utils.text import slugify
 from factory import Faker
-from factory import LazyAttribute
 from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from re_sharing.users.models import User
-from re_sharing.users.models import UserGroup
 
 
 class UserFactory(DjangoModelFactory):
@@ -44,13 +41,3 @@ class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
         django_get_or_create = ["email"]
-
-
-class UserGroupFactory(DjangoModelFactory):
-    name = Faker("company", locale="de_DE")
-    description = Faker("text", max_nb_chars=512)
-    slug = LazyAttribute(lambda o: slugify(o.name))
-
-    class Meta:
-        model = UserGroup
-        django_get_or_create = ["slug"]
