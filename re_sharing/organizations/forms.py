@@ -72,7 +72,22 @@ class OrganizationForm(forms.ModelForm):
         ),
         required=False,
     )
-    email = forms.EmailField(label=_("E-mail address of the organization"))
+    email = forms.EmailField(label=_("E-Mail address of the organization"))
+    send_booking_emails_only_to_organization = forms.BooleanField(
+        label=_("Send all booking emails to this address."),
+        help_text=_(
+            "All mails for bookings will be send to the organization and not to the "
+            "booking user."
+        ),
+        required=False,
+        initial=True,
+    )
+    monthly_bulk_access_codes = forms.BooleanField(
+        label=_("Send all access codes for the next month at once (at the 20th.)."),
+        help_text=_("This prevents sending "),
+        required=False,
+        initial=False,
+    )
     values_approval = forms.BooleanField(
         label=mark_safe(  # noqa: S308
             _(
@@ -143,6 +158,8 @@ class OrganizationForm(forms.ModelForm):
             "other_legal_form",
             "is_charitable",
             "email",
+            "send_booking_emails_only_to_organization",
+            "monthly_bulk_access_codes",
             "phone",
             "is_public",
             "website",
@@ -181,6 +198,7 @@ class OrganizationForm(forms.ModelForm):
         self.helper = FormHelper()
         address = _("Address")
         consent = _("Consent")
+        notifications = _("Notifications")
         affiliation = _("Affiliation")
         affiliation_description = _("An affiliation is not needed to book resources.")
         self.helper.layout = Layout(
@@ -211,11 +229,16 @@ class OrganizationForm(forms.ModelForm):
                 css_class="form-row mt-4",
             ),
             Row(
-                Column("email", css_class="form-group col-md-3 mb-0"),
-                Column("phone", css_class="form-group col-md-2 mb-0"),
+                Column("phone", css_class="form-group col-md-3 mb-0"),
                 Column("website", css_class="form-group col-md-3 mb-0"),
-                css_class="form-row",
+                css_class="form-row mt-4",
             ),
+            HTML("<h3 class='mt-5 mb-3'>"),
+            HTML(notifications),
+            HTML("</h3>"),
+            Column("email", css_class="form-group col-md-4 mb-0"),
+            "send_booking_emails_only_to_organization",
+            "monthly_bulk_access_codes",
             HTML("<h3 class='mt-5 mb-3'>"),
             HTML(affiliation),
             HTML("</h3>"),

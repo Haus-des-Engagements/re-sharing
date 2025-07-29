@@ -160,6 +160,10 @@ class Organization(TimeStampedModel):
         ),
         default=False,
     )
+    monthly_bulk_access_codes = BooleanField(
+        _("All access codes for the next month will be sent in one mail on the 20th."),
+        default=False,
+    )
     phone = CharField(_("Phone number"), max_length=32)
     website = CharField(_("Website"), max_length=128, blank=True)
     legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
