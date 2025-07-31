@@ -84,7 +84,7 @@ class OrganizationForm(forms.ModelForm):
     )
     monthly_bulk_access_codes = forms.BooleanField(
         label=_("Send all access codes for the next month at once (at the 20th.)."),
-        help_text=_("This prevents sending "),
+        help_text=_("This prevents sending separate emails for all bookings."),
         required=False,
         initial=False,
     )
