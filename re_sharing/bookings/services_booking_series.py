@@ -147,6 +147,7 @@ def create_booking_series_and_bookings(booking_data):
     bs.compensation = None
     bs.total_amount_per_booking = None
     bs.activity_description = booking_data["activity_description"]
+    bs.reminder_emails = booking_data.get("reminder_emails", True)
     if booking_data["compensation"]:
         bs.compensation = get_object_or_404(
             Compensation, id=booking_data["compensation"]

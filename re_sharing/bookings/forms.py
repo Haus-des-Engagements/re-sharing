@@ -162,6 +162,11 @@ class BookingForm(forms.ModelForm):
         label=_("ends"),
         required=False,
     )
+    reminder_emails = forms.BooleanField(
+        initial=True,
+        label=_("Send separate reminder E-Mails for each booking of this series."),
+        required=False,
+    )
     rrule_ends_enddate = forms.DateField(
         label=_("End Date"),
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -351,6 +356,7 @@ class BookingForm(forms.ModelForm):
                     css_id="rrule_monthly",
                     style="display: none",  # initially hidden
                 ),
+                Column("reminder_emails"),
                 css_class="row g-2",
                 css_id="rrule_additional_fields",
                 style="display: none",  # initially hidden
@@ -512,4 +518,5 @@ class BookingForm(forms.ModelForm):
             "invoice_address",
             "activity_description",
             "compensation",
+            "reminder_emails",
         ]
