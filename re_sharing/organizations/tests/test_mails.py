@@ -368,7 +368,7 @@ class OrganizationConfirmationEmailTestCase(TestCase):
             subject="Test Subject",
             body="Test Body",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=["admin1@example.com"],
+            to=["org@example.com"],
             bcc=[settings.DEFAULT_BCC_EMAIL],
         )
         mock_email_instance = mock_email_message.return_value
@@ -406,7 +406,7 @@ class OrganizationCancellationEmailTestCase(TestCase):
             subject="Test Subject",
             body="Test Body",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=["admin1@example.com"],
+            to=["org@example.com"],
             bcc=[settings.DEFAULT_BCC_EMAIL],
         )
 

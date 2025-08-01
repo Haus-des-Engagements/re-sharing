@@ -215,9 +215,12 @@ def organization_confirmation_email(organization):
         "organization": organization,
         "domain": domain,
     }
-    recipient_list = [
-        *organization.get_confirmed_admins().values_list("email", flat=True)
-    ]
+    if organization.send_booking_emails_only_to_organization:
+        recipient_list = [organization.email]
+    else:
+        recipient_list = [
+            *organization.get_confirmed_admins().values_list("email", flat=True)
+        ]
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.ORGANIZATION_CONFIRMATION,
@@ -232,9 +235,12 @@ def organization_cancellation_email(organization):
         "organization": organization,
         "domain": domain,
     }
-    recipient_list = [
-        *organization.get_confirmed_admins().values_list("email", flat=True)
-    ]
+    if organization.send_booking_emails_only_to_organization:
+        recipient_list = [organization.email]
+    else:
+        recipient_list = [
+            *organization.get_confirmed_admins().values_list("email", flat=True)
+        ]
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.ORGANIZATION_CANCELLATION,
@@ -290,11 +296,14 @@ def send_new_organization_message_email(organization_message):
         )
     else:
         # Send email to all confirmed admins of the organization
-        recipient_list = [
-            *organization_message.organization.get_confirmed_admins().values_list(
-                "email", flat=True
-            )
-        ]
+        if organization_message.organization.send_booking_emails_only_to_organization:
+            recipient_list = [organization_message.organization.email]
+        else:
+            recipient_list = [
+                *organization_message.organization.get_confirmed_admins().values_list(
+                    "email", flat=True
+                )
+            ]
         send_email_with_template(
             EmailTemplate.EmailTypeChoices.NEW_ORGANIZATION_MESSAGE,
             context,

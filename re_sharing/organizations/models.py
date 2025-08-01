@@ -154,10 +154,7 @@ class Organization(TimeStampedModel):
     city = CharField(_("City"), max_length=24)
     email = EmailField(_("E-Mail"), max_length=64)
     send_booking_emails_only_to_organization = BooleanField(
-        _(
-            "All mails for bookings will be send to the organization and not to the "
-            "booking user."
-        ),
+        _("All mails will be send to the organization and not to the user."),
         default=False,
     )
     monthly_bulk_access_codes = BooleanField(

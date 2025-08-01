@@ -74,11 +74,8 @@ class OrganizationForm(forms.ModelForm):
     )
     email = forms.EmailField(label=_("E-Mail address of the organization"))
     send_booking_emails_only_to_organization = forms.BooleanField(
-        label=_("Send all booking emails to this address."),
-        help_text=_(
-            "All mails for bookings will be send to the organization and not to the "
-            "booking user."
-        ),
+        label=_("Send all emails to this address."),
+        help_text=_("All mails will be send to the organization and not to the user."),
         required=False,
         initial=True,
     )
