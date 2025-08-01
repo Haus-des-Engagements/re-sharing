@@ -179,7 +179,7 @@ class OrganizationForm(forms.ModelForm):
             organization_groups = (
                 OrganizationGroup.objects.filter(show_on_organization_creation=True)
                 | manager.organization_groups.all()
-            )
+            ).distinct()
 
         else:
             organization_groups = OrganizationGroup.objects.filter(

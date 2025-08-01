@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
@@ -11,6 +10,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from re_sharing.providers.decorators import manager_required
 from re_sharing.users.models import User
 
 from .forms import OrganizationForm
@@ -279,20 +279,31 @@ def update_organization_view(request, organization):
 
 
 @require_http_methods(["GET"])
-@staff_member_required
+@manager_required
 def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
     """
-    Shows the organizations for a manager so that they can be confirmed or cancelled
+    Shows the organizations for a manager so that they can be confirmed or cancelled.
+    Only shows organizations that are part of the organization_groups that the
+    manager is assigned to.
     """
     status = request.GET.get("status") or "all"
     group = request.GET.get("group") or "all"
 
-    organizations = manager_filter_organizations_list(status, group)
+    # Get the manager object for the current user
+    manager = request.user.get_manager()
+
+    # Filter organizations based on the manager's assigned organization_groups
+    organizations = manager_filter_organizations_list(status, group, manager)
+
+    # Get only the organization groups that the manager has access to
+    available_groups = OrganizationGroup.objects.all()
+    if manager and manager.organization_groups.exists():
+        available_groups = manager.organization_groups.all()
 
     context = {
         "organizations": organizations,
         "statuses": Organization.Status.choices,
-        "groups": OrganizationGroup.objects.all(),
+        "groups": available_groups,
     }
 
     if request.headers.get("HX-Request"):
@@ -304,7 +315,7 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_cancel_organization_view(request, organization_slug):
     organization = manager_cancel_organization(request.user, organization_slug)
 
@@ -316,7 +327,7 @@ def manager_cancel_organization_view(request, organization_slug):
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_confirm_organization_view(request, organization_slug):
     organization = manager_confirm_organization(request.user, organization_slug)
     return render(

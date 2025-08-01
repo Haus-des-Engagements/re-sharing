@@ -146,7 +146,7 @@ def organizations_with_confirmed_bookingpermission(user):
 
 
 def user_has_admin_bookingpermission(user, organization):
-    if user.is_staff:
+    if user.is_manager():
         return True
     return (
         BookingPermission.objects.filter(user=user)
@@ -157,8 +157,21 @@ def user_has_admin_bookingpermission(user, organization):
     )
 
 
-def manager_filter_organizations_list(status, group):
+def manager_filter_organizations_list(status, group, manager=None):
+    """
+    Filter organizations based on status, group, and manager.
+    If manager is provided and has organization_groups assigned, only organizations
+    that are part of those groups will be returned.
+    """
     organizations = Organization.objects.all()
+
+    # Filter by manager's organization groups if manager is provided
+    # and has organization groups
+    if manager and manager.organization_groups.exists():
+        organizations = organizations.filter(
+            organization_groups__in=manager.organization_groups.all()
+        ).distinct()
+
     if status != "all":
         organizations = organizations.filter(status__in=status)
     if group != "all":
