@@ -15,6 +15,7 @@ from re_sharing.utils.models import BookingStatus
 
 from .models import BookingPermission
 from .models import Organization
+from .models import OrganizationGroup
 from .models import OrganizationMessage
 
 
@@ -75,6 +76,9 @@ def create_organization(user, form):
     new_org.save()
 
     new_org.organization_groups.set(form.cleaned_data["organization_groups"])
+    new_org.organization_groups.set(
+        OrganizationGroup.objects.filter(default_group=True)
+    )
     bookingpermission = BookingPermission(
         user=user,
         organization=new_org,

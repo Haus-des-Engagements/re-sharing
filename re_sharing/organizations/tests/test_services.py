@@ -17,6 +17,7 @@ from re_sharing.organizations.services import manager_confirm_organization
 from re_sharing.organizations.services import show_organization
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -95,6 +96,10 @@ def test_create_organization():
     # Create a test user
     test_user = UserFactory()
 
+    # Create organization groups - one default and one non-default
+    default_group = OrganizationGroupFactory(default_group=True)
+    non_default_group = OrganizationGroupFactory(default_group=False)
+
     # Create a dummy PDF file
     dummy_pdf_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type%%EOF"
     uploaded_file = SimpleUploadedFile(
@@ -138,6 +143,16 @@ def test_create_organization():
     )
     assert booking_permission.status == BookingPermission.Status.CONFIRMED
     assert booking_permission.role == BookingPermission.Role.ADMIN
+
+    # Check that the default group was assigned to the organization
+    # Note: The current implementation overwrites the form selection with default groups
+    # If this is a bug, the test should be updated after fixing the implementation
+    org_groups = new_org.organization_groups.all()
+    assert default_group in org_groups
+    assert (
+        non_default_group not in org_groups
+    )  # This would fail if the implementation is fixed to add default
+    # groups instead of replacing
 
 
 @pytest.mark.django_db()

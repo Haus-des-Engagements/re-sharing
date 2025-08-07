@@ -2,7 +2,7 @@
 
 <td sorttable_customkey="{{ organization.created|date:"YmdHi" }}">{{ organization.created|date:"d.m.Y" }}</td>
 <td>
-  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 200px;"><!-- djlint:on -->
+  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 400px;"><!-- djlint:on -->
   <a href="{% url "organizations:show-organization" organization.slug %}">{{ organization.name }}</a>
 </span>
 </td>

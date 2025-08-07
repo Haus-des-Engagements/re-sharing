@@ -74,6 +74,7 @@ class OrganizationGroup(TimeStampedModel):
         related_query_name="bookableprivateressource_of_organizationgroup",
         blank=True,
     )
+    default_group = BooleanField(_("Group activated by default"), default=False)
 
     class Meta:
         verbose_name = _("Organization group")
