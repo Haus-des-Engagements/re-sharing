@@ -22,9 +22,17 @@ class EmailTemplateAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(BookingPermission)
 class BookingPermissionAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "user", "organization", "role", "status"]
-    search_fields = ["id", "user", "organization", "role", "status"]
-    list_filter = ["user", "organization", "role", "status"]
+    list_display = ["id", "user", "user__email", "organization", "role", "status"]
+    search_fields = [
+        "organization__id",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "organization__name",
+        "role",
+        "status",
+    ]
+    list_filter = ["role", "status", "organization"]
     ordering = ["id"]
 
 
