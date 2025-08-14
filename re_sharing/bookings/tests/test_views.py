@@ -22,6 +22,7 @@ from re_sharing.bookings.views import manager_list_bookings_view
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.providers.tests.factories import ManagerFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -130,7 +131,7 @@ class TestShowBookingView(TestCase):
 class TestManagerBookingsView(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = UserFactory(is_staff=True)
+        self.user = ManagerFactory().user
 
     def test_authenticated(self):
         client = Client()
@@ -145,7 +146,7 @@ class TestManagerBookingsView(TestCase):
 
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
-        assert response.url == f"/{ADMIN_URL}login/?next=/manage-bookings/"
+        assert response.url.endswith("login/?next=/manage-bookings/")
 
 
 class TestManagerActionsBookingView(TestCase):

@@ -2,8 +2,10 @@ from auditlog.registry import auditlog
 from django.db.models import CASCADE
 from django.db.models import ManyToManyField
 from django.db.models import OneToOneField
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
+from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Resource
 from re_sharing.utils.models import TimeStampedModel
 
@@ -75,6 +77,30 @@ class Manager(TimeStampedModel):
 
         # Check if the manager can manage the resource
         return self.resources.filter(id=booking.resource.id).exists()
+
+    def get_organizations(self) -> QuerySet[Organization]:
+        """
+        Returns all organizations that belong to this manager's organization groups.
+        If the manager has no organization groups, returns an empty queryset.
+        Returns:
+            QuerySet[Organization]: A queryset containing all distinct organizations
+                                   associated with this manager's organization groups.
+        """
+        if not self.organization_groups.exists():
+            return Organization.objects.none()
+
+        return Organization.objects.filter(
+            organization_groups__in=self.organization_groups.all()
+        ).distinct()
+
+    def get_resources(self) -> QuerySet[Resource]:
+        """
+        Returns all resources that this manager is responsible for.
+        Returns:
+            QuerySet[Resource]: A queryset containing all resources this
+            manager manages.
+        """
+        return self.resources.all()
 
 
 auditlog.register(Manager, exclude_fields=["updated"])

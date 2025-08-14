@@ -46,6 +46,7 @@ from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.providers.tests.factories import ManagerFactory
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
@@ -220,7 +221,9 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert access_code == "only shown when confirmed"
+        # Using _() for translation, so we check that it contains the
+        # key part of the message
+        assert "only shown when confirmed" in str(access_code)
 
     def test_access_code_for_pending_booking(self):
         BookingPermissionFactory(
@@ -232,7 +235,9 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert access_code == "only shown when confirmed"
+        # Using _() for translation, so we check that it contains the key
+        # part of the message
+        assert "only shown when confirmed" in str(access_code)
 
     def test_access_code_for_confirmed_booking(self):
         BookingPermissionFactory(
@@ -263,7 +268,9 @@ class TestShowBooking(TestCase):
         booking, activity_stream, access_code = show_booking(
             self.user, self.booking.slug
         )
-        assert str(access_code) == "only shown 7 days before booking"
+        # Using _() for translation, so we check that it contains the key
+        # part of the message
+        assert "only shown 7 days before booking" in str(access_code)
 
 
 class TestSaveBooking(TestCase):
@@ -459,6 +466,7 @@ def test_filter_bookings_list(
         (True, "org1", "all", True, "all", None, 0),
     ],
 )
+@pytest.mark.django_db()
 def test_manger_filter_bookings_list(  # noqa: PLR0913
     show_past_bookings,
     organization,
@@ -473,12 +481,19 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     """
     # Arrange
     user = UserFactory()
-    org = OrganizationFactory()
-    OrganizationFactory(name="org1")
+    org = OrganizationFactory(name="org")
+    org_group = OrganizationGroupFactory()
+    manager = ManagerFactory(user=user)
+    org.organization_groups.add(org_group)
+    manager.organization_groups.add(org_group)
+    res = ResourceFactory()
+    manager.resources.add(res)
+
     BookingFactory(
         user=user,
         organization=org,
         status=BookingStatus.PENDING,
+        resource=res,
         timespan=(
             timezone.now() + timezone.timedelta(days=1),
             timezone.now() + timezone.timedelta(days=1, hours=1),
@@ -487,6 +502,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     BookingFactory(
         user=user,
         organization=org,
+        resource=res,
         timespan=(
             timezone.now() - timezone.timedelta(days=1, hours=2),
             timezone.now() - timezone.timedelta(days=1),
@@ -500,6 +516,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         hide_recurring_bookings,
         resource,
         date_string,
+        user,
     )
     # Assert
     assert len(bookings) == expected

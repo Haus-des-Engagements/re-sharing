@@ -484,16 +484,23 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     show_recurring_bookings,
     resource,
     date_string,
+    user,
 ):
-    organizations = Organization.objects.all()
-    resources = Resource.objects.all()
+    manager = user.get_manager()
+    organizations = manager.get_organizations()
+    resources = manager.get_resources()
+
     related_fields = [
         "organization",
         "resource__compensations_of_resource",
         "user",
         "booking_series",
     ]
-    bookings = Booking.objects.prefetch_related(*related_fields)
+    bookings = (
+        Booking.objects.filter(organization__in=organizations)
+        .filter(resource__in=resources)
+        .prefetch_related(*related_fields)
+    )
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
     if organization != "all":

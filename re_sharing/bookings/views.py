@@ -14,6 +14,7 @@ from django.views.decorators.http import require_http_methods
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import user_has_bookingpermission
+from re_sharing.providers.decorators import manager_required
 from re_sharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -336,7 +337,7 @@ def list_bookings_webview(request: HttpRequest) -> HttpResponse:
 
 
 @require_http_methods(["GET"])
-@staff_member_required
+@manager_required
 def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the bookings for a resource manager so that they can be confirmed or cancelled
@@ -355,6 +356,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         show_recurring_bookings,
         resource,
         date_string,
+        request.user,
     )
 
     context = {
