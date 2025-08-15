@@ -100,7 +100,7 @@ def create_booking_data_form_view(request):
 @require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_view(request):
-    booking_data = request.session["booking_data"]
+    booking_data = request.session.get("booking_data")
     if not booking_data:
         return redirect("bookings:create-booking")
 
@@ -292,7 +292,7 @@ def cancel_booking_series_booking_view(request, slug):
 @require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_series_view(request):
-    booking_data = request.session["booking_data"]
+    booking_data = request.session.get("booking_data")
     if not booking_data:
         return redirect("bookings:create-booking")
 
