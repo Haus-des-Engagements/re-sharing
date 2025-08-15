@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.forms import OrganizationForm
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
@@ -14,7 +15,13 @@ from re_sharing.organizations.services import InvalidOrganizationOperationError
 from re_sharing.organizations.services import create_organization
 from re_sharing.organizations.services import manager_cancel_organization
 from re_sharing.organizations.services import manager_confirm_organization
+from re_sharing.organizations.services import (
+    organizations_with_confirmed_bookingpermission,
+)
 from re_sharing.organizations.services import show_organization
+from re_sharing.organizations.services import user_has_admin_bookingpermission
+from re_sharing.organizations.services import user_has_bookingpermission
+from re_sharing.organizations.services import user_has_normal_bookingpermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
@@ -196,3 +203,88 @@ def test_manager_cancel_organization_not_cancelable(mock_is_cancelable):
 
     with pytest.raises(InvalidOrganizationOperationError):
         manager_cancel_organization(user, organization.slug)
+
+
+class TestUserPermissionsFunctions(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.staff_user = UserFactory(is_staff=True)
+        self.organization = OrganizationFactory()
+        self.booking = BookingFactory(organization=self.organization)
+
+    def test_user_has_bookingpermission_staff_user(self):
+        # Staff users should always have booking permission
+        assert user_has_bookingpermission(self.staff_user, self.booking)
+
+    def test_user_has_bookingpermission_confirmed_user(self):
+        # User with confirmed booking permission
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        assert user_has_bookingpermission(self.user, self.booking)
+
+    def test_user_has_bookingpermission_pending_user(self):
+        # User with pending booking permission should not have access
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.PENDING,
+        )
+        assert not user_has_bookingpermission(self.user, self.booking)
+
+    def test_user_has_normal_bookingpermission(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        assert user_has_normal_bookingpermission(self.user, self.organization)
+
+    def test_user_has_normal_bookingpermission_false(self):
+        assert not user_has_normal_bookingpermission(self.user, self.organization)
+
+    def test_organizations_with_confirmed_bookingpermission(self):
+        organization2 = OrganizationFactory()
+
+        # Give user confirmed permission for first org, pending for second
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        BookingPermissionFactory(
+            user=self.user,
+            organization=organization2,
+            status=BookingPermission.Status.PENDING,
+        )
+
+        confirmed_orgs = organizations_with_confirmed_bookingpermission(self.user)
+        assert self.organization in confirmed_orgs
+        assert organization2 not in confirmed_orgs
+
+    def test_user_has_admin_bookingpermission_manager(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        assert user_has_admin_bookingpermission(manager_user, self.organization)
+
+    def test_user_has_admin_bookingpermission_admin_role(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+            role=BookingPermission.Role.ADMIN,
+        )
+        assert user_has_admin_bookingpermission(self.user, self.organization)
+
+    def test_user_has_admin_bookingpermission_booker_role(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+            role=BookingPermission.Role.BOOKER,
+        )
+        assert not user_has_admin_bookingpermission(self.user, self.organization)

@@ -22,6 +22,7 @@ from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
 from re_sharing.bookings.services import generate_booking
 from re_sharing.bookings.services import get_booking_activity_stream
+from re_sharing.bookings.services import is_bookable_by_organization
 from re_sharing.bookings.services import manager_cancel_booking
 from re_sharing.bookings.services import manager_confirm_booking
 from re_sharing.bookings.services import manager_confirm_booking_series
@@ -958,6 +959,70 @@ def test_manager_confirm_booking_series(mock_is_confirmable):
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
     result = set_initial_booking_data(endtime, startdate, starttime, resource=None)
     assert result == expected_data
+
+
+class TestIsBookableByOrganization(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.resource = ResourceFactory(
+            is_private=True
+        )  # Make resource private for better testing
+        self.compensation = CompensationFactory()
+        self.organization_group = OrganizationGroupFactory()
+        self.organization.organization_groups.add(self.organization_group)
+        self.organization_group.bookable_private_resources.add(self.resource)
+        self.compensation.organization_groups.add(self.organization_group)
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def test_staff_user_can_book_anything(self):
+        self.user.is_staff = True
+        assert is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
+    def test_unconfirmed_organization_cannot_book(self):
+        self.organization.status = Organization.Status.PENDING
+        self.organization.save()
+        assert not is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
+    def test_user_without_booking_permission_cannot_book(self):
+        BookingPermission.objects.filter(
+            user=self.user, organization=self.organization
+        ).delete()
+        assert not is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
+    def test_confirmed_user_with_bookable_resource_can_book(self):
+        assert is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
+    def test_resource_not_bookable_by_organization(self):
+        # Remove the resource from organization group's bookable resources
+        self.organization_group.bookable_private_resources.remove(self.resource)
+        # Also need to ensure the resource isn't auto-confirmed
+        self.organization_group.auto_confirmed_resources.clear()
+        assert not is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
+    def test_compensation_not_bookable_by_organization(self):
+        # Create a different organization group that the compensation belongs to
+        # but the organization doesn't belong to
+        different_group = OrganizationGroupFactory()
+        self.compensation.organization_groups.clear()
+        self.compensation.organization_groups.add(different_group)
+        assert not is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
 
 
 class TestGetBookingStatus(TestCase):

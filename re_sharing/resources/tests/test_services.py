@@ -11,10 +11,12 @@ from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_access_code
+from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
+from re_sharing.resources.tests.factories import LocationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -326,3 +328,61 @@ class TestResourcePlanner(TestCase):
             "booking_link": "?starttime=18:00&endtime=19:30&startdate=2024-06-05"
             "&resource=" + resource2.slug,
         }  # This should be True because we booked the slot from 18:00 to 22:00
+
+
+class TestGetUserAccessibleLocations(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.staff_user = UserFactory(is_staff=True)
+        self.location1 = LocationFactory(name="Public Location")
+        self.location2 = LocationFactory(name="Private Location")
+        self.location3 = LocationFactory(name="Group Location")
+
+        # Create public resource at location1
+        self.public_resource = ResourceFactory(
+            location=self.location1, is_private=False
+        )
+
+        # Create private resource at location2
+        self.private_resource = ResourceFactory(
+            location=self.location2, is_private=True
+        )
+
+        # Create group-accessible resource at location3
+        self.group_resource = ResourceFactory(location=self.location3, is_private=True)
+
+    def test_non_staff_user_sees_only_public_locations(self):
+        accessible_locations = get_user_accessible_locations(self.user)
+        location_names = {loc.name for loc in accessible_locations}
+
+        assert "Public Location" in location_names
+        assert "Private Location" not in location_names
+        assert "Group Location" not in location_names
+
+    def test_staff_user_sees_all_accessible_locations(self):
+        from re_sharing.organizations.models import BookingPermission
+        from re_sharing.organizations.tests.factories import BookingPermissionFactory
+        from re_sharing.organizations.tests.factories import OrganizationFactory
+        from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+
+        # Create organization and group structure
+        organization = OrganizationFactory()
+        organization_group = OrganizationGroupFactory()
+        organization.organization_groups.add(organization_group)
+
+        # Add user to organization
+        BookingPermissionFactory(
+            user=self.staff_user,
+            organization=organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        # Make group_resource accessible via organization group
+        organization_group.bookable_private_resources.add(self.group_resource)
+
+        accessible_locations = get_user_accessible_locations(self.staff_user)
+        location_names = {loc.name for loc in accessible_locations}
+
+        # Staff user should see public locations and group-accessible locations
+        assert "Public Location" in location_names
+        assert "Group Location" in location_names

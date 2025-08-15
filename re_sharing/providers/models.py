@@ -63,7 +63,7 @@ class Manager(TimeStampedModel):
 
         # Check if the organization is part of any of the manager's organization groups
         return organization.organization_groups.filter(
-            managers_of_organizationgroup=self
+            manager_of_organizationgroup=self
         ).exists()
 
     def can_manage_booking(self, booking):
