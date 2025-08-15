@@ -17,6 +17,7 @@ from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
+from re_sharing.bookings.services import bookings_webview
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
@@ -48,6 +49,7 @@ from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.tests.factories import ManagerFactory
+from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
@@ -307,6 +309,67 @@ class TestSaveBooking(TestCase):
         )
         with pytest.raises(PermissionDenied):
             save_booking(self.user, self.booking)
+
+    def test_save_booking_comprehensive_setup(self):
+        # Test with more comprehensive setup including resource and compensation
+        resource = ResourceFactory(is_private=True)
+        compensation = CompensationFactory()
+        organization_group = OrganizationGroupFactory()
+        self.organization.organization_groups.add(organization_group)
+        organization_group.bookable_private_resources.add(resource)
+        compensation.organization_groups.add(organization_group)
+
+        # Ensure user has proper booking permission for this organization
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        booking = BookingFactory(
+            user=self.user,
+            organization=self.organization,
+            resource=resource,
+            compensation=compensation,
+            status=BookingStatus.PENDING,
+        )
+
+        booking.status = BookingStatus.CONFIRMED
+        saved_booking = save_booking(self.user, booking)
+
+        assert saved_booking.status == BookingStatus.CONFIRMED
+
+    def test_save_booking_staff_user_with_admin_role(self):
+        # Make user staff and admin
+        self.user.is_staff = True
+        self.user.save()
+
+        # Create or update booking permission to admin role
+        permission, created = BookingPermission.objects.get_or_create(
+            user=self.user,
+            organization=self.organization,
+            defaults={
+                "status": BookingPermission.Status.CONFIRMED,
+                "role": BookingPermission.Role.ADMIN,
+            },
+        )
+        if not created:
+            permission.role = BookingPermission.Role.ADMIN
+            permission.save()
+
+        # Create booking with different user
+        other_user = UserFactory()
+        resource = ResourceFactory()
+        booking = BookingFactory(
+            user=other_user,
+            organization=self.organization,
+            resource=resource,
+        )
+
+        saved_booking = save_booking(self.user, booking)
+
+        # Staff user should become the booking user when they are admin
+        assert saved_booking.user == self.user
 
 
 class TestCreateBookingMessage(TestCase):
@@ -1023,6 +1086,104 @@ class TestIsBookableByOrganization(TestCase):
         assert not is_bookable_by_organization(
             self.user, self.organization, self.resource, self.compensation
         )
+
+
+class TestBookingsWebview(TestCase):
+    def setUp(self):
+        self.room_resource = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
+        self.parking_resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.PARKING_LOT
+        )
+
+    def test_bookings_webview_with_date(self):
+        from datetime import date
+
+        test_date = date(2023, 12, 15)
+        date_string = "2023-12-15"
+
+        # Create confirmed room booking on test date
+        BookingFactory(
+            resource=self.room_resource,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 10, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 12, 0)),
+            ),
+        )
+
+        # Create parking booking (should be excluded)
+        BookingFactory(
+            resource=self.parking_resource,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 10, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 12, 0)),
+            ),
+        )
+
+        # Create room booking on different date (should be excluded)
+        BookingFactory(
+            resource=self.room_resource,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 14, 10, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 14, 12, 0)),
+            ),
+        )
+
+        bookings, shown_date = bookings_webview(date_string)
+
+        assert bookings.count() == 1
+        assert bookings.first().resource == self.room_resource
+        assert shown_date == test_date
+
+    def test_bookings_webview_without_date(self):
+        today = timezone.now().date()
+
+        from datetime import time
+
+        # Create booking for today
+        BookingFactory(
+            resource=self.room_resource,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime.combine(today, time(10, 0))),
+                timezone.make_aware(timezone.datetime.combine(today, time(12, 0))),
+            ),
+        )
+
+        bookings, shown_date = bookings_webview(None)
+
+        assert bookings.count() == 1
+        assert shown_date == today
+
+    def test_bookings_webview_only_confirmed(self):
+        date_string = "2023-12-15"
+
+        # Create confirmed booking
+        BookingFactory(
+            resource=self.room_resource,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 10, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 12, 0)),
+            ),
+        )
+
+        # Create pending booking (should be excluded)
+        BookingFactory(
+            resource=self.room_resource,
+            status=BookingStatus.PENDING,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 14, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 16, 0)),
+            ),
+        )
+
+        bookings, shown_date = bookings_webview(date_string)
+
+        assert bookings.count() == 1
+        assert bookings.first().status == BookingStatus.CONFIRMED
 
 
 class TestGetBookingStatus(TestCase):

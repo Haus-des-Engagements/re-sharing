@@ -386,3 +386,50 @@ class TestGetUserAccessibleLocations(TestCase):
         # Staff user should see public locations and group-accessible locations
         assert "Public Location" in location_names
         assert "Group Location" in location_names
+
+
+class TestFilterResources(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.location = LocationFactory()
+
+        # Create resources with different capacities
+        self.small_resource = ResourceFactory(
+            max_persons=2, location=self.location, is_private=False
+        )
+        self.medium_resource = ResourceFactory(
+            max_persons=5, location=self.location, is_private=False
+        )
+        self.large_resource = ResourceFactory(
+            max_persons=10, location=self.location, is_private=False
+        )
+
+    def test_filter_resources_by_location(self):
+        # Create another location and resource
+        other_location = LocationFactory()
+        other_resource = ResourceFactory(location=other_location, is_private=False)
+
+        resources = filter_resources(self.user, None, None, self.location.slug)
+
+        # Should only include resources from specified location
+        assert self.small_resource in resources
+        assert self.medium_resource in resources
+        assert self.large_resource in resources
+        assert other_resource not in resources
+
+    def test_filter_resources_excludes_booked_at_time(self):
+        # Create a booking that overlaps with the specified time
+        start_time = "2023-12-15T10:00"
+        booking_start = timezone.make_aware(timezone.datetime(2023, 12, 15, 10, 15))
+        booking_end = timezone.make_aware(timezone.datetime(2023, 12, 15, 11, 0))
+
+        BookingFactory(
+            resource=self.medium_resource, timespan=(booking_start, booking_end)
+        )
+
+        resources = filter_resources(self.user, None, start_time, None)
+
+        # Should exclude the booked resource
+        assert self.small_resource in resources
+        assert self.medium_resource not in resources
+        assert self.large_resource in resources
