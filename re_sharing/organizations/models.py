@@ -233,10 +233,14 @@ class Organization(TimeStampedModel):
         """
         from re_sharing.users.models import User
 
-        return User.objects.filter(
-            user_of_bookingpermission__organization=self,
-            user_of_bookingpermission__role=BookingPermission.Role.ADMIN,
-            user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        return (
+            User.objects.filter(
+                user_of_bookingpermission__organization=self,
+                user_of_bookingpermission__role=BookingPermission.Role.ADMIN,
+                user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+            )
+            .select_related()
+            .prefetch_related("user_of_bookingpermission")
         )
 
     def get_confirmed_users(self):
@@ -245,9 +249,13 @@ class Organization(TimeStampedModel):
         """
         from re_sharing.users.models import User
 
-        return User.objects.filter(
-            user_of_bookingpermission__organization=self,
-            user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        return (
+            User.objects.filter(
+                user_of_bookingpermission__organization=self,
+                user_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+            )
+            .select_related()
+            .prefetch_related("user_of_bookingpermission")
         )
 
     def has_confirmed_user(self, user):

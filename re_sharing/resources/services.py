@@ -62,6 +62,8 @@ def show_resource(resource_slug, date_string):
         Booking.objects.filter(resource=resource)
         .filter(status=BookingStatus.CONFIRMED)
         .filter(timespan__overlap=(start_of_week, end_of_week))
+        .select_related("resource", "organization")
+        .prefetch_related("organization__organization_groups")
     )
     # Check if a time slot is booked
     current_tz = timezone.get_current_timezone()
@@ -128,7 +130,7 @@ def filter_resources(user, persons_count, start_datetime, location_slug=None):
         end_datetime = start_datetime + timedelta(minutes=30)
         overlapping_bookings = Booking.objects.filter(
             timespan__overlap=(start_datetime, end_datetime)
-        )
+        ).select_related("resource", "organization")
         booked_resource_ids = overlapping_bookings.values_list("resource_id", flat=True)
         resources = resources.exclude(id__in=booked_resource_ids)
 

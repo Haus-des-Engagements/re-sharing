@@ -68,45 +68,42 @@ class User(AbstractUser, TimeStampedModel):
         return reverse("users:detail", kwargs={"slug": self.slug})
 
     def get_organizations_of_user(self):
-        return Organization.objects.filter(
-            organization_of_bookingpermission__user=self,
-            organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+        return (
+            Organization.objects.filter(
+                organization_of_bookingpermission__user=self,
+                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED,
+            )
+            .select_related()
+            .prefetch_related("organization_groups")
         )
 
     def get_resources(self):
-        resources = Resource.objects.all()
+        from django.db.models import Q
+
         if self.is_authenticated:
-            # Get all organizations the user is part of with confirmed permissions
-            user_organizations = self.get_organizations_of_user()
-
-            # Fetch private resources explicitly bookable by the user's organization
-            # groups
-            private_via_org_groups = Resource.objects.filter(
-                bookableprivateressource_of_organizationgroup__in=user_organizations.values_list(
-                    "organization_groups", flat=True
-                )
-            )
-            # Fetch private resources accessible via the user's auto-confirmed
-            # organization groups
-            private_via_auto_confirm = Resource.objects.filter(
-                autoconfirmedresource_of_organizationgroup__in=user_organizations.values_list(
-                    "organization_groups", flat=True
-                )
-            )
-            # Combine both private and public resources the user is allowed to access
-            allowed_resources = (
-                resources.filter(is_private=False)
-                | private_via_org_groups
-                | private_via_auto_confirm
+            # Get all organization groups the user is part of in a single query
+            user_org_groups = self.get_organizations_of_user().values_list(
+                "organization_groups", flat=True
             )
 
-            # Ensure we only return resources the user is allowed to see
-            resources = resources.filter(
-                id__in=allowed_resources.values_list("id", flat=True)
+            # Single optimized query combining all resource access
+            # patterns
+            resources = (
+                Resource.objects.filter(
+                    Q(is_private=False)  # Public resources
+                    | Q(
+                        bookableprivateressource_of_organizationgroup__in=user_org_groups
+                    )  # Bookable private
+                    | Q(
+                        autoconfirmedresource_of_organizationgroup__in=user_org_groups
+                    )  # Auto-confirmed private
+                )
+                .select_related()
+                .distinct()
             )
         else:
             # For unauthenticated users, only return public resources
-            resources = resources.filter(is_private=False)
+            resources = Resource.objects.filter(is_private=False).select_related()
 
         return resources
 
