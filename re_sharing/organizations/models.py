@@ -14,6 +14,7 @@ from django.db.models import DateField
 from django.db.models import EmailField
 from django.db.models import FileField
 from django.db.models import ForeignKey
+from django.db.models import Index
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
 from django.db.models import ManyToManyField
@@ -307,6 +308,11 @@ class BookingPermission(TimeStampedModel):
         verbose_name = _("Booking permission")
         verbose_name_plural = _("Booking permissions")
         ordering = ["id"]
+        indexes = [
+            Index(fields=["user", "organization", "status"]),
+            Index(fields=["organization", "role", "status"]),
+            Index(fields=["user", "status"]),
+        ]
 
     def __str__(self):
         return self.user.__str__() + " - " + self.organization.name
