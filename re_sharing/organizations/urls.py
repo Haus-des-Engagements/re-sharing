@@ -1,18 +1,14 @@
 from django.urls import path
 
-from .views import add_user_view
-from .views import cancel_bookingpermission_view
-from .views import confirm_bookingpermission_view
 from .views import create_organization_view
 from .views import create_organizationmessage_view
 from .views import delete_organization_view
-from .views import demote_to_booker_view
 from .views import list_organizations_view
 from .views import manager_cancel_organization_view
 from .views import manager_confirm_organization_view
 from .views import manager_list_organizations_view
-from .views import promote_to_admin_view
-from .views import request_bookingpermission_view
+from .views import organization_permission_management_view
+from .views import organization_permission_view
 from .views import show_organization_messages_view
 from .views import show_organization_view
 from .views import update_organization_view
@@ -42,35 +38,15 @@ urlpatterns = [
     ),
     path("new/", create_organization_view, name="create-organization"),
     path(
-        "<slug:organization>/request-bookingpermission/",
-        request_bookingpermission_view,
-        name="request-bookingpermission",
-    ),  # POST bookingpermission
+        "<slug:organization>/permissions/",
+        organization_permission_view,
+        name="organization-permissions",
+    ),  # POST permission creation (request/add-user)
     path(
-        "<slug:organization>/add-user/",
-        add_user_view,
-        name="add-user",
-    ),
-    path(
-        "<slug:organization>/confirm-bookingpermission/<slug:user>/",
-        confirm_bookingpermission_view,
-        name="confirm-bookingpermission",
-    ),  # PUT bookingpermission
-    path(
-        "<slug:organization>/cancel-bookingpermission/<slug:user>/",
-        cancel_bookingpermission_view,
-        name="cancel-bookingpermission",
-    ),  # DELETE bookingspermission
-    path(
-        "<slug:organization>/promote-to-admin/<slug:user>/",
-        promote_to_admin_view,
-        name="promote-to-admin",
-    ),  # PUT bookingpermission
-    path(
-        "<slug:organization>/demote-to-booker/<slug:user>/",
-        demote_to_booker_view,
-        name="demote-to-booker",
-    ),  # PUT bookingpermission
+        "<slug:organization>/permissions/<slug:user>/",
+        organization_permission_management_view,
+        name="organization-permissions-manage",
+    ),  # POST permission management (confirm/cancel/promote/demote)
     path(
         "<slug:organization>/delete-organization/",
         delete_organization_view,

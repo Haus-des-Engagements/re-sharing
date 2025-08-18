@@ -10,51 +10,35 @@ def test_list_organizations():
     assert resolve("/organizations/").view_name == "organizations:list-organizations"
 
 
-def test_request_bookingpermission(organization: Organization):
+def test_organization_permissions(organization: Organization):
+    """Test consolidated permission creation endpoint"""
     assert (
         reverse(
-            "organizations:request-bookingpermission",
+            "organizations:organization-permissions",
             kwargs={"organization": organization.slug},
         )
-        == f"/organizations/{organization.slug}/request-bookingpermission/"
+        == f"/organizations/{organization.slug}/permissions/"
     )
     assert (
-        resolve(
-            f"/organizations/{organization.slug}/request-bookingpermission/"
-        ).view_name
-        == "organizations:request-bookingpermission"
+        resolve(f"/organizations/{organization.slug}/permissions/").view_name
+        == "organizations:organization-permissions"
     )
 
 
-def test_confirm_bookingpermission(organization: Organization, user: User):
+def test_organization_permissions_manage(organization: Organization, user: User):
+    """Test consolidated permission management endpoint"""
     assert (
         reverse(
-            "organizations:confirm-bookingpermission",
+            "organizations:organization-permissions-manage",
             kwargs={"organization": organization.slug, "user": user.slug},
         )
-        == f"/organizations/{organization.slug}/confirm-bookingpermission/{user.slug}/"
+        == f"/organizations/{organization.slug}/permissions/{user.slug}/"
     )
     assert (
         resolve(
-            f"/organizations/{organization.slug}/confirm-bookingpermission/{user.slug}/"
+            f"/organizations/{organization.slug}/permissions/{user.slug}/"
         ).view_name
-        == "organizations:confirm-bookingpermission"
-    )
-
-
-def test_cancel_bookingpermission(organization: Organization, user: User):
-    assert (
-        reverse(
-            "organizations:cancel-bookingpermission",
-            kwargs={"organization": organization.slug, "user": user.slug},
-        )
-        == f"/organizations/{organization.slug}/cancel-bookingpermission/{user.slug}/"
-    )
-    assert (
-        resolve(
-            f"/organizations/{organization.slug}/cancel-bookingpermission/{user.slug}/"
-        ).view_name
-        == "organizations:cancel-bookingpermission"
+        == "organizations:organization-permissions-manage"
     )
 
 

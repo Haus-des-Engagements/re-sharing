@@ -54,374 +54,7 @@ class TestShowOrganizationView(TestCase):
         self.assertTemplateUsed(response, "organizations/show_organization.html")
 
 
-class TestRequestBookingpermissionView(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.client.force_login(self.user)
-        self.organization = OrganizationFactory()
-        self.request_bookingpermission_url = reverse(
-            "organizations:request-bookingpermission",
-            kwargs={"organization": self.organization.slug},
-        )
-
-    def test_request_pending(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.PENDING,
-        )
-
-        response = self.client.get(self.request_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response,
-            "You are already requested to become a member. Please wait patiently.",
-        )
-
-    def test_already_confirmed(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-
-        response = self.client.get(self.request_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "You are already member of this organization.")
-
-    def test_rejected(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.REJECTED,
-        )
-
-        response = self.client.get(self.request_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response, "You have already been rejected by this organization."
-        )
-
-    def test_new_request(self):
-        response = self.client.get(self.request_bookingpermission_url)
-        bookingpermission = (
-            BookingPermission.objects.filter(organization=self.organization)
-            .filter(user=self.user)
-            .first()
-        )
-        assert bookingpermission
-        assert bookingpermission.organization == self.organization
-        assert bookingpermission.user == self.user
-        assert bookingpermission.role == BookingPermission.Role.BOOKER
-        assert bookingpermission.status == BookingPermission.Status.PENDING
-
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response,
-            "Successfully requested. "
-            "You will be notified when your request is approved or denied.",
-        )
-
-
-class ConfirmBookingpermissionView(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.orga_admin = UserFactory()
-        self.organization = OrganizationFactory()
-        self.confirm_bookingpermission_url = reverse(
-            "organizations:confirm-bookingpermission",
-            kwargs={"organization": self.organization.slug, "user": self.user.slug},
-        )
-
-    def test_confirm_already_confirmed_bookingpermission_by_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.confirm_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Booking permission has already been confirmed.")
-
-    def test_confirm_new_bookingpermission_by_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.PENDING,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.confirm_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "Booking permission has been confirmed.")
-
-    def test_confirm_new_bookingpermission_by_non_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.PENDING,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.confirm_bookingpermission_url)
-        self.assertContains(
-            response,
-            "You are not allowed to confirm this booking permission.",
-            status_code=401,
-        )
-
-
-class CancelBookingpermissionView(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.orga_admin = UserFactory()
-        self.organization = OrganizationFactory()
-        self.cancel_bookingpermission_url = reverse(
-            "organizations:cancel-bookingpermission",
-            kwargs={"organization": self.organization.slug, "user": self.user.slug},
-        )
-
-    def test_cancel_existing_bookingpermission_by_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.cancel_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response,
-            "Booking permission has been cancelled.",
-        )
-        assert (
-            not BookingPermission.objects.filter(organization=self.organization)
-            .filter(user__slug=self.user)
-            .exists()
-        )
-
-    def test_cancel_not_existing_bookingpermission_by_admin(self):
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.cancel_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response,
-            "Booking permission does not exist.",
-        )
-        assert (
-            not BookingPermission.objects.filter(organization=self.organization)
-            .filter(user__slug=self.user)
-            .exists()
-        )
-
-    def test_cancel_bookingpermission_by_non_admin(self):
-        orga_booker = UserFactory()
-        BookingPermissionFactory(
-            user=orga_booker,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(orga_booker)
-
-        response = self.client.get(self.cancel_bookingpermission_url)
-        self.assertContains(
-            response,
-            "You are not allowed to cancel this booking permission.",
-            status_code=401,
-        )
-
-    def test_cancel_bookingpermission_by_user_itself(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.user)
-
-        response = self.client.get(self.cancel_bookingpermission_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(
-            response,
-            "Booking permission has been cancelled.",
-        )
-        assert (
-            not BookingPermission.objects.filter(organization=self.organization)
-            .filter(user__slug=self.user)
-            .exists()
-        )
-
-
-class PromoteToAdminView(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.orga_admin = UserFactory()
-        self.organization = OrganizationFactory()
-        self.promote_to_admin_url = reverse(
-            "organizations:promote-to-admin",
-            kwargs={"organization": self.organization.slug, "user": self.user.slug},
-        )
-
-    def test_promote_to_admin_membership_by_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.promote_to_admin_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "User has been promoted to admin.")
-        assert (
-            BookingPermission.objects.filter(
-                organization=self.organization, user=self.user
-            )
-            .first()
-            .role
-            == BookingPermission.Role.ADMIN
-        )
-
-    def test_promote_to_admin_by_non_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.promote_to_admin_url)
-        self.assertContains(
-            response,
-            "You are not allowed to promote.",
-            status_code=HTTPStatus.UNAUTHORIZED,
-        )
-
-
-class DemoteToBookerView(TestCase):
-    def setUp(self):
-        self.user = UserFactory()
-        self.orga_admin = UserFactory()
-        self.organization = OrganizationFactory()
-        self.demote_to_booker_url = reverse(
-            "organizations:demote-to-booker",
-            kwargs={"organization": self.organization.slug, "user": self.user.slug},
-        )
-
-    def test_demote_to_booker_by_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.demote_to_booker_url)
-        assert response.status_code == HTTPStatus.OK
-        self.assertContains(response, "User has been demoted to booker.")
-        assert (
-            BookingPermission.objects.filter(
-                organization=self.organization, user=self.user
-            )
-            .first()
-            .role
-            == BookingPermission.Role.BOOKER
-        )
-
-    def test_demote_to_admin_by_non_admin(self):
-        BookingPermissionFactory(
-            user=self.user,
-            organization=self.organization,
-            role=BookingPermission.Role.ADMIN,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        BookingPermissionFactory(
-            user=self.orga_admin,
-            organization=self.organization,
-            role=BookingPermission.Role.BOOKER,
-            status=BookingPermission.Status.CONFIRMED,
-        )
-        self.client.force_login(self.orga_admin)
-
-        response = self.client.get(self.demote_to_booker_url)
-        self.assertContains(
-            response,
-            "You are not allowed to demote.",
-            status_code=HTTPStatus.UNAUTHORIZED,
-        )
-
-
-class DeleteOrganizationView(TestCase):
+class TestDeleteOrganizationView(TestCase):
     def setUp(self):
         self.user = UserFactory()
         self.orga_admin = UserFactory()
@@ -580,3 +213,290 @@ class TestCreateOrganizationMessageView(TestCase):
         )
         assert response.status_code == HTTPStatus.FOUND  # 302 redirect
         assert "/accounts/login/" in response.url
+
+
+class TestOrganizationPermissionView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.admin_user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.permission_url = reverse(
+            "organizations:organization-permissions",
+            kwargs={"organization": self.organization.slug},
+        )
+
+        # Create admin permission for admin_user
+        BookingPermissionFactory(
+            user=self.admin_user,
+            organization=self.organization,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def test_request_permission_new_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.permission_url, {"action": "request"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "Successfully requested")
+
+        # Check that permission was created
+        permission = BookingPermission.objects.filter(
+            user=self.user, organization=self.organization
+        ).first()
+        assert permission
+        assert permission.status == BookingPermission.Status.PENDING
+        assert permission.role == BookingPermission.Role.BOOKER
+
+    def test_request_permission_already_pending(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.PENDING,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.permission_url, {"action": "request"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "already requested")
+
+    def test_request_permission_already_confirmed(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.permission_url, {"action": "request"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "already member")
+
+    def test_add_user_by_admin(self):
+        target_user = UserFactory(email="test@example.com")
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(
+            self.permission_url,
+            {"action": "add-user", "email": "test@example.com", "role": "booker"},
+        )
+
+        assert response.status_code == HTTPStatus.FOUND  # Redirect
+
+        # Check that permission was created
+        permission = BookingPermission.objects.filter(
+            user=target_user, organization=self.organization
+        ).first()
+        assert permission
+        assert permission.status == BookingPermission.Status.CONFIRMED
+        assert permission.role == BookingPermission.Role.BOOKER
+
+    def test_add_user_by_admin_admin_role(self):
+        target_user = UserFactory(email="admin@example.com")
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(
+            self.permission_url,
+            {"action": "add-user", "email": "admin@example.com", "role": "admin"},
+        )
+
+        assert response.status_code == HTTPStatus.FOUND  # Redirect
+
+        # Check that permission was created with admin role
+        permission = BookingPermission.objects.filter(
+            user=target_user, organization=self.organization
+        ).first()
+        assert permission
+        assert permission.role == BookingPermission.Role.ADMIN
+
+    def test_add_user_by_non_admin(self):
+        regular_user = UserFactory()
+        BookingPermissionFactory(
+            user=regular_user,
+            organization=self.organization,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(regular_user)
+
+        response = self.client.post(
+            self.permission_url,
+            {"action": "add-user", "email": "test@example.com", "role": "booker"},
+        )
+
+        assert response.status_code == HTTPStatus.FOUND  # Redirect with error message
+
+    def test_add_nonexistent_user(self):
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(
+            self.permission_url,
+            {
+                "action": "add-user",
+                "email": "nonexistent@example.com",
+                "role": "booker",
+            },
+        )
+
+        assert response.status_code == HTTPStatus.FOUND  # Redirect with error message
+
+    def test_unauthenticated_access(self):
+        response = self.client.post(self.permission_url, {"action": "request"})
+        assert response.status_code == HTTPStatus.FOUND  # Redirect to login
+
+
+class TestOrganizationPermissionManagementView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.admin_user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.management_url = reverse(
+            "organizations:organization-permissions-manage",
+            kwargs={"organization": self.organization.slug, "user": self.user.slug},
+        )
+
+        # Create admin permission for admin_user
+        BookingPermissionFactory(
+            user=self.admin_user,
+            organization=self.organization,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def test_confirm_permission(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.PENDING,
+        )
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "confirm"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "has been confirmed")
+
+        # Check that permission was confirmed
+        permission = BookingPermission.objects.get(
+            user=self.user, organization=self.organization
+        )
+        assert permission.status == BookingPermission.Status.CONFIRMED
+
+    def test_confirm_already_confirmed_permission(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "confirm"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "already been confirmed")
+
+    def test_cancel_permission(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "cancel"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "has been cancelled")
+
+        # Check that permission was deleted
+        assert not BookingPermission.objects.filter(
+            user=self.user, organization=self.organization
+        ).exists()
+
+    def test_cancel_permission_by_user_themselves(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.management_url, {"action": "cancel"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "has been cancelled")
+
+    def test_promote_to_admin(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "promote"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "promoted to admin")
+
+        # Check that role was changed
+        permission = BookingPermission.objects.get(
+            user=self.user, organization=self.organization
+        )
+        assert permission.role == BookingPermission.Role.ADMIN
+
+    def test_demote_to_booker(self):
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            role=BookingPermission.Role.ADMIN,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "demote"})
+
+        assert response.status_code == HTTPStatus.OK
+        self.assertContains(response, "demoted to booker")
+
+        # Check that role was changed
+        permission = BookingPermission.objects.get(
+            user=self.user, organization=self.organization
+        )
+        assert permission.role == BookingPermission.Role.BOOKER
+
+    def test_action_by_non_admin(self):
+        regular_user = UserFactory()
+        BookingPermissionFactory(
+            user=regular_user,
+            organization=self.organization,
+            role=BookingPermission.Role.BOOKER,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(regular_user)
+
+        response = self.client.post(self.management_url, {"action": "confirm"})
+
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_invalid_action(self):
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {"action": "invalid"})
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_missing_action(self):
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(self.management_url, {})
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_unauthenticated_access(self):
+        response = self.client.post(self.management_url, {"action": "confirm"})
+        assert response.status_code == HTTPStatus.FOUND  # Redirect to login

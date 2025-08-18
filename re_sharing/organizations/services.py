@@ -150,15 +150,10 @@ def organizations_with_confirmed_bookingpermission(user):
 
 
 def user_has_admin_bookingpermission(user, organization):
-    if user.is_manager():
-        return True
-    return (
-        BookingPermission.objects.filter(user=user)
-        .filter(organization=organization)
-        .filter(status=BookingPermission.Status.CONFIRMED)
-        .filter(role=BookingPermission.Role.ADMIN)
-        .exists()
-    )
+    """Legacy function - Use selectors.user_has_admin_permission instead"""
+    from .selectors import user_has_admin_permission
+
+    return user_has_admin_permission(user, organization)
 
 
 def manager_filter_organizations_list(status, group, manager=None):
@@ -253,3 +248,171 @@ def create_organizationmessage(organization_slug, form, user):
         return save_organizationmessage(organization, message, user)
 
     raise InvalidOrganizationOperationError
+
+
+def request_booking_permission(user, organization):
+    """Request booking permission for an organization - Business logic only"""
+    from .selectors import get_user_permissions_for_organization
+
+    # Check existing permissions via selector
+    existing_permissions = get_user_permissions_for_organization(user, organization)
+
+    if existing_permissions.exists():
+        permission = existing_permissions.first()
+        # Business logic validation
+        if permission.status == BookingPermission.Status.PENDING:
+            return (
+                "You are already requested to become a member. Please wait patiently."
+            )
+        if permission.status == BookingPermission.Status.CONFIRMED:
+            return "You are already member of this organization."
+        if permission.status == BookingPermission.Status.REJECTED:
+            return "You have already been rejected by this organization."
+
+    # Business logic: Create new permission request
+    BookingPermission.objects.create(
+        user=user,
+        organization=organization,
+        status=BookingPermission.Status.PENDING,
+        role=BookingPermission.Role.BOOKER,
+    )
+    return (
+        "Successfully requested. "
+        "You will be notified when your request is approved or denied."
+    )
+
+
+def add_user_to_organization(organization, email, role, admin_user):
+    """Add a user to an organization with specified role - Business logic only"""
+    from .selectors import get_user_by_email
+    from .selectors import user_has_admin_permission
+
+    # Business logic validation
+    if not user_has_admin_permission(admin_user, organization):
+        msg = "You are not allowed to add users to this organization."
+        raise PermissionDenied(msg)
+
+    if not email or not role:
+        msg = "Email and role are required."
+        raise ValueError(msg)
+
+    # Get user via selector
+    user = get_user_by_email(email)
+    if not user:
+        msg = f"No user found with email: {email}"
+        raise ValueError(msg)
+
+    # Business logic: Create or get permission
+    booking_permission, created = BookingPermission.objects.get_or_create(
+        user=user,
+        organization=organization,
+        defaults={
+            "status": BookingPermission.Status.CONFIRMED,
+            "role": BookingPermission.Role.ADMIN
+            if role == "admin"
+            else BookingPermission.Role.BOOKER,
+        },
+    )
+
+    # Business logic: Return appropriate message
+    if created:
+        return f"{user.email} was successfully added!"
+    return f"{user.email} already has permissions."
+
+
+def confirm_booking_permission(organization, user_slug, admin_user):
+    """Confirm a booking permission request - Business logic only"""
+    from .selectors import get_booking_permission
+    from .selectors import user_has_admin_permission
+
+    # Business logic validation
+    if not user_has_admin_permission(admin_user, organization):
+        msg = "You are not allowed to confirm this booking permission."
+        raise PermissionDenied(msg)
+
+    # Get permission via selector
+    bookingpermission = get_booking_permission(organization, user_slug)
+
+    if not bookingpermission:
+        return "Booking permission does not exist."
+
+    # Business logic validation
+    if bookingpermission.status == BookingPermission.Status.CONFIRMED:
+        return "Booking permission has already been confirmed."
+
+    # Business logic: Update permission status
+    bookingpermission.status = BookingPermission.Status.CONFIRMED
+    bookingpermission.save()
+    return "Booking permission has been confirmed."
+
+
+def cancel_booking_permission(organization, user_slug, requesting_user):
+    """Cancel a booking permission - Business logic only"""
+    from .selectors import get_booking_permission
+    from .selectors import user_has_admin_permission
+
+    # Business logic validation: Check if user can cancel
+    if not (
+        requesting_user.slug == user_slug
+        or user_has_admin_permission(requesting_user, organization)
+    ):
+        msg = "You are not allowed to cancel this booking permission."
+        raise PermissionDenied(msg)
+
+    # Get permission via selector
+    bookingpermission = get_booking_permission(organization, user_slug)
+
+    if not bookingpermission:
+        return "Booking permission does not exist."
+
+    # Business logic: Delete permission
+    bookingpermission.delete()
+    return "Booking permission has been cancelled."
+
+
+def promote_user_to_admin(organization, user_slug, admin_user):
+    """Promote a user to admin role - Business logic only"""
+    from .selectors import get_booking_permission
+    from .selectors import user_has_admin_permission
+
+    # Business logic validation
+    if not user_has_admin_permission(admin_user, organization):
+        msg = "You are not allowed to promote users."
+        raise PermissionDenied(msg)
+
+    # Get permission via selector
+    bookingpermission = get_booking_permission(organization, user_slug)
+
+    if not bookingpermission:
+        return "Booking permission does not exist."
+
+    # Business logic validation
+    if bookingpermission.status != BookingPermission.Status.CONFIRMED:
+        return "Booking permission is not confirmed."
+
+    # Business logic: Update role
+    bookingpermission.role = BookingPermission.Role.ADMIN
+    bookingpermission.save()
+    return "User has been promoted to admin."
+
+
+def demote_user_to_booker(organization, user_slug, admin_user):
+    """Demote a user to booker role - Business logic only"""
+    from .selectors import get_booking_permission
+    from .selectors import user_has_admin_permission
+
+    # Business logic validation
+    if not user_has_admin_permission(admin_user, organization):
+        msg = "You are not allowed to demote users."
+        raise PermissionDenied(msg)
+
+    # Get permission via selector
+    bookingpermission = get_booking_permission(organization, user_slug)
+
+    if not bookingpermission:
+        return "Booking permission does not exist."
+
+    # Business logic: Update role
+    bookingpermission.role = BookingPermission.Role.BOOKER
+    bookingpermission.save()
+    return "User has been demoted to booker."

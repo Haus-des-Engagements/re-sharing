@@ -179,8 +179,9 @@
         </ul>
         <form class="row align-items-center mb-5"
               method="post"
-              action="{% url 'organizations:add-user' organization=organization.slug %}">
+              action="{% url 'organizations:organization-permissions' organization=organization.slug %}">
           {% csrf_token %}
+          <input type="hidden" name="action" value="add-user" />
           <div class="col-auto">
             <input type="email"
                    class="form-control"
@@ -205,7 +206,7 @@
         <div>{% trans "Only visible for other authorised persons." %}</div>
         <div id="{{ organization.slug }}-request-bookingpermission">
           <button class="btn btn-outline-success"
-                  hx-post="{% url 'organizations:request-bookingpermission' organization=organization.slug %}"
+                  hx-post="{% url 'organizations:organization-permissions' organization=organization.slug %}"
                   hx-target="#{{ organization.slug }}-request-bookingpermission">
             {% trans "Request booking permission" %}
           </button>
@@ -245,34 +246,42 @@
                   <div class="d-grid gap-2">
                     {% if is_admin and user.permission_status == 1 %}
                       <div id="{{ user.slug }}-confirm-bookingpermission">
-                        <button class="btn btn-outline-primary"
-                                hx-post="{% url 'organizations:confirm-bookingpermission' organization=organization.slug user=user.slug %}"
-                                hx-target="#{{ user.slug }}-confirm-bookingpermission">
-                          {% trans "Confirm booking permission" %}
-                        </button>
+                        <form hx-post="{% url 'organizations:organization-permissions-manage' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-confirm-bookingpermission">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="confirm" />
+                          <button type="submit" class="btn btn-outline-primary">{% trans "Confirm booking permission" %}</button>
+                        </form>
                       </div>
                     {% endif %}
                     {% if is_admin and user.permission_status == 2 and user != request.user %}
                       <div id="{{ user.slug }}-cancel-bookingpermission">
-                        <button class="btn btn-outline-danger"
-                                hx-post="{% url 'organizations:cancel-bookingpermission' organization=organization.slug user=user.slug %}"
-                                hx-target="#{{ user.slug }}-cancel-bookingpermission">
-                          {% trans "Cancel booking permission" %}
-                        </button>
+                        <form hx-post="{% url 'organizations:organization-permissions-manage' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-cancel-bookingpermission">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="cancel" />
+                          <button type="submit" class="btn btn-outline-danger">{% trans "Cancel booking permission" %}</button>
+                        </form>
                       </div>
                     {% endif %}
                     {% if is_admin and user.permission_role == 2 %}
                       <div id="{{ user.slug }}-promote-to-admin">
-                        <button class="btn btn-outline-success"
-                                hx-post="{% url 'organizations:promote-to-admin' organization=organization.slug user=user.slug %}"
-                                hx-target="#{{ user.slug }}-promote-to-admin">{% trans "Promote to admin" %}</button>
+                        <form hx-post="{% url 'organizations:organization-permissions-manage' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-promote-to-admin">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="promote" />
+                          <button type="submit" class="btn btn-outline-success">{% trans "Promote to admin" %}</button>
+                        </form>
                       </div>
                     {% endif %}
                     {% if is_admin and user.permission_role == 1 and user != request.user %}
                       <div id="{{ user.slug }}-demote-to-booker">
-                        <button class="btn btn-outline-warning"
-                                hx-post="{% url 'organizations:demote-to-booker' organization=organization.slug user=user.slug %}"
-                                hx-target="#{{ user.slug }}-demote-to-booker">{% trans "Demote to booker" %}</button>
+                        <form hx-post="{% url 'organizations:organization-permissions-manage' organization=organization.slug user=user.slug %}"
+                              hx-target="#{{ user.slug }}-demote-to-booker">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="demote" />
+                          <button type="submit" class="btn btn-outline-warning">{% trans "Demote to booker" %}</button>
+                        </form>
                       </div>
                     {% endif %}
                   </div>

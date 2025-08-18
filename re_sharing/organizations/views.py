@@ -11,20 +11,24 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from re_sharing.providers.decorators import manager_required
-from re_sharing.users.models import User
 
 from .forms import OrganizationForm
 from .forms import OrganizationMessageForm
-from .models import BookingPermission
 from .models import Organization
 from .models import OrganizationGroup
 from .models import OrganizationMessage
+from .services import add_user_to_organization
+from .services import cancel_booking_permission
+from .services import confirm_booking_permission
 from .services import create_organization
 from .services import create_organizationmessage
+from .services import demote_user_to_booker
 from .services import filter_organizations
 from .services import manager_cancel_organization
 from .services import manager_confirm_organization
 from .services import manager_filter_organizations_list
+from .services import promote_user_to_admin
+from .services import request_booking_permission
 from .services import show_organization
 from .services import update_organization
 from .services import user_has_admin_bookingpermission
@@ -66,56 +70,6 @@ def show_organization_view(request, organization):
 
 
 @login_required
-def request_bookingpermission_view(request, organization):
-    organization = get_object_or_404(Organization, slug=organization)
-    bookingpermissions = BookingPermission.objects.filter(
-        organization=organization
-    ).filter(user=request.user)
-
-    if bookingpermissions.exists():
-        if bookingpermissions.first().status == BookingPermission.Status.PENDING:
-            return HttpResponse(
-                "You are already requested to become a member. Please wait patiently."
-            )
-        if bookingpermissions.first().status == BookingPermission.Status.CONFIRMED:
-            return HttpResponse("You are already member of this organization.")
-        if bookingpermissions.first().status == BookingPermission.Status.REJECTED:
-            return HttpResponse("You have already been rejected by this organization.")
-
-    bookingpermissions.create(
-        user=request.user,
-        organization=organization,
-        status=BookingPermission.Status.PENDING,
-        role=BookingPermission.Role.BOOKER,
-    )
-    return HttpResponse(
-        "Successfully requested. "
-        "You will be notified when your request is approved or denied."
-    )
-
-
-@login_required
-def cancel_bookingpermission_view(request, organization, user):
-    organization = get_object_or_404(Organization, slug=organization)
-    bookingpermissions = BookingPermission.objects.filter(
-        organization=organization
-    ).filter(user__slug=user)
-
-    if request.user.slug == user or user_has_admin_bookingpermission(
-        request.user, organization
-    ):
-        if bookingpermissions.exists():
-            bookingpermissions.first().delete()
-            return HttpResponse("Booking permission has been cancelled.")
-        return HttpResponse("Booking permission does not exist.")
-
-    return HttpResponse(
-        "You are not allowed to cancel this booking permission.",
-        status=HTTPStatus.UNAUTHORIZED,
-    )
-
-
-@login_required
 def delete_organization_view(request, organization):
     organization = get_object_or_404(Organization, slug=organization)
     if user_has_admin_bookingpermission(request.user, organization):
@@ -126,115 +80,6 @@ def delete_organization_view(request, organization):
     return HttpResponse(
         "You are not allowed to delete this organization.",
         status=HTTPStatus.UNAUTHORIZED,
-    )
-
-
-@login_required
-def add_user_view(request, organization):
-    organization = get_object_or_404(Organization, slug=organization)
-
-    if not user_has_admin_bookingpermission(request.user, organization):
-        raise PermissionDenied
-
-    if request.method == "POST":
-        email = request.POST.get("email")
-        role = request.POST.get("role")
-
-        if not email or not role:
-            messages.error(request, "Email and role are required.")
-            return redirect(
-                "organizations:show-organization", organization=organization.slug
-            )
-
-        try:
-            # Check if user exists by email
-            user = User.objects.get(email=email)
-            # Create or get the BookingPermission
-            booking_permission, created = BookingPermission.objects.get_or_create(
-                user=user,
-                organization=organization,
-                defaults={
-                    "status": BookingPermission.Status.CONFIRMED,
-                    "role": BookingPermission.Role.ADMIN
-                    if role == "admin"
-                    else BookingPermission.Role.BOOKER,
-                },
-            )
-            if created:
-                messages.success(request, f"{user.email} was successfully added!")
-            else:
-                messages.info(request, f"{user.email} already has permissions.")
-        except User.DoesNotExist:
-            messages.error(request, f"No user found with email: {email}")
-
-    return redirect("organizations:show-organization", organization=organization.slug)
-
-
-@login_required
-def confirm_bookingpermission_view(request, organization, user):
-    organization = get_object_or_404(Organization, slug=organization)
-    bookingpermission = (
-        BookingPermission.objects.filter(organization=organization)
-        .filter(user__slug=user)
-        .first()
-    )
-
-    if bookingpermission and user_has_admin_bookingpermission(
-        request.user, organization
-    ):
-        if bookingpermission.status == BookingPermission.Status.CONFIRMED:
-            return HttpResponse("Booking permission has already been confirmed.")
-
-        bookingpermission.status = BookingPermission.Status.CONFIRMED
-        bookingpermission.save()
-        return HttpResponse("Booking permission has been confirmed.")
-
-    return HttpResponse(
-        "You are not allowed to confirm this booking permission.",
-        status=HTTPStatus.UNAUTHORIZED,
-    )
-
-
-@login_required
-def promote_to_admin_view(request, organization, user):
-    organization = get_object_or_404(Organization, slug=organization)
-    bookingpermission = (
-        BookingPermission.objects.filter(organization=organization)
-        .filter(user__slug=user)
-        .filter(status=BookingPermission.Status.CONFIRMED)
-        .first()
-    )
-
-    if bookingpermission and user_has_admin_bookingpermission(
-        request.user, organization
-    ):
-        bookingpermission.role = BookingPermission.Role.ADMIN
-        bookingpermission.save()
-        return HttpResponse("User has been promoted to admin.")
-
-    return HttpResponse(
-        "You are not allowed to promote.", status=HTTPStatus.UNAUTHORIZED
-    )
-
-
-@login_required
-def demote_to_booker_view(request, organization, user):
-    organization = get_object_or_404(Organization, slug=organization)
-    bookingpermission = (
-        BookingPermission.objects.filter(organization=organization)
-        .filter(user__slug=user)
-        .first()
-    )
-
-    if bookingpermission and user_has_admin_bookingpermission(
-        request.user, organization
-    ):
-        bookingpermission.role = BookingPermission.Role.BOOKER
-        bookingpermission.save()
-        return HttpResponse("User has been demoted to booker.")
-
-    return HttpResponse(
-        "You are not allowed to demote.", status=HTTPStatus.UNAUTHORIZED
     )
 
 
@@ -372,3 +217,103 @@ def create_organizationmessage_view(request, slug):
         "organizations/partials/show_organizationmessage.html",
         {"message": organizationmessage},
     )
+
+
+@login_required
+def organization_permission_view(request, organization):
+    """
+    HTTP layer for permission creation: self-request and admin-add
+    """
+    organization_obj = get_object_or_404(Organization, slug=organization)
+    action = request.POST.get("action", "request")
+
+    # HTTP: Route to appropriate service handler
+    if action == "request":
+        return _handle_permission_request(request, organization_obj)
+    if action == "add-user":
+        return _handle_add_user(request, organization_obj)
+    return HttpResponse("Invalid action", status=HTTPStatus.BAD_REQUEST)
+
+
+def _handle_permission_request(request, organization):
+    """Handle user self-requesting permission"""
+    try:
+        message = request_booking_permission(request.user, organization)
+        return HttpResponse(message)
+    except (PermissionDenied, ValueError) as e:
+        return HttpResponse(str(e), status=HTTPStatus.BAD_REQUEST)
+
+
+def _handle_add_user(request, organization):
+    """Handle admin adding a user to organization"""
+    email = request.POST.get("email")
+    role = request.POST.get("role")
+
+    try:
+        message = add_user_to_organization(organization, email, role, request.user)
+        messages.success(request, message)
+    except PermissionDenied as e:
+        messages.error(request, str(e))
+    except ValueError as e:
+        messages.error(request, str(e))
+    except Exception:  # noqa: BLE001
+        messages.error(request, "An error occurred while adding the user.")
+
+    return redirect("organizations:show-organization", organization=organization.slug)
+
+
+@login_required
+def organization_permission_management_view(request, organization, user):
+    """Handles permission management: confirm/cancel/promote/demote"""
+    organization_obj = get_object_or_404(Organization, slug=organization)
+    action = request.POST.get("action")
+
+    if not action:
+        return HttpResponse("Action is required", status=HTTPStatus.BAD_REQUEST)
+
+    # Action dispatch
+    if action == "confirm":
+        return _confirm_permission(request, organization_obj, user)
+    if action == "cancel":
+        return _cancel_permission(request, organization_obj, user)
+    if action == "promote":
+        return _promote_to_admin(request, organization_obj, user)
+    if action == "demote":
+        return _demote_to_booker(request, organization_obj, user)
+    return HttpResponse("Invalid action", status=HTTPStatus.BAD_REQUEST)
+
+
+def _confirm_permission(request, organization, user_slug):
+    """Confirm a booking permission request"""
+    try:
+        message = confirm_booking_permission(organization, user_slug, request.user)
+        return HttpResponse(message)
+    except PermissionDenied as e:
+        return HttpResponse(str(e), status=HTTPStatus.UNAUTHORIZED)
+
+
+def _cancel_permission(request, organization, user_slug):
+    """Cancel a booking permission"""
+    try:
+        message = cancel_booking_permission(organization, user_slug, request.user)
+        return HttpResponse(message)
+    except PermissionDenied as e:
+        return HttpResponse(str(e), status=HTTPStatus.UNAUTHORIZED)
+
+
+def _promote_to_admin(request, organization, user_slug):
+    """Promote a user to admin role"""
+    try:
+        message = promote_user_to_admin(organization, user_slug, request.user)
+        return HttpResponse(message)
+    except PermissionDenied as e:
+        return HttpResponse(str(e), status=HTTPStatus.UNAUTHORIZED)
+
+
+def _demote_to_booker(request, organization, user_slug):
+    """Demote a user to booker role"""
+    try:
+        message = demote_user_to_booker(organization, user_slug, request.user)
+        return HttpResponse(message)
+    except PermissionDenied as e:
+        return HttpResponse(str(e), status=HTTPStatus.UNAUTHORIZED)

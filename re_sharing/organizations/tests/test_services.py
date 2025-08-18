@@ -288,3 +288,7 @@ class TestUserPermissionsFunctions(TestCase):
             role=BookingPermission.Role.BOOKER,
         )
         assert not user_has_admin_bookingpermission(self.user, self.organization)
+
+
+# Permission service tests moved to new test_services_business_logic.py
+# Keep only integration and higher-level service tests here
