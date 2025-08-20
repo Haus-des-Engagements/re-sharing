@@ -455,10 +455,17 @@ def filter_bookings_list(  # noqa: PLR0913
     return bookings, organizations
 
 
-def bookings_webview(date_string):
+def bookings_webview(date_string, access_filter="all"):
+    from re_sharing.resources.models import Access
+
     bookings = Booking.objects.filter(
         resource__type=Resource.ResourceTypeChoices.ROOM, status=BookingStatus.CONFIRMED
     )
+
+    # Filter by access if not "all"
+    if access_filter != "all":
+        bookings = bookings.filter(resource__access__slug=access_filter)
+
     if date_string:
         shown_date = parser.parse(date_string).date()
     else:
@@ -474,7 +481,16 @@ def bookings_webview(date_string):
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, shown_date
+    # Get all available accesses for the dropdown
+    accesses = (
+        Access.objects.filter(
+            resource_of_access__type=Resource.ResourceTypeChoices.ROOM
+        )
+        .distinct()
+        .order_by("name")
+    )
+
+    return bookings, shown_date, accesses
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913

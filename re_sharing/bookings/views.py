@@ -327,12 +327,18 @@ def preview_and_save_booking_series_view(request):
 @login_required
 def list_bookings_webview(request: HttpRequest) -> HttpResponse:
     date_string = request.GET.get("date") or None
-    bookings, date = bookings_webview(date_string)
+    access_filter = request.GET.get("access") or "all"
+    bookings, date, accesses = bookings_webview(date_string, access_filter)
 
     return render(
         request,
         "bookings/list-bookings-webview.html",
-        {"bookings": bookings, "date": date},
+        {
+            "bookings": bookings,
+            "date": date,
+            "accesses": accesses,
+            "selected_access": access_filter,
+        },
     )
 
 

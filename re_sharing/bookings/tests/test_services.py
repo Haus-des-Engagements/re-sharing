@@ -1131,7 +1131,7 @@ class TestBookingsWebview(TestCase):
             ),
         )
 
-        bookings, shown_date = bookings_webview(date_string)
+        bookings, shown_date, accesses = bookings_webview(date_string)
 
         assert bookings.count() == 1
         assert bookings.first().resource == self.room_resource
@@ -1152,7 +1152,7 @@ class TestBookingsWebview(TestCase):
             ),
         )
 
-        bookings, shown_date = bookings_webview(None)
+        bookings, shown_date, accesses = bookings_webview(None)
 
         assert bookings.count() == 1
         assert shown_date == today
@@ -1180,10 +1180,64 @@ class TestBookingsWebview(TestCase):
             ),
         )
 
-        bookings, shown_date = bookings_webview(date_string)
+        bookings, shown_date, accesses = bookings_webview(date_string)
 
         assert bookings.count() == 1
         assert bookings.first().status == BookingStatus.CONFIRMED
+
+    def test_bookings_webview_access_filter(self):
+        from re_sharing.resources.tests.factories import AccessFactory
+
+        date_string = "2023-12-15"
+
+        # Create two different accesses
+        access1 = AccessFactory(name="Key Card")
+        access2 = AccessFactory(name="Digital Code")
+
+        # Create resources with different accesses
+        resource_with_access1 = ResourceFactory(
+            type=Resource.ResourceTypeChoices.ROOM, access=access1
+        )
+        resource_with_access2 = ResourceFactory(
+            type=Resource.ResourceTypeChoices.ROOM, access=access2
+        )
+
+        # Create bookings for both resources
+        BookingFactory(
+            resource=resource_with_access1,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 10, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 12, 0)),
+            ),
+        )
+        BookingFactory(
+            resource=resource_with_access2,
+            status=BookingStatus.CONFIRMED,
+            timespan=(
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 14, 0)),
+                timezone.make_aware(timezone.datetime(2023, 12, 15, 16, 0)),
+            ),
+        )
+
+        # Test filtering by specific access
+        bookings, shown_date, accesses = bookings_webview(date_string, access1.slug)
+
+        assert bookings.count() == 1
+        assert bookings.first().resource == resource_with_access1
+        assert access1 in accesses
+        assert access2 in accesses
+
+        # Test filtering by another access
+        bookings, shown_date, accesses = bookings_webview(date_string, access2.slug)
+
+        assert bookings.count() == 1
+        assert bookings.first().resource == resource_with_access2
+
+        # Test "all" filter shows both bookings
+        bookings, shown_date, accesses = bookings_webview(date_string, "all")
+
+        assert bookings.count() == 2  # noqa: PLR2004
 
 
 class TestGetBookingStatus(TestCase):

@@ -18,6 +18,15 @@
              value="{{ date|date:'Y-m-d' }}" />
     </div>
     <div class="col-auto">
+      <select name="access" class="form-select" id="id_access">
+        <option value="all" {% if selected_access == "all" %}selected{% endif %}>{% trans "All Access Types" %}</option>
+        {% for access in accesses %}
+          <option value="{{ access.slug }}"
+                  {% if selected_access == access.slug %}selected{% endif %}>{{ access.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
       <button type="submit" class="btn btn-primary mb-2">{% trans "Submit" %}</button>
     </div>
   </form>
@@ -29,14 +38,22 @@
             <th scope="col">{% trans "Timespan" %}</th>
             <th scope="col">{% trans "Organization" %}</th>
             <th scope="col">{% trans "Room" %}</th>
+            <th scope="col">{% trans "Access" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for booking in bookings %}
             <tr>
               <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>{{ booking.organization }}</td>
+              <td>
+                {% if booking.organization.public_name %}
+                  {{ booking.organization.public_name }}
+                {% else %}
+                  {{ booking.organization.name }}
+                {% endif %}
+              </td>
               <td>{{ booking.resource }}</td>
+              <td>{{ booking.resource.access.name|default:"-" }}</td>
             </tr>
           {% endfor %}
         </tbody>
