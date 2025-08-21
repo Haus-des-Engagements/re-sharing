@@ -1,6 +1,6 @@
 from datetime import timedelta
+from unittest.mock import patch
 
-from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
@@ -277,6 +277,10 @@ class SendManagerNewBookingEmailTest(TestCase):
     def setUp(self):
         mail.outbox.clear()
 
+    @patch(
+        "re_sharing.organizations.mails.settings.DEFAULT_MANAGER_EMAIL",
+        "manager@example.com",
+    )
     def test_sends_manager_notification(self):
         EmailTemplateFactory(
             email_type=EmailTemplate.EmailTypeChoices.MANAGER_NEW_BOOKING,
@@ -289,7 +293,7 @@ class SendManagerNewBookingEmailTest(TestCase):
         send_manager_new_booking_email(booking)
 
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == [settings.DEFAULT_MANAGER_EMAIL]
+        assert mail.outbox[0].to == ["manager@example.com"]
         assert "New booking: Test Booking" in mail.outbox[0].subject
 
 
@@ -335,6 +339,10 @@ class SendManagerNewBookingSeriesEmailTest(TestCase):
     def setUp(self):
         mail.outbox.clear()
 
+    @patch(
+        "re_sharing.organizations.mails.settings.DEFAULT_MANAGER_EMAIL",
+        "manager@example.com",
+    )
     def test_sends_manager_series_notification(self):
         EmailTemplateFactory(
             email_type=EmailTemplate.EmailTypeChoices.MANAGER_NEW_BOOKING_SERIES,
@@ -347,7 +355,7 @@ class SendManagerNewBookingSeriesEmailTest(TestCase):
         send_manager_new_booking_series_email(booking_series)
 
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == [settings.DEFAULT_MANAGER_EMAIL]
+        assert mail.outbox[0].to == ["manager@example.com"]
 
 
 class OrganizationConfirmationEmailTest(TestCase):
