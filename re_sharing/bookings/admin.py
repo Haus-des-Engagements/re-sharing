@@ -173,7 +173,14 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "import_id",
     ]
     resource_classes = [BookingSeriesResource]
-    search_fields = ["id", "title", "slug", "import_id", "user", "organization"]
+    search_fields = [
+        "id",
+        "title",
+        "slug",
+        "import_id",
+        "user__first_name",
+        "organization__name",
+    ]
     list_filter = ["status", "organization"]
     readonly_fields = ["booking_count_link"]
     actions = ["generate_bookings", "delete_bookings"]
