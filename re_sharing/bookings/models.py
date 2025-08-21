@@ -339,6 +339,13 @@ class Booking(TimeStampedModel):
     def is_confirmable(self):
         return not self.end_is_in_the_past() and self.status == BookingStatus.PENDING
 
+    def get_access_code(self):
+        from re_sharing.resources.services import get_access_code
+
+        return get_access_code(
+            self.resource.slug, self.organization.slug, self.timespan.lower
+        )
+
 
 class BookingMessage(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)

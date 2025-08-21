@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
@@ -115,20 +116,21 @@ def send_booking_confirmation_email(booking):
 
 def send_booking_reminder_emails(days=5):
     bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
+    bookings = bookings.exclude(organization__monthly_bulk_access_codes=True)
+    bookings = bookings.filter(
+        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
+    )
     dt_in_days = timezone.now() + timedelta(days=days)
     dt_in_days = dt_in_days.replace(hour=0, minute=0, second=0, microsecond=0)
     dt_in_next_day = dt_in_days + timedelta(days=1)
     bookings = bookings.filter(timespan__startswith__gte=dt_in_days)
     bookings = bookings.filter(timespan__startswith__lt=dt_in_next_day)
-    bookings = bookings.filter(
-        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
-    )
+    domain = Site.objects.get_current().domain
 
     for booking in bookings:
         access_code = get_access_code(
             booking.resource.slug, booking.organization.slug, booking.timespan.lower
         )
-        domain = Site.objects.get_current().domain
         context = {"booking": booking, "access_code": access_code, "domain": domain}
 
         send_email_with_template(
@@ -137,6 +139,50 @@ def send_booking_reminder_emails(days=5):
             get_recipient_booking(booking),
         )
     return list(bookings.values_list("slug", flat=True)), dt_in_days.date()
+
+
+def send_monthly_bookings_overview(months=1):
+    next_month = timezone.now() + relativedelta(months=+months)
+    next_month_start = next_month.replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    )
+    domain = Site.objects.get_current().domain
+    bookings = Booking.objects.filter(
+        status=BookingStatus.CONFIRMED, organization__monthly_bulk_access_codes=True
+    )
+    bookings = bookings.filter(
+        timespan__startswith__gte=next_month_start,
+        timespan__startswith__lt=next_month_start + relativedelta(months=months),
+    )
+    # Group bookings by organization to send bulk emails
+    from collections import defaultdict
+
+    bookings_by_org = defaultdict(list)
+
+    for booking in bookings:
+        booking.access_code = booking.get_access_code()
+        # Add access_code as an attribute to the booking object
+        bookings_by_org[booking.organization].append(booking)
+
+    # Send emails for each organization
+    for organization, booking_list in bookings_by_org.items():
+        context = {
+            "organization": organization,
+            "bookings": booking_list,
+            "next_month": next_month,
+            "domain": domain,
+        }
+        send_email_with_template(
+            EmailTemplate.EmailTypeChoices.MONTHLY_BOOKINGS,
+            context,
+            [organization.email],
+        )
+
+    return {
+        "next_month_start": next_month_start.date(),
+        "organizations_processed": len(bookings_by_org),
+        "organizations_list": [org.name for org in bookings_by_org],
+    }
 
 
 def send_booking_cancellation_email(booking):

@@ -358,6 +358,10 @@ class EmailTemplate(TimeStampedModel):
             "new_organization_message",
             _("New organization message"),
         )
+        MONTHLY_BOOKINGS = (
+            "monthly_bookings",
+            _("Monthly bookings"),
+        )
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)
