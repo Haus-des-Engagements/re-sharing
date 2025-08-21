@@ -6,6 +6,7 @@ from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from re_sharing.organizations.models import BookingPermission
+from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.models import OrganizationGroup
 from re_sharing.organizations.models import OrganizationMessage
@@ -61,6 +62,19 @@ class OrganizationGroupFactory(DjangoModelFactory):
     class Meta:
         model = OrganizationGroup
         skip_postgeneration_save = True
+
+
+class EmailTemplateFactory(DjangoModelFactory):
+    email_type = EmailTemplate.EmailTypeChoices.BOOKING_CONFIRMATION
+    subject = "Test Subject: {{ booking.title }}"
+    body = (
+        "Test Body: Dear user, your booking {{ booking.title }} is confirmed. "
+        "Domain: {{ domain }}"
+    )
+    active = True
+
+    class Meta:
+        model = EmailTemplate
 
 
 class OrganizationMessageFactory(DjangoModelFactory):
