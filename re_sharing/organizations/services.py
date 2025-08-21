@@ -76,9 +76,9 @@ def create_organization(user, form):
     new_org.save()
 
     new_org.organization_groups.set(form.cleaned_data["organization_groups"])
-    new_org.organization_groups.set(
-        OrganizationGroup.objects.filter(default_group=True)
-    )
+    default_groups = OrganizationGroup.objects.filter(default_group=True)
+    new_org.organization_groups.add(*default_groups)
+
     bookingpermission = BookingPermission(
         user=user,
         organization=new_org,
