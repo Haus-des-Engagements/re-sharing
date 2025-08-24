@@ -41,7 +41,7 @@ def show_organization(user, organization_slug):
     permitted_users = None
 
     if user.is_authenticated:
-        if user_has_admin_bookingpermission(user, organization) or user.is_staff:
+        if user_has_admin_bookingpermission(user, organization):
             bookingpermissions = BookingPermission.objects.filter(
                 organization=organization
             )
@@ -63,10 +63,10 @@ def show_organization(user, organization_slug):
                 .order_by("id")
             )
 
-    if not organization.is_public and not permitted_users:
-        raise PermissionDenied
+    if organization.is_public or permitted_users or is_admin:
+        return organization, permitted_users, is_admin
 
-    return organization, permitted_users, is_admin
+    raise PermissionDenied
 
 
 def create_organization(user, form):

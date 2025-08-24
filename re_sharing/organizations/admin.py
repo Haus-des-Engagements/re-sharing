@@ -12,6 +12,7 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
     list_filter = ["status", "organization_groups"]
     list_display = ["id", "name", "status", "usage_agreement", "usage_agreement_date"]
     search_fields = ["name", "id"]
+    ordering = ["-id"]
 
 
 @admin.register(EmailTemplate)

@@ -164,13 +164,13 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "created",
         "id",
         "organization",
+        "organization__monthly_bulk_access_codes",
+        "reminder_emails",
         "user",
         "first_booking_date",
         "last_booking_date",
         "status",
-        "get_first_booking",
         "booking_count_link",
-        "import_id",
     ]
     resource_classes = [BookingSeriesResource]
     search_fields = [
@@ -181,9 +181,18 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "user__first_name",
         "organization__name",
     ]
-    list_filter = ["status", "organization"]
+    list_filter = [
+        "organization__monthly_bulk_access_codes",
+        "reminder_emails",
+        "status",
+    ]
     readonly_fields = ["booking_count_link"]
-    actions = ["generate_bookings", "delete_bookings"]
+    actions = [
+        "generate_bookings",
+        "delete_bookings",
+        "activate_reminder_mails",
+        "deactivate_reminder_mails",
+    ]
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -256,6 +265,20 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         for booking_series in queryset:
             with set_actor(request.user):
                 Booking.objects.filter(booking_series=booking_series).delete()
+
+    @admin.action(description=_("Activate reminder mails"))
+    def activate_reminder_mails(self, request, queryset):
+        for booking_series in queryset:
+            with set_actor(request.user):
+                booking_series.reminder_emails = True
+                booking_series.save()
+
+    @admin.action(description=_("Deactivate reminder mails"))
+    def deactivate_reminder_mails(self, request, queryset):
+        for booking_series in queryset:
+            with set_actor(request.user):
+                booking_series.reminder_emails = False
+                booking_series.save()
 
 
 @admin.register(BookingMessage)
