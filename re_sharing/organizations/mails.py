@@ -33,7 +33,11 @@ def get_email_template(email_type):
 def get_recipient_booking(booking):
     if booking.organization.send_booking_emails_only_to_organization:
         return [booking.organization.email]
-    return [booking.user.email]
+
+    confirmed_users = booking.organization.get_confirmed_users()
+    if confirmed_users.filter(id=booking.user.id).exists():
+        return [booking.user.email]
+    return [booking.organization.email]
 
 
 def get_recipient_booking_series(booking_series):

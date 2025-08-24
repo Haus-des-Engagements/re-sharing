@@ -207,17 +207,6 @@ def save_booking(user, booking):
     ):
         raise PermissionDenied
 
-    if user.is_staff:
-        confirmed_admins = booking.organization.get_confirmed_admins()
-        if confirmed_admins.filter(id=user.id).exists():
-            booking.user = user
-        else:
-            admin_user = confirmed_admins.first()
-            if admin_user:
-                booking.user = admin_user
-            else:
-                error_msg = "No confirmed admins available."
-                raise ValueError(error_msg)
     booking.save()
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()

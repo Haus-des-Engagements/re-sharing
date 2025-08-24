@@ -39,6 +39,7 @@ class GetRecipientBookingTest(TestCase):
             email="org@example.com", send_booking_emails_only_to_organization=False
         )
         booking = BookingFactory(user=user, organization=organization)
+        BookingPermissionFactory(user=user, organization=organization)
 
         result = get_recipient_booking(booking)
 
