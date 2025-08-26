@@ -76,13 +76,13 @@ class BookingAdmin(ImportExportModelAdmin):
         "import_id",
         "compensation",
     ]
-    search_fields = ["id", "title", "slug", "import_id"]
+    search_fields = ["id", "title", "slug", "import_id", "organization__name"]
     list_filter = [
         "status",
-        "organization",
+        "organization__organization_groups",
         "resource",
-        "booking_series",
         "compensation",
+        "resource__location",
     ]
     ordering = ["id"]
     actions = ["confirm_bookings", "cancel_bookings"]
@@ -185,6 +185,7 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "organization__monthly_bulk_access_codes",
         "reminder_emails",
         "status",
+        "organization__organization_groups",
     ]
     readonly_fields = ["booking_count_link"]
     actions = [

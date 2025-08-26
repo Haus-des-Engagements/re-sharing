@@ -9,10 +9,17 @@ from .models import OrganizationGroup
 
 @admin.register(Organization)
 class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_filter = ["status", "organization_groups"]
-    list_display = ["id", "name", "status", "usage_agreement", "usage_agreement_date"]
+    list_filter = ["status", "organization_groups", "monthly_bulk_access_codes"]
+    list_display = [
+        "id",
+        "name",
+        "status",
+        "usage_agreement",
+        "usage_agreement_date",
+        "monthly_bulk_access_codes",
+    ]
     search_fields = ["name", "id"]
-    ordering = ["-id"]
+    ordering = ["name"]
 
 
 @admin.register(EmailTemplate)
