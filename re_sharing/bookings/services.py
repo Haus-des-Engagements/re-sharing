@@ -43,7 +43,7 @@ class InvalidBookingOperationError(Exception):
 
 def is_bookable_by_organization(user, organization, resource, compensation):
     # staff users are allowed to book any combination
-    if user.is_staff:
+    if user.is_manager():
         return True
 
     # check if organization is confirmed

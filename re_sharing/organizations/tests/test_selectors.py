@@ -65,7 +65,6 @@ class TestUserHasAdminPermission(TestCase):
         self.user = UserFactory()
         self.staff_user = UserFactory(is_staff=True)
         self.manager_user = UserFactory()
-        self.manager_user.is_manager = lambda: True
         self.organization = OrganizationFactory()
 
     def test_staff_user_has_admin_permission(self):
@@ -73,6 +72,10 @@ class TestUserHasAdminPermission(TestCase):
         assert result is True
 
     def test_manager_user_has_admin_permission(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        # Create a proper manager for the user
+        ManagerFactory(user=self.manager_user)
         result = user_has_admin_permission(self.manager_user, self.organization)
         assert result is True
 

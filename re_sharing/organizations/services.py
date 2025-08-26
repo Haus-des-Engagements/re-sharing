@@ -125,6 +125,12 @@ def update_organization(user, form, organization):
 def user_has_bookingpermission(user, booking):
     if user.is_staff:
         return True
+
+    if user.is_manager():
+        manager = user.manager
+        if manager.can_manage_organization(organization=booking.organization):
+            return True
+
     return (
         BookingPermission.objects.filter(organization=booking.organization)
         .filter(user=user)

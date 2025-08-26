@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
 from django.contrib.auth.decorators import login_required
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportMixin
 
@@ -38,7 +39,7 @@ class UserAdmin(ImportExportMixin, auth_admin.UserAdmin):
     )
     list_display = ["id", "email", "first_name", "last_name", "is_superuser"]
     search_fields = ["email", "first_name", "last_name"]
-    ordering = ["id"]
+    ordering = [Lower("first_name"), Lower("last_name")]
     add_fieldsets = (
         (
             None,

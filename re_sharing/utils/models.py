@@ -31,8 +31,10 @@ class BookingStatus(IntegerChoices):
 
 
 def get_booking_status(user, organization, resource):
-    if user.is_staff:
-        return BookingStatus.CONFIRMED
+    if user.is_manager():
+        manager = user.manager
+        if manager.can_manage_organization(organization=organization):
+            return BookingStatus.CONFIRMED
     if (
         organization.organization_groups.filter(
             auto_confirmed_resources=resource

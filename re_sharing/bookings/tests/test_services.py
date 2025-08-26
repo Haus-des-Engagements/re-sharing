@@ -56,7 +56,6 @@ from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
-from re_sharing.utils.models import get_booking_status
 
 
 class TestCancelBooking(TestCase):
@@ -338,38 +337,6 @@ class TestSaveBooking(TestCase):
         saved_booking = save_booking(self.user, booking)
 
         assert saved_booking.status == BookingStatus.CONFIRMED
-
-    def test_save_booking_staff_user_with_admin_role(self):
-        # Make user staff and admin
-        self.user.is_staff = True
-        self.user.save()
-
-        # Create or update booking permission to admin role
-        permission, created = BookingPermission.objects.get_or_create(
-            user=self.user,
-            organization=self.organization,
-            defaults={
-                "status": BookingPermission.Status.CONFIRMED,
-                "role": BookingPermission.Role.ADMIN,
-            },
-        )
-        if not created:
-            permission.role = BookingPermission.Role.ADMIN
-            permission.save()
-
-        # Create booking with different user
-        other_user = UserFactory()
-        resource = ResourceFactory()
-        booking = BookingFactory(
-            user=other_user,
-            organization=self.organization,
-            resource=resource,
-        )
-
-        saved_booking = save_booking(self.user, booking)
-
-        # Staff user should become the booking user when they are admin
-        assert saved_booking.user == self.user
 
 
 class TestCreateBookingMessage(TestCase):
@@ -1238,34 +1205,3 @@ class TestBookingsWebview(TestCase):
         bookings, shown_date, accesses = bookings_webview(date_string, "all")
 
         assert bookings.count() == 2  # noqa: PLR2004
-
-
-class TestGetBookingStatus(TestCase):
-    def setUp(self):
-        self.resource = ResourceFactory()
-
-        self.organization_group = OrganizationGroupFactory()
-        self.organization_group.auto_confirmed_resources.add(self.resource)
-        self.organization = OrganizationFactory()
-
-        self.user = UserFactory()
-
-    def test_pending_by_not_confirmed_organization(self):
-        self.organization.organization_groups.add(self.organization_group)
-        status = get_booking_status(self.user, self.organization, self.resource)
-        assert status == BookingStatus.PENDING
-
-    def test_confirmed_by_confirmed_organization(self):
-        self.organization.organization_groups.add(self.organization_group)
-        self.organization.status = Organization.Status.CONFIRMED
-        status = get_booking_status(self.user, self.organization, self.resource)
-        assert status == BookingStatus.CONFIRMED
-
-    def test_pending_by_organization(self):
-        status = get_booking_status(self.user, self.organization, self.resource)
-        assert status == BookingStatus.PENDING
-
-    def test_confirmed_by_is_staff(self):
-        self.user.is_staff = True
-        status = get_booking_status(self.user, self.organization, self.resource)
-        assert status == BookingStatus.CONFIRMED

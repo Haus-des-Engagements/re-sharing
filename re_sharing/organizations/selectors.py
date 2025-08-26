@@ -37,7 +37,9 @@ def user_has_admin_permission(user: User, organization: Organization) -> bool:
         return True
 
     if user.is_manager():
-        return True
+        manager = user.manager
+        if manager.can_manage_organization(organization=organization):
+            return True
 
     return BookingPermission.objects.filter(
         user=user,

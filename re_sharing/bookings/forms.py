@@ -372,8 +372,9 @@ class BookingForm(forms.ModelForm):
                 css_class="row g-2",
             ),
         )
-        if user.is_staff:
-            organizations = Organization.objects.all()
+        if user.is_manager():
+            manager = user.get_manager()
+            organizations = manager.get_organizations()
         else:
             organizations = (
                 Organization.objects.filter(
