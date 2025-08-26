@@ -145,7 +145,7 @@ def send_booking_reminder_emails(days=5):
     return list(bookings.values_list("slug", flat=True)), dt_in_days.date()
 
 
-def send_monthly_bookings_overview(months=1):
+def send_monthly_bookings_overview(months=1, organizations=None):
     next_month = timezone.now() + relativedelta(months=+months)
     next_month_start = next_month.replace(
         day=1, hour=0, minute=0, second=0, microsecond=0
@@ -154,9 +154,13 @@ def send_monthly_bookings_overview(months=1):
     bookings = Booking.objects.filter(
         status=BookingStatus.CONFIRMED, organization__monthly_bulk_access_codes=True
     )
+
+    # Filter by specific organizations if provided
+    if organizations is not None:
+        bookings = bookings.filter(organization__in=organizations)
     bookings = bookings.filter(
         timespan__startswith__gte=next_month_start,
-        timespan__startswith__lt=next_month_start + relativedelta(months=months),
+        timespan__startswith__lt=next_month_start + relativedelta(months=1),
     )
     # Group bookings by organization to send bulk emails
     from collections import defaultdict

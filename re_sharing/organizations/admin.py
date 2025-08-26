@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportMixin
 
+from .mails import send_monthly_bookings_overview
 from .models import BookingPermission
 from .models import EmailTemplate
 from .models import Organization
@@ -22,7 +23,11 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
     ]
     search_fields = ["name", "id"]
     ordering = ["name"]
-    actions = ["activate_bulk_sending", "deactivate_bulk_sending"]
+    actions = [
+        "activate_bulk_sending",
+        "deactivate_bulk_sending",
+        "admin_send_monthly_bookings_overview",
+    ]
 
     @admin.action(description=_("Activate bulk sending"))
     def activate_bulk_sending(self, request, queryset):
@@ -37,6 +42,10 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
             with set_actor(request.user):
                 organization.monthly_bulk_access_codes = False
                 organization.save()
+
+    @admin.action(description=_("Send monthly bookings overview"))
+    def admin_send_monthly_bookings_overview(self, request, queryset):
+        send_monthly_bookings_overview(organizations=queryset)
 
 
 @admin.register(EmailTemplate)
