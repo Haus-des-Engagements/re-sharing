@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
@@ -380,7 +379,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_cancel_booking_view(request, booking_slug):
     booking = manager_cancel_booking(request.user, booking_slug)
 
@@ -390,7 +389,7 @@ def manager_cancel_booking_view(request, booking_slug):
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_confirm_booking_view(request, booking_slug):
     booking = manager_confirm_booking(request.user, booking_slug)
     return render(
@@ -399,7 +398,7 @@ def manager_confirm_booking_view(request, booking_slug):
 
 
 @require_http_methods(["GET"])
-@staff_member_required
+@manager_required
 def manager_list_booking_series_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the recurrences for a resource manager so that they can be confirmed or
@@ -429,7 +428,7 @@ def manager_list_booking_series_view(request: HttpRequest) -> HttpResponse:
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_cancel_booking_series_view(request, booking_series_uuid):
     booking_series = manager_cancel_booking_series(request.user, booking_series_uuid)
 
@@ -441,7 +440,7 @@ def manager_cancel_booking_series_view(request, booking_series_uuid):
 
 
 @require_http_methods(["PATCH"])
-@staff_member_required
+@manager_required
 def manager_confirm_booking_series_view(request, booking_series_uuid):
     booking_series = manager_confirm_booking_series(request.user, booking_series_uuid)
 
@@ -453,7 +452,7 @@ def manager_confirm_booking_series_view(request, booking_series_uuid):
 
 
 @require_http_methods(["GET"])
-@staff_member_required
+@manager_required
 def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the bookings with an invoice for a resource manager so that they can be
