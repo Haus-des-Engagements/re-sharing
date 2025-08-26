@@ -1,4 +1,6 @@
+from auditlog.context import set_actor
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportMixin
 
 from .models import BookingPermission
@@ -20,6 +22,21 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
     ]
     search_fields = ["name", "id"]
     ordering = ["name"]
+    actions = ["activate_bulk_sending", "deactivate_bulk_sending"]
+
+    @admin.action(description=_("Activate bulk sending"))
+    def activate_bulk_sending(self, request, queryset):
+        for organization in queryset:
+            with set_actor(request.user):
+                organization.monthly_bulk_access_codes = True
+                organization.save()
+
+    @admin.action(description=_("Deactivate bulk sending"))
+    def deactivate_bulk_sending(self, request, queryset):
+        for organization in queryset:
+            with set_actor(request.user):
+                organization.monthly_bulk_access_codes = False
+                organization.save()
 
 
 @admin.register(EmailTemplate)
