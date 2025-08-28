@@ -400,8 +400,7 @@ def get_user_accessible_locations(user):
     Returns:
         QuerySet: A queryset of Location objects that the user has access to.
     """
-    # TODO: change to user.is_authenticated after migration
-    if not user.is_staff:
+    if not user.is_authenticated:
         # For unauthenticated users, return locations of public resources
         return (
             Location.objects.filter(resource_of_location__is_private=False)
