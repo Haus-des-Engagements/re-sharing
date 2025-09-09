@@ -111,12 +111,12 @@ class OrganizationForm(forms.ModelForm):
                 "(or your coworking-contract)."
             )
         ),
-        required=False,
+        required=True,
         help_text=_("Please upload a single PDF file."),
     )
     usage_agreement_date = forms.DateField(
         label=_("Signing date of the usage agreement"),
-        required=False,
+        required=True,
         help_text=_("When did you sign the usage agreement?"),
     )
     hde_newsletter = forms.BooleanField(
