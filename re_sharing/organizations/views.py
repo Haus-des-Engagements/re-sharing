@@ -133,12 +133,13 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
     """
     status = request.GET.get("status") or "all"
     group = request.GET.get("group") or "all"
+    search = request.GET.get("search")
 
     # Get the manager object for the current user
     manager = request.user.get_manager()
 
     # Filter organizations based on the manager's assigned organization_groups
-    organizations = manager_filter_organizations_list(status, group, manager)
+    organizations = manager_filter_organizations_list(status, group, manager, search)
 
     # Get only the organization groups that the manager has access to
     available_groups = OrganizationGroup.objects.all()

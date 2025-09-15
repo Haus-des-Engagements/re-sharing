@@ -162,7 +162,7 @@ def user_has_admin_bookingpermission(user, organization):
     return user_has_admin_permission(user, organization)
 
 
-def manager_filter_organizations_list(status, group, manager=None):
+def manager_filter_organizations_list(status, group, manager=None, search=None):
     """
     Filter organizations based on status, group, and manager.
     If manager is provided and has organization_groups assigned, only organizations
@@ -181,6 +181,8 @@ def manager_filter_organizations_list(status, group, manager=None):
         organizations = organizations.filter(status__in=status)
     if group != "all":
         organizations = organizations.filter(organization_groups__slug=group)
+    if search:
+        organizations = organizations.filter(name__icontains=search)
 
     organizations = organizations.annotate(
         bookings_count=Count("booking_of_organization", distinct=True)

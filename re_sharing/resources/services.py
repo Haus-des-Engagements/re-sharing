@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
+from re_sharing.providers.models import Manager
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
@@ -245,6 +246,7 @@ def _process_bookings(resource_data, bookings, resource, day, user_context):
     """
     user = user_context.get("user")
     organizations_of_user = user_context.get("organizations", [])
+    organizations_of_manager = user_context.get("organizations_of_manager", [])
     for booking in bookings:
         if booking.resource != resource or booking.timespan.lower.date() != day.date():
             continue
@@ -260,17 +262,15 @@ def _process_bookings(resource_data, bookings, resource, day, user_context):
                 timeslot["status"] = "booked"
                 timeslot["link"] = None
 
-                if booking.organization in organizations_of_user:
+                if booking.organization in (
+                    organizations_of_user or organizations_of_manager
+                ):
                     timeslot["status"] = "booked by me"
                     timeslot["link"] = f"/bookings/{booking.slug}/"
                     timeslot["title"] = booking.title
+                    timeslot["organization"] = booking.organization.name
 
-                if user.is_staff:
-                    timeslot["link"] = f"/bookings/{booking.slug}/"
-
-                if (
-                    user.is_authenticated and booking.organization.is_public
-                ) or user.is_staff:
+                if user.is_authenticated and booking.organization.is_public:
                     timeslot["organization"] = booking.organization.name
 
 
@@ -326,6 +326,11 @@ def planner(user, date_string, nb_of_days, resources):
         user.get_organizations_of_user() if user.is_authenticated else []
     )
 
+    if user.is_authenticated:
+        if user.is_manager():
+            manager = Manager.objects.get(user=user)
+            organizations_of_manager = manager.get_organizations()
+
     # Process each day
     for day in weekdays:
         day_data = {"weekday": day, "resources": []}
@@ -363,7 +368,11 @@ def planner(user, date_string, nb_of_days, resources):
                 resource_data["timeslots"].append(timeslot)
 
             # Process bookings for this resource and day
-            user_context = {"user": user, "organizations": organizations_of_user}
+            user_context = {
+                "user": user,
+                "organizations": organizations_of_user,
+                "organizations_of_manager": organizations_of_manager,
+            }
             _process_bookings(resource_data, bookings, resource, day, user_context)
 
             day_data["resources"].append(resource_data)
