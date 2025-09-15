@@ -12,7 +12,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
 
-from config.settings.base import ADMIN_URL
 from re_sharing.bookings.forms import BookingForm
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingMessageFactory
@@ -152,7 +151,8 @@ class TestManagerBookingsView(TestCase):
 class TestManagerActionsBookingView(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.staff_user = UserFactory(is_staff=True)
+        self.manager = UserFactory()
+        ManagerFactory(user=self.manager)
         self.user = UserFactory(is_staff=False)
         self.booking = BookingFactory()
         self.cancel_booking_url = reverse(
@@ -165,46 +165,36 @@ class TestManagerActionsBookingView(TestCase):
         )
 
     @patch("re_sharing.bookings.models.Booking.is_cancelable", return_value=True)
-    def test_cancel_by_staff(self, mock_is_cancelable):
+    def test_cancel_by_manager(self, mock_is_cancelable):
         client = Client()
-        client.force_login(self.staff_user)
+        client.force_login(self.manager)
 
         response = client.patch(self.cancel_booking_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("re_sharing.bookings.models.Booking.is_cancelable", return_value=True)
-    def test_cancel_by_non_staff(self, mock_is_cancelable):
+    def test_cancel_by_non_manager(self, mock_is_cancelable):
         client = Client()
         client.force_login(self.user)
 
         response = client.patch(self.cancel_booking_url)
-        assert response.status_code == HTTPStatus.FOUND
-        assert (
-            response.url
-            == f"/{ADMIN_URL}login/?next=/bookings/manage-bookings/{self.booking.slug}"
-            f"/cancel-booking/"
-        )
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     @patch("re_sharing.bookings.models.Booking.is_confirmable", return_value=True)
     def test_confirm_by_staff(self, mock_is_confirmable):
         client = Client()
-        client.force_login(self.staff_user)
+        client.force_login(self.manager)
 
         response = client.patch(self.confirm_booking_url)
         assert response.status_code == HTTPStatus.OK
 
     @patch("re_sharing.bookings.models.Booking.is_confirmable", return_value=True)
-    def test_confirm_by_non_staff(self, mock_is_confirmable):
+    def test_confirm_by_non_manager(self, mock_is_confirmable):
         client = Client()
         client.force_login(self.user)
 
         response = client.patch(self.confirm_booking_url)
-        assert response.status_code == HTTPStatus.FOUND
-        assert (
-            response.url
-            == f"/{ADMIN_URL}login/?next=/bookings/manage-bookings/{self.booking.slug}"
-            f"/confirm-booking/"
-        )
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 class TestCancelBookingView(TestCase):

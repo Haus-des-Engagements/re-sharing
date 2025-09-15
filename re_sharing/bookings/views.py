@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
@@ -452,7 +453,7 @@ def manager_confirm_booking_series_view(request, booking_series_uuid):
 
 
 @require_http_methods(["GET"])
-@manager_required
+@staff_member_required
 def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpResponse:
     """
     Shows the bookings with an invoice for a resource manager so that they can be

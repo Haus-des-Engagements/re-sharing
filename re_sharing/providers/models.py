@@ -69,7 +69,7 @@ class Manager(TimeStampedModel):
     def can_manage_booking(self, booking):
         """
         Check if this resource manager can manage the given booking.
-        The manager must be able to manage the booking's organization and resource.
+        The manager must be able to manage the booking's organization and resources.
         """
         # Check if the manager can manage the organization
         if not self.can_manage_organization(booking.organization):

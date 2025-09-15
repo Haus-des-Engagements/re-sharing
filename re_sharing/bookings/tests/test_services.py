@@ -644,7 +644,6 @@ def test_create_rrule(rrule_data, expected):
 def test_manager_confirm_booking(mock_is_confirmable):
     user = UserFactory()
     booking = BookingFactory()
-
     booking = manager_confirm_booking(user, booking.slug)
 
     # Assertions

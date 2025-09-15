@@ -148,7 +148,7 @@ class BookingForm(forms.ModelForm):
         ("DAILY", _("Daily")),
         ("WEEKLY", _("Weekly")),
         ("MONTHLY_BY_DAY", _("Monthly by weekday")),
-        ("MONTHLY_BY_DATE", _("Monthly by date")),
+        # Disable this option ("MONTHLY_BY_DATE", _("Monthly by date")),
     ]
     rrule_repetitions = forms.ChoiceField(choices=FREQUENCIES, label=_("Repeat"))
     RRULE_ENDS_CHOICES = [
