@@ -30,6 +30,13 @@
         {% for resource in resources %}<option value="{{ resource.slug }}">{{ resource }}</option>{% endfor %}
       </select>
     </div>
+    <div class="col-auto">
+      <select name="invoice_filter" class="form-select" id="id_invoice_filter">
+        <option value="all">{% trans "with & without invoice number" %}</option>
+        <option value="with_invoice">{% trans "only with invoice number" %}</option>
+        <option value="without_invoice">{% trans "only without invoice number" %}</option>
+      </select>
+    </div>
     <div id="div_invoice_number" class="col-auto">
       <input type="text"
              name="invoice_number"
@@ -37,13 +44,6 @@
              placeholder="{% trans 'Invoice number' %}"
              id="invoice_number"
              {% if invoice_number %}value="{{ invoice_number }}"{% endif %} />
-    </div>
-    <div class="col-auto form-check">
-      <input type="checkbox"
-             name="only_with_invoice_number"
-             class="form-check-input"
-             id="id_only_with_invoice_number" />
-      <label for="id_only_with_invoice_number" class="form-check-label">{% trans "only with invoice number" %}</label>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

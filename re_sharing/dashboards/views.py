@@ -5,6 +5,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Count
+from django.db.models import Q
 from django.db.models import Sum
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -150,10 +151,42 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
         .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
         .order_by("resource__name", "start_date__month")
     )
+
+    months = list(range(1, 13))
+    resources = Resource.objects.all().order_by("location__id")
+
+    bookings_by_resource = []
+    for resource in resources:
+        for month in months:
+            booking_data = Booking.objects.filter(
+                start_date__year=2025,
+                start_date__month=month,
+                resource=resource,
+                status=BookingStatus.CONFIRMED,
+            ).aggregate(
+                bookings_count=Count("id"),
+                amount=Sum("total_amount"),
+                not_invoiced_amount=Sum("total_amount", filter=Q(invoice_number="")),
+            )
+
+            bookings_by_resource.append(
+                {
+                    "resource__name": resource.name,
+                    "start_date__month": month,
+                    "bookings_count": booking_data["bookings_count"] or "",
+                    "amount": booking_data["amount"] or "",
+                    "not_invoiced_amount": booking_data["not_invoiced_amount"] or "",
+                }
+            )
+
     monthly_totals = (
         Booking.objects.filter(start_date__year=2025, status=BookingStatus.CONFIRMED)
         .values("start_date__month")
-        .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
+        .annotate(
+            bookings_count=Count("id"),
+            amount=Sum("total_amount"),
+            not_invoiced_amount=Sum("total_amount", filter=Q(invoice_number="")),
+        )
         .order_by("start_date__month")
     )
     yearly_totals = Booking.objects.filter(
@@ -163,6 +196,13 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
         start_date__year=2025,
         start_date__lt=timezone.now(),
         status=BookingStatus.CONFIRMED,
+    ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
+
+    not_yet_invoiced = Booking.objects.filter(
+        start_date__year=2025,
+        status=BookingStatus.CONFIRMED,
+        invoice_number="",
+        total_amount__gt=0,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
     # Render to the template
@@ -175,5 +215,6 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
             "monthly_totals": monthly_totals,
             "yearly_totals": yearly_totals,
             "realized_yearly_totals": realized_yearly_totals,
+            "not_yet_invoiced": not_yet_invoiced,
         },
     )

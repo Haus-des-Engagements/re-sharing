@@ -459,12 +459,12 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     Shows the bookings with an invoice for a resource manager so that they can be
     confirmed or cancelled
     """
-    only_with_invoice_number = request.GET.get("only_with_invoice_number") or False
+    invoice_filter = request.GET.get("invoice_filter", "all")
     organization = request.GET.get("organization", "all")
     invoice_number = request.GET.get("invoice_number") or None
     resource = request.GET.get("resource") or "all"
     bookings, organizations, resources = manager_filter_invoice_bookings_list(
-        organization, only_with_invoice_number, invoice_number, resource
+        organization, invoice_filter, invoice_number, resource
     )
 
     context = {
