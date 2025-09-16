@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-16 12:04+0200\n"
+"POT-Creation-Date: 2025-09-16 12:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -379,7 +379,7 @@ msgid "Total amount"
 msgstr "Gesamtbetrag"
 
 #: re_sharing/bookings/models.py:268
-#: re_sharing/templates/bookings/manager_list_invoices.html:37
+#: re_sharing/templates/bookings/manager_list_invoices.html:44
 #: re_sharing/templates/bookings/partials/manager_list_invoices.html:13
 msgid "Invoice number"
 msgstr "Rechnungsnummer"
@@ -1021,7 +1021,7 @@ msgstr ""
 
 #: re_sharing/providers/models.py:28 re_sharing/resources/apps.py:7
 #: re_sharing/resources/models.py:132 re_sharing/resources/models.py:222
-#: re_sharing/templates/base.html:179
+#: re_sharing/templates/base.html:178
 msgid "Resources"
 msgstr "Ressourcen"
 
@@ -1209,7 +1209,7 @@ msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
 
 #: re_sharing/templates/allauth/layouts/entrance.html:13
-#: re_sharing/templates/base.html:143
+#: re_sharing/templates/base.html:142
 msgid "Sign In"
 msgstr "Anmelden"
 
@@ -1217,7 +1217,7 @@ msgstr "Anmelden"
 msgid "HdE Räume"
 msgstr "HdE Räume"
 
-#: re_sharing/templates/base.html:61 re_sharing/templates/base.html:175
+#: re_sharing/templates/base.html:61 re_sharing/templates/base.html:174
 msgid "Home"
 msgstr "Startseite"
 
@@ -1226,7 +1226,7 @@ msgstr "Startseite"
 msgid "Rooms"
 msgstr "Räume"
 
-#: re_sharing/templates/base.html:69 re_sharing/templates/base.html:183
+#: re_sharing/templates/base.html:69 re_sharing/templates/base.html:182
 #: re_sharing/templates/bookings/list_booking_series.html:12
 #: re_sharing/templates/bookings/list_bookings.html:13
 #: re_sharing/templates/bookings/show-booking.html:12
@@ -1245,36 +1245,40 @@ msgstr "Verwaltung"
 msgid "Invoices"
 msgstr "Rechnungen"
 
-#: re_sharing/templates/base.html:98
+#: re_sharing/templates/base.html:97
 #: re_sharing/templates/dashboards/reporting.html:12
 msgid "Reports"
 msgstr ""
 
-#: re_sharing/templates/base.html:107
+#: re_sharing/templates/base.html:106
 #: re_sharing/templates/resources/multi_planner.html:6
 #: re_sharing/templates/resources/multi_planner.html:9
 msgid "Find a free room"
 msgstr "Finde einen freien Raum"
 
-#: re_sharing/templates/base.html:121
+#: re_sharing/templates/base.html:120
 msgid "Profile"
 msgstr "Profil"
 
-#: re_sharing/templates/base.html:126
+#: re_sharing/templates/base.html:125
 msgid "My Profile"
 msgstr "Mein Profil"
 
-#: re_sharing/templates/base.html:132
+#: re_sharing/templates/base.html:131
 msgid "Sign Out"
 msgstr "Abmelden"
 
-#: re_sharing/templates/base.html:139
+#: re_sharing/templates/base.html:138
 msgid "Sign Up"
 msgstr "Registrieren"
 
-#: re_sharing/templates/base.html:187
-msgid "Imprint and Data Privacy"
-msgstr "Impressum und Datenschutz"
+#: re_sharing/templates/base.html:186
+msgid "Imprint"
+msgstr "Impressum"
+
+#: re_sharing/templates/base.html:190
+msgid "Data Privacy"
+msgstr "Datenschutzerklärung"
 
 #: re_sharing/templates/bookings/create-booking.html:10
 msgid "New booking request"
@@ -1429,15 +1433,15 @@ msgstr "zeige"
 msgid "Manage invoices"
 msgstr "Rechnungen verwalten"
 
-#: re_sharing/templates/bookings/manager_list_invoices.html:43
+#: re_sharing/templates/bookings/manager_list_invoices.html:35
 msgid "with & without invoice number"
 msgstr "mit & ohne Rechnungsnummer"
 
-#: re_sharing/templates/bookings/manager_list_invoices.html:44
+#: re_sharing/templates/bookings/manager_list_invoices.html:36
 msgid "only with invoice number"
 msgstr "nur mit Rechnungsnummer"
 
-#: re_sharing/templates/bookings/manager_list_invoices.html:45
+#: re_sharing/templates/bookings/manager_list_invoices.html:37
 msgid "only without invoice number"
 msgstr "nur ohne Rechnungsnummer"
 
