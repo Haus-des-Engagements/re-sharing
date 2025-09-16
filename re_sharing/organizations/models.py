@@ -20,6 +20,7 @@ from django.db.models import IntegerField
 from django.db.models import ManyToManyField
 from django.db.models import TextChoices
 from django.db.models import TextField
+from django.db.models import URLField
 from django.db.models import UUIDField
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -164,7 +165,7 @@ class Organization(TimeStampedModel):
         default=False,
     )
     phone = CharField(_("Phone number"), max_length=32)
-    website = CharField(_("Website"), max_length=128, blank=True)
+    website = URLField(_("Website"), max_length=128, blank=True)
     legal_form = IntegerField(verbose_name=_("Legal form"), choices=LegalForm.choices)
     other_legal_form = CharField(_("Other legal form"), max_length=160, blank=True)
     is_charitable = BooleanField(

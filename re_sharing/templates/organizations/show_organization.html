@@ -103,7 +103,7 @@
           <tr>
             <td class="first-column">{% trans "Website" %}</td>
             <td>
-              <a href="https://{{ organization.website }}">{{ organization.website }}</a>
+              <a href="{{ organization.website }}">{{ organization.website }}</a>
             </td>
           </tr>
           <tr>
@@ -150,7 +150,7 @@
                     <svg class="fs-4 me-1" width="1em" height="1em">
                       <use href="#bi-globe2" />
                     </svg>
-                    <a href="https://{{ organization.website }}">{{ organization.website }}</a>
+                    <a href="{ organization.website }}">{{ organization.website }}</a>
                   </li>
                 {% endif %}
                 <li class="list-group-item">
