@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-16 12:55+0200\n"
+"POT-Creation-Date: 2025-09-18 10:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,6 +77,8 @@ msgstr "Erinnerungsmails deaktivieren"
 #: re_sharing/bookings/forms.py:47
 #: re_sharing/templates/bookings/show_booking_series.html:91
 #: re_sharing/templates/dashboards/users_bookings_and_permissions.html:72
+#: re_sharing/templates/resources/list_resources.html:27
+#: re_sharing/templates/resources/list_resources.html:30
 #: re_sharing/templates/resources/partials/planner_table.html:20
 #: re_sharing/templates/resources/partials/selection_and_table.html:33
 #: re_sharing/templates/resources/partials/selection_and_table.html:37
@@ -1043,7 +1045,7 @@ msgid "Slug"
 msgstr "Kurzbezeichnung"
 
 #: re_sharing/resources/models.py:38 re_sharing/resources/models.py:116
-#: re_sharing/templates/resources/list_resources.html:50
+#: re_sharing/templates/resources/list_resources.html:74
 #: re_sharing/templates/resources/multi_planner.html:27
 msgid "Location"
 msgstr "Standort"
@@ -1990,17 +1992,28 @@ msgstr ""
 "Du kannst verfügbare Zeiträume auch im <a href=\"%(planner_url)s\">Planer</"
 "a> finden."
 
-#: re_sharing/templates/resources/list_resources.html:27
-#: re_sharing/templates/resources/list_resources.html:29
-msgid "Find a free resource"
-msgstr "Finde eine freie Ressource"
+#: re_sharing/templates/resources/list_resources.html:34
+#, fuzzy
+#| msgid "End time"
+msgid "Any time"
+msgstr "Enduhrzeit"
 
-#: re_sharing/templates/resources/list_resources.html:35
-#: re_sharing/templates/resources/list_resources.html:37
+#: re_sharing/templates/resources/list_resources.html:42
+#, fuzzy
+#| msgid "End Time"
+msgid "Time"
+msgstr "Enduhrzeit"
+
+#: re_sharing/templates/resources/list_resources.html:53
+msgid "Duration"
+msgstr "Dauer"
+
+#: re_sharing/templates/resources/list_resources.html:59
+#: re_sharing/templates/resources/list_resources.html:61
 msgid "Number of persons"
 msgstr "Anzahl an Personen"
 
-#: re_sharing/templates/resources/list_resources.html:42
+#: re_sharing/templates/resources/list_resources.html:66
 #: re_sharing/templates/resources/multi_planner.html:31
 msgid "All locations"
 msgstr "Alle Standorte"
@@ -2620,6 +2633,9 @@ msgstr "Storniert"
 #: re_sharing/utils/models.py:30
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Find a free resource"
+#~ msgstr "Finde eine freie Ressource"
 
 #~ msgid "Monthly by date"
 #~ msgstr "Monatlich nach Datum"

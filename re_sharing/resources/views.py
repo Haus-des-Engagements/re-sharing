@@ -1,5 +1,7 @@
 from datetime import date
+from datetime import datetime
 from datetime import time
+from datetime import timedelta
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -19,15 +21,62 @@ from re_sharing.resources.services import show_resource
 @require_http_methods(["GET"])
 def list_resources_view(request):
     persons_count = request.GET.get("persons_count")
-    start_datetime = request.GET.get("start_datetime")
+    start_date = request.GET.get("start_date")
+    start_time = request.GET.get("start_time")
+    duration = request.GET.get("duration", "60")  # Default to 60 minutes (1 hour)
     location_slug = request.GET.get("location")
+
+    # Combine date and time into datetime string if both are provided
+    start_datetime = None
+    if start_date and start_time:
+        start_datetime = f"{start_date}T{start_time}"
+
     resources = filter_resources(
-        request.user, persons_count, start_datetime, location_slug
+        request.user, persons_count, start_datetime, location_slug, duration
     )
     locations = get_user_accessible_locations(request.user)
+
+    # Create duration options from 30 minutes to 8 hours in 30-minute steps
+    duration_options = []
+    for minutes in range(30, 481, 30):  # 30 to 480 minutes (8 hours)
+        hours = minutes // 60
+        mins = minutes % 60
+        label = f"{hours}:00h" if mins == 0 else f"{hours}:{mins:02d}h"
+        duration_options.append({"value": minutes, "label": label})
+
+    # Create time options from 7:00 to 23:00 in 30-minute steps
+    start_hour = 7
+    end_hour = 24
+    last_hour = 23
+    minute_step = 30
+
+    time_options = []
+    for hour in range(start_hour, end_hour):
+        for minute in [0, minute_step]:
+            if hour == last_hour and minute == minute_step:
+                break  # Stop at 23:00
+            time_value = f"{hour:02d}:{minute:02d}"
+            time_options.append({"value": time_value, "label": time_value})
+
+    # Calculate end time if both start time and duration are provided
+    selected_end_time = None
+    if start_time:
+        try:
+            start_dt = datetime.strptime(start_time, "%H:%M")  # noqa: DTZ007
+            end_dt = start_dt + timedelta(minutes=int(duration))
+            selected_end_time = end_dt.strftime("%H:%M")
+        except (ValueError, TypeError):
+            pass
+
     context = {
         "resources": resources,
         "locations": locations,
+        "duration_options": duration_options,
+        "selected_duration": int(duration),
+        "time_options": time_options,
+        "selected_date": start_date,
+        "selected_time": start_time,
+        "selected_end_time": selected_end_time,
     }
     if request.headers.get("HX-Request"):
         return render(request, "resources/partials/list_filter_resources.html", context)

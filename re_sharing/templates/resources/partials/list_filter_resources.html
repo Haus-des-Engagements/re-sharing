@@ -43,7 +43,11 @@
       </div>
       <div class="col-md-5">
         <div class="card-body">
-          <h5 class="card-title">&nbsp</h5>
+          <h5 class="card-title text-end">
+            <a class="btn btn-sm btn-outline-primary"
+               href="{% url 'bookings:create-booking' %}?resource={{ resource.slug }}{% if selected_date %}&startdate={{ selected_date }}{% endif %}{% if selected_time %}&starttime={{ selected_time }}{% endif %}{% if selected_end_time %}&endtime={{ selected_end_time }}{% endif %}{% if request.GET.persons_count %}&attendees={{ request.GET.persons_count }}{% endif %}"
+               role="button">{% trans "buchen" %}</a>
+          </h5>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <svg class="fs-4 me-1" width="1em" height="1em">

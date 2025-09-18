@@ -95,10 +95,12 @@ def show_resource(resource_slug, date_string):
     return resource, time_slots, weekdays, dates, compensations, restrictions
 
 
-def filter_resources(user, persons_count, start_datetime, location_slug=None):
+def filter_resources(
+    user, persons_count, start_datetime, location_slug=None, duration=None
+):
     """
     Filters resources based on persons_count, start_datetime, location,
-    and user's permissions.
+    duration, and user's permissions.
 
     Args:
         persons_count (int): Minimum number of persons the resource must accommodate.
@@ -106,6 +108,8 @@ def filter_resources(user, persons_count, start_datetime, location_slug=None):
         booked.
         user (User): The user for whom the resources are being filtered.
         location_slug (str, optional): Slug of the location to filter by.
+        duration (str or int, optional): Duration in minutes for the booking.
+        Defaults to 30 minutes.
 
     Returns:
         QuerySet: A filtered queryset of resources, including only the resources the
@@ -127,7 +131,9 @@ def filter_resources(user, persons_count, start_datetime, location_slug=None):
     # Exclude resources that overlap with other bookings at the specified time
     if start_datetime:
         start_datetime = timezone.make_aware(parser.parse(start_datetime))
-        end_datetime = start_datetime + timedelta(minutes=30)
+        # Use provided duration or default to 30 minutes
+        booking_duration = int(duration) if duration else 30
+        end_datetime = start_datetime + timedelta(minutes=booking_duration)
         overlapping_bookings = Booking.objects.filter(
             timespan__overlap=(start_datetime, end_datetime)
         ).select_related("resource", "organization")
@@ -269,7 +275,7 @@ def _process_bookings(resource_data, bookings, resource, day, user_context):
                 if user.is_authenticated and booking.organization.is_public:
                     timeslot["organization"] = booking.organization.name
 
-                if user.is_manager():
+                if user.is_authenticated and user.is_manager():
                     timeslot["organization"] = booking.organization.name
                     timeslot["link"] = f"/bookings/{booking.slug}/"
 

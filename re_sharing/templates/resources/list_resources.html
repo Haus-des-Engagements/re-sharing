@@ -20,13 +20,33 @@
         hx-trigger="input change"
         hx-push-url="true"
         hx-indicator="#spinner">
-    <div id="div_start_datetime" class="form-floating mb-3 col-auto">
-      <input type="datetime-local"
-             name="start_datetime"
-             class="form-control textinput"
-             placeholder="{% trans 'Find a free resource' %}"
-             id="start_datetime" />
-      <label for="start_datetime">{% trans "Find a free resource" %}</label>
+    <div id="div_start_date" class="form-floating mb-3 col-auto">
+      <input type="date"
+             name="start_date"
+             class="form-control"
+             placeholder="{% trans 'Date' %}"
+             id="start_date"
+             value="{{ selected_date|default:'' }}" />
+      <label for="start_date">{% trans "Date" %}</label>
+    </div>
+    <div id="div_start_time" class="form-floating mb-3 col-auto">
+      <select name="start_time" class="form-select" id="start_time">
+        <option value="">{% trans "Any time" %}</option>
+        {% for option in time_options %}
+          <option value="{{ option.value }}"
+                  {% if selected_time == option.value %}selected{% endif %}>{{ option.label }}</option>
+        {% endfor %}
+      </select>
+      <label for="start_time">{% trans "Time" %}</label>
+    </div>
+    <div id="div_duration" class="form-floating mb-3 col-auto">
+      <select name="duration" class="form-select" id="duration">
+        {% for option in duration_options %}
+          <option value="{{ option.value }}"
+                  {% if selected_duration == option.value %}selected{% endif %}>{{ option.label }}</option>
+        {% endfor %}
+      </select>
+      <label for="duration">{% trans "Duration" %}</label>
     </div>
     <div id="div_persons_count" class="form-floating mb-3 col-auto">
       <input type="number"
