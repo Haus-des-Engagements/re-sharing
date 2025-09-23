@@ -8,6 +8,7 @@ from .models import BookingPermission
 from .models import EmailTemplate
 from .models import Organization
 from .models import OrganizationGroup
+from .models import OrganizationMessage
 
 
 @admin.register(Organization)
@@ -22,7 +23,7 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
         "monthly_bulk_access_codes",
     ]
     search_fields = ["name", "id"]
-    ordering = ["name"]
+    ordering = ["-id"]
     actions = [
         "activate_bulk_sending",
         "deactivate_bulk_sending",
@@ -67,7 +68,7 @@ class BookingPermissionAdmin(ImportExportMixin, admin.ModelAdmin):
         "status",
     ]
     list_filter = ["role", "status", "organization"]
-    ordering = ["id"]
+    ordering = ["-id"]
 
 
 @admin.register(OrganizationGroup)
@@ -75,4 +76,11 @@ class OrganizationGroupAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "name"]
     search_fields = ["id", "name"]
     list_filter = ["name"]
-    ordering = ["id"]
+    ordering = ["-id"]
+
+
+@admin.register(OrganizationMessage)
+class OrganizationMessageAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ["id", "organization", "user"]
+    list_filter = ["status"]
+    ordering = ["-id"]
