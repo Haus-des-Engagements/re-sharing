@@ -82,5 +82,5 @@ class OrganizationGroupAdmin(ImportExportMixin, admin.ModelAdmin):
 @admin.register(OrganizationMessage)
 class OrganizationMessageAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "organization", "user"]
-    list_filter = ["status"]
+    list_filter = ["organization"]
     ordering = ["-id"]

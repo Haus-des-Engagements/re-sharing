@@ -984,9 +984,10 @@ def test_manager_confirm_booking_series(mock_is_confirmable):
         tz=timezone.get_current_timezone()
     )
 )
-@skip
 def test_set_initial_booking_data(startdate, starttime, endtime, expected_data):
-    result = set_initial_booking_data(endtime, startdate, starttime, resource=None)
+    result = set_initial_booking_data(
+        startdate=startdate, starttime=starttime, endtime=endtime, resource=None
+    )
     assert result == expected_data
 
 

@@ -34,3 +34,4 @@ class ManagerFactory(DjangoModelFactory):
     class Meta:
         model = Manager
         django_get_or_create = ["user"]
+        skip_postgeneration_save = True

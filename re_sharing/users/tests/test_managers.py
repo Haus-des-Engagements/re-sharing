@@ -23,6 +23,16 @@ class TestUserManager:
         assert user.check_password("something-r@nd0m!")
         assert user.username is None
 
+    def test_create_user_without_email(self):
+        """Test that creating a user without email raises ValueError"""
+        with pytest.raises(ValueError, match="The given email must be set"):
+            User.objects.create_user(email="", password="test123")  # noqa: S106
+
+    def test_create_user_with_none_email(self):
+        """Test that creating a user with None email raises ValueError"""
+        with pytest.raises(ValueError, match="The given email must be set"):
+            User.objects.create_user(email=None, password="test123")  # noqa: S106
+
     def test_create_superuser(self):
         user = User.objects.create_superuser(
             email="admin@example.com",
@@ -43,6 +53,24 @@ class TestUserManager:
             password="something-r@nd0m!",  # noqa: S106
         )
         assert user.username is None
+
+    def test_create_superuser_without_is_staff(self):
+        """Test that creating a superuser with is_staff=False raises ValueError"""
+        with pytest.raises(ValueError, match="Superuser must have is_staff=True"):
+            User.objects.create_superuser(
+                email="admin@example.com",
+                password="test123",  # noqa: S106
+                is_staff=False,
+            )
+
+    def test_create_superuser_without_is_superuser(self):
+        """Test that creating a superuser with is_superuser=False raises ValueError"""
+        with pytest.raises(ValueError, match="Superuser must have is_superuser=True"):
+            User.objects.create_superuser(
+                email="admin@example.com",
+                password="test123",  # noqa: S106
+                is_superuser=False,
+            )
 
 
 @pytest.mark.django_db()
