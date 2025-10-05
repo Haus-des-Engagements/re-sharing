@@ -182,6 +182,7 @@ def generate_booking(booking_data):
         booking = Booking(
             user=user,
             title=booking_data["title"],
+            number_of_attendees=booking_data.get("number_of_attendees", 5),
             resource=resource,
             organization=organization,
             status=get_booking_status(user, organization, resource),

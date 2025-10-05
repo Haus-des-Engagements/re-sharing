@@ -19,6 +19,7 @@ from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import bookings_webview
 from re_sharing.bookings.services import cancel_booking
+from re_sharing.bookings.services import create_booking_data
 from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
 from re_sharing.bookings.services import generate_booking
@@ -28,6 +29,7 @@ from re_sharing.bookings.services import manager_cancel_booking
 from re_sharing.bookings.services import manager_confirm_booking
 from re_sharing.bookings.services import manager_confirm_booking_series
 from re_sharing.bookings.services import manager_filter_bookings_list
+from re_sharing.bookings.services import manager_filter_invoice_bookings_list
 from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
 from re_sharing.bookings.services import set_initial_booking_data
@@ -56,6 +58,14 @@ from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
+
+# Test constants
+TEST_ATTENDEES_25 = 25
+TEST_ATTENDEES_10 = 10
+TEST_ATTENDEES_15 = 15
+TEST_ATTENDEES_20 = 20
+TEST_TOTAL_AMOUNT_100 = 100  # 2 hours * 50/hour
+TEST_TOTAL_AMOUNT_225 = 225  # 3 hours * 75/hour
 
 
 class TestCancelBooking(TestCase):
@@ -1205,3 +1215,563 @@ class TestBookingsWebview(TestCase):
         bookings, shown_date, accesses = bookings_webview(date_string, "all")
 
         assert bookings.count() == 2  # noqa: PLR2004
+
+
+@pytest.mark.django_db()
+@freeze_time(
+    datetime.datetime(2023, 10, 10, 10, 0, 0).astimezone(
+        tz=timezone.get_current_timezone()
+    )
+)
+def test_set_initial_booking_data_with_all_parameters():
+    """Test set_initial_booking_data with all optional parameters"""
+    resource = ResourceFactory()
+    organization = OrganizationFactory()
+
+    result = set_initial_booking_data(
+        startdate="2023-10-15",
+        starttime="14:00",
+        endtime="16:00",
+        resource=resource.slug,
+        organization=organization.slug,
+        title="Test Title",
+        activity_description="Test Description",
+        attendees=25,
+        import_id="IMPORT-123",
+    )
+
+    assert result["startdate"] == "2023-10-15"
+    assert result["starttime"] == "14:00"
+    assert result["endtime"] == "16:00"
+    assert result["resource"] == resource
+    assert result["organization"] == organization
+    assert result["title"] == "Test Title"
+    assert result["activity_description"] == "Test Description"
+    assert result["number_of_attendees"] == TEST_ATTENDEES_25
+    assert result["import_id"] == "IMPORT-123"
+
+
+class TestCreateBookingData(TestCase):
+    """Test create_booking_data function"""
+
+    def test_create_booking_data_without_rrule(self):
+        """Test creating booking data without recurring rule"""
+        from unittest.mock import Mock
+
+        user = UserFactory()
+        resource = ResourceFactory()
+        organization = OrganizationFactory()
+        compensation = CompensationFactory()
+
+        # Create mock form with cleaned_data
+        form = Mock()
+        start_dt = datetime.datetime(2023, 10, 15, 10, 0, tzinfo=datetime.UTC)
+        end_dt = datetime.datetime(2023, 10, 15, 12, 0, tzinfo=datetime.UTC)
+
+        form.cleaned_data = {
+            "title": "Test Booking",
+            "resource": resource,
+            "timespan": (start_dt, end_dt),
+            "organization": organization,
+            "startdate": datetime.date(2023, 10, 15),
+            "enddate": datetime.date(2023, 10, 15),
+            "starttime": datetime.time(10, 0),
+            "endtime": datetime.time(12, 0),
+            "compensation": compensation,
+            "invoice_address": "Test Address",
+            "activity_description": "Test Activity",
+            "number_of_attendees": 10,
+            "rrule_repetitions": "NO_REPETITIONS",
+        }
+
+        booking_data, rrule = create_booking_data(user, form)
+
+        assert booking_data["title"] == "Test Booking"
+        assert booking_data["resource"] == resource.slug
+        assert booking_data["organization"] == organization.slug
+        assert booking_data["user"] == user.slug
+        assert booking_data["compensation"] == compensation.id
+        assert booking_data["invoice_address"] == "Test Address"
+        assert booking_data["activity_description"] == "Test Activity"
+        assert booking_data["number_of_attendees"] == TEST_ATTENDEES_10
+        assert rrule is None
+
+
+class TestGenerateBooking(TestCase):
+    """Test generate_booking function"""
+
+    def test_generate_booking_creates_new_booking(self):
+        """Test generating a new booking"""
+        user = UserFactory()
+        resource = ResourceFactory()
+        organization = OrganizationFactory()
+        compensation = CompensationFactory(hourly_rate=50)
+
+        start_dt = datetime.datetime(2023, 10, 15, 10, 0, tzinfo=datetime.UTC)
+        end_dt = datetime.datetime(2023, 10, 15, 12, 0, tzinfo=datetime.UTC)
+
+        booking_data = {
+            "title": "New Booking",
+            "resource": resource.slug,
+            "timespan": (start_dt.isoformat(), end_dt.isoformat()),
+            "organization": organization.slug,
+            "start_date": "2023-10-15",
+            "end_date": "2023-10-15",
+            "start_time": "10:00:00",
+            "end_time": "12:00:00",
+            "user": user.slug,
+            "compensation": compensation.id,
+            "invoice_address": "Test Address",
+            "activity_description": "Test Activity",
+            "number_of_attendees": TEST_ATTENDEES_15,
+        }
+
+        booking = generate_booking(booking_data)
+
+        assert booking.title == "New Booking"
+        assert booking.user == user
+        assert booking.resource == resource
+        assert booking.organization == organization
+        assert booking.compensation == compensation
+        assert booking.invoice_address == "Test Address"
+        assert booking.activity_description == "Test Activity"
+        assert booking.number_of_attendees == TEST_ATTENDEES_15
+        assert booking.total_amount == TEST_TOTAL_AMOUNT_100
+
+    def test_generate_booking_updates_existing_booking(self):
+        """Test updating an existing booking"""
+        user = UserFactory()
+        resource = ResourceFactory()
+        organization = OrganizationFactory()
+        compensation = CompensationFactory(hourly_rate=75)
+
+        # Create existing booking
+        existing_booking = BookingFactory(
+            user=user,
+            resource=resource,
+            organization=organization,
+            title="Old Title",
+            number_of_attendees=5,
+        )
+
+        # Update booking
+        new_start = datetime.datetime(2023, 10, 16, 14, 0, tzinfo=datetime.UTC)
+        new_end = datetime.datetime(2023, 10, 16, 17, 0, tzinfo=datetime.UTC)
+
+        booking_data = {
+            "booking_id": existing_booking.id,
+            "title": "Updated Booking",
+            "resource": resource.slug,
+            "timespan": (new_start.isoformat(), new_end.isoformat()),
+            "organization": organization.slug,
+            "start_date": "2023-10-16",
+            "end_date": "2023-10-16",
+            "start_time": "14:00:00",
+            "end_time": "17:00:00",
+            "user": user.slug,
+            "compensation": compensation.id,
+            "invoice_address": "Updated Address",
+            "activity_description": "Updated Activity",
+            "number_of_attendees": TEST_ATTENDEES_20,
+        }
+
+        booking = generate_booking(booking_data)
+
+        assert booking.id == existing_booking.id
+        assert booking.title == "Updated Booking"
+        assert booking.number_of_attendees == TEST_ATTENDEES_20
+        assert booking.invoice_address == "Updated Address"
+        assert booking.activity_description == "Updated Activity"
+        assert booking.total_amount == TEST_TOTAL_AMOUNT_225
+
+    def test_generate_booking_with_null_hourly_rate(self):
+        """Test generating booking with compensation that has no hourly rate"""
+        user = UserFactory()
+        resource = ResourceFactory()
+        organization = OrganizationFactory()
+        compensation = CompensationFactory(hourly_rate=None)
+
+        start_dt = datetime.datetime(2023, 10, 15, 10, 0, tzinfo=datetime.UTC)
+        end_dt = datetime.datetime(2023, 10, 15, 12, 0, tzinfo=datetime.UTC)
+
+        booking_data = {
+            "title": "Free Booking",
+            "resource": resource.slug,
+            "timespan": (start_dt.isoformat(), end_dt.isoformat()),
+            "organization": organization.slug,
+            "start_date": "2023-10-15",
+            "end_date": "2023-10-15",
+            "start_time": "10:00:00",
+            "end_time": "12:00:00",
+            "user": user.slug,
+            "compensation": compensation.id,
+            "invoice_address": "Test Address",
+            "activity_description": "Free Activity",
+            "number_of_attendees": 10,
+        }
+
+        booking = generate_booking(booking_data)
+
+        assert booking.total_amount is None
+
+
+class TestIsBookableByOrganizationManager(TestCase):
+    """Test is_bookable_by_organization for manager users"""
+
+    def test_manager_user_can_book_anything(self):
+        """Test that manager users can book any combination"""
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        organization = OrganizationFactory()
+        resource = ResourceFactory()
+        compensation = CompensationFactory()
+
+        result = is_bookable_by_organization(
+            manager_user, organization, resource, compensation
+        )
+
+        assert result is True
+
+
+class TestSaveBookingPermissionDenied(TestCase):
+    """Test save_booking permission denied scenarios"""
+
+    def test_save_booking_with_non_bookable_combination(self):
+        """Test save_booking raises PermissionDenied for non-bookable combo"""
+        user = UserFactory()
+        organization = OrganizationFactory(status=0)  # Unconfirmed
+        resource = ResourceFactory()
+        compensation = CompensationFactory()
+
+        booking = BookingFactory(
+            user=user,
+            organization=organization,
+            resource=resource,
+            compensation=compensation,
+            status=BookingStatus.PENDING,
+        )
+
+        with pytest.raises(PermissionDenied):
+            save_booking(user, booking)
+
+
+class TestShowBookingAccessCode(TestCase):
+    """Test show_booking access code scenarios"""
+
+    def test_access_code_not_necessary_for_no_access_resource(self):
+        """Test that access code is 'not necessary' when resource has no access"""
+        user = UserFactory()
+        organization = OrganizationFactory()
+        BookingPermissionFactory(user=user, organization=organization, status=2)
+
+        resource = ResourceFactory()
+        # Don't create any Access for this resource
+
+        booking = BookingFactory(
+            user=user,
+            organization=organization,
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+        )
+
+        result_booking, activity_stream, access_code = show_booking(user, booking.slug)
+
+        assert access_code == "not necessary"
+
+
+class TestManagerFilterBookingsListExtended(TestCase):
+    """Test manager_filter_bookings_list with additional filters"""
+
+    def test_filter_by_resource(self):
+        """Test filtering bookings by resource"""
+        manager_user = UserFactory()
+        manager = ManagerFactory(user=manager_user)
+
+        resource1 = ResourceFactory()
+        resource2 = ResourceFactory()
+
+        # Add resources to manager
+        manager.resources.add(resource1, resource2)
+
+        # Create organization group and add to manager
+        org_group = OrganizationGroupFactory()
+        manager.organization_groups.add(org_group)
+
+        organization = OrganizationFactory()
+        organization.organization_groups.add(org_group)
+
+        BookingFactory(
+            resource=resource1,
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+        )
+        BookingFactory(
+            resource=resource2,
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+        )
+
+        bookings, _, _ = manager_filter_bookings_list(
+            organization="all",
+            show_past_bookings=True,
+            status="all",
+            show_recurring_bookings=True,
+            resource=resource1.slug,
+            date_string=None,
+            user=manager_user,
+        )
+
+        assert bookings.filter(resource=resource1).exists()
+        assert bookings.count() >= 1
+
+    def test_filter_hide_recurring_bookings(self):
+        """Test filtering out recurring bookings"""
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+
+        booking_series = BookingSeriesFactory()
+        BookingFactory(booking_series=booking_series, status=BookingStatus.CONFIRMED)
+        BookingFactory(booking_series=None, status=BookingStatus.CONFIRMED)
+
+        bookings, _, _ = manager_filter_bookings_list(
+            organization="all",
+            show_past_bookings=True,
+            status="all",
+            show_recurring_bookings=False,
+            resource="all",
+            date_string=None,
+            user=manager_user,
+        )
+
+        assert not bookings.filter(booking_series__isnull=False).exists()
+
+    def test_filter_by_date(self):
+        """Test filtering bookings by specific date"""
+        manager_user = UserFactory()
+        manager = ManagerFactory(user=manager_user)
+
+        resource = ResourceFactory()
+        organization = OrganizationFactory()
+
+        # Add resource to manager
+        manager.resources.add(resource)
+
+        # Create organization group and add to manager and organization
+        org_group = OrganizationGroupFactory()
+        manager.organization_groups.add(org_group)
+        organization.organization_groups.add(org_group)
+
+        specific_date = timezone.now().date()
+        start_dt = timezone.make_aware(
+            datetime.datetime.combine(specific_date, datetime.time(10, 0))
+        )
+        end_dt = timezone.make_aware(
+            datetime.datetime.combine(specific_date, datetime.time(12, 0))
+        )
+
+        from psycopg.types.range import Range
+
+        BookingFactory(
+            resource=resource,
+            organization=organization,
+            timespan=Range(start_dt, end_dt),
+            start_date=specific_date,
+            status=BookingStatus.CONFIRMED,
+        )
+
+        bookings, _, _ = manager_filter_bookings_list(
+            organization="all",
+            show_past_bookings=True,
+            status="all",
+            show_recurring_bookings=True,
+            resource="all",
+            date_string=specific_date.isoformat(),
+            user=manager_user,
+        )
+
+        assert bookings.count() >= 1
+
+
+class TestManagerCancelBookingError(TestCase):
+    """Test manager_cancel_booking error scenarios"""
+
+    def test_cancel_non_cancelable_booking_raises_error(self):
+        """Test canceling non-cancelable booking raises error"""
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+
+        # Create a booking that's already cancelled (not cancelable)
+        booking = BookingFactory(status=BookingStatus.CANCELLED)
+
+        with pytest.raises(InvalidBookingOperationError):
+            manager_cancel_booking(manager_user, booking.slug)
+
+
+class TestManagerConfirmBookingError(TestCase):
+    """Test manager_confirm_booking error scenarios"""
+
+    def test_confirm_non_confirmable_booking_raises_error(self):
+        """Test confirming non-confirmable booking raises error"""
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+
+        # Create a booking that's already confirmed (not confirmable)
+        booking = BookingFactory(status=BookingStatus.CONFIRMED)
+
+        with pytest.raises(InvalidBookingOperationError):
+            manager_confirm_booking(manager_user, booking.slug)
+
+
+class TestManagerFilterInvoiceBookingsList(TestCase):
+    """Test manager_filter_invoice_bookings_list function"""
+
+    def test_filter_invoice_bookings_all(self):
+        """Test getting all invoice bookings"""
+        BookingFactory(
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_number="INV-001",
+        )
+        BookingFactory(
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_number="",
+        )
+
+        bookings, organizations, resources = manager_filter_invoice_bookings_list(
+            organization="all",
+            invoice_filter="all",
+            invoice_number=None,
+            resource="all",
+        )
+
+        expected_min_count = 2
+        assert bookings.count() >= expected_min_count
+        assert organizations.exists()
+        assert resources.exists()
+
+    def test_filter_invoice_bookings_with_invoice(self):
+        """Test filtering bookings that have invoice numbers"""
+        resource = ResourceFactory()
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_number="INV-001",
+        )
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_number="",
+        )
+
+        bookings, _, _ = manager_filter_invoice_bookings_list(
+            organization="all",
+            invoice_filter="with_invoice",
+            invoice_number=None,
+            resource="all",
+        )
+
+        assert bookings.filter(invoice_number="INV-001").exists()
+        assert not bookings.filter(invoice_number="").exists()
+
+    def test_filter_invoice_bookings_without_invoice(self):
+        """Test filtering bookings that don't have invoice numbers"""
+        resource = ResourceFactory()
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_number="INV-001",
+        )
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_number="",
+        )
+
+        bookings, _, _ = manager_filter_invoice_bookings_list(
+            organization="all",
+            invoice_filter="without_invoice",
+            invoice_number=None,
+            resource="all",
+        )
+
+        assert bookings.filter(invoice_number="").exists()
+        assert not bookings.filter(invoice_number="INV-001").exists()
+
+    def test_filter_invoice_bookings_by_organization(self):
+        """Test filtering invoice bookings by organization"""
+        org1 = OrganizationFactory()
+        org2 = OrganizationFactory()
+
+        BookingFactory(
+            organization=org1,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+        )
+        BookingFactory(
+            organization=org2,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+        )
+
+        bookings, _, _ = manager_filter_invoice_bookings_list(
+            organization=org1.slug,
+            invoice_filter="all",
+            invoice_number=None,
+            resource="all",
+        )
+
+        assert bookings.filter(organization=org1).exists()
+        assert not bookings.filter(organization=org2).exists()
+
+    def test_filter_invoice_bookings_by_invoice_number(self):
+        """Test filtering invoice bookings by invoice number search"""
+        BookingFactory(
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_number="INV-2024-001",
+        )
+        BookingFactory(
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_number="INV-2025-002",
+        )
+
+        bookings, _, _ = manager_filter_invoice_bookings_list(
+            organization="all",
+            invoice_filter="all",
+            invoice_number="2024",
+            resource="all",
+        )
+
+        assert bookings.filter(invoice_number__icontains="2024").exists()
+
+    def test_filter_invoice_bookings_by_resource(self):
+        """Test filtering invoice bookings by resource"""
+        resource1 = ResourceFactory()
+        resource2 = ResourceFactory()
+
+        BookingFactory(
+            resource=resource1,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+        )
+        BookingFactory(
+            resource=resource2,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+        )
+
+        bookings, _, _ = manager_filter_invoice_bookings_list(
+            organization="all",
+            invoice_filter="all",
+            invoice_number=None,
+            resource=resource1.slug,
+        )
+
+        assert bookings.filter(resource=resource1).exists()
+        assert not bookings.filter(resource=resource2).exists()
