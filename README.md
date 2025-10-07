@@ -35,7 +35,8 @@ The project is organized into several Django apps:
 ## Installation and Setup
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (package manager)
 - PostgreSQL
 - Redis
 - Git
@@ -47,32 +48,31 @@ The project is organized into several Django apps:
    cd re-sharing
    ```
 
-2. Set up a virtual environment:
+2. Install uv (if not already installed):
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-3. Install dependencies:
+3. Install dependencies (uv will automatically create a virtual environment):
    ```bash
-   pip install --upgrade pip
-   pip install -r requirements/local.txt
+   uv sync --extra dev
+   export DJANGO_READ_DOT_ENV_FILE=true
    ```
 
 4. Set up the database:
    ```bash
    createdb re-sharing
-   python manage.py migrate
+   uv run python manage.py migrate
    ```
 
 5. Create a superuser:
    ```bash
-   python manage.py createsuperuser
+   uv run python manage.py createsuperuser
    ```
 
 6. Run the development server:
    ```bash
-   python manage.py runserver 0.0.0.0:8000
+   uv run python manage.py runserver 0.0.0.0:8000
    ```
 
 For more detailed setup instructions, see: https://cookiecutter-django.readthedocs.io/en/latest/developing-locally.html
@@ -84,15 +84,15 @@ For information about settings configuration, see: https://cookiecutter-django.r
 
 ### Setting Up Your Users
 *To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
-* To create a **superuser account**: `python manage.py createsuperuser`
+* To create a **superuser account**: `uv run python manage.py createsuperuser`
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
 
 ### Migrations
 After you've made changes in a model, you have to propagate your changes to the database:
 
-* Create new migrations: `python manage.py makemigrations [app_label]`
-* Apply migrations: `python manage.py migrate [app_label]`
+* Create new migrations: `uv run python manage.py makemigrations [app_label]`
+* Apply migrations: `uv run python manage.py migrate [app_label]`
 
 [app_label] is optional.
 
@@ -112,14 +112,29 @@ To make strings available for translations in Django:
 
 1. Make gettext_lazy available as _: `from django.utils.translation import gettext_lazy as _`
 2. Mark strings as translatable: `_('string to be translated)`
-3. Run `python manage.py makemessages -l de` (for German in this case)
+3. Run `uv run python manage.py makemessages -l de` (for German in this case)
 4. Translate the strings now available in _/locale/de/LC_MESSAGES/django.po_
-5. Compile the .po file with `python manage.py compilemessages` to a .mo file
+5. Compile the .po file with `uv run python manage.py compilemessages` to a .mo file
 
 ### Python packages
-The used packages are listed in /requirements. When packages are added or removed, execute this command to make the needed packages available and remove the unneeded:
+Dependencies are managed using `uv` and defined in `pyproject.toml`.
 
-`pip install --upgrade pip && pip install -r requirements/local.txt`
+#### Adding or updating packages:
+```bash
+# Add a new dependency
+uv add package-name
+
+# Add a dev dependency
+uv add --dev package-name
+
+# Update all dependencies
+uv lock --upgrade
+
+# Sync dependencies after changes
+uv sync --extra dev
+```
+
+The `uv.lock` file tracks exact versions and should be committed to version control.
 
 ## Database
 
@@ -135,27 +150,24 @@ After creating the new (empty) database, migrations need to be applied again.
 Before committing we locally verify the correct coding style with different tools.
 Ruff is a Python linter and code formatter, written in Rust. It is a aggregation of flake8, pylint, pyupgrade and many more.
 
-Ruff comes with a linter `ruff check` and a formatter `ruff format` .
+Ruff comes with a linter `uv run ruff check` and a formatter `uv run ruff format`.
 The linter is a wrapper around flake8, pylint, and other linters, and the formatter is a wrapper around black, isort, and other formatters.
 
-Hint: You can also use an installed pre-commit hook with `pre-commit run --all-files`, included:
+Hint: You can also use an installed pre-commit hook with `uv run pre-commit run --all-files`, included:
+* UV lock file sync
 * Trim Trailing Whitespaces
 * Fix end of files
 * check Yaml
-* flake8
-* black
-* mypy
-* pylint has been excluded because it takes too long
-* isort
-* djhtml (indent html templates that contain django syntax correctly)
+* Ruff linting and formatting
+* djLint (indent html templates that contain django syntax correctly)
 
 ## Testing
-To run the tests, check your test coverage, and generate an HTML coverage report in the vagrant machine:
+To run the tests, check your test coverage, and generate an HTML coverage report:
 
-1. Run tests without test coverage analysis: `pytest`
+1. Run tests without test coverage analysis: `uv run pytest`
   * If the database schema has changed, use `--create-db`, as pytest will otherwise use the previous one (as it is much faster).
   * To see the slowest tests, use `--durations=10` (to get the 10 slowest tests)
-2. Run test with test coverage analysis (and branch analysis) and create the html report: `coverage run --branch -m pytest && coverage html`
+2. Run test with test coverage analysis (and branch analysis) and create the html report: `uv run coverage run --branch -m pytest && uv run coverage html`
 3. You can find the report in `htmlcov/index.html`.
 
 ## Continuous Integration (CI)
@@ -221,8 +233,8 @@ We welcome contributions to the Re(source)-Sharing project! Here's how you can c
 1. Fork the repository
 2. Create a new branch for your feature or bugfix
 3. Write tests for your changes
-4. Ensure all tests pass with `pytest`
-5. Make sure your code follows our coding style (use `ruff format` and `ruff check`)
+4. Ensure all tests pass with `uv run pytest`
+5. Make sure your code follows our coding style (use `uv run ruff format` and `uv run ruff check`)
 6. Submit a pull request with a clear description of your changes
 
 ### Documentation

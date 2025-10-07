@@ -14,12 +14,21 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
   libpq-dev
 
-# Requirements are installed here to ensure they will be cached.
-COPY ./requirements .
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Create Python Dependency and Sub-Dependency Wheels.
-RUN pip wheel --wheel-dir /usr/src/app/wheels  \
-  -r ${BUILD_ENVIRONMENT}.txt
+# Copy project files for dependency installation
+COPY pyproject.toml uv.lock .python-version ./
+
+# Create virtual environment and install dependencies from lockfile
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$BUILD_ENVIRONMENT" = "production" ]; then \
+      uv sync --frozen --no-install-project --no-dev; \
+    else \
+      uv sync --frozen --no-install-project; \
+    fi
 
 
 # Python 'run' stage
@@ -51,12 +60,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   && rm -rf /var/lib/apt/lists/*
 
 # All absolute dir copies ignore workdir instruction. All relative dir copies are wrt to the workdir instruction
-# copy python dependency wheels from python-build-stage
-COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
+# copy virtual environment from python-build-stage
+COPY --from=python-build-stage /.venv ${APP_HOME}/.venv
 
-# use wheels to install python dependencies
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
-  && rm -rf /wheels/
+# Activate virtual environment
+ENV PATH="${APP_HOME}/.venv/bin:$PATH"
+ENV VIRTUAL_ENV="${APP_HOME}/.venv"
 
 
 COPY --chown=django:django ./utility/Docker/entrypoint /entrypoint
@@ -74,6 +83,12 @@ COPY --chown=django:django . ${APP_HOME}
 
 # make django owner of the WORKDIR directory as well.
 RUN chown -R django:django ${APP_HOME}
+
+# Install uv for project installation
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Install the project itself into the virtual environment
+RUN uv sync --frozen --no-dev
 
 USER django
 
