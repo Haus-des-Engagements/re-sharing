@@ -67,7 +67,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install Dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Run tests
         run: uv run python -m pytest --cov --cov-report=xml
