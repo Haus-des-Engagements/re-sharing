@@ -25,7 +25,7 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ "$BUILD_ENVIRONMENT" = "production" ]; then \
-      uv sync --frozen --no-install-project --no-dev; \
+      uv sync --frozen --no-install-project --no-dev --extra production; \
     else \
       uv sync --frozen --no-install-project; \
     fi
@@ -88,7 +88,7 @@ RUN chown -R django:django ${APP_HOME}
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install the project itself into the virtual environment
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --extra production
 
 USER django
 

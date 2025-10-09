@@ -131,6 +131,7 @@ def test_compensation_is_bookable_by_organization():
 
     # Set the organization group for the compensation
     comp.organization_groups.add(org_group)
+    comp.refresh_from_db()
 
     # Test that org1 can book the compensation
     assert comp.is_bookable_by_organization(org1) is True
