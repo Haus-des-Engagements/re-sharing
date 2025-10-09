@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy project files for dependency installation
-COPY pyproject.toml uv.lock .python-version ./
+COPY pyproject.toml uv.lock ./
 
 # Create virtual environment and install dependencies from lockfile
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
