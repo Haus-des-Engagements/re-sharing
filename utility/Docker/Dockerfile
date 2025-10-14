@@ -1,100 +1,74 @@
-# define an alias for the specific python version used in this file.
-FROM docker.io/python:3.12.8-slim-bookworm AS python
+# Build stage - install dependencies
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
-# Python build stage
-FROM python as python-build-stage
-
-ARG BUILD_ENVIRONMENT=production
-
-# Install apt packages
-RUN apt-get update && apt-get install --no-install-recommends -y \
-  # dependencies for building Python packages
-  build-essential \
-  curl \
-  # psycopg2 dependencies
-  libpq-dev
-
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Copy project files for dependency installation
-COPY pyproject.toml uv.lock ./
-
-# Create virtual environment and install dependencies from lockfile
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+ENV UV_PYTHON_DOWNLOADS=0
 
+# Install build dependencies for psycopg and other packages
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install dependencies (without the project itself)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ "$BUILD_ENVIRONMENT" = "production" ]; then \
-      uv sync --frozen --no-install-project --no-dev --extra production; \
-    else \
-      uv sync --frozen --no-install-project; \
-    fi
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev --extra production
+
+# Copy application code
+COPY . /app
+
+# Install the project itself
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --extra production
 
 
-# Python 'run' stage
-FROM python as python-run-stage
+# Final runtime stage
+FROM python:3.12-slim-bookworm
 
-ARG BUILD_ENVIRONMENT=production
 ARG APP_HOME=/app
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV BUILD_ENV ${BUILD_ENVIRONMENT}
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR ${APP_HOME}
-
-RUN addgroup --system django \
-    && adduser --system --ingroup django django
-
-
-# Install required system dependencies
+# Install runtime dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
-  # psycopg2 dependencies
-  libpq-dev \
-  # Translations dependencies
-  gettext \
-  curl \
-  libmagic1 \
-  # cleaning up unused files
-  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
-  && rm -rf /var/lib/apt/lists/*
+    libpq-dev \
+    gettext \
+    libmagic1 \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && rm -rf /var/lib/apt/lists/*
 
-# All absolute dir copies ignore workdir instruction. All relative dir copies are wrt to the workdir instruction
-# copy virtual environment from python-build-stage
-COPY --from=python-build-stage /.venv ${APP_HOME}/.venv
+# Create non-root user
+RUN groupadd --system --gid 999 django \
+    && useradd --system --gid 999 --uid 999 --create-home django
 
-# Activate virtual environment
-ENV PATH="${APP_HOME}/.venv/bin:$PATH"
-ENV VIRTUAL_ENV="${APP_HOME}/.venv"
+# Copy application and virtual environment from builder
+COPY --from=builder --chown=django:django /app ${APP_HOME}
 
-
+# Copy entrypoint and start scripts
 COPY --chown=django:django ./utility/Docker/entrypoint /entrypoint
-RUN sed -i 's/\r$//g' /entrypoint
-RUN chmod +x /entrypoint
-
+RUN sed -i 's/\r$//g' /entrypoint && chmod +x /entrypoint
 
 COPY --chown=django:django ./utility/Docker/start /start
-RUN sed -i 's/\r$//g' /start
-RUN chmod +x /start
+RUN sed -i 's/\r$//g' /start && chmod +x /start
 
+# Place executables in the environment at the front of the path
+ENV PATH="${APP_HOME}/.venv/bin:$PATH"
 
-# copy application code to WORKDIR
-COPY --chown=django:django . ${APP_HOME}
-
-# make django owner of the WORKDIR directory as well.
-RUN chown -R django:django ${APP_HOME}
-
-# Install uv for project installation
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Install the project itself into the virtual environment
-RUN uv sync --frozen --no-dev --extra production
-
+# Use the non-root user
 USER django
 
+# Use /app as the working directory
+WORKDIR ${APP_HOME}
+
+# Compile translation messages
 RUN DATABASE_URL="" \
-  DJANGO_SETTINGS_MODULE="config.settings.test" \
-  python manage.py compilemessages
+    DJANGO_SETTINGS_MODULE="config.settings.test" \
+    python manage.py compilemessages
 
 ENTRYPOINT ["/entrypoint"]
-CMD ${STARTUP_COMMAND}
+CMD ["/start"]
