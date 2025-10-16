@@ -2,6 +2,7 @@ from datetime import time
 from http import HTTPStatus
 
 import pytest
+from django.test import Client
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
@@ -10,6 +11,9 @@ from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.providers.tests.factories import ManagerFactory
+from re_sharing.resources.models import AccessCode
+from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.resources.tests.factories import ResourceRestrictionFactory
@@ -269,3 +273,299 @@ class GetCompensationsViewTest(TestCase):
             "This resource is not available at the selected time."
             not in response.content.decode()
         )
+
+
+class AccessCodeListViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        # Create a manager user with access to resources
+        self.user = UserFactory()
+        self.resource = ResourceFactory()
+        self.manager = ManagerFactory(user=self.user, resources=[self.resource])
+        self.access_code = AccessCodeFactory(access=self.resource.access)
+        self.client.force_login(self.user)
+
+    def test_list_view_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.FOUND
+        assert "/accounts/login/" in response.url
+
+    def test_list_view_requires_manager_permission(self):
+        # Create a regular non-manager user
+        regular_user = UserFactory()
+        self.client.force_login(regular_user)
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_list_view_displays_access_codes(self):
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.OK
+        assert self.access_code.code in response.content.decode()
+
+    def test_list_view_displays_empty_message(self):
+        AccessCode.objects.all().delete()
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.OK
+        assert "No access codes found" in response.content.decode()
+
+    def test_list_view_filters_by_code(self):
+        # Create another access code with different code but same access
+        AccessCodeFactory(code="DIFFERENT", access=self.resource.access)
+        response = self.client.get(
+            reverse("resources:accesscode-list"), {"code": self.access_code.code}
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert self.access_code.code in response.content.decode()
+        assert "DIFFERENT" not in response.content.decode()
+
+    def test_list_view_only_shows_manager_resources(self):
+        # Create another resource and access code that manager doesn't have access to
+        other_resource = ResourceFactory()
+        other_access_code = AccessCodeFactory(access=other_resource.access)
+
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.OK
+        # Should show the access code for manager's resource
+        assert self.access_code.code in response.content.decode()
+        # Should NOT show the access code for other resource
+        assert other_access_code.code not in response.content.decode()
+
+    def test_list_view_has_filter_in_context(self):
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.OK
+        # Check that the filter is available in the context
+        assert "filter" in response.context or "filterset" in response.context
+
+    def test_list_view_filter_only_shows_manager_access_choices(self):
+        # Create another resource and access that manager doesn't have access to
+        other_resource = ResourceFactory()
+        other_access = other_resource.access
+
+        response = self.client.get(reverse("resources:accesscode-list"))
+        assert response.status_code == HTTPStatus.OK
+
+        # Get the filterset from context
+        filterset = response.context.get("filterset")
+        assert filterset is not None
+
+        # Get the queryset of Access choices in the filter
+        access_choices = filterset.filters["access"].queryset
+
+        # Manager's access should be in the choices
+        assert self.resource.access in access_choices
+        # Other access should NOT be in the choices
+        assert other_access not in access_choices
+
+
+class AccessCodeDetailViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserFactory()
+        self.resource = ResourceFactory()
+        self.manager = ManagerFactory(user=self.user, resources=[self.resource])
+        self.access_code = AccessCodeFactory(access=self.resource.access)
+        self.client.force_login(self.user)
+
+    def test_detail_view_requires_login(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-detail", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        assert "/accounts/login/" in response.url
+
+    def test_detail_view_displays_access_code(self):
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-detail", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert self.access_code.code in response.content.decode()
+        assert str(self.access_code.access) in response.content.decode()
+
+    def test_detail_view_404_for_nonexistent_uuid(self):
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-detail",
+                kwargs={"uuid": "00000000-0000-0000-0000-000000000000"},
+            )
+        )
+        assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+class AccessCodeCreateViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserFactory()
+        self.resource = ResourceFactory()
+        self.manager = ManagerFactory(user=self.user, resources=[self.resource])
+        self.access = self.resource.access
+        self.organization = OrganizationFactory()
+        self.client.force_login(self.user)
+
+    def test_create_view_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("resources:accesscode-create"))
+        assert response.status_code == HTTPStatus.FOUND
+        assert "/accounts/login/" in response.url
+
+    def test_create_view_get_displays_form(self):
+        response = self.client.get(reverse("resources:accesscode-create"))
+        assert response.status_code == HTTPStatus.OK
+        assert "form" in response.context
+
+    def test_create_view_post_creates_access_code(self):
+        initial_count = AccessCode.objects.count()
+        response = self.client.post(
+            reverse("resources:accesscode-create"),
+            {
+                "access": self.access.id,
+                "code": "TEST123",
+                "validity_start": "2025-01-01 12:00:00",
+                "organization": self.organization.id,
+            },
+        )
+        assert AccessCode.objects.count() == initial_count + 1
+        new_access_code = AccessCode.objects.latest("created")
+        assert new_access_code.code == "TEST123"
+        assert response.status_code == HTTPStatus.FOUND
+
+    def test_create_view_post_redirects_to_list(self):
+        response = self.client.post(
+            reverse("resources:accesscode-create"),
+            {
+                "access": self.access.id,
+                "code": "TEST456",
+                "validity_start": "2025-01-01 12:00:00",
+                "organization": self.organization.id,
+            },
+            follow=True,
+        )
+        assert response.redirect_chain[-1][0] == reverse("resources:accesscode-list")
+
+    def test_create_view_post_invalid_data(self):
+        initial_count = AccessCode.objects.count()
+        response = self.client.post(
+            reverse("resources:accesscode-create"),
+            {
+                "access": "",
+                "code": "",
+                "validity_start": "invalid-date",
+            },
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert AccessCode.objects.count() == initial_count
+        assert "form" in response.context
+
+
+class AccessCodeUpdateViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserFactory()
+        self.resource = ResourceFactory()
+        self.manager = ManagerFactory(user=self.user, resources=[self.resource])
+        self.access_code = AccessCodeFactory(access=self.resource.access)
+        self.client.force_login(self.user)
+
+    def test_update_view_requires_login(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-update", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        assert "/accounts/login/" in response.url
+
+    def test_update_view_get_displays_form_with_instance(self):
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-update", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert "form" in response.context
+        assert response.context["object"] == self.access_code
+
+    def test_update_view_post_updates_access_code(self):
+        response = self.client.post(
+            reverse(
+                "resources:accesscode-update", kwargs={"uuid": self.access_code.uuid}
+            ),
+            {
+                "access": self.access_code.access.id,
+                "code": "UPDATED123",
+                "validity_start": "2025-01-01 12:00:00",
+                "organization": self.access_code.organization.id,
+            },
+        )
+        self.access_code.refresh_from_db()
+        assert self.access_code.code == "UPDATED123"
+        assert response.status_code == HTTPStatus.FOUND
+
+    def test_update_view_post_redirects_to_list(self):
+        response = self.client.post(
+            reverse(
+                "resources:accesscode-update", kwargs={"uuid": self.access_code.uuid}
+            ),
+            {
+                "access": self.access_code.access.id,
+                "code": "UPDATED456",
+                "validity_start": "2025-01-01 12:00:00",
+                "organization": self.access_code.organization.id,
+            },
+            follow=True,
+        )
+        assert response.redirect_chain[-1][0] == reverse("resources:accesscode-list")
+
+
+class AccessCodeDeleteViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserFactory()
+        self.resource = ResourceFactory()
+        self.manager = ManagerFactory(user=self.user, resources=[self.resource])
+        self.access_code = AccessCodeFactory(access=self.resource.access)
+        self.client.force_login(self.user)
+
+    def test_delete_view_requires_login(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-delete", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        assert "/accounts/login/" in response.url
+
+    def test_delete_view_get_displays_confirmation(self):
+        response = self.client.get(
+            reverse(
+                "resources:accesscode-delete", kwargs={"uuid": self.access_code.uuid}
+            )
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert self.access_code.code in response.content.decode()
+
+    def test_delete_view_post_deletes_access_code(self):
+        access_code_uuid = self.access_code.uuid
+        initial_count = AccessCode.objects.count()
+        response = self.client.post(
+            reverse("resources:accesscode-delete", kwargs={"uuid": access_code_uuid})
+        )
+        assert AccessCode.objects.count() == initial_count - 1
+        assert not AccessCode.objects.filter(uuid=access_code_uuid).exists()
+        assert response.status_code == HTTPStatus.FOUND
+
+    def test_delete_view_post_redirects_to_list(self):
+        response = self.client.post(
+            reverse(
+                "resources:accesscode-delete", kwargs={"uuid": self.access_code.uuid}
+            ),
+            follow=True,
+        )
+        assert response.redirect_chain[-1][0] == reverse("resources:accesscode-list")

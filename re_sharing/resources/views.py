@@ -3,12 +3,18 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 
+import django_filters
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+from neapolitan.views import CRUDView
 
 from re_sharing.organizations.models import Organization
+from re_sharing.providers.decorators import ManagerRequiredMixin
+from re_sharing.resources.models import Access
+from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
@@ -16,6 +22,32 @@ from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
+
+
+class AccessCodeFilterSet(django_filters.FilterSet):
+    """Custom filterset for AccessCode to limit Access choices dynamically."""
+
+    access = django_filters.ModelChoiceFilter(queryset=Access.objects.none())
+
+    class Meta:
+        model = AccessCode
+        fields = ["access", "code", "validity_start", "organization"]
+
+    def __init__(self, *args, **kwargs):
+        # Extract the request from kwargs to get the user
+        request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        # If we have a request and the user is a manager, limit Access choices
+        if request and hasattr(request, "user") and request.user.is_manager():
+            manager = request.user.get_manager()
+            manager_resources = manager.get_resources()
+            accessible_access_ids = manager_resources.values_list(
+                "access_id", flat=True
+            ).distinct()
+            self.filters["access"].queryset = Access.objects.filter(
+                id__in=accessible_access_ids
+            )
 
 
 @require_http_methods(["GET"])
@@ -226,3 +258,40 @@ def get_compensations(request, selected_compensation=None):
             "restriction_message": restriction_message,
         },
     )
+
+
+class AccessCodeView(LoginRequiredMixin, ManagerRequiredMixin, CRUDView):
+    model = AccessCode
+    fields = ["access", "code", "validity_start", "organization"]
+    lookup_field = "uuid"
+    path_converter = "uuid"
+    filterset_class = AccessCodeFilterSet
+
+    def get_queryset(self):
+        """
+        Filter AccessCodes to only show codes for resources the manager has access
+        to.
+        """
+        queryset = super().get_queryset()
+        if self.request.user.is_manager():
+            manager = self.request.user.get_manager()
+            # Get all Access objects related to the manager's resources
+            manager_resources = manager.get_resources()
+            accessible_access_ids = manager_resources.values_list(
+                "access_id", flat=True
+            )
+            queryset = queryset.filter(access_id__in=accessible_access_ids)
+        return queryset
+
+    def get_filterset_kwargs(self, filterset_class):
+        """
+        Pass the request to the filterset so it can limit Access choices.
+        """
+        kwargs = super().get_filterset_kwargs(filterset_class)
+        kwargs["request"] = self.request
+        return kwargs
+
+    def get_success_url(self):
+        from django.urls import reverse
+
+        return reverse("resources:accesscode-list")

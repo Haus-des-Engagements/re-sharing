@@ -38,7 +38,6 @@ The project is organized into several Django apps:
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (package manager)
 - PostgreSQL
-- Redis
 - Git
 
 ### Local Development Setup

@@ -567,6 +567,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-filter"
+version = "25.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2c/e4/465d2699cd388c0005fb8d6ae6709f239917c6d8790ac35719676fffdcf3/django_filter-25.2.tar.gz", hash = "sha256:760e984a931f4468d096f5541787efb8998c61217b73006163bf2f9523fe8f23", size = 143818, upload-time = "2025-10-05T09:51:31.521Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/40/6a02495c5658beb1f31eb09952d8aa12ef3c2a66342331ce3a35f7132439/django_filter-25.2-py3-none-any.whl", hash = "sha256:9c0f8609057309bba611062fe1b720b4a873652541192d232dd28970383633e3", size = 94145, upload-time = "2025-10-05T09:51:29.728Z" },
+]
+
+[[package]]
 name = "django-hijack"
 version = "3.7.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1116,6 +1128,19 @@ wheels = [
 ]
 
 [[package]]
+name = "neapolitan"
+version = "25.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-filter" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/08/06/f967ed9e8f1e46640bcb4cc847eca0019b70fd233291264f6d493b38fdab/neapolitan-25.1.tar.gz", hash = "sha256:e5f1692c6d5807143f48635e351f62f0921d491efa6de8906e9a5ca22104a877", size = 26464, upload-time = "2025-07-03T13:06:30.532Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/40/dff95e2f497108406ba964ced175b2654f6c44ae85ab908742ebf9a39753/neapolitan-25.1-py2.py3-none-any.whl", hash = "sha256:fecc83ba80e2d0654cb649050aea2f1ff4965737665c41b6aa8976e9ecdb205d", size = 14217, upload-time = "2025-07-03T13:06:29.097Z" },
+]
+
+[[package]]
 name = "nodeenv"
 version = "1.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1536,12 +1561,14 @@ dependencies = [
     { name = "django-crispy-forms" },
     { name = "django-environ" },
     { name = "django-extensions" },
+    { name = "django-filter" },
     { name = "django-hijack" },
     { name = "django-import-export" },
     { name = "django-model-utils" },
     { name = "django-storages", extra = ["s3"] },
     { name = "django-tinymce" },
     { name = "icalendar" },
+    { name = "neapolitan" },
     { name = "pillow" },
     { name = "python-dateutil" },
     { name = "python-magic" },
@@ -1596,6 +1623,7 @@ requires-dist = [
     { name = "django-debug-toolbar", marker = "extra == 'dev'", specifier = ">=5.0.1" },
     { name = "django-environ", specifier = ">=0.12.0" },
     { name = "django-extensions", specifier = ">=3.2.3" },
+    { name = "django-filter", specifier = ">=25.2" },
     { name = "django-hijack", specifier = ">=3.7.1" },
     { name = "django-import-export", specifier = ">=4.3.4" },
     { name = "django-model-utils", specifier = ">=5.0.0" },
@@ -1611,6 +1639,7 @@ requires-dist = [
     { name = "ipdb", marker = "extra == 'dev'", specifier = ">=0.13.13" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.2" },
     { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=4.0.1" },
+    { name = "neapolitan", specifier = ">=24.2" },
     { name = "pillow", specifier = ">=10.4.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'dev'", specifier = ">=3.2.4" },

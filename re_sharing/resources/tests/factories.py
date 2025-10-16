@@ -57,7 +57,7 @@ class ResourceFactory(DjangoModelFactory):
 class AccessCodeFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     access = SubFactory(AccessFactory)
-    code = Faker("random_letters", length=6)
+    code = Faker("lexify", text="??????", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     validity_start = timezone.now() - timedelta(days=10)
     organization = SubFactory(
         "re_sharing.organizations.tests.factories.OrganizationFactory"

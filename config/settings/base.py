@@ -82,6 +82,7 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
+    "django_filters",
     "auditlog",
     "tinymce",
     "storages",

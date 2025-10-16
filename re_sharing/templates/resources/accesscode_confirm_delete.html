@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Delete Access Code" %}
+{% endblock title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h1>{% trans "Delete Access Code" %}</h1>
+    <a href="{% url 'resources:accesscode-list' %}"
+       class="btn btn-secondary">{% trans "Back to List" %}</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading">{% trans "Are you sure?" %}</h5>
+        <p>
+          {% blocktrans with code=object.code %}Are you sure you want to delete the access code "{{ code }}"? This action cannot be undone.{% endblocktrans %}
+        </p>
+      </div>
+      <dl class="row">
+        <dt class="col-sm-3">{% trans "Code" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.code }}
+        </dd>
+        <dt class="col-sm-3">{% trans "Access" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.access }}
+        </dd>
+        <dt class="col-sm-3">{% trans "Organization" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.organization|default:"-" }}
+        </dd>
+        <dt class="col-sm-3">{% trans "Validity Start" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.validity_start|date:"Y-m-d H:i:s" }}
+        </dd>
+      </dl>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "Yes, Delete" %}</button>
+        <a href="{% url 'resources:accesscode-list' %}"
+           class="btn btn-secondary">{% trans "Cancel" %}</a>
+      </form>
+    </div>
+  </div>
+{% endblock content %}

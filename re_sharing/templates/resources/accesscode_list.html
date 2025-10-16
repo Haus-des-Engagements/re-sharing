@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% load static i18n crispy_forms_tags %}
+
+{% block title %}
+  {% trans "Access Codes" %}
+{% endblock title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h1>{% trans "Access Codes" %}</h1>
+    <a href="{% url 'resources:accesscode-create' %}"
+       class="btn btn-primary">{% trans "Create Access Code" %}</a>
+  </div>
+  {% if filterset %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{% trans "Filter Access Codes" %}</h5>
+        <form method="get">
+          {{ filterset.form|crispy }}
+          <button type="submit" class="btn btn-primary">{% trans "Apply Filters" %}</button>
+          <a href="{% url 'resources:accesscode-list' %}"
+             class="btn btn-secondary">{% trans "Clear Filters" %}</a>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+  {% if object_list %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>{% trans "Code" %}</th>
+            <th>{% trans "Access" %}</th>
+            <th>{% trans "Organization" %}</th>
+            <th>{% trans "Validity Start" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for accesscode in object_list %}
+            <tr>
+              <td>{{ accesscode.code }}</td>
+              <td>{{ accesscode.access }}</td>
+              <td>{{ accesscode.organization|default:"-" }}</td>
+              <td>{{ accesscode.validity_start|date:"Y-m-d H:i" }}</td>
+              <td>
+                <a href="{% url 'resources:accesscode-detail' accesscode.uuid %}"
+                   class="btn btn-sm btn-info">{% trans "View" %}</a>
+                <a href="{% url 'resources:accesscode-update' accesscode.uuid %}"
+                   class="btn btn-sm btn-warning">{% trans "Edit" %}</a>
+                <a href="{% url 'resources:accesscode-delete' accesscode.uuid %}"
+                   class="btn btn-sm btn-danger">{% trans "Delete" %}</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">{% trans "No access codes found." %}</p>
+  {% endif %}
+{% endblock content %}

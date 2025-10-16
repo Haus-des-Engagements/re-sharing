@@ -25,6 +25,8 @@ dependencies = [
     "django-storages[s3]>=1.14.4",
     "django-import-export>=4.3.4",
     "django-hijack>=3.7.1",
+    "neapolitan>=24.2",
+    "django-filter>=25.2",
     "boto3>=1.35.54",
     "botocore>=1.35.54",
 ]

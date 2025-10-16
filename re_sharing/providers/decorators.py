@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 
@@ -18,3 +19,12 @@ def manager_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return _wrapped_view
+
+
+class ManagerRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin for class-based views that checks that the user is a manager.
+    """
+
+    def test_func(self):
+        return self.request.user.is_manager()
