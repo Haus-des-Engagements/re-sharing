@@ -135,7 +135,8 @@ def filter_resources(
         booking_duration = int(duration) if duration else 30
         end_datetime = start_datetime + timedelta(minutes=booking_duration)
         overlapping_bookings = Booking.objects.filter(
-            timespan__overlap=(start_datetime, end_datetime)
+            status=BookingStatus.CONFIRMED,
+            timespan__overlap=(start_datetime, end_datetime),
         ).select_related("resource", "organization")
         booked_resource_ids = overlapping_bookings.values_list("resource_id", flat=True)
         resources = resources.exclude(id__in=booked_resource_ids)

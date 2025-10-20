@@ -424,7 +424,9 @@ class TestFilterResources(TestCase):
         booking_end = timezone.make_aware(timezone.datetime(2023, 12, 15, 11, 0))
 
         BookingFactory(
-            resource=self.medium_resource, timespan=(booking_start, booking_end)
+            resource=self.medium_resource,
+            timespan=(booking_start, booking_end),
+            status=BookingStatus.CONFIRMED,
         )
 
         resources = filter_resources(self.user, None, start_time, None)
@@ -433,3 +435,95 @@ class TestFilterResources(TestCase):
         assert self.small_resource in resources
         assert self.medium_resource not in resources
         assert self.large_resource in resources
+
+
+class TestManagerAccessibleMethods(TestCase):
+    """Test Manager model methods for accessing resources."""
+
+    def setUp(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+        from re_sharing.users.tests.factories import UserFactory
+
+        # Create a manager with specific resources
+        self.manager_user = UserFactory()
+        self.resource1 = ResourceFactory()
+        self.resource2 = ResourceFactory()
+        self.manager = ManagerFactory(
+            user=self.manager_user, resources=[self.resource1, self.resource2]
+        )
+
+        # Create access codes for manager's resources
+        self.access_code1 = AccessCodeFactory(access=self.resource1.access)
+        self.access_code2 = AccessCodeFactory(access=self.resource2.access)
+
+        # Create another resource and access code that manager doesn't have access to
+        self.other_resource = ResourceFactory()
+        self.other_access_code = AccessCodeFactory(access=self.other_resource.access)
+
+    def test_get_accessible_access_ids(self):
+        """Test that we get correct Access IDs for manager's resources."""
+        accessible_ids = list(self.manager.get_accessible_access_ids())
+
+        # Should include access IDs for manager's resources
+        assert self.resource1.access.id in accessible_ids
+        assert self.resource2.access.id in accessible_ids
+
+        # Should NOT include other access IDs
+        assert self.other_resource.access.id not in accessible_ids
+
+    def test_get_accessible_accesses(self):
+        """Test that we get correct Access objects for manager's resources."""
+        accessible_accesses = self.manager.get_accessible_accesses()
+
+        # Should include accesses for manager's resources
+        assert self.resource1.access in accessible_accesses
+        assert self.resource2.access in accessible_accesses
+
+        # Should NOT include other accesses
+        assert self.other_resource.access not in accessible_accesses
+
+    def test_get_accessible_access_codes(self):
+        """Test that we get correct AccessCodes for manager's resources."""
+        accessible_codes = self.manager.get_accessible_access_codes()
+
+        # Should include access codes for manager's resources
+        assert self.access_code1 in accessible_codes
+        assert self.access_code2 in accessible_codes
+
+        # Should NOT include other access codes
+        assert self.other_access_code not in accessible_codes
+
+    def test_manager_with_no_resources(self):
+        """Test that a manager with no resources gets empty results."""
+        from re_sharing.providers.tests.factories import ManagerFactory
+        from re_sharing.users.tests.factories import UserFactory
+
+        empty_manager_user = UserFactory()
+        empty_manager = ManagerFactory(user=empty_manager_user, resources=[])
+
+        accessible_ids = list(empty_manager.get_accessible_access_ids())
+        accessible_accesses = empty_manager.get_accessible_accesses()
+        accessible_codes = empty_manager.get_accessible_access_codes()
+
+        assert len(accessible_ids) == 0
+        assert accessible_accesses.count() == 0
+        assert accessible_codes.count() == 0
+
+    def test_manager_with_duplicate_access_ids(self):
+        """Test that duplicate Access IDs are properly deduplicated."""
+        from re_sharing.providers.tests.factories import ManagerFactory
+        from re_sharing.users.tests.factories import UserFactory
+
+        # Create two resources with the same access
+        same_access = AccessFactory()
+        resource_a = ResourceFactory(access=same_access)
+        resource_b = ResourceFactory(access=same_access)
+
+        manager_user = UserFactory()
+        manager = ManagerFactory(user=manager_user, resources=[resource_a, resource_b])
+
+        accessible_ids = list(manager.get_accessible_access_ids())
+
+        # Should only have one instance of the access ID (deduplicated)
+        assert accessible_ids.count(same_access.id) == 1
+        assert len(accessible_ids) == 1

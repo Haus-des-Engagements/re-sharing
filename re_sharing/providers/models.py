@@ -102,5 +102,43 @@ class Manager(TimeStampedModel):
         """
         return self.resources.all()
 
+    def get_accessible_access_ids(self) -> QuerySet:
+        """
+        Get IDs of Access objects that this manager can manage.
+
+        Returns:
+            QuerySet: A values_list queryset of Access IDs (deduplicated)
+        """
+        # Use distinct on the Resource queryset before extracting access_ids
+        # to ensure proper deduplication
+        return (
+            self.get_resources()
+            .order_by("access_id")
+            .distinct("access_id")
+            .values_list("access_id", flat=True)
+        )
+
+    def get_accessible_accesses(self) -> QuerySet:
+        """
+        Get Access objects that this manager can manage based on their resources.
+
+        Returns:
+            QuerySet: Queryset of Access objects
+        """
+        from re_sharing.resources.models import Access
+
+        return Access.objects.filter(id__in=self.get_accessible_access_ids())
+
+    def get_accessible_access_codes(self) -> QuerySet:
+        """
+        Get AccessCodes that this manager can see based on their resources.
+
+        Returns:
+            QuerySet: Queryset of AccessCode objects filtered by manager's access
+        """
+        from re_sharing.resources.models import AccessCode
+
+        return AccessCode.objects.filter(access_id__in=self.get_accessible_access_ids())
+
 
 auditlog.register(Manager, exclude_fields=["updated"])

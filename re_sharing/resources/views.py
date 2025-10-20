@@ -41,13 +41,7 @@ class AccessCodeFilterSet(django_filters.FilterSet):
         # If we have a request and the user is a manager, limit Access choices
         if request and hasattr(request, "user") and request.user.is_manager():
             manager = request.user.get_manager()
-            manager_resources = manager.get_resources()
-            accessible_access_ids = manager_resources.values_list(
-                "access_id", flat=True
-            ).distinct()
-            self.filters["access"].queryset = Access.objects.filter(
-                id__in=accessible_access_ids
-            )
+            self.filters["access"].queryset = manager.get_accessible_accesses()
 
 
 @require_http_methods(["GET"])
@@ -272,16 +266,8 @@ class AccessCodeView(LoginRequiredMixin, ManagerRequiredMixin, CRUDView):
         Filter AccessCodes to only show codes for resources the manager has access
         to.
         """
-        queryset = super().get_queryset()
-        if self.request.user.is_manager():
-            manager = self.request.user.get_manager()
-            # Get all Access objects related to the manager's resources
-            manager_resources = manager.get_resources()
-            accessible_access_ids = manager_resources.values_list(
-                "access_id", flat=True
-            )
-            queryset = queryset.filter(access_id__in=accessible_access_ids)
-        return queryset
+        manager = self.request.user.get_manager()
+        return manager.get_accessible_access_codes()
 
     def get_filterset_kwargs(self, filterset_class):
         """
