@@ -363,6 +363,10 @@ class EmailTemplate(TimeStampedModel):
             "monthly_bookings",
             _("Monthly bookings"),
         )
+        BOOKING_NOT_AVAILABLE = (
+            "booking_not_available",
+            _("Booking not available"),
+        )
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)

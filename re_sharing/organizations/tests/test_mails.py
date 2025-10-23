@@ -15,6 +15,7 @@ from re_sharing.organizations.mails import organization_cancellation_email
 from re_sharing.organizations.mails import organization_confirmation_email
 from re_sharing.organizations.mails import send_booking_cancellation_email
 from re_sharing.organizations.mails import send_booking_confirmation_email
+from re_sharing.organizations.mails import send_booking_not_available_email
 from re_sharing.organizations.mails import send_booking_reminder_emails
 from re_sharing.organizations.mails import send_booking_series_cancellation_email
 from re_sharing.organizations.mails import send_booking_series_confirmation_email
@@ -221,6 +222,128 @@ class SendBookingCancellationEmailTest(TestCase):
         assert len(mail.outbox) == 1
         assert "Booking cancelled: Test Booking" in mail.outbox[0].subject
         assert "Your booking Test Booking has been cancelled" in mail.outbox[0].body
+
+
+class SendBookingNotAvailableEmailTest(TestCase):
+    def setUp(self):
+        mail.outbox.clear()
+
+    def test_sends_not_available_email(self):
+        """
+        Test that booking not available email is sent when template is active
+        """
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+            subject="Booking not available: {{ booking.title }}",
+            body=(
+                "Unfortunately, the resource for {{ booking.title }} "
+                "is no longer available at the requested time."
+            ),
+            active=True,
+        )
+        booking = BookingFactory(title="Test Booking", status=BookingStatus.UNAVAILABLE)
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 1
+        assert "Booking not available: Test Booking" in mail.outbox[0].subject
+        assert (
+            "Unfortunately, the resource for Test Booking is no longer available"
+            in mail.outbox[0].body
+        )
+
+    def test_does_not_send_email_when_template_inactive(self):
+        """Test that no email is sent when template is inactive"""
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+            active=False,
+        )
+        booking = BookingFactory(status=BookingStatus.UNAVAILABLE)
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 0
+
+    def test_does_not_send_email_when_template_does_not_exist(self):
+        """Test that no email is sent when template does not exist"""
+        booking = BookingFactory(status=BookingStatus.UNAVAILABLE)
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 0
+
+    def test_sends_to_correct_recipient_user(self):
+        """Test that email is sent to the correct recipient (user)"""
+        user = UserFactory(email="user@example.com")
+        organization = OrganizationFactory(
+            email="org@example.com", send_booking_emails_only_to_organization=False
+        )
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+            subject="Not available",
+            body="Not available",
+            active=True,
+        )
+        booking = BookingFactory(
+            user=user, organization=organization, status=BookingStatus.UNAVAILABLE
+        )
+        BookingPermissionFactory(user=user, organization=organization)
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == ["user@example.com"]
+
+    def test_sends_to_correct_recipient_organization(self):
+        """Test that email is sent to organization when setting is true"""
+        user = UserFactory(email="user@example.com")
+        organization = OrganizationFactory(
+            email="org@example.com", send_booking_emails_only_to_organization=True
+        )
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+            subject="Not available",
+            body="Not available",
+            active=True,
+        )
+        booking = BookingFactory(
+            user=user, organization=organization, status=BookingStatus.UNAVAILABLE
+        )
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == ["org@example.com"]
+
+    def test_email_includes_booking_details(self):
+        """Test that email includes booking details in context"""
+        resource = ResourceFactory(name="Meeting Room A")
+        start = timezone.now() + timedelta(days=1)
+        end = start + timedelta(hours=2)
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+            subject=(
+                "Not available: {{ booking.title }} " "for {{ booking.resource.name }}"
+            ),
+            body=(
+                "Resource: {{ booking.resource.name }}, "
+                "Time: {{ booking.timespan.lower }}"
+            ),
+            active=True,
+        )
+        booking = BookingFactory(
+            title="Important Meeting",
+            resource=resource,
+            timespan=Range(start, end),
+            status=BookingStatus.UNAVAILABLE,
+        )
+
+        send_booking_not_available_email(booking)
+
+        assert len(mail.outbox) == 1
+        assert "Important Meeting" in mail.outbox[0].subject
+        assert "Meeting Room A" in mail.outbox[0].subject
+        assert "Meeting Room A" in mail.outbox[0].body
 
 
 class SendBookingReminderEmailsTest(TestCase):

@@ -19,6 +19,7 @@ from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services_booking_series import create_rrule
 from re_sharing.organizations.mails import send_booking_cancellation_email
 from re_sharing.organizations.mails import send_booking_confirmation_email
+from re_sharing.organizations.mails import send_booking_not_available_email
 from re_sharing.organizations.mails import send_booking_series_confirmation_email
 from re_sharing.organizations.mails import send_manager_new_booking_email
 from re_sharing.organizations.mails import send_new_booking_message_email
@@ -549,10 +550,25 @@ def manager_cancel_booking(user, booking_slug):
 def manager_confirm_booking(user, booking_slug):
     booking = get_object_or_404(Booking, slug=booking_slug)
     if booking.is_confirmable():
-        with set_actor(user):
-            booking.status = BookingStatus.CONFIRMED
-            booking.save()
-        send_booking_confirmation_email(booking)
+        # Check for overlaps with existing confirmed bookings
+        overlapping_bookings = Booking.objects.filter(
+            status=BookingStatus.CONFIRMED,
+            resource=booking.resource,
+            timespan__overlap=booking.timespan,
+        ).exclude(id=booking.id)
+
+        if overlapping_bookings.exists():
+            # Set status to UNAVAILABLE instead of CONFIRMED
+            with set_actor(user):
+                booking.status = BookingStatus.UNAVAILABLE
+                booking.save()
+            send_booking_not_available_email(booking)
+        else:
+            # No overlap, confirm the booking
+            with set_actor(user):
+                booking.status = BookingStatus.CONFIRMED
+                booking.save()
+            send_booking_confirmation_email(booking)
 
         return booking
 

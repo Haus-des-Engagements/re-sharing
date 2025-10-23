@@ -204,6 +204,17 @@ def send_booking_cancellation_email(booking):
     )
 
 
+def send_booking_not_available_email(booking):
+    domain = Site.objects.get_current().domain
+    context = {"booking": booking, "domain": domain}
+
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
+        context,
+        get_recipient_booking(booking),
+    )
+
+
 def send_manager_new_booking_email(booking):
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}

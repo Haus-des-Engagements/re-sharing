@@ -1622,6 +1622,176 @@ class TestManagerConfirmBookingError(TestCase):
             manager_confirm_booking(manager_user, booking.slug)
 
 
+class TestManagerConfirmBookingOverlap(TestCase):
+    """Test manager_confirm_booking with overlapping bookings"""
+
+    def setUp(self):
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.resource = ResourceFactory()
+        self.organization = OrganizationFactory()
+
+        # Create a confirmed booking from 10:00 to 12:00
+        self.start_time = timezone.now() + timedelta(days=1)
+        self.end_time = self.start_time + timedelta(hours=2)
+        self.confirmed_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.CONFIRMED,
+            timespan=(self.start_time, self.end_time),
+        )
+
+    def test_confirm_booking_with_overlap_sets_status_unavailable(self):
+        """Test that confirming a booking with overlap sets status to UNAVAILABLE"""
+        # Create a pending booking that overlaps (10:30 to 12:30)
+        overlapping_start = self.start_time + timedelta(minutes=30)
+        overlapping_end = self.end_time + timedelta(minutes=30)
+        pending_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(overlapping_start, overlapping_end),
+        )
+
+        # Attempt to confirm the overlapping booking
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is UNAVAILABLE, not CONFIRMED
+        assert result.status == BookingStatus.UNAVAILABLE
+        result.refresh_from_db()
+        assert result.status == BookingStatus.UNAVAILABLE
+
+    def test_confirm_booking_without_overlap_sets_status_confirmed(self):
+        """Test that confirming a booking without overlap sets status to CONFIRMED"""
+        # Create a pending booking that does NOT overlap (13:00 to 15:00)
+        non_overlapping_start = self.end_time + timedelta(hours=1)
+        non_overlapping_end = non_overlapping_start + timedelta(hours=2)
+        pending_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(non_overlapping_start, non_overlapping_end),
+        )
+
+        # Attempt to confirm the non-overlapping booking
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is CONFIRMED
+        assert result.status == BookingStatus.CONFIRMED
+        result.refresh_from_db()
+        assert result.status == BookingStatus.CONFIRMED
+
+    def test_confirm_booking_overlap_different_resource_sets_status_confirmed(
+        self,
+    ):
+        """
+        Test confirming a booking on different resource sets status to CONFIRMED
+        """
+        # Create a different resource
+        different_resource = ResourceFactory()
+
+        # Create a pending booking for different resource at same time
+        pending_booking = BookingFactory(
+            resource=different_resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(self.start_time, self.end_time),
+        )
+
+        # Attempt to confirm the booking on different resource
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is CONFIRMED (different resource = no overlap)
+        assert result.status == BookingStatus.CONFIRMED
+        result.refresh_from_db()
+        assert result.status == BookingStatus.CONFIRMED
+
+    def test_confirm_booking_partial_overlap_sets_status_unavailable(self):
+        """Test that partial overlap also sets status to UNAVAILABLE"""
+        # Create a pending booking with partial overlap (11:00 to 13:00)
+        partial_overlap_start = self.start_time + timedelta(hours=1)
+        partial_overlap_end = self.end_time + timedelta(hours=1)
+        pending_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(partial_overlap_start, partial_overlap_end),
+        )
+
+        # Attempt to confirm the partially overlapping booking
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is UNAVAILABLE
+        assert result.status == BookingStatus.UNAVAILABLE
+        result.refresh_from_db()
+        assert result.status == BookingStatus.UNAVAILABLE
+
+    def test_confirm_booking_exact_overlap_sets_status_unavailable(self):
+        """Test that exact overlap sets status to UNAVAILABLE"""
+        # Create a pending booking with exact same timespan
+        exact_overlap_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(self.start_time, self.end_time),
+        )
+
+        # Attempt to confirm the exactly overlapping booking
+        result = manager_confirm_booking(self.manager_user, exact_overlap_booking.slug)
+
+        # Assert the booking status is UNAVAILABLE
+        assert result.status == BookingStatus.UNAVAILABLE
+        result.refresh_from_db()
+        assert result.status == BookingStatus.UNAVAILABLE
+
+    def test_confirm_booking_contained_overlap_sets_status_unavailable(self):
+        """
+        Test booking contained within confirmed booking
+        sets status to UNAVAILABLE
+        """
+        # Create pending booking contained within confirmed booking
+        contained_start = self.start_time + timedelta(minutes=30)
+        contained_end = self.end_time - timedelta(minutes=30)
+        pending_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(contained_start, contained_end),
+        )
+
+        # Attempt to confirm the contained booking
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is UNAVAILABLE
+        assert result.status == BookingStatus.UNAVAILABLE
+        result.refresh_from_db()
+        assert result.status == BookingStatus.UNAVAILABLE
+
+    def test_confirm_booking_overlap_with_cancelled_sets_status_confirmed(self):
+        """Test that overlap with cancelled booking still allows confirmation"""
+        # Change the existing booking to CANCELLED
+        self.confirmed_booking.status = BookingStatus.CANCELLED
+        self.confirmed_booking.save()
+
+        # Create a pending booking that overlaps
+        overlapping_start = self.start_time + timedelta(minutes=30)
+        overlapping_end = self.end_time + timedelta(minutes=30)
+        pending_booking = BookingFactory(
+            resource=self.resource,
+            organization=self.organization,
+            status=BookingStatus.PENDING,
+            timespan=(overlapping_start, overlapping_end),
+        )
+
+        # Attempt to confirm - should succeed since other booking is cancelled
+        result = manager_confirm_booking(self.manager_user, pending_booking.slug)
+
+        # Assert the booking status is CONFIRMED
+        assert result.status == BookingStatus.CONFIRMED
+        result.refresh_from_db()
+        assert result.status == BookingStatus.CONFIRMED
+
+
 class TestManagerFilterInvoiceBookingsList(TestCase):
     """Test manager_filter_invoice_bookings_list function"""
 
