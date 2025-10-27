@@ -4,16 +4,28 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-  {{ organization.name }}
+  {% if organization %}
+    {% trans "Edit organization" %} - {{ organization.name }}
+  {% else %}
+    {% trans "Add an organization" %}
+  {% endif %}
 {% endblock title %}
 {% block content %}
   <div class="row mt-5 mb-2">
-    <h1>{% trans "Add an organization" %}</h1>
+    {% if organization %}
+      <h1>{% trans "Edit organization" %}</h1>
+    {% else %}
+      <h1>{% trans "Add an organization" %}</h1>
+    {% endif %}
   </div>
   <div class="row">
-    <p>
-      {% trans "Only registered organizations can book resources. If your organization is not registered yet, you can add it here." %}
-    </p>
+    {% if organization %}
+      <p>{% trans "Update the information for your organization." %}</p>
+    {% else %}
+      <p>
+        {% trans "Only registered organizations can book resources. If your organization is not registered yet, you can add it here." %}
+      </p>
+    {% endif %}
   </div>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}

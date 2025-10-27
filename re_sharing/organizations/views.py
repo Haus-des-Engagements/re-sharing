@@ -120,7 +120,11 @@ def update_organization_view(request, organization):
             messages.success(request, "Organization updated successfully.")
             return redirect("organizations:show-organization", organization.slug)
 
-    return render(request, "organizations/create_organization.html", {"form": form})
+    return render(
+        request,
+        "organizations/create_organization.html",
+        {"form": form, "organization": organization},
+    )
 
 
 @require_http_methods(["GET"])

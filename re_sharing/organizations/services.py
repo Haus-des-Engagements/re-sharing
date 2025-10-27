@@ -116,7 +116,12 @@ def update_organization(user, form, organization):
     if user_has_admin_bookingpermission(user, organization):
         organization = form.save(commit=False)
         organization.save()
-        organization.organization_groups.set(form.cleaned_data["organization_groups"])
+        # Only update organization_groups if the field exists in the form
+        # (non-managers don't have access to this field)
+        if "organization_groups" in form.cleaned_data:
+            organization.organization_groups.set(
+                form.cleaned_data["organization_groups"]
+            )
         return organization
 
     raise PermissionDenied

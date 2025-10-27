@@ -205,7 +205,9 @@ class OrganizationForm(forms.ModelForm):
         notifications = _("Notifications")
         affiliation = _("Affiliation")
         affiliation_description = _("An affiliation is not needed to book resources.")
-        self.helper.layout = Layout(
+
+        # Build layout components
+        layout_fields = [
             Column("name", css_class="form-group col-md-8 mb-0"),
             Column("public_name", css_class="form-group col-md-8 mb-0"),
             Column("description", css_class="form-group col-md-8 mb-0"),
@@ -243,21 +245,44 @@ class OrganizationForm(forms.ModelForm):
             Column("email", css_class="form-group col-md-4 mb-0"),
             "send_booking_emails_only_to_organization",
             "monthly_bulk_access_codes",
-            HTML("<h3 class='mt-5 mb-3'>"),
-            HTML(affiliation),
-            HTML("</h3>"),
-            HTML(affiliation_description),
-            "organization_groups",
-            HTML("<h3 class='mt-5 mb-3'>"),
-            HTML(consent),
-            HTML("</h3>"),
-            Row(
-                Column("usage_agreement", css_class="form-group col-md-6 mb-0"),
-                Column("usage_agreement_date", css_class="form-group col-md-4 mb-0"),
-            ),
-            "is_public",
-            "values_approval",
-            "hde_newsletter",
-            "hde_newsletter_for_actives",
-            Submit("submit", _("Save organization")),
+        ]
+
+        # Only include affiliation section if organization_groups field exists
+        if "organization_groups" in self.fields:
+            layout_fields.extend(
+                [
+                    HTML("<h3 class='mt-5 mb-3'>"),
+                    HTML(affiliation),
+                    HTML("</h3>"),
+                    HTML(affiliation_description),
+                    "organization_groups",
+                ]
+            )
+
+        # Continue with consent section
+        layout_fields.extend(
+            [
+                HTML("<h3 class='mt-5 mb-3'>"),
+                HTML(consent),
+                HTML("</h3>"),
+                Row(
+                    Column("usage_agreement", css_class="form-group col-md-6 mb-0"),
+                    Column(
+                        "usage_agreement_date", css_class="form-group col-md-4 mb-0"
+                    ),
+                ),
+                "is_public",
+                "values_approval",
+            ]
         )
+
+        # Add newsletter fields if they exist (only for creation)
+        if "hde_newsletter" in self.fields:
+            layout_fields.append("hde_newsletter")
+        if "hde_newsletter_for_actives" in self.fields:
+            layout_fields.append("hde_newsletter_for_actives")
+
+        # Add submit button
+        layout_fields.append(Submit("submit", _("Save organization")))
+
+        self.helper.layout = Layout(*layout_fields)
