@@ -174,20 +174,27 @@ class OrganizationForm(forms.ModelForm):
             )
             or organization_group.name
         )
+
+        is_editing = self.instance.pk is not None
+
         if user.is_manager():
             manager = user.get_manager()
             organization_groups = (
                 OrganizationGroup.objects.filter(show_on_organization_creation=True)
                 | manager.organization_groups.all()
             ).distinct()
-
+            self.fields["organization_groups"].queryset = organization_groups
+        elif is_editing:
+            # Remove the field entirely when editing
+            self.fields.pop("organization_groups", None)
         else:
+            # For creation, show only groups with show_on_organization_creation
             organization_groups = OrganizationGroup.objects.filter(
                 show_on_organization_creation=True
             )
-        self.fields["organization_groups"].queryset = organization_groups
+            self.fields["organization_groups"].queryset = organization_groups
 
-        if self.instance.pk is not None:  # Existing instance (update form)
+        if is_editing:
             # Remove 'hde_newsletter' and 'hde_newsletter_for_actives' for an update
             self.fields.pop("hde_newsletter", None)
             self.fields.pop("hde_newsletter_for_actives", None)
