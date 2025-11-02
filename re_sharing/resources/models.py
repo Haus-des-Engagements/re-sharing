@@ -7,6 +7,7 @@ from django.db.models import CASCADE
 from django.db.models import SET_NULL
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import DateField
 from django.db.models import DateTimeField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
@@ -241,6 +242,20 @@ class ResourceRestriction(TimeStampedModel):
         max_length=13,
         help_text=_("Comma-separated list of weekday numbers (0=Monday, 6=Sunday)."),
     )
+    start_date = DateField(
+        _("Start date"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Start date of the restriction. Leave empty to apply from the beginning."
+        ),
+    )
+    end_date = DateField(
+        _("End date"),
+        null=True,
+        blank=True,
+        help_text=_("End date of the restriction. Leave empty to apply indefinitely."),
+    )
     message = CharField(
         _("Message"),
         max_length=512,
@@ -271,6 +286,13 @@ class ResourceRestriction(TimeStampedModel):
         """
         Check if this restriction applies to the given datetime.
         """
+        # Check if the date is within the date range
+        date = dt.date()
+        if self.start_date and date < self.start_date:
+            return False
+        if self.end_date and date > self.end_date:
+            return False
+
         # Check if the day of week is in the restriction's days of week
         weekday = dt.weekday()
         days = [int(d.strip()) for d in self.days_of_week.split(",")]

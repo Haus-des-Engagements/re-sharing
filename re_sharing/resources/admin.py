@@ -54,11 +54,45 @@ class ResourceRestrictionAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = [
         "id",
         "message",
+        "start_date",
+        "end_date",
         "start_time",
         "end_time",
         "days_of_week",
         "is_active",
     ]
+    list_filter = ["is_active", "start_date", "end_date"]
     search_fields = ["id", "message"]
     filter_horizontal = ["resources", "exempt_organization_groups"]
     ordering = ["id"]
+    fieldsets = (
+        (
+            "Date Range",
+            {
+                "fields": ("start_date", "end_date"),
+                "description": (
+                    "Define the date range for this restriction. "
+                    "Leave both empty to apply always. "
+                    "Set only start_date to apply from that date onwards."
+                ),
+            },
+        ),
+        (
+            "Time and Days",
+            {
+                "fields": ("start_time", "end_time", "days_of_week"),
+            },
+        ),
+        (
+            "Resources and Exemptions",
+            {
+                "fields": ("resources", "exempt_organization_groups"),
+            },
+        ),
+        (
+            "Details",
+            {
+                "fields": ("message", "is_active"),
+            },
+        ),
+    )
