@@ -27,41 +27,55 @@
         hx-sync="closest form:replace">
     <div id="div_id_organization" class="col-3">
       <select name="organization" class="form-select" id="id_organization">
-        <option selected value="all">{% trans "all organizations" %}</option>
+        <option value="all"
+                {% if selected_organization == "all" %}selected{% endif %}>{% trans "all organizations" %}</option>
         {% for organization in organizations %}
-          <option value="{{ organization.slug }}">{{ organization }}</option>
+          <option value="{{ organization.slug }}"
+                  {% if selected_organization == organization.slug %}selected{% endif %}>{{ organization }}</option>
         {% endfor %}
       </select>
     </div>
     <div id="div_id_resource" class="col-auto">
       <select name="resource" class="form-select" id="id_resource">
-        <option selected value="all">{% trans "all resources" %}</option>
-        {% for resource in resources %}<option value="{{ resource.slug }}">{{ resource }}</option>{% endfor %}
+        <option value="all" {% if selected_resource == "all" %}selected{% endif %}>{% trans "all resources" %}</option>
+        {% for resource in resources %}
+          <option value="{{ resource.slug }}"
+                  {% if selected_resource == resource.slug %}selected{% endif %}>{{ resource }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="col-auto" id="div_id_status">
       <select name="status" class="select form-select" id="id_status">
-        <option value="all">{% trans "all statuses" %}</option>
+        <option value="all" {% if selected_status == "all" %}selected{% endif %}>{% trans "all statuses" %}</option>
         {% for status in statuses %}
-          <option value="{{ status.0 }}" {% if status.0 == 1 %}selected{% endif %}>{{ status.1 }}</option>
+          <option value="{{ status.0 }}"
+                  {% if selected_status|stringformat:"s" == status.0|stringformat:"s" %}selected{% endif %}>
+            {{ status.1 }}
+          </option>
         {% endfor %}
       </select>
     </div>
     <div class="col-auto">
-      <input type="date" name="date" class="form-control textinput" id="id_date" />
+      <input type="date"
+             name="date"
+             class="form-control textinput"
+             id="id_date"
+             {% if selected_date %}value="{{ selected_date }}"{% endif %} />
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"
              name="show_past_bookings"
              class="form-check-input"
-             id="id_show_past_bookings" />
+             id="id_show_past_bookings"
+             {% if show_past_bookings %}checked{% endif %} />
       <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"
              name="show_recurring_bookings"
              class="form-check-input"
-             id="id_hide_recurring_bookings" />
+             id="id_hide_recurring_bookings"
+             {% if show_recurring_bookings %}checked{% endif %} />
       <label for="id_show_recurring_bookings" class="form-check-label">
         {% trans "show" %} <a href="{% url 'bookings:manager-list-booking_series' %}">{% trans "booking series" %}</a>
       </label>

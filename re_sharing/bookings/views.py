@@ -371,6 +371,12 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         "organizations": organizations,
         "statuses": BookingStatus.choices,
         "resources": resources,
+        "selected_organization": organization,
+        "selected_resource": resource,
+        "selected_status": status,
+        "selected_date": date_string,
+        "show_past_bookings": show_past_bookings,
+        "show_recurring_bookings": show_recurring_bookings,
     }
 
     if request.headers.get("HX-Request"):

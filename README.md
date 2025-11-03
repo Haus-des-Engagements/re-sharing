@@ -138,7 +138,7 @@ The `uv.lock` file tracks exact versions and should be committed to version cont
 ## Database
 
 ### Postgres
-Django connects to a Postgres Database, that runs inside vagrant. The database can be recreated with these commands:
+Django connects to a Postgres Database. The database can be recreated with these commands:
 
 * Delete the database: `dropdb re-sharing`
 * Create database: `createdb re-sharing`
