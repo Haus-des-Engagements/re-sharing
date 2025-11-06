@@ -1,0 +1,1876 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-06 12:35+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "English"
+msgstr "Anglais"
+
+msgid "German"
+msgstr "Allemand"
+
+msgid "French"
+msgstr "Français"
+
+msgid "Confirm selected bookings"
+msgstr "Confirmer les réservations sélectionnées"
+
+#, python-format
+msgid "%d booking was successfully confirmed."
+msgid_plural "%d bookings were successfully confirmed."
+msgstr[0] "%d réservation confirmée avec succès."
+msgstr[1] "%d réservations confirmées avec succès."
+
+msgid "Cancel selected bookings"
+msgstr "Annuler les réservations sélectionnées"
+
+#, python-format
+msgid "%d booking was successfully cancelled."
+msgid_plural "%d bookings were successfully cancelled."
+msgstr[0] "%d réservation annulée avec succès."
+msgstr[1] "%d réservations annulées avec succès."
+
+msgid "Bookings"
+msgstr "Réservations"
+
+msgid "Generate bookings"
+msgstr "Générer des réservations"
+
+msgid "Delete bookings"
+msgstr "Supprimer les réservations"
+
+msgid "Activate reminder mails"
+msgstr "Activer les e-mails de rappel"
+
+msgid "Deactivate reminder mails"
+msgstr "Désactiver les e-mails de rappel"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "from"
+msgstr "du"
+
+msgid "until"
+msgstr "au"
+
+msgid "Organization"
+msgstr "Organisation"
+
+msgid "Booking title"
+msgstr "Titre de la réservation"
+
+msgid "e.g. internal meeting, workshop XY, public talk about ZY..."
+msgstr "par ex. réunion interne, atelier XY, conférence publique sur ZY..."
+
+msgid "Number of attendees"
+msgstr "Nombre de participants"
+
+msgid "Please describe shortly what you are planning to do."
+msgstr "Veuillez décrire brièvement ce que vous prévoyez de faire."
+
+msgid "Resource"
+msgstr "Ressource"
+
+msgid "hour"
+msgstr "heure"
+
+msgid "Compensation"
+msgstr "Compensation"
+
+msgid "No repetitions"
+msgstr "Aucune répétition"
+
+msgid "Daily"
+msgstr "Quotidien"
+
+msgid "Weekly"
+msgstr "Hebdomadaire"
+
+msgid "Monthly by weekday"
+msgstr "Mensuel par jour de la semaine"
+
+msgid "Repeat"
+msgstr "Répéter"
+
+msgid "after"
+msgstr "après"
+
+msgid "at"
+msgstr "le"
+
+msgid "never"
+msgstr "ne se termine jamais"
+
+msgid "ends"
+msgstr "se termine"
+
+msgid "Send separate reminder E-Mails for each booking of this series."
+msgstr "Envoyer des e-mails de rappel séparés pour chaque réservation de cette série."
+
+msgid "End Date"
+msgstr "Date de fin"
+
+msgid "Repetition frequency"
+msgstr "Fréquence de répétition"
+
+msgid "Repeat on these days"
+msgstr "Répéter ces jours"
+
+msgid "Preview"
+msgstr "Aperçu"
+
+#, python-brace-format
+msgid "Have a look at the <a href='{url}'>planner</a> for free slots."
+msgstr "Consultez le <a href='{url}'>planificateur</a> pour les créneaux libres."
+
+msgid "Start time must be selected in 30-minute intervals."
+msgstr "L'heure de début doit être sélectionnée par intervalles de 30 minutes."
+
+msgid "The end must be in the future."
+msgstr "La fin doit être dans le futur."
+
+msgid "The end must be after the start."
+msgstr "La fin doit être après le début."
+
+msgid "You can only book for the next 2 years."
+msgstr "Vous ne pouvez réserver que pour les 2 prochaines années."
+
+msgid "The resource is already booked during your selected timeslot."
+msgstr "La ressource est déjà réservée pendant votre créneau sélectionné."
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Initial Booking User"
+msgstr "Utilisateur de la réservation initiale"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Recurrence rule"
+msgstr "Règle de récurrence"
+
+msgid "Date of first booking"
+msgstr "Date de la première réservation"
+
+msgid "Date of last booking"
+msgstr "Date de la dernière réservation"
+
+msgid "Start Time"
+msgstr "Heure de début"
+
+msgid "End Time"
+msgstr "Heure de fin"
+
+msgid "Total amount per booking"
+msgstr "Montant total par réservation"
+
+msgid "Invoice address"
+msgstr "Adresse de facturation"
+
+msgid "Activity description"
+msgstr "Description de l'activité"
+
+msgid "Enable reminder e-mails"
+msgstr "Activer les e-mails de rappel"
+
+msgid "Import ID"
+msgstr "ID d'importation"
+
+msgid ""
+"The ID of the record in the old system. This is used for referencing records "
+"even after migration."
+msgstr "L'ID de l'enregistrement dans l'ancien système. Utilisé pour référencer les enregistrements même après la migration."
+
+msgid "Booking series"
+msgstr "Série de réservations"
+
+msgid "ends after "
+msgstr "se termine après "
+
+msgid " times"
+msgstr " fois"
+
+msgid "ends at the "
+msgstr "se termine le "
+
+msgid "never ends"
+msgstr "ne se termine jamais"
+
+msgid "last "
+msgstr "dernier "
+
+msgid " at the "
+msgstr " le "
+
+msgid " (on all days of the week)"
+msgstr " (tous les jours de la semaine)"
+
+msgid "only "
+msgstr "seulement "
+
+msgid "only at the"
+msgstr "seulement le"
+
+msgid "day"
+msgstr "jour"
+
+msgid "Booking Organization"
+msgstr "Organisation de la réservation"
+
+msgid "Start date"
+msgstr "Date de début"
+
+msgid "End date"
+msgstr "Date de fin"
+
+msgid "Start time"
+msgstr "Heure de début"
+
+msgid "End time"
+msgstr "Heure de fin"
+
+msgid "Total amount"
+msgstr "Montant total"
+
+msgid "Invoice number"
+msgstr "Numéro de facture"
+
+msgid "Automatically generated on"
+msgstr "Généré automatiquement le"
+
+msgid "Booking"
+msgstr "Réservation"
+
+msgid ""
+"The requested timespan overlaps with an existing booking for this resource. "
+"Please chose another timespan."
+msgstr "La période demandée chevauche une réservation existante pour cette ressource. Veuillez choisir une autre période."
+
+msgid "Message"
+msgstr "Message"
+
+msgid "User"
+msgstr "Utilisateur"
+
+msgid "Booking Message"
+msgstr "Message de réservation"
+
+msgid "Booking Messages"
+msgstr "Messages de réservation"
+
+msgid "only shown when confirmed"
+msgstr "affiché uniquement après confirmation"
+
+msgid "only shown 7 days before booking"
+msgstr "affiché uniquement 7 jours avant la réservation"
+
+msgid "Start Date"
+msgstr "Date de début"
+
+msgid "Booking created successfully!"
+msgstr "Réservation créée avec succès !"
+
+msgid ""
+"Booking request created successfully! Please await our confirmation. You "
+"will be notified by mail."
+msgstr "Demande de réservation créée avec succès ! Veuillez attendre notre confirmation. Vous serez notifié par e-mail."
+
+msgid "Sorry, something went wrong. Please try again."
+msgstr "Désolé, quelque chose s'est mal passé. Veuillez réessayer."
+
+msgid "Successfully cancelled all future bookings."
+msgstr "Toutes les réservations futures ont été annulées avec succès."
+
+msgid "Booking series created successfully!"
+msgstr "Série de réservations créée avec succès !"
+
+msgid "Dashboards"
+msgstr "Tableaux de bord"
+
+msgid "Activate bulk sending"
+msgstr "Activer l'envoi groupé"
+
+msgid "Deactivate bulk sending"
+msgstr "Désactiver l'envoi groupé"
+
+msgid "Send monthly bookings overview"
+msgstr "Envoyer l'aperçu mensuel des réservations"
+
+msgid "Organizations"
+msgstr "Organisations"
+
+msgid "Name of the organization"
+msgstr "Nom de l'organisation"
+
+msgid ""
+"e.g. Accordion Club Gundelfinden e.V. <a href='/organizations'>Please check "
+"here first</a> if your organization has already been created."
+msgstr "par ex. Club d'accordéon Gundelfinden e.V. <a href='/organizations'>Veuillez vérifier ici d'abord</a> si votre organisation a déjà été créée."
+
+msgid "Public display name (optional)"
+msgstr "Nom d'affichage public (facultatif)"
+
+msgid ""
+"This name will be displayed on the screen inside the HdE (not in the "
+"internet)."
+msgstr "Ce nom sera affiché sur l'écran à l'intérieur de la HdE (pas sur internet)."
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Describe shortly what your organization is doing and trying to achieve."
+msgstr "Décrivez brièvement ce que fait votre organisation et ce qu'elle cherche à accomplir."
+
+msgid "We are a charitable organization."
+msgstr "Nous sommes une organisation caritative."
+
+msgid ""
+"Please select only if you have a valid certificate of tax exemption. Of "
+"course you can also book resources if you're not officially charitable!"
+msgstr "Veuillez sélectionner uniquement si vous disposez d'un certificat valide d'exonération fiscale. Bien sûr, vous pouvez également réserver des ressources si vous n'êtes pas officiellement caritatif !"
+
+msgid "This organization may be listed publicly on this website."
+msgstr "Cette organisation peut être répertoriée publiquement sur ce site web."
+
+msgid ""
+"Only organization name, description, city, website and area of activity will "
+"be displayed."
+msgstr "Seuls le nom de l'organisation, la description, la ville, le site web et le domaine d'activité seront affichés."
+
+msgid "E-Mail address of the organization"
+msgstr "Adresse e-mail de l'organisation"
+
+msgid "Send all emails to this address."
+msgstr "Envoyer tous les e-mails à cette adresse."
+
+msgid "All mails will be send to the organization and not to the user."
+msgstr "Tous les e-mails seront envoyés à l'organisation et non à l'utilisateur."
+
+msgid "Send all access codes for the next month at once (at the 20th.)."
+msgstr "Envoyer tous les codes d'accès pour le mois prochain en une fois (le 20)."
+
+msgid "This prevents sending separate emails for all bookings."
+msgstr "Cela évite d'envoyer des e-mails séparés pour toutes les réservations."
+
+msgid ""
+"I have read <a href='https://haus-des-engagements.de/wp-content/"
+"uploads/2024/08/Unsere-Werte-im-HdE.pdf' target='_blank'>Our Values in the "
+"House of Engagement</a> and the associated <a href='https://haus-des-"
+"engagements.de/wp-content/uploads/2024/08/Ablauf-Werte-im-HdE.pdf "
+"target='_blank'>Procedure</a>. I will inform all members of my group about "
+"them. We agree to the values."
+msgstr "J'ai lu <a href='https://haus-des-engagements.de/wp-content/uploads/2024/08/Unsere-Werte-im-HdE.pdf' target='_blank'>Nos Valeurs dans la Maison de l'Engagement</a> ainsi que la <a href='https://haus-des-engagements.de/wp-content/uploads/2024/08/Ablauf-Werte-im-HdE.pdf target='_blank'>Procédure</a> associée. J'informerai tous les membres de mon groupe à leur sujet. Nous acceptons les valeurs."
+
+msgid "In which societal area are you mainly active?"
+msgstr "Dans quel domaine social êtes-vous principalement actif ?"
+
+msgid ""
+"Upload your existing usage agreement or add a <a href='https://haus-des-"
+"engagements.de/wp-content/"
+"uploads/2025/07/2025-07-08_Vereinbarung_Raumnutzung_HdE.pdf' "
+"target='_blank'>new one</a> (or your coworking-contract)."
+msgstr "Téléchargez votre accord d'utilisation existant ou ajoutez-en un <a href='https://haus-des-engagements.de/wp-content/uploads/2025/07/2025-07-08_Vereinbarung_Raumnutzung_HdE.pdf' target='_blank'>nouveau</a> (ou votre contrat de coworking)."
+
+msgid "Please upload a single PDF file."
+msgstr "Veuillez télécharger un seul fichier PDF."
+
+msgid "Signing date of the usage agreement"
+msgstr "Date de signature de l'accord d'utilisation"
+
+msgid "When did you sign the usage agreement?"
+msgstr "Quand avez-vous signé l'accord d'utilisation ?"
+
+msgid ""
+"I want to subscribe my organization to the monthly newsletter ofthe Haus des "
+"Engagements."
+msgstr "Je souhaite abonner mon organisation à la newsletter mensuelle de la Haus des Engagements."
+
+msgid ""
+"I would like to subscribe my organization to the monthly newsletter for "
+"actives (with tips on further training, events, and funding opportunities in "
+"Freiburg and the surrounding area)."
+msgstr "Je souhaite abonner mon organisation à la newsletter mensuelle pour les actifs (avec des conseils sur la formation continue, les événements et les opportunités de financement à Fribourg et dans les environs)."
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Consent"
+msgstr "Consentement"
+
+msgid "Notifications"
+msgstr "Notifications"
+
+msgid "Affiliation"
+msgstr "Affiliation"
+
+msgid "An affiliation is not needed to book resources."
+msgstr "Une affiliation n'est pas nécessaire pour réserver des ressources."
+
+msgid ""
+"We need some more information of your organization. If you don'thave an "
+"official address yet, you can also enter your personal address."
+msgstr "Nous avons besoin de plus d'informations sur votre organisation. Si vous n'avez pas encore d'adresse officielle, vous pouvez également entrer votre adresse personnelle."
+
+msgid "Save organization"
+msgstr "Enregistrer l'organisation"
+
+#, python-format
+msgid "Find all related information here: %s%s"
+msgstr "Trouvez toutes les informations connexes ici : %s%s"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Auto confirmed resources"
+msgstr "Ressources confirmées automatiquement"
+
+msgid "Show on organization creation"
+msgstr "Afficher lors de la création d'une organisation"
+
+msgid "This will be displayed in the form"
+msgstr "Ceci sera affiché dans le formulaire"
+
+msgid "Bookable private resources"
+msgstr "Ressources privées réservables"
+
+msgid "Group activated by default"
+msgstr "Groupe activé par défaut"
+
+msgid "Organization group"
+msgstr "Groupe d'organisation"
+
+msgid "Organization groups"
+msgstr "Groupes d'organisation"
+
+msgid "Pending"
+msgstr "En attente"
+
+msgid "Confirmed"
+msgstr "Confirmé"
+
+msgid "Rejected"
+msgstr "Rejeté"
+
+msgid "Sport and exercise"
+msgstr "Sport et exercice"
+
+msgid "Culture and music"
+msgstr "Culture et musique"
+
+msgid "Social area"
+msgstr "Domaine social"
+
+msgid "School or nursery area"
+msgstr "École et garderie"
+
+msgid "Church or religious area"
+msgstr "Domaine religieux"
+
+msgid "Leisure and social interaction"
+msgstr "Loisirs et convivialité"
+
+msgid "Environment, nature protection or animal rights"
+msgstr "Environnement, protection de la nature ou droits des animaux"
+
+msgid "Youth work outside school or adult education"
+msgstr "Travail de jeunesse hors école ou éducation des adultes"
+
+msgid "Politics and political interest groups"
+msgstr "Politique et groupes d'intérêt politique"
+
+msgid "Accident or ambulance service or voluntary fire brigade"
+msgstr "Service d'accident, ambulance ou pompiers volontaires"
+
+msgid "Health area"
+msgstr "Domaine de la santé"
+
+msgid "Professional interest groups outside work"
+msgstr "Groupes d'intérêt professionnel hors travail"
+
+msgid "Justice and criminality"
+msgstr "Justice et criminalité"
+
+msgid "Area not yet mentioned"
+msgstr "Autre domaine"
+
+msgid "Without legal form"
+msgstr "Sans forme juridique"
+
+msgid "Registered association"
+msgstr "Association enregistrée"
+
+msgid "Not registered association"
+msgstr "Association non enregistrée"
+
+msgid "Foundation"
+msgstr "Fondation"
+
+msgid "Civil law company"
+msgstr "Société de droit civil"
+
+msgid "Limited company"
+msgstr "Société à responsabilité limitée"
+
+msgid "Cooperative"
+msgstr "Coopérative"
+
+msgid "Individual entrepreneur"
+msgstr "Entrepreneur individuel"
+
+msgid "Other"
+msgstr "Autre"
+
+msgid "Public name"
+msgstr "Nom public"
+
+msgid ""
+"This is the name that appears on the public timetables. Only relevant if you "
+"wish to hide your official name publicly."
+msgstr "C'est le nom qui apparaît sur les horaires publics. Pertinent uniquement si vous souhaitez masquer votre nom officiel publiquement."
+
+msgid "Describe shortly what your organization does."
+msgstr "Décrivez brièvement ce que fait votre organisation."
+
+msgid "Street and housenumber"
+msgstr "Rue et numéro"
+
+msgid "Zip Code"
+msgstr "Code postal"
+
+msgid "City"
+msgstr "Ville"
+
+msgid "E-Mail"
+msgstr "E-mail"
+
+msgid ""
+"All access codes for the next month will be sent in one mail on the 20th."
+msgstr "Tous les codes d'accès pour le mois prochain seront envoyés en un seul e-mail le 20."
+
+msgid "Phone number"
+msgstr "Numéro de téléphone"
+
+msgid "Website"
+msgstr "Site web"
+
+msgid "Legal form"
+msgstr "Forme juridique"
+
+msgid "Other legal form"
+msgstr "Autre forme juridique"
+
+msgid "Only applicable if you have a valid certificate of tax exemption."
+msgstr "Applicable uniquement si vous disposez d'un certificat valide d'exonération fiscale."
+
+msgid "Main area of activity"
+msgstr "Principal domaine d'activité"
+
+msgid "Organization information is publicly visible"
+msgstr "Les informations de l'organisation sont publiquement visibles"
+
+msgid ""
+"If checked, we'll show the following information to others: name, "
+"description, city, website, area of activity"
+msgstr "Si coché, nous afficherons les informations suivantes aux autres : nom, description, ville, site web, domaine d'activité"
+
+msgid "Approval of values"
+msgstr "Approbation des valeurs"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Internal notes"
+msgstr "Notes internes"
+
+msgid "Usage agreement"
+msgstr "Accord d'utilisation"
+
+msgid "Date of the signed usage agreement"
+msgstr "Date de signature de l'accord d'utilisation"
+
+msgid "Administrator"
+msgstr "Administrateur"
+
+msgid "Booker"
+msgstr "Réservateur"
+
+msgid "Role"
+msgstr "Rôle"
+
+msgid "Booking permission"
+msgstr "Permission de réservation"
+
+msgid "Booking permissions"
+msgstr "Permissions de réservation"
+
+msgid "Booking confirmation"
+msgstr "Confirmation de réservation"
+
+msgid "Booking cancellation"
+msgstr "Annulation de réservation"
+
+msgid "Booking reminder"
+msgstr "Rappel de réservation"
+
+msgid "Booking series confirmation"
+msgstr "Confirmation de série de réservations"
+
+msgid "Booking series cancellation"
+msgstr "Annulation de série de réservations"
+
+msgid "Organization confirmation"
+msgstr "Confirmation d'organisation"
+
+msgid "Organization cancellation"
+msgstr "Annulation d'organisation"
+
+msgid "Manager new organization"
+msgstr "Gestionnaire nouvelle organisation"
+
+msgid "Manager new booking series"
+msgstr "Gestionnaire nouvelle série de réservations"
+
+msgid "Manager new booking"
+msgstr "Gestionnaire nouvelle réservation"
+
+msgid "Manager new organization message"
+msgstr "Gestionnaire nouveau message d'organisation"
+
+msgid "New booking message"
+msgstr "Nouveau message de réservation"
+
+msgid "New organization message"
+msgstr "Nouveau message d'organisation"
+
+msgid "Monthly bookings"
+msgstr "Réservations mensuelles"
+
+msgid "Booking not available"
+msgstr "Réservation non disponible"
+
+msgid "Send this email out."
+msgstr "Envoyer cet e-mail."
+
+msgid "E-Mail template"
+msgstr "Modèle d'e-mail"
+
+msgid "Organization Message"
+msgstr "Message d'organisation"
+
+msgid "Organization Messages"
+msgstr "Messages d'organisation"
+
+msgid "Providers"
+msgstr "Fournisseurs"
+
+msgid "Resources"
+msgstr "Ressources"
+
+msgid ""
+"If no organization group is specified, the user can manage all bookings and "
+"organizations."
+msgstr "Si aucun groupe d'organisation n'est spécifié, l'utilisateur peut gérer toutes les réservations et organisations."
+
+msgid "Manager"
+msgstr "Gestionnaire"
+
+msgid "Slug"
+msgstr "Identifiant"
+
+msgid "Location"
+msgstr "Emplacement"
+
+msgid "Locations"
+msgstr "Emplacements"
+
+msgid "Instructions"
+msgstr "Instructions"
+
+msgid "Access"
+msgstr "Accès"
+
+msgid "Accesses"
+msgstr "Accès"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Validity start"
+msgstr "Début de validité"
+
+msgid "Access code"
+msgstr "Code d'accès"
+
+msgid "Access codes"
+msgstr "Codes d'accès"
+
+msgid "Room"
+msgstr "Salle"
+
+msgid "Parking lot"
+msgstr "Parking"
+
+msgid "Accessibility"
+msgstr "Accessibilité"
+
+msgid "Square Meters"
+msgstr "Mètres carrés"
+
+msgid "Maximum Number of Persons"
+msgstr "Nombre maximum de personnes"
+
+msgid "General Bookable Times"
+msgstr "Horaires réservables"
+
+msgid "Included Equipment"
+msgstr "Équipement inclus"
+
+msgid "Private"
+msgstr "Privé"
+
+msgid "Only bookable with specific permissions"
+msgstr "Réservable uniquement avec permissions spécifiques"
+
+msgid "Resource Image"
+msgstr "Image de la ressource"
+
+msgid "Resource Images"
+msgstr "Images de la ressource"
+
+msgid "Select the resources this restriction applies to."
+msgstr "Sélectionnez les ressources auxquelles cette restriction s'applique."
+
+msgid "Exempt organization groups"
+msgstr "Groupes d'organisation exemptés"
+
+msgid "Organizations in these groups are exempt from this restriction."
+msgstr "Les organisations de ces groupes sont exemptées de cette restriction."
+
+msgid "Start time of the restriction."
+msgstr "Heure de début de la restriction."
+
+msgid "End time of the restriction."
+msgstr "Heure de fin de la restriction."
+
+msgid "Days of week"
+msgstr "Jours de la semaine"
+
+msgid "Comma-separated list of weekday numbers (0=Monday, 6=Sunday)."
+msgstr "Liste de numéros de jours de la semaine séparés par des virgules (0=lundi, 6=dimanche)."
+
+msgid "Start date of the restriction. Leave empty to apply from the beginning."
+msgstr "Date de début de la restriction. Laissez vide pour appliquer depuis le début."
+
+msgid "End date of the restriction. Leave empty to apply indefinitely."
+msgstr "Date de fin de la restriction. Laissez vide pour appliquer indéfiniment."
+
+msgid "Message to display when the restriction applies."
+msgstr "Message à afficher lorsque la restriction s'applique."
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Resource restriction"
+msgstr "Restriction de ressource"
+
+msgid "Resource restrictions"
+msgstr "Restrictions de ressources"
+
+msgid ""
+"If no resource is selected, the compensation is bookable for all resources."
+msgstr "Si aucune ressource n'est sélectionnée, la compensation est réservable pour toutes les ressources."
+
+msgid "Conditions"
+msgstr "Conditions"
+
+msgid "Hourly Rate"
+msgstr "Tarif horaire"
+
+msgid ""
+"If no group is selected, the compensation is bookable for all organizations."
+msgstr "Si aucun groupe n'est sélectionné, la compensation est réservable pour toutes les organisations."
+
+msgid "Compensations"
+msgstr "Compensations"
+
+msgid "Please select a resource first."
+msgstr "Veuillez d'abord sélectionner une ressource."
+
+msgid "Sign In"
+msgstr "Se connecter"
+
+msgid "HdE Räume"
+msgstr "Salles HdE"
+
+msgid "Home"
+msgstr "Accueil"
+
+msgid "Rooms"
+msgstr "Salles"
+
+msgid "My Dashboard"
+msgstr "Mon tableau de bord"
+
+msgid "Management"
+msgstr "Gestion"
+
+msgid "Invoices"
+msgstr "Factures"
+
+msgid "Access Codes"
+msgstr "Codes d'accès"
+
+msgid "Reports"
+msgstr "Rapports"
+
+msgid "Find a free room"
+msgstr "Trouver une salle libre"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "My Profile"
+msgstr "Mon profil"
+
+msgid "Sign Out"
+msgstr "Se déconnecter"
+
+msgid "Sign Up"
+msgstr "S'inscrire"
+
+msgid "Imprint"
+msgstr "Mentions légales"
+
+msgid "Data Privacy"
+msgstr "Protection des données"
+
+msgid "New booking request"
+msgstr "Nouvelle demande de réservation"
+
+msgid ""
+"You first need to create an organization you want to book for and wait for "
+"us to confirm it."
+msgstr "Vous devez d'abord créer une organisation pour laquelle vous souhaitez réserver et attendre notre confirmation."
+
+msgid "Create a new organization."
+msgstr "Créer une nouvelle organisation."
+
+msgid "All Access Types"
+msgstr "Tous les types d'accès"
+
+msgid "Submit"
+msgstr "Soumettre"
+
+msgid "Timespan"
+msgstr "Période"
+
+msgid "My booking series"
+msgstr "Mes séries de réservations"
+
+msgid "New Booking"
+msgstr "Nouvelle réservation"
+
+msgid "(without end)"
+msgstr "(sans fin)"
+
+msgid "for"
+msgstr "pour"
+
+msgid "Occurrences"
+msgstr "Occurrences"
+
+msgid "View Details"
+msgstr "Voir les détails"
+
+msgid "My bookings"
+msgstr "Mes réservations"
+
+msgid "My bookings an requests"
+msgstr "Mes réservations et demandes"
+
+msgid "all organizations"
+msgstr "toutes les organisations"
+
+msgid "all statuses"
+msgstr "tous les statuts"
+
+msgid "show past bookings"
+msgstr "afficher les réservations passées"
+
+msgid "hide"
+msgstr "masquer"
+
+msgid "booking series"
+msgstr "série de réservations"
+
+msgid "First"
+msgstr "Premier"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Page"
+msgstr "Page"
+
+msgid "of"
+msgstr "de"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "Last"
+msgstr "Dernier"
+
+msgid "Manage booking series"
+msgstr "Gérer les séries de réservations"
+
+msgid "show past booking series"
+msgstr "afficher les séries de réservations passées"
+
+msgid "Manage bookings"
+msgstr "Gérer les réservations"
+
+msgid "all resources"
+msgstr "toutes les ressources"
+
+msgid "show"
+msgstr "afficher"
+
+msgid "Manage invoices"
+msgstr "Gérer les factures"
+
+msgid "with & without invoice number"
+msgstr "avec & sans numéro de facture"
+
+msgid "only with invoice number"
+msgstr "uniquement avec numéro de facture"
+
+msgid "only without invoice number"
+msgstr "uniquement sans numéro de facture"
+
+msgid "booked by:"
+msgstr "réservé par :"
+
+msgid "Differing billing address"
+msgstr "Adresse de facturation différente"
+
+msgid "View"
+msgstr "Voir"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Are you sure you want to cancel this booking?"
+msgstr "Êtes-vous sûr de vouloir annuler cette réservation ?"
+
+msgid "Cancel "
+msgstr "Annuler "
+
+msgid "show all occurrences"
+msgstr "afficher toutes les occurrences"
+
+msgid "Donation / Billing"
+msgstr "Don / Facturation"
+
+msgid "This resource is not available at the selected time."
+msgstr "Cette ressource n'est pas disponible à l'heure sélectionnée."
+
+msgid "No results found."
+msgstr "Aucun résultat trouvé."
+
+msgid "Confirm"
+msgstr "Confirmer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Are you sure you want to confirm all bookings?"
+msgstr "Êtes-vous sûr de vouloir confirmer toutes les réservations ?"
+
+msgid "Are you sure you want to cancel all bookings?"
+msgstr "Êtes-vous sûr de vouloir annuler toutes les réservations ?"
+
+msgid "Created"
+msgstr "Créé"
+
+msgid "Start - End"
+msgstr "Début - Fin"
+
+msgid "Admin-Link"
+msgstr "Lien Admin"
+
+msgid "Are you sure you want to cancel this single booking?"
+msgstr "Êtes-vous sûr de vouloir annuler cette réservation individuelle ?"
+
+msgid "Cancel Booking"
+msgstr "Annuler la réservation"
+
+msgid "Message sent"
+msgstr "Message envoyé"
+
+msgid "These bookings are part of the recurrence"
+msgstr "Ces réservations font partie de la série"
+
+msgid "Resource not free at this date."
+msgstr "Ressource non disponible à cette date."
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Book"
+msgstr "Réserver"
+
+msgid "Access Code"
+msgstr "Code d'accès"
+
+msgid ""
+"The access code and instructions are only visible for confirmed bookings."
+msgstr "Le code d'accès et les instructions ne sont visibles que pour les réservations confirmées."
+
+msgid "Write us a message for this booking"
+msgstr "Écrivez-nous un message pour cette réservation"
+
+msgid "We will usually respond in the next 48h."
+msgstr "Nous répondons généralement dans les 48 heures."
+
+msgid "You will get notified by e-mail when receiving an answer."
+msgstr "Vous serez notifié par e-mail lors de la réception d'une réponse."
+
+msgid "Send new message"
+msgstr "Envoyer un nouveau message"
+
+msgid "Timeline"
+msgstr "Chronologie"
+
+msgid "by"
+msgstr "par"
+
+msgid "Booking has been changed"
+msgstr "La réservation a été modifiée"
+
+msgid "Booking created"
+msgstr "Réservation créée"
+
+msgid "Are you sure you want to cancel all future bookings?"
+msgstr "Êtes-vous sûr de vouloir annuler toutes les réservations futures ?"
+
+msgid "Cancel all future bookings"
+msgstr "Annuler toutes les réservations futures"
+
+msgid "Weekday"
+msgstr "Jour de la semaine"
+
+msgid "We will automatically generate the next bookings two years in advance."
+msgstr "Nous générerons automatiquement les prochaines réservations deux ans à l'avance."
+
+msgid "Report"
+msgstr "Rapport"
+
+msgid "Report 2025"
+msgstr "Rapport 2025"
+
+#, python-format
+msgid "There are %(yearly_bookings)s bookings and %(yearly_total)s€ for 2025."
+msgstr "Il y a %(yearly_bookings)s réservations et %(yearly_total)s€ pour 2025."
+
+#, python-format
+msgid ""
+"Until today, %(realized_bookings)s bookings and %(realized_total)s€ have "
+"been realized in 2025."
+msgstr "Jusqu'à aujourd'hui, %(realized_bookings)s réservations et %(realized_total)s€ ont été réalisées en 2025."
+
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+msgid "Hi"
+msgstr "Bonjour"
+
+msgid "My organizations"
+msgstr "Mes organisations"
+
+msgid "New Organization"
+msgstr "Nouvelle organisation"
+
+msgid "No organizations yet. Go and add yours!"
+msgstr "Aucune organisation pour le moment. Ajoutez la vôtre !"
+
+msgid "My upcoming bookings and requests"
+msgstr "Mes réservations et demandes à venir"
+
+msgid "New Booking Request"
+msgstr "Nouvelle demande de réservation"
+
+msgid "Details"
+msgstr "Détails"
+
+msgid "No upcoming bookings"
+msgstr "Aucune réservation à venir"
+
+msgid "Show all bookings"
+msgstr "Afficher toutes les réservations"
+
+msgid "or"
+msgstr "ou"
+
+msgid "show booking series."
+msgstr "afficher les séries de réservations."
+
+msgid "Edit organization"
+msgstr "Modifier l'organisation"
+
+msgid "Add an organization"
+msgstr "Ajouter une organisation"
+
+msgid "Update the information for your organization."
+msgstr "Mettez à jour les informations de votre organisation."
+
+msgid ""
+"Only registered organizations can book resources. If your organization is "
+"not registered yet, you can add it here."
+msgstr "Seules les organisations enregistrées peuvent réserver des ressources. Si votre organisation n'est pas encore enregistrée, vous pouvez l'ajouter ici."
+
+msgid ""
+"Here you can find all organizations, that decided to share some information "
+"publicly."
+msgstr "Vous trouverez ici toutes les organisations qui ont décidé de partager certaines informations publiquement."
+
+msgid "Search organizations"
+msgstr "Rechercher des organisations"
+
+msgid "Manage organizations"
+msgstr "Gérer les organisations"
+
+msgid "Search organizations..."
+msgstr "Rechercher des organisations..."
+
+msgid "all groups"
+msgstr "tous les groupes"
+
+msgid "Users"
+msgstr "Utilisateurs"
+
+msgid "Agreement"
+msgstr "Accord"
+
+msgid "without date"
+msgstr "sans date"
+
+msgid "n.a."
+msgstr "n.d."
+
+msgid "Are you sure you want to cancel this organization?"
+msgstr "Êtes-vous sûr de vouloir annuler cette organisation ?"
+
+msgid "Are you sure you want to delete the organization?"
+msgstr "Êtes-vous sûr de vouloir supprimer l'organisation ?"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Messages"
+msgstr "Messages"
+
+msgid ""
+"We are currently checking your organization. You can't yet book or make "
+"booking request."
+msgstr "Nous vérifions actuellement votre organisation. Vous ne pouvez pas encore réserver ou faire de demande de réservation."
+
+msgid "Your organization is confirmed and you are good to go."
+msgstr "Votre organisation est confirmée et vous pouvez y aller."
+
+msgid "Your organization has been cancelled."
+msgstr "Votre organisation a été annulée."
+
+msgid "Area of activity"
+msgstr "Domaine d'activité"
+
+msgid "charitable"
+msgstr "caritatif"
+
+msgid "Yes, No"
+msgstr "Oui, Non"
+
+msgid "Not uploaded."
+msgstr "Non téléchargé."
+
+msgid "Organization visible"
+msgstr "Organisation visible"
+
+msgid "This is what others can see"
+msgstr "Voici ce que les autres peuvent voir"
+
+msgid "Persons authorised to make bookings"
+msgstr "Personnes autorisées à effectuer des réservations"
+
+msgid ""
+"As administrator for this organization you can give other registered users "
+"the permission to book for this organization."
+msgstr "En tant qu'administrateur de cette organisation, vous pouvez donner à d'autres utilisateurs enregistrés la permission de réserver pour cette organisation."
+
+msgid "'Bookers' can book and cancel bookings."
+msgstr "Les 'Réservateurs' peuvent réserver et annuler des réservations."
+
+msgid ""
+"'Administrators' can additionally add and remove user for this organization."
+msgstr "Les 'Administrateurs' peuvent en plus ajouter et supprimer des utilisateurs pour cette organisation."
+
+msgid "Admin"
+msgstr "Administrateur"
+
+msgid "Add User"
+msgstr "Ajouter un utilisateur"
+
+msgid "Only visible for other authorised persons."
+msgstr "Visible uniquement pour les autres personnes autorisées."
+
+msgid "Request booking permission"
+msgstr "Demander la permission de réservation"
+
+msgid "that's you"
+msgstr "c'est vous"
+
+msgid "Approved"
+msgstr "Approuvé"
+
+msgid "Confirm booking permission"
+msgstr "Confirmer la permission de réservation"
+
+msgid "Cancel booking permission"
+msgstr "Annuler la permission de réservation"
+
+msgid "Promote to admin"
+msgstr "Promouvoir en administrateur"
+
+msgid "Demote to booker"
+msgstr "Rétrograder en réservateur"
+
+msgid ""
+"You can find all messages that address your organization. Messages for are "
+"single booking can only be found in that booking itself."
+msgstr "Vous pouvez trouver tous les messages qui s'adressent à votre organisation. Les messages concernant une réservation unique ne peuvent être trouvés que dans cette réservation elle-même."
+
+msgid "Write a message"
+msgstr "Écrire un message"
+
+msgid "No messages yet."
+msgstr "Pas encore de messages."
+
+msgid "HdE Rooms | Start"
+msgstr "Salles HdE | Accueil"
+
+msgid "Haus des Engagements room bookings"
+msgstr "Réservations de salles Haus des Engagements"
+
+msgid ""
+"This is the new place where you can book rooms for the 'Haus des "
+"Engagements'."
+msgstr "Voici le nouvel endroit où vous pouvez réserver des salles pour la 'Haus des Engagements'."
+
+msgid "Registered in total"
+msgstr "Enregistré au total"
+
+msgid "Meetings"
+msgstr "Réunions"
+
+msgid "This year until today *"
+msgstr "Cette année jusqu'à aujourd'hui *"
+
+msgid "Hours for free"
+msgstr "Heures gratuites"
+
+msgid "amounting to "
+msgstr "soit "
+
+msgid "this year"
+msgstr "cette année"
+
+msgid "including user groups, CoWorking, paying guests and ourselves"
+msgstr "y compris les groupes d'utilisateurs, le CoWorking, les invités payants et nous-mêmes"
+
+msgid ""
+"this is what it would cost charitables to use our rooms, if they would pay "
+"the cost-covering price"
+msgstr "c'est ce que cela coûterait aux organisations caritatives d'utiliser nos salles, si elles payaient le prix couvrant les coûts"
+
+msgid "This is how you book a room:"
+msgstr "Voici comment réserver une salle :"
+
+#, python-format
+msgid "Look for a <a href=\"%(planner_url)s\">free room</a>."
+msgstr "Cherchez une <a href=\"%(planner_url)s\">salle libre</a>."
+
+#, python-format
+msgid "Create an <a href=\"%(signup_url)s\">account</a>."
+msgstr "Créez un <a href=\"%(signup_url)s\">compte</a>."
+
+msgid "Create an organization you want to book for and wait for our approval."
+msgstr "Créez une organisation pour laquelle vous souhaitez réserver et attendez notre approbation."
+
+msgid "Make your booking requests."
+msgstr "Faites vos demandes de réservation."
+
+msgid ""
+"Await our confirmation with all the necessary stuff (like doorcodes and "
+"instructions) and your good to go!"
+msgstr ""
+
+msgid "Here you can find more detailed instructions."
+msgstr "Vous trouverez ici des instructions plus détaillées."
+
+msgid "Delete Access Code"
+msgstr "Supprimer le code d'accès"
+
+msgid "Back to List"
+msgstr "Retour à la liste"
+
+msgid "Are you sure?"
+msgstr "Êtes-vous sûr ?"
+
+#, python-format
+msgid ""
+"Are you sure you want to delete the access code \"%(code)s\"? This action "
+"cannot be undone."
+msgstr "Êtes-vous sûr de vouloir supprimer le code d'accès \"%(code)s\" ? Cette action ne peut pas être annulée."
+
+msgid "Validity Start"
+msgstr "Début de validité"
+
+msgid "Yes, Delete"
+msgstr "Oui, supprimer"
+
+msgid "Access Code Details"
+msgstr "Détails du code d'accès"
+
+msgid "Modified"
+msgstr "Modifié"
+
+msgid "Edit Access Code"
+msgstr "Modifier le code d'accès"
+
+msgid "Create Access Code"
+msgstr "Créer un code d'accès"
+
+msgid "Update"
+msgstr "Mettre à jour"
+
+msgid "Create"
+msgstr "Créer"
+
+msgid "Filter Access Codes"
+msgstr "Filtrer les codes d'accès"
+
+msgid "Apply Filters"
+msgstr "Appliquer les filtres"
+
+msgid "Clear Filters"
+msgstr "Effacer les filtres"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "No access codes found."
+msgstr "Aucun code d'accès trouvé."
+
+msgid "HdE | Rooms"
+msgstr "HdE | Salles"
+
+#, python-format
+msgid ""
+"You can also find free slots in the <a href=\"%(planner_url)s\">planner "
+"overview</a>."
+msgstr "Vous pouvez également trouver des créneaux libres dans l'<a href=\"%(planner_url)s\">aperçu du planificateur</a>."
+
+msgid "Any time"
+msgstr "N'importe quand"
+
+msgid "Time"
+msgstr "Heure"
+
+msgid "Duration"
+msgstr "Durée"
+
+msgid "Number of persons"
+msgstr "Nombre de personnes"
+
+msgid "All locations"
+msgstr "Tous les emplacements"
+
+msgid ""
+"In this view, you can see the free times for all resources. Click on a free "
+"(white) slot to go directly to the booking page."
+msgstr "Dans cette vue, vous pouvez voir les horaires libres pour toutes les ressources. Cliquez sur un créneau libre (blanc) pour accéder directement à la page de réservation."
+
+msgid "We provide rooms at different locations, please select accordingly:"
+msgstr ""
+
+msgid "Persons"
+msgstr "Personnes"
+
+msgid "buchen"
+msgstr "réserver"
+
+msgid "No resource matches your filter."
+msgstr "Aucune ressource ne correspond à votre filtre."
+
+msgid "Days to display"
+msgstr "Jours à afficher"
+
+msgid "days"
+msgstr "jours"
+
+msgid "bookable"
+msgstr "réservable"
+
+msgid "restricted"
+msgstr "restreint"
+
+msgid "booked"
+msgstr "réservé"
+
+msgid "booked by me"
+msgstr "réservé par moi"
+
+msgid "past"
+msgstr "passé"
+
+msgid "Planner"
+msgstr "Planificateur"
+
+msgid ""
+"In this view, you can see the free times for all resources. Click on a free "
+"slot to go directly to the booking page."
+msgstr ""
+
+msgid "HdE | Room"
+msgstr "HdE | Salle"
+
+msgid "Restrictions"
+msgstr "Restrictions"
+
+msgid "There are no specific restrictions for this resource."
+msgstr "Il n'y a pas de restrictions spécifiques pour cette ressource."
+
+msgid ""
+"In this view, you can see the free times for this resource. Click on a free "
+"slot to go directly to the booking page."
+msgstr "Dans cette vue, vous pouvez voir les horaires libres pour cette ressource. Cliquez sur un créneau libre pour accéder directement à la page de réservation."
+
+msgid "My Info"
+msgstr "Mes informations"
+
+msgid "Multi-Factor-Authentication"
+msgstr "Authentification multi-facteurs"
+
+msgid "Personal info"
+msgstr "Informations personnelles"
+
+msgid "Permissions"
+msgstr "Permissions"
+
+msgid "Important dates"
+msgstr "Dates importantes"
+
+msgid "This email has already been taken."
+msgstr "Cet e-mail est déjà utilisé."
+
+msgid "First Name"
+msgstr "Prénom"
+
+msgid "Last Name"
+msgstr "Nom de famille"
+
+msgid "email address"
+msgstr "adresse e-mail"
+
+msgid "Information successfully updated"
+msgstr "Informations mises à jour avec succès"
+
+msgid "Monday"
+msgstr "Lundi"
+
+msgid "Tuesday"
+msgstr "Mardi"
+
+msgid "Wednesday"
+msgstr "Mercredi"
+
+msgid "Thursday"
+msgstr "Jeudi"
+
+msgid "Friday"
+msgstr "Vendredi"
+
+msgid "Saturday"
+msgstr "Samedi"
+
+msgid "Sunday"
+msgstr "Dimanche"
+
+msgid "first monday"
+msgstr "premier lundi"
+
+msgid "first tuesday"
+msgstr "premier mardi"
+
+msgid "first wednesday"
+msgstr "premier mercredi"
+
+msgid "first thursday"
+msgstr "premier jeudi"
+
+msgid "first friday"
+msgstr "premier vendredi"
+
+msgid "first saturday"
+msgstr "premier samedi"
+
+msgid "first sunday"
+msgstr "premier dimanche"
+
+msgid "second monday"
+msgstr "deuxième lundi"
+
+msgid "second tuesday"
+msgstr "deuxième mardi"
+
+msgid "second wednesday"
+msgstr "deuxième mercredi"
+
+msgid "second thursday"
+msgstr "deuxième jeudi"
+
+msgid "second friday"
+msgstr "deuxième vendredi"
+
+msgid "second saturday"
+msgstr "deuxième samedi"
+
+msgid "second sunday"
+msgstr "deuxième dimanche"
+
+msgid "third monday"
+msgstr "troisième lundi"
+
+msgid "third tuesday"
+msgstr "troisième mardi"
+
+msgid "third wednesday"
+msgstr "troisième mercredi"
+
+msgid "third thursday"
+msgstr "troisième jeudi"
+
+msgid "third friday"
+msgstr "troisième vendredi"
+
+msgid "third saturday"
+msgstr "troisième samedi"
+
+msgid "third sunday"
+msgstr "troisième dimanche"
+
+msgid "fourth monday"
+msgstr "quatrième lundi"
+
+msgid "fourth tuesday"
+msgstr "quatrième mardi"
+
+msgid "fourth wednesday"
+msgstr "quatrième mercredi"
+
+msgid "fourth thursday"
+msgstr "quatrième jeudi"
+
+msgid "fourth friday"
+msgstr "quatrième vendredi"
+
+msgid "fourth saturday"
+msgstr "quatrième samedi"
+
+msgid "fourth sunday"
+msgstr "quatrième dimanche"
+
+msgid "fifth monday"
+msgstr "cinquième lundi"
+
+msgid "fifth tuesday"
+msgstr "cinquième mardi"
+
+msgid "fifth wednesday"
+msgstr "cinquième mercredi"
+
+msgid "fifth thursday"
+msgstr "cinquième jeudi"
+
+msgid "fifth friday"
+msgstr "cinquième vendredi"
+
+msgid "fifth saturday"
+msgstr "cinquième samedi"
+
+msgid "fifth sunday"
+msgstr "cinquième dimanche"
+
+msgid "last monday"
+msgstr "dernier lundi"
+
+msgid "last tuesday"
+msgstr "dernier mardi"
+
+msgid "last wednesday"
+msgstr "dernier mercredi"
+
+msgid "last thursday"
+msgstr "dernier jeudi"
+
+msgid "last friday"
+msgstr "dernier vendredi"
+
+msgid "last saturday"
+msgstr "dernier samedi"
+
+msgid "last sunday"
+msgstr "dernier dimanche"
+
+#, python-format
+msgid "%s. day"
+msgstr "%se jour"
+
+msgid "every month"
+msgstr "chaque mois"
+
+msgid "every 2nd month"
+msgstr "tous les 2 mois"
+
+msgid "every 3rd month"
+msgstr "tous les 3 mois"
+
+msgid "every 4th month"
+msgstr "tous les 4 mois"
+
+msgid "every 5th month"
+msgstr "tous les 5 mois"
+
+msgid "every 6th month"
+msgstr "tous les 6 mois"
+
+msgid "every 7th month"
+msgstr "tous les 7 mois"
+
+msgid "every 8th month"
+msgstr "tous les 8 mois"
+
+msgid "every 9th month"
+msgstr "tous les 9 mois"
+
+msgid "every 10th month"
+msgstr "tous les 10 mois"
+
+msgid "every 11th month"
+msgstr "tous les 11 mois"
+
+msgid "every week"
+msgstr "chaque semaine"
+
+msgid "every 2nd week"
+msgstr "toutes les 2 semaines"
+
+msgid "every 3rd week"
+msgstr "toutes les 3 semaines"
+
+msgid "every 4th week"
+msgstr "toutes les 4 semaines"
+
+msgid "every 5th week"
+msgstr "toutes les 5 semaines"
+
+msgid "every 6th week"
+msgstr "toutes les 6 semaines"
+
+msgid "every 7th week"
+msgstr "toutes les 7 semaines"
+
+msgid "every 8th week"
+msgstr "toutes les 8 semaines"
+
+msgid "every 9th week"
+msgstr "toutes les 9 semaines"
+
+msgid "every 10th week"
+msgstr "toutes les 10 semaines"
+
+msgid "every 11th week"
+msgstr "toutes les 11 semaines"
+
+msgid "every 12th week"
+msgstr "toutes les 12 semaines"
+
+msgid "every 13th week"
+msgstr "toutes les 13 semaines"
+
+msgid "every 14th week"
+msgstr "toutes les 14 semaines"
+
+msgid "every 15th week"
+msgstr "toutes les 15 semaines"
+
+msgid "every 16th week"
+msgstr "toutes les 16 semaines"
+
+msgid "every 17th week"
+msgstr "toutes les 17 semaines"
+
+msgid "every 18th week"
+msgstr "toutes les 18 semaines"
+
+msgid "every 19th week"
+msgstr "toutes les 19 semaines"
+
+msgid "every 20th week"
+msgstr "toutes les 20 semaines"
+
+msgid "every 21st week"
+msgstr "toutes les 21 semaines"
+
+msgid "every 22nd week"
+msgstr "toutes les 22 semaines"
+
+msgid "every 23rd week"
+msgstr "toutes les 23 semaines"
+
+msgid "every 24th week"
+msgstr "toutes les 24 semaines"
+
+msgid "every 25th week"
+msgstr "toutes les 25 semaines"
+
+msgid "every 26th week"
+msgstr "toutes les 26 semaines"
+
+msgid "every 27th week"
+msgstr "toutes les 27 semaines"
+
+msgid "every 28th week"
+msgstr "toutes les 28 semaines"
+
+msgid "every day"
+msgstr "chaque jour"
+
+msgid "every 2nd day"
+msgstr "tous les 2 jours"
+
+msgid "every 3rd day"
+msgstr "tous les 3 jours"
+
+msgid "every 4th day"
+msgstr "tous les 4 jours"
+
+msgid "every 5th day"
+msgstr "tous les 5 jours"
+
+msgid "every 6th day"
+msgstr "tous les 6 jours"
+
+msgid "every 7th day"
+msgstr "tous les 7 jours"
+
+msgid "every 8th day"
+msgstr "tous les 8 jours"
+
+msgid "every 9th day"
+msgstr "tous les 9 jours"
+
+msgid "every 10th day"
+msgstr "tous les 10 jours"
+
+msgid "every 11th day"
+msgstr "tous les 11 jours"
+
+msgid "every 12th day"
+msgstr "tous les 12 jours"
+
+msgid "every 13th day"
+msgstr "tous les 13 jours"
+
+msgid "every 14th day"
+msgstr "tous les 14 jours"
+
+msgid "every 15th day"
+msgstr "tous les 15 jours"
+
+msgid "every 16th day"
+msgstr "tous les 16 jours"
+
+msgid "every 17th day"
+msgstr "tous les 17 jours"
+
+msgid "every 18th day"
+msgstr "tous les 18 jours"
+
+msgid "every 19th day"
+msgstr "tous les 19 jours"
+
+msgid "every 20th day"
+msgstr "tous les 20 jours"
+
+msgid "every 21st day"
+msgstr "tous les 21 jours"
+
+msgid "every 22nd day"
+msgstr "tous les 22 jours"
+
+msgid "every 23rd day"
+msgstr "tous les 23 jours"
+
+msgid "every 24th day"
+msgstr "tous les 24 jours"
+
+msgid "every 25th day"
+msgstr "tous les 25 jours"
+
+msgid "every 26th day"
+msgstr "tous les 26 jours"
+
+msgid "every 27th day"
+msgstr "tous les 27 jours"
+
+msgid "every 28th day"
+msgstr "tous les 28 jours"
+
+msgid "every 29th day"
+msgstr "tous les 29 jours"
+
+msgid "every 30th day"
+msgstr "tous les 30 jours"
+
+msgid "every 31st day"
+msgstr "tous les 31 jours"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "Cancelled"
+msgstr "Annulé"
+
+msgid "Unavailable"
+msgstr "Indisponible"
