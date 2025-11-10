@@ -497,14 +497,16 @@ def test_filter_bookings_list(
         "status",
         "hide_recurring_bookings",
         "resource",
-        "date_string",
+        "location",
+        "from_date_string",
+        "until_date_string",
         "expected",
     ),
     [
-        (True, "all", "all", True, "all", None, 2),
-        (True, "all", [1], True, "all", None, 1),
-        (False, "all", "all", True, "all", None, 1),
-        (True, "org1", "all", True, "all", None, 0),
+        (True, "all", "all", True, "all", "all", None, None, 2),
+        (True, "all", [1], True, "all", "all", None, None, 1),
+        (False, "all", "all", True, "all", "all", None, None, 1),
+        (True, "org1", "all", True, "all", "all", None, None, 0),
     ],
 )
 @pytest.mark.django_db()
@@ -514,7 +516,9 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     status,
     hide_recurring_bookings,
     resource,
-    date_string,
+    location,
+    from_date_string,
+    until_date_string,
     expected,
 ):
     """
@@ -550,13 +554,15 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         ),
     )
     # Act
-    bookings, organizations, resources = manager_filter_bookings_list(
+    bookings, organizations, resources, locations = manager_filter_bookings_list(
         organization,
         show_past_bookings,
         status,
         hide_recurring_bookings,
         resource,
-        date_string,
+        location,
+        from_date_string,
+        until_date_string,
         user,
     )
     # Assert
@@ -1511,13 +1517,15 @@ class TestManagerFilterBookingsListExtended(TestCase):
             status=BookingStatus.CONFIRMED,
         )
 
-        bookings, _, _ = manager_filter_bookings_list(
+        bookings, _, _, _ = manager_filter_bookings_list(
             organization="all",
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=True,
             resource=resource1.slug,
-            date_string=None,
+            location="all",
+            from_date_string=None,
+            until_date_string=None,
             user=manager_user,
         )
 
@@ -1533,13 +1541,15 @@ class TestManagerFilterBookingsListExtended(TestCase):
         BookingFactory(booking_series=booking_series, status=BookingStatus.CONFIRMED)
         BookingFactory(booking_series=None, status=BookingStatus.CONFIRMED)
 
-        bookings, _, _ = manager_filter_bookings_list(
+        bookings, _, _, _ = manager_filter_bookings_list(
             organization="all",
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=False,
             resource="all",
-            date_string=None,
+            location="all",
+            from_date_string=None,
+            until_date_string=None,
             user=manager_user,
         )
 
@@ -1579,13 +1589,15 @@ class TestManagerFilterBookingsListExtended(TestCase):
             status=BookingStatus.CONFIRMED,
         )
 
-        bookings, _, _ = manager_filter_bookings_list(
+        bookings, _, _, _ = manager_filter_bookings_list(
             organization="all",
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=True,
             resource="all",
-            date_string=specific_date.isoformat(),
+            location="all",
+            from_date_string=specific_date.isoformat(),
+            until_date_string=specific_date.isoformat(),
             user=manager_user,
         )
 

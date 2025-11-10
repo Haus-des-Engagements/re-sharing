@@ -29,6 +29,7 @@ from re_sharing.organizations.services import (
 )
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
 from re_sharing.resources.services import get_access_code
 from re_sharing.users.models import User
@@ -490,16 +491,26 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     status,
     show_recurring_bookings,
     resource,
-    date_string,
+    location,
+    from_date_string,
+    until_date_string,
     user,
 ):
     manager = user.get_manager()
     organizations = manager.get_organizations()
     resources = manager.get_resources()
 
+    # Get distinct locations from resources the manager has access to
+    locations = (
+        Location.objects.filter(resource_of_location__in=resources)
+        .distinct()
+        .order_by("name")
+    )
+
     related_fields = [
         "organization",
         "resource__compensations_of_resource",
+        "resource__location",
         "user",
         "booking_series",
     ]
@@ -514,23 +525,31 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         bookings = bookings.filter(organization__slug=organization)
     if resource != "all":
         bookings = bookings.filter(resource__slug=resource)
+    if location != "all":
+        bookings = bookings.filter(resource__location__slug=location)
     if status != "all":
         bookings = bookings.filter(status__in=status)
     if not show_recurring_bookings:
         bookings = bookings.filter(booking_series__isnull=True)
-    if date_string:
-        shown_date = parser.parse(date_string).date()
-        start_of_day = timezone.make_aware(
-            datetime.combine(shown_date, time(hour=0)),
+
+    # Date range filtering
+    if from_date_string:
+        from_date = parser.parse(from_date_string).date()
+        start_of_from_date = timezone.make_aware(
+            datetime.combine(from_date, time(hour=0)),
         )
-        end_of_day = timezone.make_aware(
-            datetime.combine(shown_date, time(hour=23, minute=59)),
+        bookings = bookings.filter(timespan__endswith__gte=start_of_from_date)
+
+    if until_date_string:
+        until_date = parser.parse(until_date_string).date()
+        end_of_until_date = timezone.make_aware(
+            datetime.combine(until_date, time(hour=23, minute=59)),
         )
-        bookings = bookings.filter(timespan__overlap=(start_of_day, end_of_day))
+        bookings = bookings.filter(timespan__startswith__lte=end_of_until_date)
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, organizations, resources
+    return bookings, organizations, resources, locations
 
 
 def manager_cancel_booking(user, booking_slug):

@@ -352,16 +352,20 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     status = request.GET.get("status") or "1"
     organization = request.GET.get("organization") or "all"
     resource = request.GET.get("resource") or "all"
-    date_string = request.GET.get("date") or None
+    location = request.GET.get("location") or "all"
+    from_date_string = request.GET.get("from_date") or None
+    until_date_string = request.GET.get("until_date") or None
     show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
 
-    bookings, organizations, resources = manager_filter_bookings_list(
+    bookings, organizations, resources, locations = manager_filter_bookings_list(
         organization,
         show_past_bookings,
         status,
         show_recurring_bookings,
         resource,
-        date_string,
+        location,
+        from_date_string,
+        until_date_string,
         request.user,
     )
 
@@ -371,10 +375,13 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         "organizations": organizations,
         "statuses": BookingStatus.choices,
         "resources": resources,
+        "locations": locations,
         "selected_organization": organization,
         "selected_resource": resource,
+        "selected_location": location,
         "selected_status": status,
-        "selected_date": date_string,
+        "selected_from_date": from_date_string,
+        "selected_until_date": until_date_string,
         "show_past_bookings": show_past_bookings,
         "show_recurring_bookings": show_recurring_bookings,
     }

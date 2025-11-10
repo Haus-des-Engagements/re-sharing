@@ -35,6 +35,17 @@
         {% endfor %}
       </select>
     </div>
+    {% if locations.count > 1 %}
+      <div id="div_id_location" class="col-auto">
+        <select name="location" class="form-select" id="id_location">
+          <option value="all" {% if selected_location == "all" %}selected{% endif %}>{% trans "all locations" %}</option>
+          {% for location in locations %}
+            <option value="{{ location.slug }}"
+                    {% if selected_location == location.slug %}selected{% endif %}>{{ location }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
     <div id="div_id_resource" class="col-auto">
       <select name="resource" class="form-select" id="id_resource">
         <option value="all" {% if selected_resource == "all" %}selected{% endif %}>{% trans "all resources" %}</option>
@@ -57,10 +68,19 @@
     </div>
     <div class="col-auto">
       <input type="date"
-             name="date"
+             name="from_date"
              class="form-control textinput"
-             id="id_date"
-             {% if selected_date %}value="{{ selected_date }}"{% endif %} />
+             id="id_from_date"
+             placeholder="{% trans 'From date' %}"
+             {% if selected_from_date %}value="{{ selected_from_date }}"{% endif %} />
+    </div>
+    <div class="col-auto">
+      <input type="date"
+             name="until_date"
+             class="form-control textinput"
+             id="id_until_date"
+             placeholder="{% trans 'Until date' %}"
+             {% if selected_until_date %}value="{{ selected_until_date }}"{% endif %} />
     </div>
     <div class="col-auto form-check">
       <input type="checkbox"

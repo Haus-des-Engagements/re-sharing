@@ -689,7 +689,7 @@ class TestManagerListBookingsViewHTMX(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_bookings_list")
     def test_htmx_request_returns_partial(self, mock_filter):
-        mock_filter.return_value = ([], [], [])
+        mock_filter.return_value = ([], [], [], [])
 
         response = self.client.get(
             reverse("bookings:manager-list-bookings"), headers={"hx-request": "true"}
