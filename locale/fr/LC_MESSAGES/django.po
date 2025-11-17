@@ -1286,6 +1286,9 @@ msgid ""
 "Engagements'."
 msgstr "Voici le nouvel endroit où vous pouvez réserver des salles pour la 'Haus des Engagements'."
 
+msgid "View all rooms"
+msgstr "Voir toutes les salles"
+
 msgid "Registered in total"
 msgstr "Enregistré au total"
 
@@ -1320,8 +1323,18 @@ msgid "Look for a <a href=\"%(planner_url)s\">free room</a>."
 msgstr "Cherchez une <a href=\"%(planner_url)s\">salle libre</a>."
 
 #, python-format
+msgid ""
+"Look for a <a href=\"%(planner_url)s\" class=\"fw-semibold\">free room</a>."
+msgstr ""
+"Cherchez une <a href=\"%(planner_url)s\" class=\"fw-semibold\">salle libre</a>."
+
+#, python-format
 msgid "Create an <a href=\"%(signup_url)s\">account</a>."
 msgstr "Créez un <a href=\"%(signup_url)s\">compte</a>."
+
+#, python-format
+msgid "Create an <a href=\"%(signup_url)s\" class=\"fw-semibold\">account</a>."
+msgstr "Créez un <a href=\"%(signup_url)s\" class=\"fw-semibold\">compte</a>."
 
 msgid "Create an organization you want to book for and wait for our approval."
 msgstr "Créez une organisation pour laquelle vous souhaitez réserver et attendez notre approbation."
@@ -1333,6 +1346,8 @@ msgid ""
 "Await our confirmation with all the necessary stuff (like doorcodes and "
 "instructions) and your good to go!"
 msgstr ""
+"Attendez notre confirmation avec toutes les informations nécessaires (comme les codes de porte "
+"et les instructions) et c'est parti !"
 
 msgid "Here you can find more detailed instructions."
 msgstr "Vous trouverez ici des instructions plus détaillées."

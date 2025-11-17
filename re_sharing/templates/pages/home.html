@@ -9,66 +9,106 @@
 {% block content_title %}
 {% endblock content_title %}
 {% block content %}
-  <div class="col-md-10 mt-5">
-    <h1 class="display-4 text-center">{% trans "Haus des Engagements room bookings" %}</h1>
-    <p class="lead text-center">
-      {% trans "This is the new place where you can book rooms for the 'Haus des Engagements'." %}
-    </p>
-    <!-- Statistics Section -->
-    <div class="row mb-4 mt-5">
-      <div class="col">
-        <div class="card text-center bg-light">
-          <div class="card-body">
-            <h5 class="card-title">{% trans "Organizations" %}</h5>
-            <p class="card-text display-4">{{ registered_organizations }}</p>
-            <p class="card-text text-muted">{% trans "Registered in total" %}</p>
-          </div>
-        </div>
+  <!-- Hero Section -->
+  <div class="row mt-5 mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+      <h1 class="display-3 fw-bold mb-4">{% trans "Haus des Engagements room bookings" %}</h1>
+      <p class="lead mb-4 fs-4">
+        {% trans "This is the new place where you can book rooms for the 'Haus des Engagements'." %}
+      </p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a href="{% url 'resources:planner' %}"
+           class="btn btn-primary btn-lg px-4 gap-3">{% trans "Find a free room" %}</a>
+        <a href="{% url 'resources:list-resources' %}"
+           class="btn btn-outline-secondary btn-lg px-4">{% trans "View all rooms" %}</a>
       </div>
-      <div class="col">
-        <div class="card text-center bg-light">
-          <div class="card-body">
-            <h5 class="card-title">{% trans "Meetings" %}</h5>
-            <p class="card-text display-4">{{ confirmed_bookings }}</p>
-            <p class="card-text text-muted">{% trans "This year until today *" %}</p>
+    </div>
+  </div>
+  <!-- Statistics Section -->
+  <div class="row g-4 mb-5 mt-4">
+    <div class="col-md-4">
+      <div class="card text-center border-0 shadow-sm h-100">
+        <div class="card-body py-4">
+          <div class="text-ci-teal h2 mb-3">
+            <svg width="1em" height="1em" fill="currentColor">
+              <use href="#bi-buildings" />&nbsp;
+            </svg>
           </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card text-center bg-light">
-          <div class="card-body">
-            <h5 class="card-title">{% trans "Hours for free" %}</h5>
-            <p class="card-text display-4">{{ total_hours_comp1 }}</p>
-            <p class="card-text text-muted">{% trans "amounting to " %}{{ free_bookings_value }} € {% trans "this year" %} **</p>
-          </div>
+          <p class="display-4 fw-bold text-ci-teal mb-2">{{ registered_organizations }}</p>
+          <h5 class="card-title text-muted mb-2">{% trans "Organizations" %}</h5>
+          <p class="card-text text-muted small">{% trans "Registered in total" %}</p>
         </div>
       </div>
     </div>
-    <div class="row">
-      <p class="card-text text-muted">
+    <div class="col-md-4">
+      <div class="card text-center border-0 shadow-sm h-100">
+        <div class="card-body py-4">
+          <div class="text-ci-red h2 mb-3">
+            <svg width="1em" height="1em" fill="currentColor">
+              <use href="#bi-calendar-check" />&nbsp;
+            </svg>
+          </div>
+          <p class="display-4 fw-bold text-ci-red mb-2">{{ confirmed_bookings }}</p>
+          <h5 class="card-title text-muted mb-2">{% trans "Meetings" %}</h5>
+          <p class="card-text text-muted small">{% trans "This year until today *" %}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center border-0 shadow-sm h-100">
+        <div class="card-body py-4">
+          <div class="text-ci-green h2 mb-3">
+            <svg width="1em" height="1em" fill="currentColor">
+              <use href="#bi-clock" />&nbsp;
+            </svg>
+          </div>
+          <p class="display-4 fw-bold text-ci-green mb-2">{{ total_hours_comp1 }}</p>
+          <h5 class="card-title text-muted mb-2">{% trans "Hours for free" %}</h5>
+          <p class="card-text text-muted small">
+            {% trans "amounting to " %}{{ free_bookings_value }} € {% trans "this year" %} **
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row mb-5">
+    <div class="col-12">
+      <p class="text-muted small text-center">
         * {% trans "including user groups, CoWorking, paying guests and ourselves" %}
         <br />
         ** {% trans "this is what it would cost charitables to use our rooms, if they would pay the cost-covering price" %}
       </p>
     </div>
-    <hr class="my-4" />
-    <p>{% trans "This is how you book a room:" %}</p>
-    <ol>
-      <li>
-        {% url 'resources:planner' as planner_url %}
-        {% blocktrans with planner_url=planner_url %}Look for a <a href="{{ planner_url }}">free room</a>.{% endblocktrans %}
-      </li>
-      <li>
-        {% url 'account_signup' as signup_url %}
-        {% blocktrans with planner_url=planner_url %}Create an <a href="{{ signup_url }}">account</a>.{% endblocktrans %}
-      </li>
-      <li>{% trans "Create an organization you want to book for and wait for our approval." %}</li>
-      <li>{% trans "Make your booking requests." %}</li>
-      <li>
-        {% trans "Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!" %}
-      </li>
-    </ol>
-    <br />
-    <a href="https://haus-des-engagements.de/angebote/neue-raeume/">{% trans "Here you can find more detailed instructions." %}</a>
+  </div>
+  <!-- How to Book Section -->
+  <div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">{% trans "This is how you book a room:" %}</h3>
+          <ol class="list-group list-group-numbered list-group-flush">
+            <li class="list-group-item border-0 px-0 py-3">
+              {% url 'resources:planner' as planner_url %}
+              {% blocktrans with planner_url=planner_url %}Look for a <a href="{{ planner_url }}" class="fw-semibold">free room</a>.{% endblocktrans %}
+            </li>
+            <li class="list-group-item border-0 px-0 py-3">
+              {% url 'account_signup' as signup_url %}
+              {% blocktrans with signup_url=signup_url %}Create an <a href="{{ signup_url }}" class="fw-semibold">account</a>.{% endblocktrans %}
+            </li>
+            <li class="list-group-item border-0 px-0 py-3">
+              {% trans "Create an organization you want to book for and wait for our approval." %}
+            </li>
+            <li class="list-group-item border-0 px-0 py-3">{% trans "Make your booking requests." %}</li>
+            <li class="list-group-item border-0 px-0 py-3">
+              {% trans "Await our confirmation with all the necessary stuff (like doorcodes and instructions) and your good to go!" %}
+            </li>
+          </ol>
+          <div class="mt-4 pt-3 border-top">
+            <a href="https://haus-des-engagements.de/angebote/neue-raeume/"
+               class="text-decoration-none">{% trans "Here you can find more detailed instructions." %} →</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock content %}

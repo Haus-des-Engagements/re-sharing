@@ -547,7 +547,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         )
         bookings = bookings.filter(timespan__startswith__lte=end_of_until_date)
 
-    bookings = bookings.order_by("timespan")
+    bookings = bookings.order_by("created")
 
     return bookings, organizations, resources, locations
 

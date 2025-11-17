@@ -110,3 +110,8 @@ violet: #AA3377, grey: #BBBBBB
 .bookable { background-color: #f8f9fa;}
 .past { background-color: #BBBBBB;}
 .restricted { background-color: #fff3cd;}
+
+/* CI Colors */
+.text-ci-teal { color: #5b9da4; }
+.text-ci-red { color: #eb698c; }
+.text-ci-green { color: #70cb7b; }
