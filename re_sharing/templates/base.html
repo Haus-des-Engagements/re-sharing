@@ -95,9 +95,19 @@
                       <li>
                         <a class="dropdown-item" href="{% url 'resources:accesscode-list' %}">{% translate "Access Codes" %}</a>
                       </li>
-                      <li>
-                        <a class="dropdown-item" href="{% url 'dashboards:reports' %}">{% translate "Reports" %}</a>
-                      </li>
+                      {% if request.user.is_staff %}
+                        <li>
+                          <a class="dropdown-item"
+                             href="{% url 'organizations:bookingpermission-list' %}">{% translate "Permissions" %}</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item"
+                             href="{% url 'organizations:emailtemplate-list' %}">{% translate "Email templates" %}</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="{% url 'dashboards:reports' %}">{% translate "Reports" %}</a>
+                        </li>
+                      {% endif %}
                     </ul>
                   </li>
                 {% endif %}

@@ -1,19 +1,27 @@
 from http import HTTPStatus
 
+import django_filters
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods
+from neapolitan.views import CRUDView
 
+from re_sharing.providers.decorators import ManagerRequiredMixin
 from re_sharing.providers.decorators import manager_required
 
 from .forms import OrganizationForm
 from .forms import OrganizationMessageForm
+from .models import BookingPermission
+from .models import EmailTemplate
 from .models import Organization
 from .models import OrganizationGroup
 from .models import OrganizationMessage
@@ -322,3 +330,88 @@ def _demote_to_booker(request, organization, user_slug):
         return HttpResponse(message)
     except PermissionDenied as e:
         return HttpResponse(str(e), status=HTTPStatus.UNAUTHORIZED)
+
+
+# ============================================================================
+# Neapolitan CRUD Views
+# ============================================================================
+
+
+class BookingPermissionFilterSet(django_filters.FilterSet):
+    """Custom filterset for BookingPermission with all fields and user search."""
+
+    # User-related filters
+    user__first_name = django_filters.CharFilter(
+        lookup_expr="icontains", label="First Name"
+    )
+    user__last_name = django_filters.CharFilter(
+        lookup_expr="icontains", label="Last Name"
+    )
+    user__email = django_filters.CharFilter(lookup_expr="icontains", label="Email")
+
+    class Meta:
+        model = BookingPermission
+        fields = [
+            "user",
+            "user__first_name",
+            "user__last_name",
+            "user__email",
+            "organization",
+            "role",
+            "status",
+        ]
+
+
+class BookingPermissionView(LoginRequiredMixin, ManagerRequiredMixin, CRUDView):
+    """CRUD view for managing booking permissions."""
+
+    model = BookingPermission
+    fields = ["user", "organization", "role", "status"]
+    filterset_class = BookingPermissionFilterSet
+
+    def get_queryset(self):
+        """
+        Filter BookingPermissions to only show permissions for organizations
+        the manager has access to.
+        """
+        manager = self.request.user.get_manager()
+        if manager.organization_groups.exists():
+            # Get all organization groups the manager has access to
+            allowed_groups = manager.organization_groups.all()
+            # Filter organizations that belong to these groups
+            allowed_organizations = Organization.objects.filter(
+                organization_groups__in=allowed_groups
+            ).distinct()
+            # Return booking permissions for these organizations
+            return BookingPermission.objects.filter(
+                organization__in=allowed_organizations
+            ).select_related("user", "organization")
+        # If manager has no group restrictions, show all
+        return BookingPermission.objects.all().select_related("user", "organization")
+
+    def get_success_url(self):
+        from django.urls import reverse
+
+        return reverse("organizations:bookingspermission-list")
+
+
+class EmailTemplateFilterSet(django_filters.FilterSet):
+    """Custom filterset for EmailTemplate with all fields."""
+
+    class Meta:
+        model = EmailTemplate
+        fields = ["email_type", "active"]
+
+
+@method_decorator(staff_member_required, name="dispatch")
+class EmailTemplateView(LoginRequiredMixin, CRUDView):
+    """CRUD view for managing email templates."""
+
+    model = EmailTemplate
+    fields = ["email_type", "subject", "body", "active"]
+    filterset_class = EmailTemplateFilterSet
+
+    def get_success_url(self):
+        from django.urls import reverse
+
+        return reverse("organizations:emailtemplate-list")

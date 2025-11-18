@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% load static i18n crispy_forms_tags %}
+
+{% block title %}
+  {% trans "E-Mail template" %}
+{% endblock title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h1>{% trans "E-Mail template" %}</h1>
+    <a href="{% url 'organizations:emailtemplate-create' %}"
+       class="btn btn-primary">{% trans "Create E-Mail Template" %}</a>
+  </div>
+  {% if filterset %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{% trans "Filter E-Mail Templates" %}</h5>
+        <form method="get">
+          {{ filterset.form|crispy }}
+          <button type="submit" class="btn btn-primary">{% trans "Apply Filters" %}</button>
+          <a href="{% url 'organizations:emailtemplate-list' %}"
+             class="btn btn-secondary">{% trans "Clear Filters" %}</a>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+  {% if object_list %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>{% trans "Email Type" %}</th>
+            <th>{% trans "Subject" %}</th>
+            <th>{% trans "Active" %}</th>
+            <th>{% trans "Modified" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for template in object_list %}
+            <tr>
+              <td>{{ template.get_email_type_display }}</td>
+              <td>{{ template.subject }}</td>
+              <td>
+                {% if template.active %}
+                  <span class="badge bg-success">{% trans "Active" %}</span>
+                {% else %}
+                  <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+                {% endif %}
+              </td>
+              <td>{{ template.modified|date:"Y-m-d H:i" }}</td>
+              <td>
+                <a href="{% url 'organizations:emailtemplate-detail' template.pk %}"
+                   class="btn btn-sm btn-info">{% trans "View" %}</a>
+                <a href="{% url 'organizations:emailtemplate-update' template.pk %}"
+                   class="btn btn-sm btn-warning">{% trans "Edit" %}</a>
+                <a href="{% url 'organizations:emailtemplate-delete' template.pk %}"
+                   class="btn btn-sm btn-danger">{% trans "Delete" %}</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">{% trans "No email templates found." %}</p>
+  {% endif %}
+{% endblock content %}

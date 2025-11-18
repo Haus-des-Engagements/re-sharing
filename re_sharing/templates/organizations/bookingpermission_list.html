@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% load static i18n crispy_forms_tags %}
+
+{% block title %}
+  {% trans "Booking Permissions" %}
+{% endblock title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h1>{% trans "Booking Permissions" %}</h1>
+    <a href="{% url 'organizations:bookingpermission-create' %}"
+       class="btn btn-primary">{% trans "Create Booking Permission" %}</a>
+  </div>
+  {% if filterset %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{% trans "Filter Booking Permissions" %}</h5>
+        <form method="get">
+          {{ filterset.form|crispy }}
+          <button type="submit" class="btn btn-primary">{% trans "Apply Filters" %}</button>
+          <a href="{% url 'organizations:bookingpermission-list' %}"
+             class="btn btn-secondary">{% trans "Clear Filters" %}</a>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+  {% if object_list %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>{% trans "User" %}</th>
+            <th>{% trans "Organization" %}</th>
+            <th>{% trans "Role" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Created" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for permission in object_list %}
+            <tr>
+              <td>
+                {{ permission.user.get_full_name }}
+                <br />
+                <small class="text-muted">{{ permission.user.email }}</small>
+              </td>
+              <td>{{ permission.organization.name }}</td>
+              <td>
+                {% if permission.role == 1 %}
+                  <span class="badge bg-primary">{% trans "Admin" %}</span>
+                {% else %}
+                  <span class="badge bg-secondary">{% trans "Booker" %}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if permission.status == 1 %}
+                  <span class="badge bg-warning">{% trans "Pending" %}</span>
+                {% elif permission.status == 2 %}
+                  <span class="badge bg-success">{% trans "Confirmed" %}</span>
+                {% else %}
+                  <span class="badge bg-danger">{% trans "Rejected" %}</span>
+                {% endif %}
+              </td>
+              <td>{{ permission.created|date:"Y-m-d H:i" }}</td>
+              <td>
+                <a href="{% url 'organizations:bookingpermission-detail' permission.pk %}"
+                   class="btn btn-sm btn-info">{% trans "View" %}</a>
+                <a href="{% url 'organizations:bookingpermission-update' permission.pk %}"
+                   class="btn btn-sm btn-warning">{% trans "Edit" %}</a>
+                <a href="{% url 'organizations:bookingpermission-delete' permission.pk %}"
+                   class="btn btn-sm btn-danger">{% trans "Delete" %}</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">{% trans "No booking permissions found." %}</p>
+  {% endif %}
+{% endblock content %}

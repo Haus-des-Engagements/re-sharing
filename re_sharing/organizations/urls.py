@@ -1,5 +1,8 @@
+from django.urls import include
 from django.urls import path
 
+from .views import BookingPermissionView
+from .views import EmailTemplateView
 from .views import create_organization_view
 from .views import create_organizationmessage_view
 from .views import delete_organization_view
@@ -62,6 +65,8 @@ urlpatterns = [
         show_organization_messages_view,
         name="show-organization-messages",
     ),  # GET organization messages
+    path("booking-permissions/", include(BookingPermissionView.get_urls())),
+    path("email-templates/", include(EmailTemplateView.get_urls())),
     path(
         "<slug:organization>/", show_organization_view, name="show-organization"
     ),  # GET organization

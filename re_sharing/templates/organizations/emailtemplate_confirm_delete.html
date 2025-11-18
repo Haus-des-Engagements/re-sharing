@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Delete E-Mail Template" %}
+{% endblock title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h1>{% trans "Delete E-Mail Template" %}</h1>
+    <a href="{% url 'organizations:emailtemplate-list' %}"
+       class="btn btn-secondary">{% trans "Back to List" %}</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title text-danger">{% trans "Are you sure?" %}</h5>
+      <p>{% trans "Are you sure you want to delete this email template?" %}</p>
+      <dl class="row">
+        <dt class="col-sm-3">{% trans "Email Type" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.get_email_type_display }}
+        </dd>
+        <dt class="col-sm-3">{% trans "Subject" %}</dt>
+        <dd class="col-sm-9">
+          {{ object.subject }}
+        </dd>
+        <dt class="col-sm-3">{% trans "Active" %}</dt>
+        <dd class="col-sm-9">
+          {% if object.active %}
+            <span class="badge bg-success">{% trans "Active" %}</span>
+          {% else %}
+            <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+          {% endif %}
+        </dd>
+      </dl>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "Yes, Delete" %}</button>
+        <a href="{% url 'organizations:emailtemplate-detail' object.pk %}"
+           class="btn btn-secondary">{% trans "Cancel" %}</a>
+      </form>
+    </div>
+  </div>
+{% endblock content %}
