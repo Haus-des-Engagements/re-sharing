@@ -8,9 +8,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
+from django_ical.views import ICalFeed
 from neapolitan.views import CRUDView
 
+from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
 from re_sharing.providers.decorators import ManagerRequiredMixin
 from re_sharing.resources.models import Access
@@ -159,7 +163,7 @@ def planner_view(request):
     # Get locations that the user has access to
     locations = get_user_accessible_locations(request.user)
 
-    resource, timeslots, weekdays, dates, planner_data = planner(
+    _resource, timeslots, weekdays, dates, planner_data = planner(
         request.user, date_string, selected_nb_of_days, selected_resources
     )
     context = {
@@ -211,8 +215,6 @@ def get_compensations(request, selected_compensation=None):
 
     # Check if there are any active restrictions that apply to this resource,
     # organization, and datetime
-    from datetime import datetime
-
     booking_datetime = datetime.combine(start_date, start_time)
 
     # Get all active restrictions that apply to this resource
@@ -278,6 +280,42 @@ class AccessCodeView(LoginRequiredMixin, ManagerRequiredMixin, CRUDView):
         return kwargs
 
     def get_success_url(self):
-        from django.urls import reverse
-
         return reverse("resources:accesscode-list")
+
+
+class ResourceIcalFeed(ICalFeed):
+    """ICS calendar feed for a specific resource showing daily bookings."""
+
+    timezone = "UTC"
+
+    def get_object(self, request, resource_slug):
+        return get_object_or_404(Resource, slug=resource_slug)
+
+    def file_name(self, obj):
+        return f"{obj.slug}.ics"
+
+    def title(self, obj):
+        return f"{obj.name} - Bookings"
+
+    def description(self, obj):
+        return f"Booking schedule for {obj.name}"
+
+    def items(self, obj):
+        return Booking.objects.filter(
+            resource=obj, start_date=timezone.now().date()
+        ).order_by("start_date", "start_time")
+
+    def item_title(self, item):
+        return f"{item.organization.name}"
+
+    def item_start_datetime(self, item):
+        """Booking start datetime."""
+        return item.timespan.lower
+
+    def item_end_datetime(self, item):
+        """Booking end datetime."""
+        return item.timespan.upper
+
+    def item_link(self, item):
+        """Link to booking detail."""
+        return reverse("bookings:show-booking", kwargs={"booking": item.slug})

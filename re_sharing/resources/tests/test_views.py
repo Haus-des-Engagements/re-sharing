@@ -1,4 +1,6 @@
+from datetime import datetime
 from datetime import time
+from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
@@ -9,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.tests.factories import ManagerFactory
@@ -129,8 +132,6 @@ class ResourceRestrictionModelTest(TestCase):
         Test that the restriction applies to a datetime on a weekday within the time
         range.
         """
-        from datetime import datetime
-
         # Monday at 12:00
         monday_noon = datetime.now(tz=timezone.get_current_timezone()).replace(
             year=2025, month=4, day=28, hour=12, minute=0, second=0, microsecond=0
@@ -141,8 +142,6 @@ class ResourceRestrictionModelTest(TestCase):
         """
         Test that the restriction does not apply to a datetime on a weekend.
         """
-        from datetime import datetime
-
         # Saturday at 12:00
         saturday_noon = datetime.now(tz=timezone.get_current_timezone()).replace(
             year=2025, month=4, day=26, hour=12, minute=0, second=0, microsecond=0
@@ -153,8 +152,6 @@ class ResourceRestrictionModelTest(TestCase):
         """
         Test that the restriction does not apply to a datetime outside the time range.
         """
-        from datetime import datetime
-
         # Monday at 19:00 (after 18:00)
         monday_evening = datetime.now(tz=timezone.get_current_timezone()).replace(
             year=2025, month=4, day=28, hour=19, minute=0, second=0, microsecond=0
@@ -569,3 +566,64 @@ class AccessCodeDeleteViewTest(TestCase):
             follow=True,
         )
         assert response.redirect_chain[-1][0] == reverse("resources:accesscode-list")
+
+
+class ResourceIcalFeedTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.resource = ResourceFactory()
+        today = timezone.now().date()
+        self.today_booking = BookingFactory(resource=self.resource, start_date=today)
+        self.future_booking = BookingFactory(
+            resource=self.resource, start_date=today + timedelta(days=7)
+        )
+        self.past_booking = BookingFactory(
+            resource=self.resource, start_date=today - timedelta(days=7)
+        )
+
+    def test_ical_feed_accessible(self):
+        response = self.client.get(
+            reverse(
+                "resources:daily-calendar", kwargs={"resource_slug": self.resource.slug}
+            )
+        )
+        assert response.status_code == HTTPStatus.OK
+
+    def test_ical_feed_content_type(self):
+        response = self.client.get(
+            reverse(
+                "resources:daily-calendar", kwargs={"resource_slug": self.resource.slug}
+            )
+        )
+        assert response["Content-Type"] == "text/calendar; charset=utf-8"
+
+    def test_ical_feed_includes_today_bookings(self):
+        response = self.client.get(
+            reverse(
+                "resources:daily-calendar", kwargs={"resource_slug": self.resource.slug}
+            )
+        )
+        content = response.content.decode()
+        assert self.today_booking.organization.name in content
+        assert "BEGIN:VCALENDAR" in content
+        assert "BEGIN:VEVENT" in content
+
+    def test_ical_feed_excludes_past_bookings(self):
+        response = self.client.get(
+            reverse(
+                "resources:daily-calendar", kwargs={"resource_slug": self.resource.slug}
+            )
+        )
+        content = response.content.decode()
+        # Past booking should not be included
+        assert self.past_booking.slug not in content
+
+    def test_ical_feed_has_calendar_metadata(self):
+        response = self.client.get(
+            reverse(
+                "resources:daily-calendar", kwargs={"resource_slug": self.resource.slug}
+            )
+        )
+        content = response.content.decode()
+        assert self.resource.name in content
+        assert "Booking schedule for" in content
