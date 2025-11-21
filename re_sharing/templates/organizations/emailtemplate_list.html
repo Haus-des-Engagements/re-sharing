@@ -51,11 +51,23 @@
               <td>{{ template.modified|date:"Y-m-d H:i" }}</td>
               <td>
                 <a href="{% url 'organizations:emailtemplate-detail' template.pk %}"
-                   class="btn btn-sm btn-info">{% trans "View" %}</a>
+                   title="{% trans "View" %}">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-eye" />
+                  </svg>
+                </a>
                 <a href="{% url 'organizations:emailtemplate-update' template.pk %}"
-                   class="btn btn-sm btn-warning">{% trans "Edit" %}</a>
+                   title="{% trans "Edit" %}">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-pencil" />
+                  </svg>
+                </a>
                 <a href="{% url 'organizations:emailtemplate-delete' template.pk %}"
-                   class="btn btn-sm btn-danger">{% trans "Delete" %}</a>
+                   title="{% trans "Delete" %}">
+                  <svg class="fs-4 me-1" width="1em" height="1em">
+                    <use href="#bi-trash" />
+                  </svg>
+                </a>
               </td>
             </tr>
           {% endfor %}
