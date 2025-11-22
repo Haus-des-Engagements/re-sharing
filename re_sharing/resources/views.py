@@ -27,6 +27,7 @@ from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
+from re_sharing.utils.models import BookingStatus
 
 
 class AccessCodeFilterSet(django_filters.FilterSet):
@@ -303,7 +304,9 @@ class ResourceIcalFeed(ICalFeed):
 
     def items(self, obj):
         return Booking.objects.filter(
-            resource=obj, start_date=timezone.now().date()
+            resource=obj,
+            start_date=timezone.now().date(),
+            status=BookingStatus.CONFIRMED,
         ).order_by("start_date", "start_time")
 
     def item_title(self, item):
