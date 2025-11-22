@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import django_filters
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.models import Site
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -306,16 +307,20 @@ class ResourceIcalFeed(ICalFeed):
         ).order_by("start_date", "start_time")
 
     def item_title(self, item):
+        if item.organization.public_name:
+            return f"{item.organization.public_name}"
         return f"{item.organization.name}"
 
     def item_start_datetime(self, item):
-        """Booking start datetime."""
         return item.timespan.lower
 
     def item_end_datetime(self, item):
-        """Booking end datetime."""
         return item.timespan.upper
 
+    def item_description(self, item):
+        domain = Site.objects.get_current().domain
+        return f"https://{domain}{item.get_absolute_url()}"
+
     def item_link(self, item):
-        """Link to booking detail."""
-        return reverse("bookings:show-booking", kwargs={"booking": item.slug})
+        domain = Site.objects.get_current().domain
+        return f"https://{domain}{item.get_absolute_url()}"
