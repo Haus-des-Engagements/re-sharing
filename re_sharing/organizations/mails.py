@@ -374,3 +374,80 @@ def send_new_organization_message_email(organization_message):
             context,
             recipient_list,
         )
+
+
+def send_custom_organization_email(
+    organizations,
+    subject_template,
+    body_template,
+    filter_context=None,
+):
+    """
+    Send a custom email to multiple organizations.
+
+    Args:
+        organizations: QuerySet or list of Organization objects
+        subject_template: String template for email subject
+        body_template: String template for email body
+        filter_context: Optional dict with filter parameters (min_bookings, months)
+
+    Returns:
+        Dictionary with count of emails sent and list of organization names
+    """
+    domain = Site.objects.get_current().domain
+    sent_count = 0
+    sent_organizations = []
+
+    for organization in organizations:
+        # Build context for template rendering
+        context = {
+            "organization": organization,
+            "domain": domain,
+        }
+
+        # Add filter context if provided
+        if filter_context:
+            context.update(filter_context)
+            # Add organization-specific booking statistics if months is provided
+            if "months" in filter_context:
+                # Check if organization has annotated attributes from queryset
+                if hasattr(organization, "booking_count"):
+                    context["number_of_bookings"] = organization.booking_count
+                    context["total_amount"] = organization.total_amount
+                else:
+                    # Fallback to selector function if not annotated
+                    from re_sharing.organizations.selectors import (
+                        get_organization_booking_count,
+                    )
+
+                    context["number_of_bookings"] = get_organization_booking_count(
+                        organization, filter_context["months"]
+                    )
+                    # Note: total_amount not available without annotation
+
+        # Render templates
+        subject = Template(subject_template).render(Context(context))
+        body = Template(body_template).render(Context(context))
+
+        # Send email
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[organization.email],
+            bcc=[settings.DEFAULT_BCC_EMAIL],
+        )
+
+        try:
+            email.send(fail_silently=False)
+            sent_count += 1
+            sent_organizations.append(organization.name)
+        except Exception:
+            logger.exception(
+                "Failed to send custom email to organization %s", organization.name
+            )
+
+    return {
+        "sent_count": sent_count,
+        "sent_organizations": sent_organizations,
+    }

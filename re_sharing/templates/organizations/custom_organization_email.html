@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% load static i18n %}
+
+{% block title %}
+  {% trans "Send Custom Email to Organizations" %}
+{% endblock title %}
+{% block content %}
+  <div class="container mt-4">
+    <h1 class="mb-4">{% trans "Send Custom Email to Organizations" %}</h1>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+             role="alert">
+          {{ message }}
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Filter Organizations" %}</h5>
+            <form method="get" id="filterForm">
+              <div class="mb-3">
+                <label for="include_groups" class="form-label">{% trans "Include Organization Groups" %}</label>
+                <select name="include_groups"
+                        id="include_groups"
+                        class="form-select"
+                        multiple>
+                  {% for group in organization_groups %}
+                    <option value="{{ group.id }}"
+                            {% if group.id|stringformat:"s" in selected_include_groups %}selected{% endif %}>
+                      {{ group.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">{% trans "Only organizations in these groups will be included" %}</small>
+              </div>
+              <div class="mb-3">
+                <label for="exclude_groups" class="form-label">{% trans "Exclude Organization Groups" %}</label>
+                <select name="exclude_groups"
+                        id="exclude_groups"
+                        class="form-select"
+                        multiple>
+                  {% for group in organization_groups %}
+                    <option value="{{ group.id }}"
+                            {% if group.id|stringformat:"s" in selected_exclude_groups %}selected{% endif %}>
+                      {{ group.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">{% trans "Organizations in these groups will be excluded" %}</small>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="min_bookings" class="form-label">{% trans "Minimum Bookings" %}</label>
+                    <input type="number"
+                           name="min_bookings"
+                           id="min_bookings"
+                           class="form-control"
+                           value="{{ min_bookings }}"
+                           min="0" />
+                    <small class="form-text text-muted">{% trans "Minimum number of bookings required" %}</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="months" class="form-label">{% trans "In Last X Months" %}</label>
+                    <input type="number"
+                           name="months"
+                           id="months"
+                           class="form-control"
+                           value="{{ months }}"
+                           min="1" />
+                    <small class="form-text text-muted">{% trans "Number of months to look back" %}</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="max_amount" class="form-label">{% trans "Maximum Total Amount (€)" %}</label>
+                    <input type="number"
+                           name="max_amount"
+                           id="max_amount"
+                           class="form-control"
+                           value="{{ max_amount }}"
+                           min="0"
+                           step="0.01" />
+                    <small class="form-text text-muted">{% trans "Exclude organizations above this amount" %}</small>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">{% trans "Preview Organizations" %}</button>
+            </form>
+          </div>
+        </div>
+        {% if organizations %}
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title">{% trans "Filtered Organizations" %} ({{ organizations|length }})</h5>
+              <div class="table-responsive">
+                <table class="table table-striped sortable">
+                  <thead>
+                    <tr>
+                      <th class="sorttable_nosort">
+                        <input type="checkbox" id="selectAll" checked class="form-check-input" title="{% trans "Select/Deselect All" %}" />
+                      </th>
+                      <th>{% trans "Name" %}</th>
+                      <th>{% trans "Email" %}</th>
+                      <th>{% trans "Bookings" %}</th>
+                      <th>{% trans "Total Amount" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for org in organizations %}
+                      <tr>
+                        <td>
+                          <input type="checkbox"
+                                 name="selected_orgs"
+                                 value="{{ org.id }}"
+                                 checked
+                                 class="form-check-input org-checkbox"
+                                 form="emailForm" />
+                        </td>
+                        <td>{{ org.name }}</td>
+                        <td>{{ org.email }}</td>
+                        <td class="text-end">{{ org.booking_count|default:"0" }}</td>
+                        <td class="text-end">{{ org.total_amount|default:"0"|floatformat:2 }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title">{% trans "Compose Email" %}</h5>
+              <form method="post"
+                    id="emailForm"
+                    action="{% url 'organizations:send-custom-organization-email' %}">
+                {% csrf_token %}
+                {# Pass filter parameters as hidden fields #}
+                {% for group in selected_include_groups %}
+                  <input type="hidden" name="include_groups" value="{{ group }}" />
+                {% endfor %}
+                {% for group in selected_exclude_groups %}
+                  <input type="hidden" name="exclude_groups" value="{{ group }}" />
+                {% endfor %}
+                <input type="hidden" name="min_bookings" value="{{ min_bookings }}" />
+                <input type="hidden" name="months" value="{{ months }}" />
+                <input type="hidden" name="max_amount" value="{{ max_amount }}" />
+                <div class="mb-3">
+                  <label for="subject" class="form-label">{% trans "Subject" %}</label>
+                  <input type="text" name="subject" id="subject" class="form-control" required />
+                  <small class="form-text text-muted">{% trans "You can use template tags like" %}
+                    {% verbatim %}
+                      {{ organization.name }}
+                    {% endverbatim %}
+                  </small>
+                </div>
+                <div class="mb-3">
+                  <label for="body" class="form-label">{% trans "Body" %}</label>
+                  <textarea name="body" id="body" class="form-control" rows="10" required></textarea>
+                  <small class="form-text text-muted">
+                    {% trans "Available template tags:" %}
+                    <ul>
+                      <li>
+                        {% verbatim %}
+                          {{ organization.name }}
+                        {% endverbatim %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ organization.email }}
+                        {% endverbatim %}
+                      </li>
+                      {% if months %}
+                        <li>
+                          {% verbatim %}
+                            {{ number_of_bookings }}
+                          {% endverbatim %}
+                          - {% trans "Bookings in selected period" %}
+                        </li>
+                        <li>
+                          {% verbatim %}
+                            {{ total_amount }}
+                          {% endverbatim %}
+                          - {% trans "Total amount in selected period" %}
+                        </li>
+                        <li>
+                          {% verbatim %}
+                            {{ months }}
+                          {% endverbatim %}
+                          - {% trans "Number of months" %}
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </small>
+                </div>
+                <button type="submit"
+                        id="sendEmailBtn"
+                        class="btn btn-success"
+                        onclick="return validateAndConfirm()">
+                  {% trans "Send Email to" %} <span id="selectedCount">{{ organizations|length }}</span> {% trans "Organizations" %}
+                </button>
+              </form>
+              <script>
+                // Handle select all checkbox
+                document.getElementById('selectAll').addEventListener('change', function() {
+                  const checkboxes = document.querySelectorAll('.org-checkbox');
+                  checkboxes.forEach(cb => cb.checked = this.checked);
+                  updateSelectedCount();
+                });
+
+                // Update count when individual checkboxes change
+                document.querySelectorAll('.org-checkbox').forEach(checkbox => {
+                  checkbox.addEventListener('change', function() {
+                    updateSelectedCount();
+                    // Update "select all" checkbox state
+                    const allCheckboxes = document.querySelectorAll('.org-checkbox');
+                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                    document.getElementById('selectAll').checked = allChecked;
+                  });
+                });
+
+                function updateSelectedCount() {
+                  const selectedCount = document.querySelectorAll('.org-checkbox:checked').length;
+                  document.getElementById('selectedCount').textContent = selectedCount;
+                }
+
+                function validateAndConfirm() {
+                  const selectedCount = document.querySelectorAll('.org-checkbox:checked').length;
+                  if (selectedCount === 0) {
+                    alert('{% trans "Please select at least one organization to send emails to." %}');
+                    return false;
+                  }
+                  return confirm('{% trans "Are you sure you want to send this email to" %} ' + selectedCount + ' {% trans "organizations?" %}');
+                }
+              </script>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Help" %}</h5>
+            <p>{% trans "Use this page to send custom emails to filtered organizations." %}</p>
+            <h6>{% trans "Filtering" %}</h6>
+            <ul>
+              <li>
+                <strong>{% trans "Include Groups" %}:</strong> {% trans "Only organizations belonging to these groups will be included" %}
+              </li>
+              <li>
+                <strong>{% trans "Exclude Groups" %}:</strong> {% trans "Organizations belonging to these groups will be excluded" %}
+              </li>
+              <li>
+                <strong>{% trans "Minimum Bookings" %}:</strong> {% trans "Only organizations with at least this many bookings in the specified period" %}
+              </li>
+              <li>
+                <strong>{% trans "Maximum Total Amount" %}:</strong> {% trans "Organizations with a total amount above this threshold will be excluded" %}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

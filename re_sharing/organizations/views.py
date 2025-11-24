@@ -415,3 +415,140 @@ class EmailTemplateView(LoginRequiredMixin, CRUDView):
         from django.urls import reverse
 
         return reverse("organizations:emailtemplate-list")
+
+
+@manager_required
+def custom_organization_email_view(request: HttpRequest) -> HttpResponse:
+    """
+    View for composing and previewing custom emails to filtered organizations.
+    Managers can filter organizations and see which ones will receive the email.
+    """
+    from re_sharing.organizations.selectors import get_filtered_organizations
+
+    organizations = []
+    filter_params = {}
+
+    if request.method == "GET":
+        # Get filter parameters
+        include_groups = request.GET.getlist("include_groups")
+        exclude_groups = request.GET.getlist("exclude_groups")
+        min_bookings = request.GET.get("min_bookings")
+        months = request.GET.get("months")
+        max_amount = request.GET.get("max_amount")
+
+        # Convert to appropriate types
+        include_groups = [int(g) for g in include_groups if g]
+        exclude_groups = [int(g) for g in exclude_groups if g]
+        min_bookings = int(min_bookings) if min_bookings else None
+        months = int(months) if months else None
+        max_amount = float(max_amount) if max_amount else None
+
+        # Store filter params for later use
+        if min_bookings is not None and months is not None:
+            filter_params = {
+                "min_bookings": min_bookings,
+                "months": months,
+            }
+
+        # Get filtered organizations if any filters applied
+        if include_groups or exclude_groups or (min_bookings and months) or max_amount:
+            organizations = get_filtered_organizations(
+                include_groups=include_groups if include_groups else None,
+                exclude_groups=exclude_groups if exclude_groups else None,
+                min_bookings=min_bookings,
+                months=months,
+                max_amount=max_amount,
+            )
+
+    # Get all organization groups for the filter form
+    organization_groups = OrganizationGroup.objects.all()
+
+    context = {
+        "organizations": organizations,
+        "organization_groups": organization_groups,
+        "filter_params": filter_params,
+        "selected_include_groups": request.GET.getlist("include_groups"),
+        "selected_exclude_groups": request.GET.getlist("exclude_groups"),
+        "min_bookings": request.GET.get("min_bookings", ""),
+        "months": request.GET.get("months", ""),
+        "max_amount": request.GET.get("max_amount", ""),
+    }
+
+    return render(request, "organizations/custom_organization_email.html", context)
+
+
+@manager_required
+@require_http_methods(["POST"])
+def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
+    """
+    View for sending custom emails to filtered organizations.
+    """
+    from re_sharing.organizations.mails import send_custom_organization_email
+    from re_sharing.organizations.selectors import get_filtered_organizations
+
+    # Get filter parameters
+    include_groups = request.POST.getlist("include_groups")
+    exclude_groups = request.POST.getlist("exclude_groups")
+    min_bookings = request.POST.get("min_bookings")
+    months = request.POST.get("months")
+    max_amount = request.POST.get("max_amount")
+    selected_org_ids = request.POST.getlist("selected_orgs")
+
+    # Get email content
+    subject_template = request.POST.get("subject", "")
+    body_template = request.POST.get("body", "")
+
+    if not subject_template or not body_template:
+        messages.error(request, "Subject and body are required.")
+        return redirect("organizations:custom-organization-email")
+
+    if not selected_org_ids:
+        messages.error(request, "Please select at least one organization.")
+        return redirect("organizations:custom-organization-email")
+
+    # Convert to appropriate types
+    include_groups = [int(g) for g in include_groups if g]
+    exclude_groups = [int(g) for g in exclude_groups if g]
+    min_bookings = int(min_bookings) if min_bookings else None
+    months = int(months) if months else None
+    max_amount = float(max_amount) if max_amount else None
+    selected_org_ids = [int(org_id) for org_id in selected_org_ids]
+
+    # Build filter context
+    filter_context = {}
+    if min_bookings is not None and months is not None:
+        filter_context = {
+            "min_bookings": min_bookings,
+            "months": months,
+        }
+
+    # Get filtered organizations
+    organizations = get_filtered_organizations(
+        include_groups=include_groups if include_groups else None,
+        exclude_groups=exclude_groups if exclude_groups else None,
+        min_bookings=min_bookings,
+        months=months,
+        max_amount=max_amount,
+    )
+
+    # Filter to only selected organizations
+    organizations = organizations.filter(id__in=selected_org_ids)
+
+    if not organizations.exists():
+        messages.warning(request, "No organizations match the selected filters.")
+        return redirect("organizations:custom-organization-email")
+
+    # Send emails
+    result = send_custom_organization_email(
+        organizations=organizations,
+        subject_template=subject_template,
+        body_template=body_template,
+        filter_context=filter_context if filter_context else None,
+    )
+
+    messages.success(
+        request,
+        f"Successfully sent {result['sent_count']} email(s) to organizations.",
+    )
+
+    return redirect("organizations:custom-organization-email")
