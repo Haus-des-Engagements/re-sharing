@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 import pytest
+from django.contrib.messages import get_messages
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
@@ -500,3 +501,61 @@ class TestOrganizationPermissionManagementView(TestCase):
     def test_unauthenticated_access(self):
         response = self.client.post(self.management_url, {"action": "confirm"})
         assert response.status_code == HTTPStatus.FOUND  # Redirect to login
+
+
+class TestCustomOrganizationEmailView(TestCase):
+    def setUp(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.custom_email_url = reverse("organizations:custom-organization-email")
+
+    def test_url_accessible_for_manager(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url)
+        assert response.status_code == HTTPStatus.OK
+
+    def test_view_renders_correct_template(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url)
+        self.assertTemplateUsed(
+            response, "organizations/custom_organization_email.html"
+        )
+
+    def test_unauthenticated_access_redirects(self):
+        response = self.client.get(self.custom_email_url)
+        assert response.status_code == HTTPStatus.FOUND  # Redirect to login
+
+
+class TestSendCustomOrganizationEmailView(TestCase):
+    def setUp(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.send_email_url = reverse("organizations:send-custom-organization-email")
+        self.org = OrganizationFactory(status=Organization.Status.CONFIRMED)
+
+    def test_url_requires_post(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.send_email_url)
+        assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+    def test_view_requires_authentication(self):
+        response = self.client.post(self.send_email_url)
+        assert response.status_code == HTTPStatus.FOUND  # Redirect to login
+
+    def test_view_requires_selected_organizations(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(
+            self.send_email_url,
+            {
+                "subject": "Test",
+                "body": "Test body",
+                "months": "1",
+            },
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        messages = list(get_messages(response.wsgi_request))
+        assert any("select at least one" in str(m).lower() for m in messages)
