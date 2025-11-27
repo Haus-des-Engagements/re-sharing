@@ -241,7 +241,7 @@ def get_compensations(request, selected_compensation=None):
     )
     if selected_compensation in compensations.values_list("id", flat=True):
         selected_compensation = get_object_or_404(
-            Compensation, id=selected_compensation, resource=resource
+            Compensation, id=selected_compensation
         )
     else:
         selected_compensation = 1
