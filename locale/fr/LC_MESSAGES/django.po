@@ -1889,3 +1889,9 @@ msgstr "Annulé"
 
 msgid "Unavailable"
 msgstr "Indisponible"
+
+msgid "(deleted)"
+msgstr "(supprimé)"
+
+msgid "(deleted user)"
+msgstr "(utilisateur supprimé)"

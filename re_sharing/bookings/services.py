@@ -288,7 +288,7 @@ def cancel_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
-def process_field_changes(field, values):
+def process_field_changes(field, values):  # noqa: C901, PLR0912, PLR0915
     """Process specific field changes and return formatted details."""
     old_value, new_value = values
 
@@ -301,13 +301,23 @@ def process_field_changes(field, values):
 
     # Handle field-specific cases
     if field == "user":
-        old_user = get_object_or_404(User, id=int(old_value))
-        new_user = get_object_or_404(User, id=int(new_value))
+        try:
+            old_user = User.objects.get(id=int(old_value))
+            old_user_display = f"{old_user.first_name} {old_user.last_name}"
+        except User.DoesNotExist:
+            old_user_display = _("(deleted)")
+
+        try:
+            new_user = User.objects.get(id=int(new_value))
+            new_user_display = f"{new_user.first_name} {new_user.last_name}"
+        except User.DoesNotExist:
+            new_user_display = _("(deleted)")
+
         change_details.update(
             {
                 "field": _("User"),
-                "old_value": f"{old_user.first_name} {old_user.last_name}",
-                "new_value": f"{new_user.first_name} {new_user.last_name}",
+                "old_value": old_user_display,
+                "new_value": new_user_display,
             }
         )
     elif field == "start_date":
@@ -323,33 +333,63 @@ def process_field_changes(field, values):
             }
         )
     elif field == "resource":
-        old_resource = get_object_or_404(Resource, id=int(old_value))
-        new_resource = get_object_or_404(Resource, id=int(new_value))
+        try:
+            old_resource = Resource.objects.get(id=int(old_value))
+            old_resource_display = old_resource.name
+        except Resource.DoesNotExist:
+            old_resource_display = _("(deleted)")
+
+        try:
+            new_resource = Resource.objects.get(id=int(new_value))
+            new_resource_display = new_resource.name
+        except Resource.DoesNotExist:
+            new_resource_display = _("(deleted)")
+
         change_details.update(
             {
                 "field": _("Resource"),
-                "old_value": old_resource.name,
-                "new_value": new_resource.name,
+                "old_value": old_resource_display,
+                "new_value": new_resource_display,
             }
         )
     elif field == "compensation":
-        old_compensation = get_object_or_404(Compensation, id=int(old_value))
-        new_compensation = get_object_or_404(Compensation, id=int(new_value))
+        try:
+            old_compensation = Compensation.objects.get(id=int(old_value))
+            old_compensation_display = old_compensation.name
+        except Compensation.DoesNotExist:
+            old_compensation_display = _("(deleted)")
+
+        try:
+            new_compensation = Compensation.objects.get(id=int(new_value))
+            new_compensation_display = new_compensation.name
+        except Compensation.DoesNotExist:
+            new_compensation_display = _("(deleted)")
+
         change_details.update(
             {
                 "field": _("Compensation"),
-                "old_value": old_compensation.name,
-                "new_value": new_compensation.name,
+                "old_value": old_compensation_display,
+                "new_value": new_compensation_display,
             }
         )
     elif field == "organization":
-        old_organization = get_object_or_404(Organization, id=int(old_value))
-        new_organization = get_object_or_404(Organization, id=int(new_value))
+        try:
+            old_organization = Organization.objects.get(id=int(old_value))
+            old_organization_display = old_organization.name
+        except Organization.DoesNotExist:
+            old_organization_display = _("(deleted)")
+
+        try:
+            new_organization = Organization.objects.get(id=int(new_value))
+            new_organization_display = new_organization.name
+        except Organization.DoesNotExist:
+            new_organization_display = _("(deleted)")
+
         change_details.update(
             {
                 "field": _("Organization"),
-                "old_value": old_organization.name,
-                "new_value": new_organization.name,
+                "old_value": old_organization_display,
+                "new_value": new_organization_display,
             }
         )
     elif field == "status":
@@ -395,12 +435,18 @@ def get_booking_activity_stream(booking):
             processed_change = process_field_changes(field, values)
             change_details.append(processed_change)
 
+        # Get actor, handling deleted users
+        try:
+            actor = User.objects.get(id=log_entry.actor_id)
+        except User.DoesNotExist:
+            actor = None
+
         # Append information for this log entry to the activity stream
         activity_stream.append(
             {
                 "date": log_entry.timestamp,
                 "type": "change",
-                "user": get_object_or_404(User, id=log_entry.actor_id),
+                "user": actor,
                 "changes": change_details,
             }
         )

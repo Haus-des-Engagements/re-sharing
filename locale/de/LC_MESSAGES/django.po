@@ -2008,3 +2008,9 @@ msgstr "Storniert"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+msgid "(deleted)"
+msgstr "(gelöscht)"
+
+msgid "(deleted user)"
+msgstr "(gelöschte:r Benutzer:in)"

@@ -30,6 +30,7 @@ from re_sharing.bookings.services import manager_confirm_booking
 from re_sharing.bookings.services import manager_confirm_booking_series
 from re_sharing.bookings.services import manager_filter_bookings_list
 from re_sharing.bookings.services import manager_filter_invoice_bookings_list
+from re_sharing.bookings.services import process_field_changes
 from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
 from re_sharing.bookings.services import set_initial_booking_data
@@ -1957,3 +1958,115 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
 
         assert bookings.filter(resource=resource1).exists()
         assert not bookings.filter(resource=resource2).exists()
+
+
+class TestDeletedEntityHandling(TestCase):
+    """Test that deleted entities are handled gracefully in activity stream."""
+
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.resource = ResourceFactory()
+        self.compensation = CompensationFactory()
+        self.booking = BookingFactory(
+            user=self.user,
+            organization=self.organization,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.PENDING,
+        )
+
+    def test_process_field_changes_with_deleted_user(self):
+        """Test that process_field_changes handles deleted users gracefully."""
+        user2 = UserFactory()
+        user_id = user2.id
+
+        # Delete the user
+        user2.delete()
+
+        # Process field change with deleted user
+        changes = process_field_changes("user", (str(self.user.id), str(user_id)))
+
+        assert changes["field"] == "User"
+        assert changes["old_value"] == f"{self.user.first_name} {self.user.last_name}"
+        assert changes["new_value"] == "(deleted)"
+
+    def test_process_field_changes_with_deleted_resource(self):
+        """Test that process_field_changes handles deleted resources gracefully."""
+        resource2 = ResourceFactory()
+        resource_id = resource2.id
+
+        # Delete the resource
+        resource2.delete()
+
+        # Process field change with deleted resource
+        changes = process_field_changes(
+            "resource", (str(self.resource.id), str(resource_id))
+        )
+
+        assert changes["field"] == "Resource"
+        assert changes["old_value"] == self.resource.name
+        assert changes["new_value"] == "(deleted)"
+
+    def test_process_field_changes_with_deleted_compensation(self):
+        """Test that process_field_changes handles deleted compensations gracefully."""
+        compensation2 = CompensationFactory()
+        compensation_id = compensation2.id
+
+        # Delete the compensation
+        compensation2.delete()
+
+        # Process field change with deleted compensation
+        changes = process_field_changes(
+            "compensation", (str(self.compensation.id), str(compensation_id))
+        )
+
+        assert changes["field"] == "Compensation"
+        assert changes["old_value"] == self.compensation.name
+        assert changes["new_value"] == "(deleted)"
+
+    def test_process_field_changes_with_deleted_organization(self):
+        """Test that process_field_changes handles deleted organizations gracefully."""
+        organization2 = OrganizationFactory()
+        organization_id = organization2.id
+
+        # Delete the organization
+        organization2.delete()
+
+        # Process field change with deleted organization
+        changes = process_field_changes(
+            "organization", (str(self.organization.id), str(organization_id))
+        )
+
+        assert changes["field"] == "Organization"
+        assert changes["old_value"] == self.organization.name
+        assert changes["new_value"] == "(deleted)"
+
+    def test_get_booking_activity_stream_with_deleted_actor(self):
+        """Test that activity stream handles deleted actor gracefully."""
+        from auditlog.context import set_actor
+
+        # Create a user who will be deleted
+        actor = UserFactory()
+
+        # Make a change to the booking with the actor
+        with set_actor(actor):
+            self.booking.title = "Updated Title"
+            self.booking.save()
+
+        # Delete the actor
+        actor.delete()
+
+        # Get activity stream - should not raise an error
+        activity_stream = get_booking_activity_stream(self.booking)
+
+        # Find the change entry
+        change_entry = None
+        for entry in activity_stream:
+            if entry["type"] == "change":
+                change_entry = entry
+                break
+
+        # Verify that the user is None for deleted actor
+        assert change_entry is not None
+        assert change_entry["user"] is None

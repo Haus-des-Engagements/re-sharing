@@ -91,11 +91,27 @@
                   <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
                   {% if activity.type == "message" %}
                     <h5 class="card-title">{% trans "Message" %}</h5>
-                    <p>{% trans "by" %}  {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <p>
+                      {% trans "by" %}
+                      {% if activity.user %}
+                        {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
+                      {% else %}
+                        {% trans "(deleted user)" %}
+                      {% endif %}
+                      :
+                    </p>
                     <p class="fst-italic">{{ activity.text }}</p>
                   {% else %}
                     <h5 class="card-title">{% trans "Booking has been changed" %}</h5>
-                    <p>{% trans "by" %} {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }}):</p>
+                    <p>
+                      {% trans "by" %}
+                      {% if activity.user %}
+                        {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
+                      {% else %}
+                        {% trans "(deleted user)" %}
+                      {% endif %}
+                      :
+                    </p>
                     <ul class="list-unstyled">
                       {% for change in activity.changes %}
                         <li>
