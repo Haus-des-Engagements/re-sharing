@@ -181,7 +181,7 @@ def manager_cancel_organization_view(request, organization_slug):
 
     return render(
         request,
-        "organizations/partials/manager_organization_item.html",
+        "organizations/manager_list_organizations.html#organization-item",
         {"organization": organization},
     )
 
@@ -192,7 +192,7 @@ def manager_confirm_organization_view(request, organization_slug):
     organization = manager_confirm_organization(request.user, organization_slug)
     return render(
         request,
-        "organizations/partials/manager_organization_item.html",
+        "organizations/manager_list_organizations.html#organization-item",
         {"organization": organization},
     )
 
