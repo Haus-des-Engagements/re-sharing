@@ -166,7 +166,9 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
 
     if request.headers.get("HX-Request"):
         return render(
-            request, "organizations/partials/manager_list_organizations.html", context
+            request,
+            "organizations/manager_list_organizations.html#organization-list",
+            context,
         )
 
     return render(request, "organizations/manager_list_organizations.html", context)
