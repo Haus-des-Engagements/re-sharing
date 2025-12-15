@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.db.models import F
-from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 
@@ -191,15 +190,6 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
 
     organizations = organizations.annotate(
         bookings_count=Count("booking_of_organization", distinct=True)
-    ).prefetch_related()
-    organizations = organizations.annotate(
-        confirmed_users_count=Count(
-            "organization_of_bookingpermission",
-            filter=Q(
-                organization_of_bookingpermission__status=BookingPermission.Status.CONFIRMED
-            ),
-            distinct=True,
-        ),
     ).prefetch_related("organization_groups")
 
     return organizations.order_by(Lower("name"))

@@ -9,7 +9,6 @@
 <td>
   <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
 </td>
-<td>{{ organization.confirmed_users_count }}</td>
 <td>
   <a href="{% url "bookings:manager-list-bookings" %}?organization={{ organization.slug }}&show_past_bookings=on">{{ organization.bookings_count }}</a>
 </td>
