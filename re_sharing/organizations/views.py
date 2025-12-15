@@ -49,7 +49,7 @@ def list_organizations_view(request):
     context = {"organizations": organizations}
     if request.headers.get("HX-Request"):
         return render(
-            request, "organizations/partials/list_organizations.html", context
+            request, "organizations/list_organizations.html#organization-list", context
         )
 
     return render(request, "organizations/list_organizations.html", context)
@@ -229,7 +229,7 @@ def create_organizationmessage_view(request, slug):
 
     return render(
         request,
-        "organizations/partials/show_organizationmessage.html",
+        "organizations/show_organization_messages.html#organization-message",
         {"message": organizationmessage},
     )
 
