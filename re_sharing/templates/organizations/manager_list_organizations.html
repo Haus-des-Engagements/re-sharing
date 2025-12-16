@@ -49,35 +49,36 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="organization-list">{% partial organization-list %}</div>
-{% endblock content %}
-{% partialdef organization-list %}
-<div class="table-responsive mt-5">
-  <table class="table table-hover sortable" id="organizations-table">
-    <thead>
-      <tr>
-        <th scope="col">{% trans "Created" %}</th>
-        <th scope="col">{% trans "Name" %}</th>
-        <th scope="col">{% trans "Status" %}</th>
-        <th scope="col">{% trans "Bookings" %}</th>
-        <th scope="col">{% trans "Agreement" %}</th>
-        <th scope="col">{% trans "Organization groups" %}</th>
-        <th scope="col"></th>
-        <th scope="col"></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for organization in organizations %}
-        <tr id="tr-{{ organization.slug }}">{% partial organization-item %}</tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <script>
-    var newTableObject = document.getElementById("organizations-table")
-    sorttable.makeSortable(newTableObject);
-  </script>
+  <div id="organization-list">
+    {% partialdef organization-list inline %}
+    <div class="table-responsive mt-5">
+      <table class="table table-hover sortable" id="organizations-table">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Created" %}</th>
+            <th scope="col">{% trans "Name" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col">{% trans "Bookings" %}</th>
+            <th scope="col">{% trans "Agreement" %}</th>
+            <th scope="col">{% trans "Organization groups" %}</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for organization in organizations %}
+            <tr id="tr-{{ organization.slug }}">{% partial organization-item %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <script>
+        var newTableObject = document.getElementById("organizations-table")
+        sorttable.makeSortable(newTableObject);
+      </script>
+    </div>
+  {% endpartialdef %}
 </div>
-{% endpartialdef %}
+{% endblock content %}
 {% partialdef organization-item %}
 <td sorttable_customkey="{{ organization.created|date:"YmdHi" }}">{{ organization.created|date:"d.m.Y" }}</td>
 <td>

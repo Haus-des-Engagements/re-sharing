@@ -42,20 +42,21 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </div>
-  <div id="list-organizations" class="mt-4">{% partial organization-list %}</div>
-{% endblock content %}
-{% partialdef organization-list %}
-{% for organization in organizations %}
-  <div class="card mb-3">
-    <div class="row g-0">
-      <div class="col-md-8">
-        <div class="card-body">
-          <a class="card-title"
-             href="{% url 'organizations:show-organization' organization=organization.slug %}">{{ organization.name }}
-          </a>
+  <div id="list-organizations" class="mt-4">
+    {% partialdef organization-list inline %}
+    {% for organization in organizations %}
+      <div class="card mb-3">
+        <div class="row g-0">
+          <div class="col-md-8">
+            <div class="card-body">
+              <a class="card-title"
+                 href="{% url 'organizations:show-organization' organization=organization.slug %}">{{ organization.name }}
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-{% endfor %}
-{% endpartialdef %}
+    {% endfor %}
+  {% endpartialdef %}
+</div>
+{% endblock content %}
