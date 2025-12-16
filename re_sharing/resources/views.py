@@ -197,7 +197,7 @@ def planner_view(request):
     ):
         return render(
             request,
-            "resources/partials/selection_and_table.html#multi-planner-table",
+            "resources/multi_planner.html#multi-planner-table",
             context,
         )
     return render(request, "resources/multi_planner.html", context)
