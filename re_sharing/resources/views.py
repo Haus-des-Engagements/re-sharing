@@ -111,7 +111,7 @@ def list_resources_view(request):
         "selected_end_time": selected_end_time,
     }
     if request.headers.get("HX-Request"):
-        return render(request, "resources/partials/list_filter_resources.html", context)
+        return render(request, "resources/list_resources.html#resource-list", context)
 
     return render(request, "resources/list_resources.html", context)
 
@@ -132,7 +132,9 @@ def show_resource_view(request, resource_slug):
         "restrictions": restrictions,
     }
     if request.headers.get("HX-Request"):
-        return render(request, "resources/partials/weekly_bookings_table.html", context)
+        return render(
+            request, "resources/show_resource.html#weekly-bookings-table", context
+        )
 
     return render(request, "resources/show_resource.html", context)
 
@@ -140,7 +142,7 @@ def show_resource_view(request, resource_slug):
 @require_http_methods(["GET"])
 def planner_view(request):
     date_string = request.GET.get("date")
-    selected_nb_of_days = int(request.GET.get("selected_nb_of_days", "7"))
+    selected_nb_of_days = int(request.GET.get("selected_nb_of_days", "3"))
     selected_resources_slugs = request.GET.getlist("resources")
     location_slug = request.GET.get("location")
 
@@ -186,12 +188,18 @@ def planner_view(request):
         request.headers.get("HX-Request")
         and request.headers.get("partial") == "selection_and_table"
     ):
-        return render(request, "resources/partials/selection_and_table.html", context)
+        return render(
+            request, "resources/multi_planner.html#selection-and-table", context
+        )
     if (
         request.headers.get("HX-Request")
         and request.headers.get("partial") == "planner-table"
     ):
-        return render(request, "resources/partials/multi_planner_table.html", context)
+        return render(
+            request,
+            "resources/partials/selection_and_table.html#multi-planner-table",
+            context,
+        )
     return render(request, "resources/multi_planner.html", context)
 
 
