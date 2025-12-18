@@ -4,6 +4,7 @@
 {% load static %}
 {% load tz %}
 {% load crispy_forms_tags %}
+{% load admin_urls %}
 
 {% block content %}
   <h1 class="mt-4">{% trans "Manage invoices" %}</h1>
@@ -51,5 +52,44 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="booking-list">{% include "bookings/partials/manager_list_invoices.html" %}</div>
+  <div id="booking-list">
+    {% partialdef manager-list-invoices inline %}
+    <div class="table-responsive mt-5">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Booking" %}</th>
+            <th scope="col">{% trans "Timespan" %}</th>
+            <th scope="col">{% trans "Resource" %}</th>
+            <th scope="col">{% trans "Title" %}</th>
+            <th scope="col">{% trans "Organization" %}</th>
+            <th scope="col">{% trans "Total amount" %}</th>
+            <th scope="col">{% trans "Invoice number" %}</th>
+            <th scope="col">{% trans "Admin-Link" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr id="tr-{{ booking.slug }}">
+              {% partialdef manager-invoice-item inline %}
+              <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
+              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
+              <td>{{ booking.resource }}</td>
+              <td>
+                <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
+              </td>
+              <td>{{ booking.organization }}</td>
+              <td>{{ booking.total_amount }}</td>
+              <td>{{ booking.invoice_number }}</td>
+              <td>
+                <a href="{% url 'admin:bookings_booking_change' booking.pk %}">Edit</a>
+              </td>
+            {% endpartialdef %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endpartialdef %}
+</div>
 {% endblock content %}

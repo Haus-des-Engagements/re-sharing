@@ -70,28 +70,133 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="booking-list">{% include "bookings/partials/list_bookings.html" %}</div>
-  <nav aria-label="Page navigation example">
-    <ul class="pagination">
-      {% if bookings.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?page=1">{% trans "First" %}</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="?page={{ bookings.previous_page_number }}">{% trans "Previous" %}</a>
-        </li>
-      {% endif %}
-      <li class="page-item active">
-        <a class="page-link" href="#">{% trans "Page" %} {{ bookings.number }} {% trans "of" %} {{ bookings.paginator.num_pages }}</a>
+  <div id="booking-list">
+    {% partialdef list-bookings inline %}
+    {% for booking in bookings %}
+      {% partialdef booking-item inline %}
+      <div class="card mb-3 mt-4" id="booking-list-item-{{ booking.slug }}">
+        <div class="row g-0">
+          <div class="col col-md-2 card-body text-center">
+            <p class="h6">{{ booking.timespan.lower|date:"l" }}</p>
+            <p class="h4">{{ booking.timespan.lower|date:"d" }}. {{ booking.timespan.lower|date:"F" }}</p>
+            <p class="h6">{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</p>
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">
+                {% if request.resolver_match.view_name != 'bookings:show-booking' and request.resolver_match.view_name != 'bookings:cancel-booking' %}
+                  <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.title }}</a>
+                {% else %}
+                  {{ booking.title }}
+                {% endif %}
+                <span id="status-{{ booking.slug }}"
+                      class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+              </h5>
+              <p class="card-text">
+                <svg width="1em" height="1em">
+                  <use href="#bi-door-closed" />
+                </svg>
+                <em>{{ booking.resource }}</em>
+                <br />
+                <svg width="1em" height="1em">
+                  <use href="#bi-person-fill" />
+                </svg>
+                {% trans "booked by:" %} <em>{{ booking.user }}</em> {% trans "for" %} <em><a href="{% url 'organizations:show-organization' booking.organization.slug %}">{{ booking.organization.name }}</a></em>
+                <br />
+                {% if booking.compensation %}
+                  <svg width="1em" height="1em">
+                    <use href="#bi-currency-euro" />
+                  </svg>
+                  {{ booking.compensation.name }}
+                  {% if booking.total_amount %}
+                    {% if booking.status == 3 %}
+                      <s>({% trans "Total amount" %}: {{ booking.total_amount }}€)</s>
+                    {% else %}
+                      ({% trans "Total amount" %}: {{ booking.total_amount }}€)
+                      {% if booking.invoice_address %}
+                        , {% trans "Differing billing address" %}: {{ booking.invoice_address }}
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+                <br />
+                <svg width="1em" height="1em">
+                  <use href="#bi-card-text" />
+                </svg>
+                <em>{{ booking.activity_description }}</em>
+              </p>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                {% if request.resolver_match.view_name != 'bookings:show-booking' and request.resolver_match.view_name != 'bookings:cancel-booking' %}
+                  <a class="btn btn-outline-primary"
+                     href="{% url 'bookings:show-booking' booking=booking.slug %}">
+                    <svg width="1em" height="1em">
+                      <use href="#bi-eye" />
+                    </svg>
+                  {% trans "View" %}</a>
+                {% endif %}
+                {% if booking.is_editable %}
+                  <a class="btn btn-outline-primary"
+                     href="{% url 'bookings:update-booking' booking_slug=booking.slug %}">
+                    <svg width="1em" height="1em">
+                      <use href="#bi-pencil" />
+                    </svg>
+                  {% trans "Edit" %}</a>
+                {% endif %}
+                {% if booking.is_cancelable %}
+                  <a class="btn btn-outline-danger"
+                     hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
+                     hx-patch="{% url 'bookings:cancel-booking' slug=booking.slug %}"
+                     hx-target="#booking-list-item-{{ booking.slug }}"
+                     hx-swap="outerHTML">
+                    <svg width="1em" height="1em">
+                      <use href="#bi-x-octagon" />
+                    </svg>
+                  {% trans "Cancel " %}</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if booking.booking_series %}
+            <div class="card-footer">
+              <svg width="1em" height="1em">
+                <use href="#bi-arrow-repeat" />
+              </svg>
+              {{ booking.booking_series.get_human_readable_rule }} <a href="{% url 'bookings:show-booking-series' booking.booking_series.slug %}">({% trans "show all occurrences" %})</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endpartialdef %}
+  {% empty %}
+    <div>{% trans "No results found." %}</div>
+  {% endfor %}
+{% endpartialdef %}
+</div>
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+    {% if bookings.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1">{% trans "First" %}</a>
       </li>
-      {% if bookings.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ bookings.next_page_number }}">{% trans "Next" %}</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="?page={{ bookings.paginator.num_pages }}">{% trans "Last" %}</a>
-        </li>
-      {% endif %}
-    </ul>
-  </nav>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ bookings.previous_page_number }}">{% trans "Previous" %}</a>
+      </li>
+    {% endif %}
+    <li class="page-item active">
+      <a class="page-link" href="#">{% trans "Page" %} {{ bookings.number }} {% trans "of" %} {{ bookings.paginator.num_pages }}</a>
+    </li>
+    {% if bookings.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ bookings.next_page_number }}">{% trans "Next" %}</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ bookings.paginator.num_pages }}">{% trans "Last" %}</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
 {% endblock content %}

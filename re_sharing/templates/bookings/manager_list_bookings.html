@@ -106,5 +106,69 @@
       <span class="visually-hidden">Loading...</span>
     </div>
   </form>
-  <div id="booking-list">{% include "bookings/partials/manager_list_bookings.html" %}</div>
+  <div id="booking-list">
+    {% partialdef manager-list-bookings inline %}
+    <div class="table-responsive mt-5">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Created" %}</th>
+            <th scope="col">{% trans "Booking" %}</th>
+            <th scope="col">{% trans "Timespan" %}</th>
+            <th scope="col">{% trans "Resource" %}</th>
+            <th scope="col">{% trans "Organization" %}</th>
+            <th scope="col">{% trans "Title" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr id="tr-{{ booking.slug }}">
+              {% partialdef manager-booking-item inline %}
+              <td>{{ booking.created|date:"d.m.Y H:i" }}</td>
+              <td>{{ booking.timespan.lower|date:"D, d.m.Y" }}</td>
+              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
+              <td>{{ booking.resource }}</td>
+              <td>
+                <a href="{% url "organizations:show-organization" booking.organization.slug %}">{{ booking.organization }}</a>
+              </td>
+              <td>
+                <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
+              </td>
+              <td>
+                <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+              </td>
+              <td>
+                {% if booking.is_confirmable %}
+                  <button id="confirm-button"
+                          type="submit"
+                          class="btn btn-sm btn-outline-success"
+                          value="Submit"
+                          hx-patch="{% url 'bookings:manager-confirm-booking' booking_slug=booking.slug %}"
+                          hx-target="#tr-{{ booking.slug }}"
+                          hx-swap="innerHTML">{% trans "Confirm" %}</button>
+                {% endif %}
+              </td>
+              <td>
+                {% if booking.is_cancelable %}
+                  <button id="cancel-button"
+                          type="submit"
+                          class="btn btn-sm btn-outline-danger"
+                          value="Submit"
+                          hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
+                          hx-patch="{% url 'bookings:manager-cancel-booking' booking_slug=booking.slug %}"
+                          hx-target="#tr-{{ booking.slug }}"
+                          hx-swap="innerHTML">{% trans "Cancel" %}</button>
+                {% endif %}
+              </td>
+            {% endpartialdef %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endpartialdef %}
+</div>
 {% endblock content %}

@@ -203,7 +203,7 @@ def list_bookings_view(request):
     }
 
     if request.headers.get("HX-Request"):
-        return render(request, "bookings/partials/list_bookings.html", context)
+        return render(request, "bookings/list_bookings.html#list-bookings", context)
 
     return render(request, "bookings/list_bookings.html", context)
 
@@ -276,7 +276,9 @@ def create_bookingmessage_view(request, slug):
 def cancel_booking_view(request, slug):
     booking = cancel_booking(request.user, slug)
 
-    return render(request, "bookings/partials/booking_item.html", {"booking": booking})
+    return render(
+        request, "bookings/list_bookings.html#booking-item", {"booking": booking}
+    )
 
 
 @require_http_methods(["PATCH"])
@@ -285,7 +287,9 @@ def cancel_booking_series_booking_view(request, slug):
     booking = cancel_booking(request.user, slug)
 
     return render(
-        request, "bookings/partials/occurrence_item.html", {"booking": booking}
+        request,
+        "bookings/show_booking_series.html#occurrence-item",
+        {"booking": booking},
     )
 
 
@@ -387,7 +391,11 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     }
 
     if request.headers.get("HX-Request"):
-        return render(request, "bookings/partials/manager_list_bookings.html", context)
+        return render(
+            request,
+            "bookings/manager_list_bookings.html#manager-list-bookings",
+            context,
+        )
 
     return render(request, "bookings/manager_list_bookings.html", context)
 
@@ -398,7 +406,9 @@ def manager_cancel_booking_view(request, booking_slug):
     booking = manager_cancel_booking(request.user, booking_slug)
 
     return render(
-        request, "bookings/partials/manager_booking_item.html", {"booking": booking}
+        request,
+        "bookings/manager_list_bookings.html#manager-booking-item",
+        {"booking": booking},
     )
 
 
@@ -407,7 +417,9 @@ def manager_cancel_booking_view(request, booking_slug):
 def manager_confirm_booking_view(request, booking_slug):
     booking = manager_confirm_booking(request.user, booking_slug)
     return render(
-        request, "bookings/partials/manager_booking_item.html", {"booking": booking}
+        request,
+        "bookings/manager_list_bookings.html#manager-booking-item",
+        {"booking": booking},
     )
 
 
@@ -435,7 +447,9 @@ def manager_list_booking_series_view(request: HttpRequest) -> HttpResponse:
 
     if request.headers.get("HX-Request"):
         return render(
-            request, "bookings/partials/manager_list_booking_series.html", context
+            request,
+            "bookings/manager_list_booking_series.html#manager-list-booking-series",
+            context,
         )
 
     return render(request, "bookings/manager_list_booking_series.html", context)
@@ -448,7 +462,7 @@ def manager_cancel_booking_series_view(request, booking_series_uuid):
 
     return render(
         request,
-        "bookings/partials/manager_booking_series_item.html",
+        "bookings/manager_list_booking_series.html#manager-booking-series-item",
         {"booking_series": booking_series},
     )
 
@@ -460,7 +474,7 @@ def manager_confirm_booking_series_view(request, booking_series_uuid):
 
     return render(
         request,
-        "bookings/partials/manager_booking_series_item.html",
+        "bookings/manager_list_booking_series.html#manager-booking-series-item",
         {"booking_series": booking_series},
     )
 
@@ -488,6 +502,10 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     }
 
     if request.headers.get("HX-Request"):
-        return render(request, "bookings/partials/manager_list_invoices.html", context)
+        return render(
+            request,
+            "bookings/manager_list_invoices.html#manager-list-invoices",
+            context,
+        )
 
     return render(request, "bookings/manager_list_invoices.html", context)

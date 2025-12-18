@@ -21,150 +21,249 @@
   <h1 class="mt-4">
     {% trans "Booking" %}: <em>{{ booking.title }}</em>
   </h1>
-  <div id="booking-detail-item">{% include "bookings/partials/booking_item.html" %}</div>
-  <h2 class="font-weight-light py-3">{% trans "Access" %}</h2>
-  <div class="card mb-3 mt-2" id="access">
-    <div class="row g-0">
-      <div class="col col-md-2 card-body text-center">
-        <p class="h6">{% trans "Access Code" %}:</p>
-        <p class="h6">{{ access_code }}</p>
-      </div>
-      <div class="col-md-10">
-        <div class="card-body">
-          <h5 class="card-title">{% trans "Instructions" %}</h5>
-          <p class="card-text">
-            {% if booking.resource.access.instructions %}
-              {% if not access_code %}
-                <p class="card-text">{% trans "The access code and instructions are only visible for confirmed bookings." %}</p>
-              {% endif %}
-              {{ booking.resource.access.instructions }}
-            {% else %}
-              The resource has no specific access information.
-            </p>
-          {% endif %}
+  <div id="booking-detail-item">
+    {% partialdef booking-detail-item inline %}
+    <div class="card mb-3 mt-4" id="booking-list-item-{{ booking.slug }}">
+      <div class="row g-0">
+        <div class="col col-md-2 card-body text-center">
+          <p class="h6">{{ booking.timespan.lower|date:"l" }}</p>
+          <p class="h4">{{ booking.timespan.lower|date:"d" }}. {{ booking.timespan.lower|date:"F" }}</p>
+          <p class="h6">{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</p>
         </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">
+              {% if request.resolver_match.view_name != 'bookings:show-booking' and request.resolver_match.view_name != 'bookings:cancel-booking' %}
+                <a href="{% url 'bookings:show-booking' booking=booking.slug %}">{{ booking.title }}</a>
+              {% else %}
+                {{ booking.title }}
+              {% endif %}
+              <span id="status-{{ booking.slug }}"
+                    class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+            </h5>
+            <p class="card-text">
+              <svg width="1em" height="1em">
+                <use href="#bi-door-closed" />
+              </svg>
+              <em>{{ booking.resource }}</em>
+              <br />
+              <svg width="1em" height="1em">
+                <use href="#bi-person-fill" />
+              </svg>
+              {% trans "booked by:" %} <em>{{ booking.user }}</em> {% trans "for" %} <em><a href="{% url 'organizations:show-organization' booking.organization.slug %}">{{ booking.organization.name }}</a></em>
+              <br />
+              {% if booking.compensation %}
+                <svg width="1em" height="1em">
+                  <use href="#bi-currency-euro" />
+                </svg>
+                {{ booking.compensation.name }}
+                {% if booking.total_amount %}
+                  {% if booking.status == 3 %}
+                    <s>({% trans "Total amount" %}: {{ booking.total_amount }}€)</s>
+                  {% else %}
+                    ({% trans "Total amount" %}: {{ booking.total_amount }}€)
+                    {% if booking.invoice_address %}
+                      , {% trans "Differing billing address" %}: {{ booking.invoice_address }}
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+              <br />
+              <svg width="1em" height="1em">
+                <use href="#bi-card-text" />
+              </svg>
+              <em>{{ booking.activity_description }}</em>
+            </p>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              {% if request.resolver_match.view_name != 'bookings:show-booking' and request.resolver_match.view_name != 'bookings:cancel-booking' %}
+                <a class="btn btn-outline-primary"
+                   href="{% url 'bookings:show-booking' booking=booking.slug %}">
+                  <svg width="1em" height="1em">
+                    <use href="#bi-eye" />
+                  </svg>
+                {% trans "View" %}</a>
+              {% endif %}
+              {% if booking.is_editable %}
+                <a class="btn btn-outline-primary"
+                   href="{% url 'bookings:update-booking' booking_slug=booking.slug %}">
+                  <svg width="1em" height="1em">
+                    <use href="#bi-pencil" />
+                  </svg>
+                {% trans "Edit" %}</a>
+              {% endif %}
+              {% if booking.is_cancelable %}
+                <a class="btn btn-outline-danger"
+                   hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
+                   hx-patch="{% url 'bookings:cancel-booking' slug=booking.slug %}"
+                   hx-target="#booking-list-item-{{ booking.slug }}"
+                   hx-swap="outerHTML">
+                  <svg width="1em" height="1em">
+                    <use href="#bi-x-octagon" />
+                  </svg>
+                {% trans "Cancel " %}</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if booking.booking_series %}
+          <div class="card-footer">
+            <svg width="1em" height="1em">
+              <use href="#bi-arrow-repeat" />
+            </svg>
+            {{ booking.booking_series.get_human_readable_rule }} <a href="{% url 'bookings:show-booking-series' booking.booking_series.slug %}">({% trans "show all occurrences" %})</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endpartialdef %}
+</div>
+<h2 class="font-weight-light py-3">{% trans "Access" %}</h2>
+<div class="card mb-3 mt-2" id="access">
+  <div class="row g-0">
+    <div class="col col-md-2 card-body text-center">
+      <p class="h6">{% trans "Access Code" %}:</p>
+      <p class="h6">{{ access_code }}</p>
+    </div>
+    <div class="col-md-10">
+      <div class="card-body">
+        <h5 class="card-title">{% trans "Instructions" %}</h5>
+        <p class="card-text">
+          {% if booking.resource.access.instructions %}
+            {% if not access_code %}
+              <p class="card-text">{% trans "The access code and instructions are only visible for confirmed bookings." %}</p>
+            {% endif %}
+            {{ booking.resource.access.instructions }}
+          {% else %}
+            The resource has no specific access information.
+          </p>
+        {% endif %}
       </div>
     </div>
   </div>
-  <div class="container py-4">
-    <h2 class="font-weight-light">{% trans "Write us a message for this booking" %}</h2>
-    <p>
-      {% trans "We will usually respond in the next 48h." %} {% trans "You will get notified by e-mail when receiving an answer." %}
-    </p>
-    <div class="row" id="message-form">
-      <form hx-post="{% url 'bookings:create-bookingmessage' booking.slug %}"
-            hx-target="#timeline-heading"
-            hx-swap="afterend"
-            hx-on::after-request="if(event.detail.successful) this.reset()">
-        {% csrf_token %}
-        <div class="mb-3">
-          <textarea class="form-control" name="text" rows="3" required="true"></textarea>
+</div>
+<div class="container py-4">
+  <h2 class="font-weight-light">{% trans "Write us a message for this booking" %}</h2>
+  <p>
+    {% trans "We will usually respond in the next 48h." %} {% trans "You will get notified by e-mail when receiving an answer." %}
+  </p>
+  <div class="row" id="message-form">
+    <form hx-post="{% url 'bookings:create-bookingmessage' booking.slug %}"
+          hx-target="#timeline-heading"
+          hx-swap="afterend"
+          hx-on::after-request="if(event.detail.successful) this.reset()">
+      {% csrf_token %}
+      <div class="mb-3">
+        <textarea class="form-control" name="text" rows="3" required="true"></textarea>
+      </div>
+      <div class="row d-flex align-items-center">
+        <div class="col-auto">
+          <button type="submit" class="btn btn-outline-primary" value="Submit">{% trans "Send new message" %}</button>
         </div>
-        <div class="row d-flex align-items-center">
-          <div class="col-auto">
-            <button type="submit" class="btn btn-outline-primary" value="Submit">{% trans "Send new message" %}</button>
-          </div>
-          <div class="col-auto" id="confirmation"></div>
-        </div>
-      </form>
-      <div class="container py-4">
-        <h2 class="font-weight-light py-3" id="timeline-heading">{% trans "Timeline" %}</h2>
-        <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
-        {% for activity in activity_stream %}
-          <div class="row">
-            <div class="col-auto text-center flex-column d-none d-sm-flex">
-              <div class="row h-50">
-                <div class="col border-end">&nbsp;</div>
-                <div class="col">&nbsp;</div>
-              </div>
-              <h5 class="m-2">
-                <span class="badge rounded-pill bg-light border">&nbsp;</span>
-              </h5>
-              <div class="row h-50">
-                <div class="col border-end">&nbsp;</div>
-                <div class="col">&nbsp;</div>
-              </div>
-            </div>
-            <div class="col py-2">
-              <div class="card">
-                <div class="card-body">
-                  <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
-                  {% if activity.type == "message" %}
-                    <h5 class="card-title">{% trans "Message" %}</h5>
-                    <p>
-                      {% trans "by" %}
-                      {% if activity.user %}
-                        {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
-                      {% else %}
-                        {% trans "(deleted user)" %}
-                      {% endif %}
-                      :
-                    </p>
-                    <p class="fst-italic">{{ activity.text }}</p>
-                  {% else %}
-                    <h5 class="card-title">{% trans "Booking has been changed" %}</h5>
-                    <p>
-                      {% trans "by" %}
-                      {% if activity.user %}
-                        {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
-                      {% else %}
-                        {% trans "(deleted user)" %}
-                      {% endif %}
-                      :
-                    </p>
-                    <ul class="list-unstyled">
-                      {% for change in activity.changes %}
-                        <li>
-                          <strong>{{ change.field|capfirst }}</strong>:
-                          {% if change.field == "status" %}
-                            <span class="fs-6 badge text-bg-status-{{ change.old_value.0 }}">{{ change.old_value.1 }}</span>
-                            <svg class="fs-4 me-1" width="1em" height="1em">
-                              <use href="#bi-arrow-right" />
-                            </svg>
-                            <span class="fs-6 badge text-bg-status-{{ change.new_value.0 }}">{{ change.new_value.1 }}</span>
-                          {% else %}
-                            <span class="text-muted fst-italic">{{ change.old_value }}</span>
-                            <svg class="fs-4 me-1" width="1em" height="1em">
-                              <use href="#bi-arrow-right" />
-                            </svg>
-                            {{ change.new_value }}
-                          {% endif %}
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-        <!-- timeline item 1 -->
+        <div class="col-auto" id="confirmation"></div>
+      </div>
+    </form>
+    <div class="container py-4">
+      <h2 class="font-weight-light py-3" id="timeline-heading">{% trans "Timeline" %}</h2>
+      <!-- timeline snippet from: https://www.codeply.com/p/GSinLfFXIJ -->
+      {% for activity in activity_stream %}
         <div class="row">
-          <!-- timeline item 1 left dot -->
           <div class="col-auto text-center flex-column d-none d-sm-flex">
             <div class="row h-50">
-              <div class="col border-end order">&nbsp;</div>
+              <div class="col border-end">&nbsp;</div>
               <div class="col">&nbsp;</div>
             </div>
             <h5 class="m-2">
               <span class="badge rounded-pill bg-light border">&nbsp;</span>
             </h5>
             <div class="row h-50">
-              <div class="col">&nbsp;</div>
+              <div class="col border-end">&nbsp;</div>
               <div class="col">&nbsp;</div>
             </div>
           </div>
-          <!-- timeline item 1 content -->
           <div class="col py-2">
             <div class="card">
               <div class="card-body">
-                <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
-                <h5 class="card-title">{% trans "Booking created" %}</h5>
+                <div class="text-muted">{{ activity.date|date:"l, d.m.Y - H:i" }}</div>
+                {% if activity.type == "message" %}
+                  <h5 class="card-title">{% trans "Message" %}</h5>
+                  <p>
+                    {% trans "by" %}
+                    {% if activity.user %}
+                      {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
+                    {% else %}
+                      {% trans "(deleted user)" %}
+                    {% endif %}
+                    :
+                  </p>
+                  <p class="fst-italic">{{ activity.text }}</p>
+                {% else %}
+                  <h5 class="card-title">{% trans "Booking has been changed" %}</h5>
+                  <p>
+                    {% trans "by" %}
+                    {% if activity.user %}
+                      {{ activity.user.first_name }} {{ activity.user.last_name }} ({{ activity.user.email }})
+                    {% else %}
+                      {% trans "(deleted user)" %}
+                    {% endif %}
+                    :
+                  </p>
+                  <ul class="list-unstyled">
+                    {% for change in activity.changes %}
+                      <li>
+                        <strong>{{ change.field|capfirst }}</strong>:
+                        {% if change.field == "status" %}
+                          <span class="fs-6 badge text-bg-status-{{ change.old_value.0 }}">{{ change.old_value.1 }}</span>
+                          <svg class="fs-4 me-1" width="1em" height="1em">
+                            <use href="#bi-arrow-right" />
+                          </svg>
+                          <span class="fs-6 badge text-bg-status-{{ change.new_value.0 }}">{{ change.new_value.1 }}</span>
+                        {% else %}
+                          <span class="text-muted fst-italic">{{ change.old_value }}</span>
+                          <svg class="fs-4 me-1" width="1em" height="1em">
+                            <use href="#bi-arrow-right" />
+                          </svg>
+                          {{ change.new_value }}
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
               </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <!-- timeline item 1 -->
+      <div class="row">
+        <!-- timeline item 1 left dot -->
+        <div class="col-auto text-center flex-column d-none d-sm-flex">
+          <div class="row h-50">
+            <div class="col border-end order">&nbsp;</div>
+            <div class="col">&nbsp;</div>
+          </div>
+          <h5 class="m-2">
+            <span class="badge rounded-pill bg-light border">&nbsp;</span>
+          </h5>
+          <div class="row h-50">
+            <div class="col">&nbsp;</div>
+            <div class="col">&nbsp;</div>
+          </div>
+        </div>
+        <!-- timeline item 1 content -->
+        <div class="col py-2">
+          <div class="card">
+            <div class="card-body">
+              <div class="text-muted">{{ booking.created|date:"l, d.m.Y - H:m" }}</div>
+              <h5 class="card-title">{% trans "Booking created" %}</h5>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 {% endblock content %}
