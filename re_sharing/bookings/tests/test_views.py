@@ -532,7 +532,7 @@ class TestListBookingsViewHTMX(TestCase):
             reverse("bookings:list-bookings"), headers={"hx-request": "true"}
         )
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(response, "bookings/partials/list_bookings.html")
+        self.assertTemplateUsed(response, "list-bookings")
 
 
 class TestCancelBookingsOfBookingSeriesView(TestCase):
@@ -696,9 +696,7 @@ class TestManagerListBookingsViewHTMX(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(
-            response, "bookings/partials/manager_list_bookings.html"
-        )
+        self.assertTemplateUsed(response, "manager-list-bookings")
 
 
 class TestManagerListBookingSeriesView(TestCase):
@@ -726,9 +724,7 @@ class TestManagerListBookingSeriesView(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(
-            response, "bookings/partials/manager_list_booking_series.html"
-        )
+        self.assertTemplateUsed(response, "manager-list-booking-series")
 
 
 class TestManagerCancelBookingSeriesView(TestCase):
@@ -749,9 +745,7 @@ class TestManagerCancelBookingSeriesView(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(
-            response, "bookings/partials/manager_booking_series_item.html"
-        )
+        self.assertTemplateUsed(response, "manager-booking-series-item")
         mock_cancel.assert_called_once()
 
 
@@ -773,9 +767,7 @@ class TestManagerConfirmBookingSeriesView(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(
-            response, "bookings/partials/manager_booking_series_item.html"
-        )
+        self.assertTemplateUsed(response, "manager-booking-series-item")
         mock_confirm.assert_called_once()
 
 
@@ -803,9 +795,7 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        self.assertTemplateUsed(
-            response, "bookings/partials/manager_list_invoices.html"
-        )
+        self.assertTemplateUsed(response, "manager-list-invoices")
 
     @patch("re_sharing.bookings.views.manager_filter_invoice_bookings_list")
     def test_manager_filter_invoice_bookings_with_filters(self, mock_filter):
