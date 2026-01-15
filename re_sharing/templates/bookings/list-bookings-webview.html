@@ -1,63 +1,192 @@
-{% extends "base.html" %}
+{% load static i18n tz %}
 
-{% load i18n %}
-{% load static %}
-{% load tz %}
-{% load crispy_forms_tags %}
-
-{% block content %}
-  <h1 class="mt-4">{% trans "Bookings" %}</h1>
-  <form class="row gx-3 gy-2 align-items-center mt-3"
-        method="get"
-        action="{% url 'bookings:list-bookings-webview' %}">
-    <div class="col-auto">
-      <input type="date"
-             name="date"
-             class="form-control textinput"
-             id="id_date"
-             value="{{ date|date:'Y-m-d' }}" />
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% trans "Room Schedule" %} - {{ date|date:"l, j. F Y" }}</title>
+    <link rel="icon" href="{% static 'images/favicons/favicon.png' %}" />
+    <link href="{% static 'css/bootstrap/bootstrap.min.css' %}"
+          rel="stylesheet" />
+    {# djlint:off #}
+    <style>
+      /* Optimized for 22" screen, readable from 1-3 meters */
+      :root {
+        --font-size-base: 1.5rem;
+        --font-size-lg: 2rem;
+        --font-size-xl: 2.5rem;
+        --font-size-xxl: 3.5rem;
+      }
+      body {
+        font-size: var(--font-size-base);
+        padding: 2rem;
+        background: #fff;
+      }
+      h1 {
+        font-size: var(--font-size-xxl);
+        font-weight: 700;
+      }
+      h2 {
+        font-size: var(--font-size-xl);
+        font-weight: 600;
+      }
+      .table {
+        font-size: var(--font-size-lg);
+      }
+      .table th {
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        padding: 1rem;
+      }
+      .table td {
+        padding: 1rem;
+        vertical-align: middle;
+      }
+      .date-display {
+        font-size: var(--font-size-xl);
+        color: #6c757d;
+      }
+      /* Event carousel styles */
+      .event-title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        line-height: 1.2;
+      }
+      .event-date {
+        font-size: var(--font-size-base);
+      }
+      .event-location {
+        font-size: var(--font-size-base);
+      }
+      .event-description {
+        font-size: var(--font-size-base);
+        line-height: 1.4;
+      }
+      .carousel-indicators button {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin: 0 8px;
+      }
+      /* Hide form controls - this is a display-only view */
+      .visually-hidden-form {
+        display: none;
+      }
+</style>
+    {# djlint:on #}
+    <script defer src="{% static 'js/vendors/bootstrap/bootstrap.bundle.js' %}"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <header class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div class="d-flex align-items-center">
+          <img src="{% static 'images/hde_logo.svg' %}"
+               alt="Logo"
+               height="140"
+               class="me-3" />
+          <div>
+            <div class="fs-3 fw-bold">Haus des Engagements</div>
+            <h1 class="mb-0">{% trans "Room Schedule" %}: {{ access.name }}</h1>
+          </div>
+        </div>
+        <span class="date-display">{{ date|date:"l, j. F Y" }}</span>
+      </header>
+      <div id="booking-list">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">{% trans "Time" %}</th>
+                <th scope="col">{% trans "Organization" %}</th>
+                <th scope="col">{% trans "Room" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in bookings %}
+                <tr>
+                  <td>
+                    <strong>{{ booking.timespan.lower|date:"H:i" }}</strong> - {{ booking.timespan.upper|date:"H:i" }}
+                  </td>
+                  <td>
+                    {% if booking.organization.public_name %}
+                      {{ booking.organization.public_name|truncatechars:60 }}
+                    {% else %}
+                      {{ booking.organization.name|truncatechars:60 }}
+                    {% endif %}
+                  </td>
+                  <td>{{ booking.resource }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted py-4">{% trans "No bookings for today" %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% if external_events %}
+        <div id="eventsCarousel"
+             class="carousel slide mt-5"
+             data-bs-ride="carousel"
+             data-bs-interval="7000">
+          <div class="carousel-inner">
+            {% for event in external_events %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="card border-0 bg-light">
+                  <div class="card-body p-4">
+                    <h3 class="event-title mb-3">{{ event.title }}</h3>
+                    <p class="event-date text-muted mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                           width="32"
+                           height="32"
+                           fill="currentColor"
+                           class="bi bi-calendar-event me-2"
+                           viewBox="0 0 16 16">
+                        <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z" />
+                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
+                      </svg>
+                      {{ event.start|date:"l, j. F Y" }}
+                      {% if event.start|date:"H:i" != "00:00" %}: {{ event.start|date:"H:i" }} - {{ event.end|date:"H:i" }}{% endif %}
+                    </p>
+                    {% if event.location %}
+                      <p class="event-location text-muted">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="28"
+                             height="28"
+                             fill="currentColor"
+                             class="bi bi-geo-alt me-2"
+                             viewBox="0 0 16 16">
+                          <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z" />
+                          <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                        </svg>
+                        {{ event.location }}
+                      </p>
+                    {% endif %}
+                    {% if event.description %}<p class="event-description mt-3">{{ event.description|truncatewords:50 }}</p>{% endif %}
+                    <p>
+                      <i>Anmeldung und weitere Infos auf <a href="https://haus-des-engagements.de">haus-des-engagements.de</a></i>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          {% if external_events|length > 1 %}
+            <div class="carousel-indicators position-relative mt-3">
+              {% for event in external_events %}
+                <button type="button"
+                        data-bs-target="#eventsCarousel"
+                        data-bs-slide-to="{{ forloop.counter0 }}"
+                        {% if forloop.first %}class="active bg-secondary" aria-current="true"{% else %}class="bg-secondary"{% endif %}
+                        aria-label="Slide {{ forloop.counter }}"></button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
-    <div class="col-auto">
-      <select name="access" class="form-select" id="id_access">
-        <option value="all" {% if selected_access == "all" %}selected{% endif %}>{% trans "All Access Types" %}</option>
-        {% for access in accesses %}
-          <option value="{{ access.slug }}"
-                  {% if selected_access == access.slug %}selected{% endif %}>{{ access.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-auto">
-      <button type="submit" class="btn btn-primary mb-2">{% trans "Submit" %}</button>
-    </div>
-  </form>
-  <div id="booking-list">
-    <div class="table-responsive mt-5">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Timespan" %}</th>
-            <th scope="col">{% trans "Organization" %}</th>
-            <th scope="col">{% trans "Room" %}</th>
-            <th scope="col">{% trans "Access" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
-            <tr>
-              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>
-                {% if booking.organization.public_name %}
-                  {{ booking.organization.public_name }}
-                {% else %}
-                  {{ booking.organization.name }}
-                {% endif %}
-              </td>
-              <td>{{ booking.resource }}</td>
-              <td>{{ booking.resource.access.name|default:"-" }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-{% endblock content %}
+  </body>
+</html>

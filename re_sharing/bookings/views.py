@@ -330,18 +330,29 @@ def preview_and_save_booking_series_view(request):
 @require_http_methods(["GET"])
 @login_required
 def list_bookings_webview(request: HttpRequest) -> HttpResponse:
-    date_string = request.GET.get("date") or None
-    access_filter = request.GET.get("access") or "all"
-    bookings, date, accesses = bookings_webview(date_string, access_filter)
+    from django.conf import settings
+
+    from .services import get_external_events
+
+    access = request.GET.get("access") or "all"
+    bookings, access = bookings_webview(access)
+
+    # Fetch external events from ICS feed
+    external_events = []
+    if (
+        hasattr(settings, "EXTERNAL_EVENTS_ICS_URL")
+        and settings.EXTERNAL_EVENTS_ICS_URL
+    ):
+        external_events = get_external_events(settings.EXTERNAL_EVENTS_ICS_URL)
 
     return render(
         request,
         "bookings/list-bookings-webview.html",
         {
             "bookings": bookings,
-            "date": date,
-            "accesses": accesses,
-            "selected_access": access_filter,
+            "date": timezone.now(),
+            "access": access,
+            "external_events": external_events,
         },
     )
 

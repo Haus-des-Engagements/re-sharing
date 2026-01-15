@@ -659,27 +659,50 @@ class TestListBookingsWebview(TestCase):
         self.user = UserFactory()
         self.client.force_login(self.user)
 
+    @patch("re_sharing.bookings.services.get_external_events")
     @patch("re_sharing.bookings.views.bookings_webview")
-    def test_list_bookings_webview(self, mock_bookings_webview):
-        mock_bookings_webview.return_value = ([], timezone.now().date(), [])
+    def test_list_bookings_webview(self, mock_bookings_webview, mock_external_events):
+        mock_bookings_webview.return_value = ([], "all")
+        mock_external_events.return_value = []
 
         response = self.client.get(reverse("bookings:list-bookings-webview"))
 
         assert response.status_code == HTTPStatus.OK
         self.assertTemplateUsed(response, "bookings/list-bookings-webview.html")
-        mock_bookings_webview.assert_called_once()
+        mock_bookings_webview.assert_called_once_with("all")
 
+    @patch("re_sharing.bookings.services.get_external_events")
     @patch("re_sharing.bookings.views.bookings_webview")
-    def test_list_bookings_webview_with_filters(self, mock_bookings_webview):
-        mock_bookings_webview.return_value = ([], timezone.now().date(), [])
+    def test_list_bookings_webview_with_filters(
+        self, mock_bookings_webview, mock_external_events
+    ):
+        mock_bookings_webview.return_value = ([], "public")
+        mock_external_events.return_value = []
 
         response = self.client.get(
             reverse("bookings:list-bookings-webview"),
-            {"date": "2023-10-01", "access": "public"},
+            {"access": "public"},
         )
 
         assert response.status_code == HTTPStatus.OK
-        mock_bookings_webview.assert_called_once_with("2023-10-01", "public")
+        mock_bookings_webview.assert_called_once_with("public")
+
+    @patch("re_sharing.bookings.services.get_external_events")
+    @patch("re_sharing.bookings.views.bookings_webview")
+    def test_list_bookings_webview_with_events(
+        self, mock_bookings_webview, mock_external_events
+    ):
+        """Test that external events are included in context."""
+        mock_bookings_webview.return_value = ([], "all")
+        mock_external_events.return_value = [
+            {"title": "Test Event", "start": timezone.now(), "end": None}
+        ]
+
+        response = self.client.get(reverse("bookings:list-bookings-webview"))
+
+        assert response.status_code == HTTPStatus.OK
+        assert "external_events" in response.context
+        assert len(response.context["external_events"]) == 1
 
 
 class TestManagerListBookingsViewHTMX(TestCase):

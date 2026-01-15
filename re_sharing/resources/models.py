@@ -47,7 +47,7 @@ class Location(TimeStampedModel):
 class Access(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = CharField(_("Name"), max_length=255)
-    slug = AutoSlugField(_("Slug"), populate_from="name")
+    slug = AutoSlugField(_("Slug"), populate_from="name", editable=True)
     instructions = TextField(_("Instructions"), max_length=512)
 
     class Meta:

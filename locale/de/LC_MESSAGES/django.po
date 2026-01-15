@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-10 19:40+0100\n"
+"POT-Creation-Date: 2026-01-12 21:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -284,6 +284,9 @@ msgstr "erst nach Bestätigung sichtbar"
 
 msgid "only shown 7 days before booking"
 msgstr "wird erst 7 Tage vor Beginn angezeigt"
+
+msgid "(deleted)"
+msgstr "(gelöscht)"
 
 msgid "Start Date"
 msgstr "Startdatum"
@@ -887,10 +890,16 @@ msgstr "Verwaltung"
 msgid "Invoices"
 msgstr "Rechnungen"
 
-#, fuzzy
 #| msgid "Access Code"
 msgid "Access Codes"
-msgstr "Zugangscode"
+msgstr "Zugangscodes"
+
+msgid "Permissions"
+msgstr "Berechtigungen"
+
+#| msgid "E-Mail template"
+msgid "Email templates"
+msgstr "E-Mail Vorlagen"
 
 msgid "Reports"
 msgstr "Berichte"
@@ -929,14 +938,20 @@ msgstr ""
 msgid "Create a new organization."
 msgstr "Neue Organisation anlegen"
 
+msgid "Room Schedule"
+msgstr "Raumbelegung"
+
 msgid "All Access Types"
 msgstr "Alle Zugänge"
 
-msgid "Submit"
-msgstr "Absenden"
+msgid "Time"
+msgstr "Uhrzeit"
 
-msgid "Timespan"
-msgstr "Zeitraum"
+msgid "No bookings for today"
+msgstr "Heute gibt es keine Buchungen"
+
+msgid "Upcoming Events"
+msgstr "Kommende Veranstaltungen"
 
 msgid "My booking series"
 msgstr "Meine Serienbuchungen"
@@ -977,6 +992,30 @@ msgstr "verstecke"
 msgid "booking series"
 msgstr "Serienbuchung"
 
+msgid "booked by:"
+msgstr "gebucht von"
+
+msgid "Differing billing address"
+msgstr "Abweichende Rechnungsadresse"
+
+msgid "View"
+msgstr "Anzeigen"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Are you sure you want to cancel this booking?"
+msgstr "Möchest du diese Buchung wirklich stornieren?"
+
+msgid "Cancel "
+msgstr "Stornieren"
+
+msgid "show all occurrences"
+msgstr "alle Wiederholungen ansehen"
+
+msgid "No results found."
+msgstr "Keine Ergebnisse gefunden."
+
 msgid "First"
 msgstr "Erste"
 
@@ -1001,10 +1040,30 @@ msgstr "Serienbuchungen verwalten"
 msgid "show past booking series"
 msgstr "zeige vergangene Serienbuchungen"
 
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "Start - End"
+msgstr "Start - Ende"
+
+msgid "Timespan"
+msgstr "Zeitraum"
+
+msgid "Are you sure you want to confirm all bookings?"
+msgstr "Möchest du alle Buchungen bestätigen?"
+
+msgid "Confirm"
+msgstr "Bestätigen"
+
+msgid "Are you sure you want to cancel all bookings?"
+msgstr "Möchest du alle zukünftigen Buchungen stornieren?"
+
+msgid "Cancel"
+msgstr "Stornieren"
+
 msgid "Manage bookings"
 msgstr "Buchungen verwalten"
 
-#, fuzzy
 #| msgid "All locations"
 msgid "all locations"
 msgstr "Alle Standorte"
@@ -1037,62 +1096,14 @@ msgstr "nur mit Rechnungsnummer"
 msgid "only without invoice number"
 msgstr "nur ohne Rechnungsnummer"
 
-msgid "booked by:"
-msgstr "gebucht von"
-
-msgid "Differing billing address"
-msgstr "Abweichende Rechnungsadresse"
-
-msgid "View"
-msgstr "Anzeigen"
-
-msgid "Edit"
-msgstr "Bearbeiten"
-
-msgid "Are you sure you want to cancel this booking?"
-msgstr "Möchest du diese Buchung wirklich stornieren?"
-
-msgid "Cancel "
-msgstr "Stornieren"
-
-msgid "show all occurrences"
-msgstr "alle Wiederholungen ansehen"
+msgid "Admin-Link"
+msgstr "Admin-Link"
 
 msgid "Donation / Billing"
 msgstr "Spende / Rechnung"
 
 msgid "This resource is not available at the selected time."
 msgstr "Die Ressource ist zu der Zeit nicht verfügbar."
-
-msgid "No results found."
-msgstr "Keine Ergebnisse gefunden."
-
-msgid "Confirm"
-msgstr "Bestätigen"
-
-msgid "Cancel"
-msgstr "Stornieren"
-
-msgid "Are you sure you want to confirm all bookings?"
-msgstr "Möchest du alle Buchungen bestätigen?"
-
-msgid "Are you sure you want to cancel all bookings?"
-msgstr "Möchest du alle zukünftigen Buchungen stornieren?"
-
-msgid "Created"
-msgstr "Erstellt"
-
-msgid "Start - End"
-msgstr "Start - Ende"
-
-msgid "Admin-Link"
-msgstr "Admin-Link"
-
-msgid "Are you sure you want to cancel this single booking?"
-msgstr "Möchest du diese einzelne Buchung wirklich stornieren?"
-
-msgid "Cancel Booking"
-msgstr "Buchung stornieren"
 
 msgid "Message sent"
 msgstr "Nachricht gesendet"
@@ -1138,6 +1149,9 @@ msgstr "Verlauf"
 msgid "by"
 msgstr "von"
 
+msgid "(deleted user)"
+msgstr "(gelöschte:r Benutzer:in)"
+
 msgid "Booking has been changed"
 msgstr "Buchung wurde geändert"
 
@@ -1152,6 +1166,12 @@ msgstr "Alle zukünfigen Buchungen stornieren"
 
 msgid "Weekday"
 msgstr "Wochentag"
+
+msgid "Are you sure you want to cancel this single booking?"
+msgstr "Möchest du diese einzelne Buchung wirklich stornieren?"
+
+msgid "Cancel Booking"
+msgstr "Buchung stornieren"
 
 msgid "We will automatically generate the next bookings two years in advance."
 msgstr "Wir werden die weiteren Termine immer zwei Jahre im Voraus buchen."
@@ -1212,6 +1232,85 @@ msgstr "oder"
 msgid "show booking series."
 msgstr "zeige Serienbuchungen"
 
+#, fuzzy
+#| msgid "Booking permission"
+msgid "Delete Booking Permission"
+msgstr "Buchungsberechtigung"
+
+msgid "Back to List"
+msgstr "Zurück zur Liste"
+
+msgid "Are you sure?"
+msgstr "Bist du sicher?"
+
+#, fuzzy
+#| msgid "Are you sure you want to cancel this booking?"
+msgid "Are you sure you want to delete this booking permission?"
+msgstr "Möchest du diese Buchung wirklich stornieren?"
+
+msgid "Yes, Delete"
+msgstr "Ja, löschen"
+
+#, fuzzy
+#| msgid "Booking permissions"
+msgid "Booking Permission Details"
+msgstr "Buchungsberechtigungen"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Modified"
+msgstr "Geändert"
+
+msgid "Delete"
+msgstr "Löschen"
+
+#, fuzzy
+#| msgid "Booking permission"
+msgid "Edit Booking Permission"
+msgstr "Buchungsberechtigung"
+
+#, fuzzy
+#| msgid "Cancel booking permission"
+msgid "Create Booking Permission"
+msgstr "Buchungsberechtigung beenden"
+
+#, fuzzy
+#| msgid "Updated"
+msgid "Update"
+msgstr "Aktualisiert"
+
+#, fuzzy
+#| msgid "Created"
+msgid "Create"
+msgstr "Erstellt"
+
+#, fuzzy
+#| msgid "Booking permissions"
+msgid "Booking Permissions"
+msgstr "Buchungsberechtigungen"
+
+#, fuzzy
+#| msgid "Booking permissions"
+msgid "Filter Booking Permissions"
+msgstr "Buchungsberechtigungen"
+
+msgid "Apply Filters"
+msgstr "Filter anwenden"
+
+msgid "Clear Filters"
+msgstr "Filter zurücksetzen"
+
+#, fuzzy
+#| msgid "Locations"
+msgid "Actions"
+msgstr "Standorte"
+
+#, fuzzy
+#| msgid "Booking permissions"
+msgid "No booking permissions found."
+msgstr "Buchungsberechtigungen"
+
 msgid "Edit organization"
 msgstr "Organisation bearbeiten"
 
@@ -1227,6 +1326,209 @@ msgid ""
 msgstr ""
 "Nur registrierte Organisationen können Ressourcen buchen. Wenn deine "
 "Organisation noch nicht registriert ist, kannst du sie hier hinzufügen."
+
+#, fuzzy
+#| msgid "Search organizations"
+msgid "Send Custom Email to Organizations"
+msgstr "Organisationen suchen"
+
+#, fuzzy
+#| msgid "Organizations"
+msgid "Filter Organizations"
+msgstr "Organisationen"
+
+#, fuzzy
+#| msgid "Organization groups"
+msgid "Include Organization Groups"
+msgstr "Organisationsgruppen"
+
+#, fuzzy
+#| msgid "Organizations in these groups are exempt from this restriction."
+msgid "Only organizations in these groups will be included"
+msgstr ""
+"Organisationen in diesen Gruppen sind von der Einschränkung ausgenommen."
+
+#, fuzzy
+#| msgid "Exempt organization groups"
+msgid "Exclude Organization Groups"
+msgstr "Organisationsgruppen ausschließen"
+
+#, fuzzy
+#| msgid "Organizations in these groups are exempt from this restriction."
+msgid "Organizations in these groups will be excluded"
+msgstr ""
+"Organisationen in diesen Gruppen sind von der Einschränkung ausgenommen."
+
+#, fuzzy
+#| msgid "Bookings"
+msgid "Minimum Bookings"
+msgstr "Buchungen"
+
+#, fuzzy
+#| msgid "Maximum Number of Persons"
+msgid "Minimum number of bookings required"
+msgstr "Maximale Anzahl an Personen"
+
+msgid "In Last X Months"
+msgstr ""
+
+msgid "Number of months to look back"
+msgstr ""
+
+msgid "Maximum Total Amount (€)"
+msgstr ""
+
+msgid "Exclude organizations above this amount"
+msgstr ""
+
+#, fuzzy
+#| msgid "New Organization"
+msgid "Preview Organizations"
+msgstr "Neue Organisation"
+
+#, fuzzy
+#| msgid "Organizations"
+msgid "Filtered Organizations"
+msgstr "Organisationen"
+
+msgid "Select/Deselect All"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+#, fuzzy
+#| msgid "Total amount"
+msgid "Total Amount"
+msgstr "Gesamtbetrag"
+
+msgid "Compose Email"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "You can use template tags like"
+msgstr ""
+
+msgid "Body"
+msgstr ""
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "Available template tags:"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "Booking reminder"
+msgid "Bookings in selected period"
+msgstr "Buchungserinnerung"
+
+#, fuzzy
+#| msgid "Total amount per booking"
+msgid "Total amount in selected period"
+msgstr "Betrag pro Buchung"
+
+#, fuzzy
+#| msgid "Number of persons"
+msgid "Number of months"
+msgstr "Anzahl an Personen"
+
+#, fuzzy
+#| msgid "Send this email out."
+msgid "Send Email to"
+msgstr "Sende diese E-Mails"
+
+msgid "Please select at least one organization to send emails to."
+msgstr ""
+
+#, fuzzy
+#| msgid "Are you sure you want to cancel this organization?"
+msgid "Are you sure you want to send this email to"
+msgstr "Möchest du die Organisation wirklich stornieren?"
+
+#, fuzzy
+#| msgid "Organizations"
+msgid "organizations?"
+msgstr "Organisationen"
+
+msgid "Help"
+msgstr ""
+
+msgid "Use this page to send custom emails to filtered organizations."
+msgstr ""
+
+msgid "Filtering"
+msgstr ""
+
+#, fuzzy
+#| msgid "Included Equipment"
+msgid "Include Groups"
+msgstr "Vorhandene Ausstattung"
+
+msgid "Only organizations belonging to these groups will be included"
+msgstr ""
+
+msgid "Exclude Groups"
+msgstr ""
+
+msgid "Organizations belonging to these groups will be excluded"
+msgstr ""
+
+msgid ""
+"Only organizations with at least this many bookings in the specified period"
+msgstr ""
+
+#, fuzzy
+#| msgid "Total amount"
+msgid "Maximum Total Amount"
+msgstr "Gesamtbetrag"
+
+msgid "Organizations with a total amount above this threshold will be excluded"
+msgstr ""
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "Delete E-Mail Template"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "Are you sure you want to delete the organization?"
+msgid "Are you sure you want to delete this email template?"
+msgstr "Möchest du Organisation wirklich löschen?"
+
+msgid "Email Type"
+msgstr ""
+
+#, fuzzy
+#| msgid "Active"
+msgid "Inactive"
+msgstr "Aktiv"
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "E-Mail Template Details"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "Edit E-Mail Template"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "Create E-Mail Template"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "E-Mail template"
+msgid "Filter E-Mail Templates"
+msgstr "E-Mail Vorlage"
+
+#, fuzzy
+#| msgid "No results found."
+msgid "No email templates found."
+msgstr "Keine Ergebnisse gefunden."
 
 msgid ""
 "Here you can find all organizations, that decided to share some information "
@@ -1247,9 +1549,6 @@ msgstr "Organisationen suchen"
 msgid "all groups"
 msgstr "alle Gruppen"
 
-msgid "Users"
-msgstr "Nutzer:innen"
-
 msgid "Agreement"
 msgstr "Nutzungsvereinbarung"
 
@@ -1264,9 +1563,6 @@ msgstr "Möchest du die Organisation wirklich stornieren?"
 
 msgid "Are you sure you want to delete the organization?"
 msgstr "Möchest du Organisation wirklich löschen?"
-
-msgid "Delete"
-msgstr "Löschen"
 
 msgid "Messages"
 msgstr "Nachrichten"
@@ -1321,9 +1617,6 @@ msgid ""
 msgstr ""
 "'Administrator:innen' können zusätzlich Nutzer:innen hinzufügen und "
 "entfernen."
-
-msgid "Admin"
-msgstr "Admin"
 
 msgid "Add User"
 msgstr "Nutzer:in hinzufügen"
@@ -1413,11 +1706,15 @@ msgstr "So buchst du einen Raum:"
 #, python-format
 msgid ""
 "Look for a <a href=\"%(planner_url)s\" class=\"fw-semibold\">free room</a>."
-msgstr "Suche nach einem <a href=\"%(planner_url)s\" class=\"fw-semibold\">freien Raum</a>."
+msgstr ""
+"Suche nach einem <a href=\"%(planner_url)s\" class=\"fw-semibold\">freien "
+"Raum</a>."
 
 #, python-format
 msgid "Create an <a href=\"%(signup_url)s\" class=\"fw-semibold\">account</a>."
-msgstr "Erstelle dir einen <a href=\"%(signup_url)s\" class=\"fw-semibold\">Account</a>."
+msgstr ""
+"Erstelle dir einen <a href=\"%(signup_url)s\" class=\"fw-semibold\">Account</"
+"a>."
 
 msgid "Create an organization you want to book for and wait for our approval."
 msgstr ""
@@ -1442,12 +1739,6 @@ msgstr "Hier findest du eine ausführlichere Anleitung und weitere Infos."
 msgid "Delete Access Code"
 msgstr "Zugangscode"
 
-msgid "Back to List"
-msgstr "Zurück zur Liste"
-
-msgid "Are you sure?"
-msgstr "Bist du sicher?"
-
 #, fuzzy, python-format
 #| msgid "Are you sure you want to delete the organization?"
 msgid ""
@@ -1460,16 +1751,10 @@ msgstr "Möchest du Organisation wirklich löschen?"
 msgid "Validity Start"
 msgstr "Gültigkeitsbeginn"
 
-msgid "Yes, Delete"
-msgstr "Ja, löschen"
-
 #, fuzzy
 #| msgid "Access Code"
 msgid "Access Code Details"
 msgstr "Zugangscode"
-
-msgid "Modified"
-msgstr "Geändert"
 
 #, fuzzy
 #| msgid "Access Code"
@@ -1482,30 +1767,9 @@ msgid "Create Access Code"
 msgstr "Zugangscode"
 
 #, fuzzy
-#| msgid "Updated"
-msgid "Update"
-msgstr "Aktualisiert"
-
-#, fuzzy
-#| msgid "Created"
-msgid "Create"
-msgstr "Erstellt"
-
-#, fuzzy
 #| msgid "Access Code"
 msgid "Filter Access Codes"
 msgstr "Zugangscode"
-
-msgid "Apply Filters"
-msgstr "Filter anwenden"
-
-msgid "Clear Filters"
-msgstr "Filter zurücksetzen"
-
-#, fuzzy
-#| msgid "Locations"
-msgid "Actions"
-msgstr "Standorte"
 
 #, fuzzy
 #| msgid "No results found."
@@ -1528,11 +1792,6 @@ msgstr ""
 msgid "Any time"
 msgstr "Enduhrzeit"
 
-#, fuzzy
-#| msgid "End Time"
-msgid "Time"
-msgstr "Enduhrzeit"
-
 msgid "Duration"
 msgstr "Dauer"
 
@@ -1541,6 +1800,15 @@ msgstr "Anzahl an Personen"
 
 msgid "All locations"
 msgstr "Alle Standorte"
+
+msgid "Persons"
+msgstr "Personen"
+
+msgid "buchen"
+msgstr "buchen"
+
+msgid "No resource matches your filter."
+msgstr "Es wurde keine passende Ressource gefunden."
 
 msgid ""
 "In this view, you can see the free times for all resources. Click on a free "
@@ -1552,15 +1820,6 @@ msgstr ""
 msgid "We provide rooms at different locations, please select accordingly:"
 msgstr ""
 "Wir haben Räume an unterschiedliche Standorten, bitte wähle den gewünschten:"
-
-msgid "Persons"
-msgstr "Personen"
-
-msgid "buchen"
-msgstr "buchen"
-
-msgid "No resource matches your filter."
-msgstr "Es wurde keine passende Ressource gefunden."
 
 msgid "Days to display"
 msgstr "Tage"
@@ -1582,16 +1841,6 @@ msgstr "von mir gebucht"
 
 msgid "past"
 msgstr "vergangen"
-
-msgid "Planner"
-msgstr "Planer"
-
-msgid ""
-"In this view, you can see the free times for all resources. Click on a free "
-"slot to go directly to the booking page."
-msgstr ""
-"In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
-"auf einen freien Zeitraum, um direkt zur Buchung zu gelangen."
 
 msgid "HdE | Room"
 msgstr "HdE | Räume"
@@ -1618,11 +1867,11 @@ msgstr "Multi-Faktor-Authentifizierung"
 msgid "Personal info"
 msgstr "Persönliche Informationen"
 
-msgid "Permissions"
-msgstr "Berechtigungen"
-
 msgid "Important dates"
 msgstr "Wichtige Daten"
+
+msgid "Users"
+msgstr "Nutzer:innen"
 
 msgid "This email has already been taken."
 msgstr "Diese E-Mail ist bereits vergeben."
@@ -2009,8 +2258,15 @@ msgstr "Storniert"
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
 
-msgid "(deleted)"
-msgstr "(gelöscht)"
+#~ msgid "Submit"
+#~ msgstr "Absenden"
 
-msgid "(deleted user)"
-msgstr "(gelöschte:r Benutzer:in)"
+#~ msgid "Planner"
+#~ msgstr "Planer"
+
+#~ msgid ""
+#~ "In this view, you can see the free times for all resources. Click on a "
+#~ "free slot to go directly to the booking page."
+#~ msgstr ""
+#~ "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
+#~ "auf einen freien Zeitraum, um direkt zur Buchung zu gelangen."

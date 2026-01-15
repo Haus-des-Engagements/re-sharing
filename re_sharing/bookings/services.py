@@ -28,6 +28,7 @@ from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
 from re_sharing.organizations.services import user_has_bookingpermission
+from re_sharing.resources.models import Access
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
@@ -493,42 +494,26 @@ def filter_bookings_list(  # noqa: PLR0913
     return bookings, organizations
 
 
-def bookings_webview(date_string, access_filter="all"):
-    from re_sharing.resources.models import Access
-
+def bookings_webview(access="all"):
     bookings = Booking.objects.filter(
         resource__type=Resource.ResourceTypeChoices.ROOM, status=BookingStatus.CONFIRMED
     )
 
     # Filter by access if not "all"
-    if access_filter != "all":
-        bookings = bookings.filter(resource__access__slug=access_filter)
+    if access != "all":
+        access = get_object_or_404(Access, slug=access)
+        bookings = bookings.filter(resource__access=access)
 
-    if date_string:
-        shown_date = parser.parse(date_string).date()
-    else:
-        shown_date = timezone.now().date()
-
-    start_of_day = timezone.make_aware(
-        datetime.combine(shown_date, time(hour=0)),
+    bookings = bookings.filter(
+        timespan__overlap=(
+            timezone.now(),
+            datetime.combine(timezone.now(), time(hour=23, minute=59)),
+        )
     )
-    end_of_day = timezone.make_aware(
-        datetime.combine(shown_date, time(hour=23, minute=59)),
-    )
-    bookings = bookings.filter(timespan__overlap=(start_of_day, end_of_day))
 
     bookings = bookings.order_by("timespan")
 
-    # Get all available accesses for the dropdown
-    accesses = (
-        Access.objects.filter(
-            resource_of_access__type=Resource.ResourceTypeChoices.ROOM
-        )
-        .distinct()
-        .order_by("name")
-    )
-
-    return bookings, shown_date, accesses
+    return bookings, access
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913
@@ -686,3 +671,73 @@ def manager_filter_invoice_bookings_list(
     bookings = bookings.order_by("timespan")
 
     return bookings, organizations, resources
+
+
+def get_external_events(ics_url: str, cache_key: str = "external_events") -> list[dict]:
+    """
+    Fetch and parse events from an external ICS calendar feed.
+
+    Returns a list of upcoming events sorted by start date.
+    Results are cached for 24 hours.
+    """
+    import logging
+
+    import requests
+    from django.core.cache import cache
+    from icalendar import Calendar
+
+    logger = logging.getLogger(__name__)
+
+    # Try cache first
+    cached_events = cache.get(cache_key)
+    if cached_events is not None:
+        return cached_events
+
+    events = []
+    try:
+        response = requests.get(ics_url, timeout=10)
+        response.raise_for_status()
+
+        cal = Calendar.from_ical(response.content)
+        today = timezone.now().date()
+
+        for component in cal.walk():
+            if component.name == "VEVENT":
+                dtstart = component.get("dtstart")
+                if dtstart is None:
+                    continue
+
+                # Get start date (handle both date and datetime)
+                start_dt = dtstart.dt
+                start_date = start_dt.date() if hasattr(start_dt, "date") else start_dt
+
+                # Skip past events
+                if start_date < today:
+                    continue
+
+                # Get end date/time
+                dtend = component.get("dtend")
+                end_dt = dtend.dt if dtend else None
+
+                events.append(
+                    {
+                        "title": str(component.get("summary", "")),
+                        "start": start_dt,
+                        "end": end_dt,
+                        "location": str(component.get("location", "")),
+                        "description": str(component.get("description", "")),
+                        "url": str(component.get("url", "")),
+                    }
+                )
+
+        # Sort by start date
+        events.sort(key=lambda x: x["start"])
+
+    except requests.RequestException:
+        logger.exception("Failed to fetch external events from %s", ics_url)
+    except Exception:
+        logger.exception("Failed to parse ICS feed from %s", ics_url)
+
+    # Cache for 24 hours
+    cache.set(cache_key, events, 60 * 60 * 24)
+    return events
