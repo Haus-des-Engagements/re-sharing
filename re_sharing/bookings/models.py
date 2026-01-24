@@ -208,6 +208,85 @@ class BookingSeries(TimeStampedModel):
         return frequency + ", " + ends
 
 
+class BookingGroup(TimeStampedModel):
+    """Groups bookings of lendable items that were booked together."""
+
+    uuid = UUIDField(default=uuid.uuid4, editable=False)
+    slug = AutoSlugField(populate_from="uuid", editable=False)
+    organization = ForeignKey(
+        Organization,
+        verbose_name=_("Organization"),
+        on_delete=PROTECT,
+        related_name="bookinggroups_of_organization",
+        related_query_name="bookinggroup_of_organization",
+    )
+    user = ForeignKey(
+        User,
+        verbose_name=_("User"),
+        on_delete=PROTECT,
+        related_name="bookinggroups_of_user",
+        related_query_name="bookinggroup_of_user",
+    )
+    status = IntegerField(verbose_name=_("Status"), choices=BookingStatus.choices)
+
+    class Meta:
+        verbose_name = _("Booking group")
+        verbose_name_plural = _("Booking groups")
+        ordering = ["-created"]
+
+    def __str__(self):
+        return str(self.slug)
+
+    def get_absolute_url(self):
+        return reverse("bookings:show-booking-group", kwargs={"slug": self.slug})
+
+    @property
+    def total_amount(self):
+        """Calculate total amount from all child bookings."""
+        from django.db.models import Sum
+
+        return (
+            self.bookings_of_bookinggroup.aggregate(total=Sum("total_amount"))["total"]
+            or 0
+        )
+
+    def get_pickup_date(self):
+        """Get the pickup date from the first booking."""
+        first_booking = self.bookings_of_bookinggroup.first()
+        return first_booking.start_date if first_booking else None
+
+    def get_return_date(self):
+        """Get the return date from the first booking."""
+        first_booking = self.bookings_of_bookinggroup.first()
+        return first_booking.end_date if first_booking else None
+
+    def get_items_summary(self):
+        """Return a summary string of items, e.g., '2 Projectors, 1 Laptop'."""
+        items = [
+            f"{booking.quantity} {booking.resource.name}"
+            for booking in self.bookings_of_bookinggroup.all()
+        ]
+        return ", ".join(items)
+
+    def is_cancelable(self):
+        """Check if any booking in the group is cancelable."""
+        return any(
+            booking.is_cancelable() for booking in self.bookings_of_bookinggroup.all()
+        )
+
+    def confirm_all_bookings(self):
+        """Confirm all bookings in the group."""
+        self.status = BookingStatus.CONFIRMED
+        self.save()
+        self.bookings_of_bookinggroup.update(status=BookingStatus.CONFIRMED)
+
+    def cancel_all_bookings(self):
+        """Cancel all bookings in the group."""
+        self.status = BookingStatus.CANCELLED
+        self.save()
+        self.bookings_of_bookinggroup.update(status=BookingStatus.CANCELLED)
+
+
 class Booking(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
@@ -244,6 +323,21 @@ class Booking(TimeStampedModel):
         related_query_name="booking_of_bookingseries",
         null=True,
         blank=True,
+    )
+    booking_group = ForeignKey(
+        BookingGroup,
+        verbose_name=_("Booking group"),
+        on_delete=CASCADE,
+        related_name="bookings_of_bookinggroup",
+        related_query_name="booking_of_bookinggroup",
+        null=True,
+        blank=True,
+        help_text=_("Groups lendable items booked together."),
+    )
+    quantity = PositiveIntegerField(
+        _("Quantity"),
+        default=1,
+        help_text=_("Number of items booked. Only applicable for lendable items."),
     )
     # These fields are only stored for potential DST (Dailight Saving Time) problems.
     start_date = DateField(_("Start date"))
@@ -285,6 +379,13 @@ class Booking(TimeStampedModel):
         max_length=256,
         blank=True,
     )
+    is_item_booking = BooleanField(
+        _("Is item booking"),
+        default=False,
+        help_text=_(
+            "True for lendable item bookings. Used to exclude from overlap constraint."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Booking")
@@ -295,6 +396,7 @@ class Booking(TimeStampedModel):
             Index(fields=["resource"]),
             Index(fields=["organization"]),
             Index(fields=["booking_series"]),
+            Index(fields=["booking_group"]),
         ]
 
         constraints = [
@@ -308,7 +410,9 @@ class Booking(TimeStampedModel):
                     ("timespan", RangeOperators.OVERLAPS),
                     ("resource", RangeOperators.EQUAL),
                 ],
-                condition=Q(status=2),  # 2 = CONFIRMED
+                # Only apply to confirmed, non-item bookings (rooms/parking lots)
+                # Lendable items are validated in service layer (quantity-based)
+                condition=Q(status=2) & Q(is_item_booking=False),
             ),
         ]
 
@@ -376,3 +480,4 @@ class BookingMessage(TimeStampedModel):
 
 auditlog.register(Booking, exclude_fields=["created, updated"])
 auditlog.register(BookingSeries, exclude_fields=["created, updated"])
+auditlog.register(BookingGroup, exclude_fields=["created, updated"])

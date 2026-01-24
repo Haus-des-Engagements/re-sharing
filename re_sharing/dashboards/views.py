@@ -26,7 +26,7 @@ def users_bookings_and_permissions_dashboard_view(request: HttpRequest) -> HttpR
     View that renders a dashboard with the bookings and booking permissions of
     all the organizations the user belongs to.
     """
-    bookings, booking_permissions = get_users_bookings_and_permissions(
+    bookings, booking_permissions, equipment_loans = get_users_bookings_and_permissions(
         user=request.user
     )
 
@@ -36,6 +36,7 @@ def users_bookings_and_permissions_dashboard_view(request: HttpRequest) -> HttpR
         {
             "bookings": bookings,
             "booking_permissions": booking_permissions,
+            "equipment_loans": equipment_loans,
             "user": request.user,
         },
     )

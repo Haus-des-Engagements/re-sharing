@@ -105,11 +105,15 @@ def test_resourceimage_get_absolute_url():
 def test_compensation_str():
     # Test with hourly rate
     comp1 = CompensationFactory(name="Comp1", hourly_rate=10)
-    assert str(comp1) == "Comp1 (10 €)"
+    assert str(comp1) == "Comp1 (10 €/h)"
 
-    # Test without hourly rate
-    comp2 = CompensationFactory(name="Comp2", hourly_rate=None)
-    assert str(comp2) == "Comp2"
+    # Test with daily rate
+    comp2 = CompensationFactory(name="Comp2", hourly_rate=None, daily_rate=50)
+    assert str(comp2) == "Comp2 (50 €/day)"
+
+    # Test without any rate
+    comp3 = CompensationFactory(name="Comp3", hourly_rate=None, daily_rate=None)
+    assert str(comp3) == "Comp3"
 
 
 @pytest.mark.django_db()

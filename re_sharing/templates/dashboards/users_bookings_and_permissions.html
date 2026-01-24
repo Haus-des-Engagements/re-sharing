@@ -106,4 +106,63 @@
       <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a> {% trans "or" %} <a href="{% url "bookings:list-booking-series" %}">{% trans "show booking series." %}</a>
     </div>
   </div>
+  {% if request.user.is_manager %}
+    <div class="row mt-5">
+      <h2>
+        {% trans "My equipment loans" %}
+        <a class="btn btn-outline-primary"
+           href="{% url 'bookings:create-item-booking' %}"
+           role="button">
+          <svg width="1em" height="1em">
+            <use href="#bi-plus-lg" />
+          </svg>
+          {% trans "Borrow Equipment" %}
+        </a>
+      </h2>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th scope="col">{% trans "Created" %}</th>
+              <th scope="col">{% trans "Items" %}</th>
+              <th scope="col">{% trans "Period" %}</th>
+              <th scope="col">{% trans "Organization" %}</th>
+              <th scope="col">{% trans "Status" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in equipment_loans %}
+              <tr>
+                <td>{{ loan.created|date:"d.m.Y" }}</td>
+                <td>
+                  {% for booking in loan.bookings_of_bookinggroup.all %}
+                    {{ booking.quantity }}x {{ booking.resource.name }}
+                    {% if not forloop.last %},{% endif %}
+                  {% endfor %}
+                </td>
+                <td>
+                  {% with first_booking=loan.bookings_of_bookinggroup.first %}
+                    {% if first_booking %}
+                      {{ first_booking.timespan.lower|date:"d.m." }} - {{ first_booking.timespan.upper|date:"d.m.Y" }}
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                <td>{{ loan.organization }}</td>
+                <td>
+                  <span class="fs-6 badge text-bg-status-{{ loan.status }}">{{ loan.get_status_display }}</span>
+                </td>
+                <td>
+                  <a class="btn btn-outline-primary btn-sm"
+                     href="{% url 'bookings:show-booking-group' slug=loan.slug %}">{% trans "Details" %}</a>
+                </td>
+              </tr>
+            {% empty %}
+              <em>{% trans "No equipment loans" %}</em>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
 {% endblock content %}

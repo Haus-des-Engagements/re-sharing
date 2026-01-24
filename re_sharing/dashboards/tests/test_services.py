@@ -54,7 +54,7 @@ def test_get_users_bookings_and_permissions(
     BookingPermissionFactory(organization=org1, user=user3)
     BookingPermissionFactory(organization=org2, user=user3)
 
-    bookings, booking_permissions = get_users_bookings_and_permissions(
+    bookings, booking_permissions, equipment_loans = get_users_bookings_and_permissions(
         user=User.objects.get(first_name=first_name)
     )
     assert {
@@ -62,3 +62,5 @@ def test_get_users_bookings_and_permissions(
         for organization in {bp.organization for bp in booking_permissions}
     } == set(expected_orgs)
     assert {booking.title for booking in bookings} == set(expected_bookings)
+    # equipment_loans should be empty as we didn't create any
+    assert list(equipment_loans) == []

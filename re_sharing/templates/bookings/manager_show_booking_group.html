@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url 'bookings:manager-item-bookings' %}">{% trans "Manage Equipment Bookings" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ booking_group.organization.name }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {% trans "Equipment Booking Details" %}
+    <span class="fs-4 badge text-bg-status-{{ booking_group.status }}">{{ booking_group.get_status_display }}</span>
+  </h1>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% trans "Booking Information" %}</h5>
+          <div class="btn-group">
+            {% if booking_group.is_confirmable %}
+              <button class="btn btn-success"
+                      hx-patch="{% url 'bookings:manager-confirm-booking-group' slug=booking_group.slug %}"
+                      hx-swap="none">
+                <svg width="1em" height="1em">
+                  <use href="#bi-check-lg" />
+                </svg>
+                {% trans "Confirm All" %}
+              </button>
+            {% endif %}
+            {% if booking_group.is_cancelable %}
+              <button class="btn btn-outline-danger"
+                      hx-confirm="{% trans 'Are you sure you want to cancel this entire booking?' %}"
+                      hx-patch="{% url 'bookings:manager-cancel-booking-group' slug=booking_group.slug %}"
+                      hx-swap="none">
+                <svg width="1em" height="1em">
+                  <use href="#bi-x-octagon" />
+                </svg>
+                {% trans "Cancel All" %}
+              </button>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>{% trans "Organization" %}:</strong>
+              <p>
+                <a href="{% url 'organizations:show-organization' booking_group.organization.slug %}">{{ booking_group.organization.name }}</a>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <strong>{% trans "User" %}:</strong>
+              <p>{{ booking_group.user.get_full_name }} ({{ booking_group.user.email }})</p>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>{% trans "Created" %}:</strong>
+              <p>{{ booking_group.created|date:"d.m.Y H:i" }}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>{% trans "Last Updated" %}:</strong>
+              <p>{{ booking_group.updated|date:"d.m.Y H:i" }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">{% trans "Booked Items" %}</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Item" %}</th>
+                <th>{% trans "Pickup" %}</th>
+                <th>{% trans "Return" %}</th>
+                <th class="text-center">{% trans "Qty" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th class="text-end">{% trans "Amount" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in bookings %}
+                {% partialdef manager-booking-item inline %}
+                <tr id="manager-booking-item-{{ booking.pk }}">
+                  <td>
+                    <strong>{{ booking.resource.name }}</strong>
+                    {% if booking.compensation %}
+                      <br />
+                      <small class="text-muted">{{ booking.compensation.name }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ booking.timespan.lower|date:"d.m.Y" }}
+                    <br />
+                    <small class="text-muted">{{ booking.timespan.lower|time:"H:i" }}</small>
+                    {% if booking.actual_pickup_time %}
+                      <br />
+                      <span class="badge bg-info">{% trans "Picked up" %}: {{ booking.actual_pickup_time|date:"d.m. H:i" }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ booking.timespan.upper|date:"d.m.Y" }}
+                    <br />
+                    <small class="text-muted">{{ booking.timespan.upper|time:"H:i" }}</small>
+                    {% if booking.actual_return_time %}
+                      <br />
+                      <span class="badge bg-info">{% trans "Returned" %}: {{ booking.actual_return_time|date:"d.m. H:i" }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">{{ booking.quantity }}</td>
+                  <td>
+                    <span class="badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                  </td>
+                  <td class="text-end">
+                    {% if booking.total_amount %}
+                      {{ booking.total_amount|floatformat:2 }} €
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if booking.is_cancelable %}
+                      <button class="btn btn-outline-danger btn-sm"
+                              hx-confirm="{% trans 'Are you sure you want to cancel this item?' %}"
+                              hx-patch="{% url 'bookings:manager-cancel-item-in-group' slug=booking_group.slug booking_id=booking.pk %}"
+                              hx-target="#manager-booking-item-{{ booking.pk }}"
+                              hx-swap="outerHTML">
+                        <svg width="1em" height="1em">
+                          <use href="#bi-x" />
+                        </svg>
+                      </button>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endpartialdef %}
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="5" class="text-end">{% trans "Total Amount" %}:</th>
+              <th class="text-end">{{ booking_group.total_amount|floatformat:2 }} €</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-light mb-4">
+      <div class="card-body">
+        <h5 class="card-title">{% trans "Quick Actions" %}</h5>
+        <div class="d-grid gap-2">
+          <a href="{% url 'bookings:manager-item-bookings' %}"
+             class="btn btn-outline-secondary">
+            <svg width="1em" height="1em">
+              <use href="#bi-arrow-left" />
+            </svg>
+            {% trans "Back to List" %}
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">{% trans "Status History" %}</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2">
+            <small class="text-muted">{{ booking_group.created|date:"d.m.Y H:i" }}</small>
+            <br />
+            {% trans "Booking created" %}
+          </li>
+          {% if booking_group.status == 2 %}
+            <li class="mb-2">
+              <small class="text-muted">{{ booking_group.updated|date:"d.m.Y H:i" }}</small>
+              <br />
+              {% trans "Booking confirmed" %}
+            </li>
+          {% elif booking_group.status == 3 %}
+            <li class="mb-2">
+              <small class="text-muted">{{ booking_group.updated|date:"d.m.Y H:i" }}</small>
+              <br />
+              {% trans "Booking cancelled" %}
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

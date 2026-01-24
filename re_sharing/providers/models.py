@@ -1,13 +1,75 @@
 from auditlog.registry import auditlog
+from django.db import models
 from django.db.models import CASCADE
+from django.db.models import BooleanField
+from django.db.models import CharField
+from django.db.models import IntegerField
 from django.db.models import ManyToManyField
 from django.db.models import OneToOneField
 from django.db.models import QuerySet
+from django.db.models import TimeField
 from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Resource
 from re_sharing.utils.models import TimeStampedModel
+
+# Weekday choices for LendingTimeSlot
+WEEKDAY_CHOICES = [
+    (0, _("Monday")),
+    (1, _("Tuesday")),
+    (2, _("Wednesday")),
+    (3, _("Thursday")),
+    (4, _("Friday")),
+    (5, _("Saturday")),
+    (6, _("Sunday")),
+]
+
+
+class LendingTimeSlot(TimeStampedModel):
+    """Configuration for when lendable items can be picked up or returned."""
+
+    class SlotType(models.TextChoices):
+        PICKUP = "pickup", _("Pickup")
+        RETURN = "return", _("Return")
+
+    slot_type = CharField(
+        _("Slot type"),
+        max_length=10,
+        choices=SlotType.choices,
+    )
+    weekday = IntegerField(
+        _("Weekday"),
+        choices=WEEKDAY_CHOICES,
+    )
+    start_time = TimeField(_("Start time"))
+    end_time = TimeField(_("End time"))
+    is_active = BooleanField(_("Active"), default=True)
+
+    class Meta:
+        verbose_name = _("Lending time slot")
+        verbose_name_plural = _("Lending time slots")
+        unique_together = [("slot_type", "weekday")]
+        ordering = ["slot_type", "weekday"]
+
+    def __str__(self):
+        slot_type = self.get_slot_type_display()
+        weekday = self.get_weekday_display()
+        time_range = f"{self.start_time:%H:%M}-{self.end_time:%H:%M}"
+        return f"{slot_type} - {weekday} ({time_range})"
+
+    def get_weekday_short_name(self):
+        """Return short weekday name for display."""
+        short_names = {
+            0: _("Mon"),
+            1: _("Tue"),
+            2: _("Wed"),
+            3: _("Thu"),
+            4: _("Fri"),
+            5: _("Sat"),
+            6: _("Sun"),
+        }
+        return short_names.get(self.weekday, "")
 
 
 class Manager(TimeStampedModel):

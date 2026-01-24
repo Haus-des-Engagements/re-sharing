@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-12 21:43+0100\n"
+"POT-Creation-Date: 2026-01-23 20:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,12 @@ msgstr "Deutsch"
 
 msgid "French"
 msgstr "Französisch"
+
+msgid "Endet"
+msgstr "Endet"
+
+msgid "Repeat"
+msgstr "Wiederholen"
 
 msgid "Confirm selected bookings"
 msgstr "Ausgewählte Buchungen bestätigen"
@@ -59,6 +65,12 @@ msgstr "Erinnerungsmails aktivieren"
 
 msgid "Deactivate reminder mails"
 msgstr "Erinnerungsmails deaktivieren"
+
+msgid "Items"
+msgstr "Materialien"
+
+msgid "Total"
+msgstr "Gesamt"
 
 msgid "Date"
 msgstr "Datum"
@@ -104,9 +116,6 @@ msgstr "Wöchentlich"
 
 msgid "Monthly by weekday"
 msgstr "Monatlich nach Wochentag"
-
-msgid "Repeat"
-msgstr "Wiederholen"
 
 msgid "after"
 msgstr "nach"
@@ -233,8 +242,29 @@ msgstr "nur am"
 msgid "day"
 msgstr "Tag"
 
+msgid "User"
+msgstr "Nutzer:in"
+
+msgid "Invoice number"
+msgstr "Rechnungsnummer"
+
+msgid "Booking group"
+msgstr "Buchungsgruppe"
+
+msgid "Booking groups"
+msgstr "Buchungsgruppen"
+
 msgid "Booking Organization"
 msgstr "Buchende Organisation"
+
+msgid "Groups lendable items booked together."
+msgstr "Gruppiert Materialbuchungen"
+
+msgid "Quantity"
+msgstr "Anzahl"
+
+msgid "Number of items booked. Only applicable for lendable items."
+msgstr "Anzahl der gebuchtne Ressource. Nur anwendbar auf Materialien."
 
 msgid "Start date"
 msgstr "Startdatum"
@@ -251,11 +281,16 @@ msgstr "Enduhrzeit"
 msgid "Total amount"
 msgstr "Gesamtbetrag"
 
-msgid "Invoice number"
-msgstr "Rechnungsnummer"
-
 msgid "Automatically generated on"
 msgstr "Automatisch erzeugt am"
+
+msgid "Is item booking"
+msgstr "ist Materialbuchung"
+
+msgid ""
+"True for lendable item bookings. Used to exclude from overlap constraint."
+msgstr ""
+"aktiviert bei Materialverleihgegenständen, damit sie nicht über das DB-Constraint validiert werden."
 
 msgid "Booking"
 msgstr "Buchung"
@@ -269,9 +304,6 @@ msgstr ""
 
 msgid "Message"
 msgstr "Nachricht"
-
-msgid "User"
-msgstr "Nutzer:in"
 
 msgid "Booking Message"
 msgstr "Nachricht zur Buchung"
@@ -291,6 +323,43 @@ msgstr "(gelöscht)"
 msgid "Start Date"
 msgstr "Startdatum"
 
+msgid "Return date must be after pickup date"
+msgstr "Die Rückgabe muss nach der Abholung sein."
+
+#, python-format
+msgid "Pickup only available on %(days)s"
+msgstr "Abholng möglich an %(days)s"
+
+#, python-format
+msgid "Return only available on %(days)s"
+msgstr "Rückgabe nur möglich an %(days)s"
+
+msgid "Please select at least one item"
+msgstr "Bitte wähle mindestens einen Gegenstand aus."
+
+#, python-format
+msgid "Only %(n)s available for %(item)s"
+msgstr "Nur %(n)s mal verfügbar für %(item)s"
+
+#, python-format
+msgid "%(item)s is not available for your organization"
+msgstr "%(item)s ist nicht verfügbar für deine Organisation."
+
+msgid "You don't have permission to book for this organization"
+msgstr "Du hast nicht die Berechtigung für diese Organisation zu buchen."
+
+msgid "Some items are no longer available. Please adjust your selection."
+msgstr "Manche Gegenstände sind nicht mehr verfügbar. Bitte aktualisere deine Auswahl"
+
+msgid "Equipment loan"
+msgstr "Materialverleih"
+
+msgid "This booking cannot be cancelled"
+msgstr "Die Buchung kann nicht storniert werden."
+
+msgid "This item cannot be cancelled"
+msgstr "Dieser gegenstand kann nicht storniert werden."
+
 msgid "Booking created successfully!"
 msgstr "Buchungen erfolgreich erstellt!"
 
@@ -309,6 +378,49 @@ msgstr "Alle zukünftigen Buchungen erfolgreich storniert."
 
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
+
+msgid ""
+"You need to be a confirmed member of an organization to borrow equipment."
+msgstr ""
+"Du musst ein bestätigtes Mitglied einer Organisation sein, um Material "
+"auszuleihen."
+
+msgid "Please fill in all required fields."
+msgstr "Bitte fülle alle Pflichtfelder aus."
+
+msgid "Invalid data provided."
+msgstr "Ungültige Daten übermittelt."
+
+msgid "Pickup not available on this date."
+msgstr "Abholung an diesem Datum nicht möglich."
+
+msgid "Return not available on this date."
+msgstr "Rückgabe an diesem Datum nicht möglich."
+
+msgid "Return date must be after pickup date."
+msgstr "Das Rückgabedatum muss nach dem Abholdatum liegen."
+
+msgid "Please select at least one item."
+msgstr "Bitte wähle mindestens einen Gegenstand aus."
+
+msgid "Equipment booking created successfully! Please await confirmation."
+msgstr ""
+"Materialausleihe erfolgreich erstellt! Bitte warte auf die Bestätigung."
+
+msgid "Equipment booking cancelled successfully."
+msgstr "Materialausleihe erfolgreich storniert."
+
+msgid "Item cancelled successfully."
+msgstr "Gegenstand erfolgreich storniert."
+
+msgid "Equipment booking confirmed."
+msgstr "Materialausleihe bestätigt."
+
+msgid "Equipment booking cancelled."
+msgstr "Materialausleihe storniert."
+
+msgid "Item cancelled."
+msgstr "Gegenstand storniert."
 
 msgid "Dashboards"
 msgstr "Dashboards"
@@ -709,10 +821,8 @@ msgstr "Neue Nachricht für die Organisation"
 msgid "Monthly bookings"
 msgstr "Monatliche Buchungen"
 
-#, fuzzy
-#| msgid "Booking title"
 msgid "Booking not available"
-msgstr "Name der Buchung"
+msgstr "Buchung nicht verfügbar"
 
 msgid "Send this email out."
 msgstr "Sende diese E-Mails"
@@ -728,6 +838,69 @@ msgstr "Nachrichten für Organisation"
 
 msgid "Providers"
 msgstr "Anbieter"
+
+msgid "Monday"
+msgstr "Montag"
+
+msgid "Tuesday"
+msgstr "Dienstag"
+
+msgid "Wednesday"
+msgstr "Mittwoch"
+
+msgid "Thursday"
+msgstr "Donnerstag"
+
+msgid "Friday"
+msgstr "Freitag"
+
+msgid "Saturday"
+msgstr "Samstag"
+
+msgid "Sunday"
+msgstr "Sonntag"
+
+msgid "Pickup"
+msgstr "Abholung"
+
+msgid "Return"
+msgstr "Rückgabe"
+
+msgid "Slot type"
+msgstr "Zeitfenstertyp"
+
+msgid "Weekday"
+msgstr "Wochentag"
+
+msgid "Active"
+msgstr "Aktiv"
+
+msgid "Lending time slot"
+msgstr "Ausleih-Zeitfenster"
+
+msgid "Lending time slots"
+msgstr "Ausleih-Zeitfenster"
+
+msgid "Mon"
+msgstr "Mo"
+
+msgid "Tue"
+msgstr "Di"
+
+msgid "Wed"
+msgstr "Mi"
+
+msgid "Thu"
+msgstr "Do"
+
+msgid "Fri"
+msgstr "Fr"
+
+msgid "Sat"
+msgstr "Sa"
+
+msgid "Sun"
+msgstr "So"
 
 msgid "Resources"
 msgstr "Ressourcen"
@@ -778,11 +951,11 @@ msgstr "Raum"
 msgid "Parking lot"
 msgstr "Parkplatz"
 
+msgid "Lendable item"
+msgstr "Material"
+
 msgid "Accessibility"
 msgstr "Zugänglichkeit"
-
-msgid "Square Meters"
-msgstr "Quadratmeter"
 
 msgid "Maximum Number of Persons"
 msgstr "Maximale Anzahl an Personen"
@@ -798,6 +971,12 @@ msgstr "Privat"
 
 msgid "Only bookable with specific permissions"
 msgstr "Nur buchbar mit Berechtigung"
+
+msgid "Quantity available"
+msgstr "Verfügbare Menge"
+
+msgid "Number of items in stock. Only applicable for lendable items."
+msgstr "Anzahl der vorhandenen Exemplare. Nur anwendbar auf ausleihbare Gegenstände."
 
 msgid "Resource Image"
 msgstr "Bild der Ressource"
@@ -836,9 +1015,6 @@ msgstr "Enddatum der Einschränkung. Leer lassen für unbegrenzte Gültigkeit."
 msgid "Message to display when the restriction applies."
 msgstr "Anzuzeigende Nachricht wenn die Einschränkung greift."
 
-msgid "Active"
-msgstr "Aktiv"
-
 msgid "Resource restriction"
 msgstr "Resourceneinschränkung"
 
@@ -856,6 +1032,12 @@ msgstr "Voraussetzungen"
 
 msgid "Hourly Rate"
 msgstr "Preis pro Stunde"
+
+msgid "Daily Rate"
+msgstr "Preis pro Tag"
+
+msgid "Price per calendar day. Only applicable for lendable items."
+msgstr "Preis pro Kalendertag. Nur anwendbar auf ausleihbare Gegenstände."
 
 msgid ""
 "If no group is selected, the compensation is bookable for all organizations."
@@ -881,23 +1063,27 @@ msgstr "Startseite"
 msgid "Rooms"
 msgstr "Räume"
 
+msgid "Lendable Items"
+msgstr "Material"
+
 msgid "My Dashboard"
 msgstr "Meine Übersicht"
 
 msgid "Management"
 msgstr "Verwaltung"
 
+msgid "Equipment Bookings"
+msgstr "Materialverleih-Buchungen"
+
 msgid "Invoices"
 msgstr "Rechnungen"
 
-#| msgid "Access Code"
 msgid "Access Codes"
 msgstr "Zugangscodes"
 
 msgid "Permissions"
 msgstr "Berechtigungen"
 
-#| msgid "E-Mail template"
 msgid "Email templates"
 msgstr "E-Mail Vorlagen"
 
@@ -938,20 +1124,75 @@ msgstr ""
 msgid "Create a new organization."
 msgstr "Neue Organisation anlegen"
 
+msgid "Borrow Equipment"
+msgstr "Material ausleihen"
+
+msgid ""
+"Select items you want to borrow, choose pickup and return dates, then "
+"confirm your request."
+msgstr ""
+"Wähle die Gegenstände aus, die du ausleihen möchtest, wähle Abhol- und "
+"Rückgabedatum, und bestätige deine Anfrage."
+
+msgid "Select Dates"
+msgstr "Daten auswählen"
+
+msgid "Pickup Date"
+msgstr "Abholdatum"
+
+msgid "Available:"
+msgstr "Verfügbar:"
+
+msgid "Return Date"
+msgstr "Rückgabedatum"
+
+msgid "Booking for"
+msgstr "Buchung für"
+
+msgid "Invoice address (optional)"
+msgstr "Rechnungsadresse (optional)"
+
+msgid "Leave empty to use organization address"
+msgstr "Leer lassen um die Adresse der Organisation zu verwenden"
+
+msgid "Available Equipment"
+msgstr "Verfügbares Material"
+
+msgid "Item"
+msgstr "Gegenstand"
+
+msgid "Price/Day"
+msgstr "Preis/Tag"
+
+msgid "Available"
+msgstr "Verfügbar"
+
+msgid "Show details"
+msgstr "Details anzeigen"
+
+msgid "No equipment available for lending."
+msgstr "Kein Material zum Ausleihen verfügbar."
+
+msgid "Continue to Preview"
+msgstr "Weiter zur Vorschau"
+
+msgid "Previous"
+msgstr "Vorherige"
+
+msgid "Next"
+msgstr "Nächste"
+
+msgid "Close"
+msgstr "Schließen"
+
 msgid "Room Schedule"
 msgstr "Raumbelegung"
-
-msgid "All Access Types"
-msgstr "Alle Zugänge"
 
 msgid "Time"
 msgstr "Uhrzeit"
 
 msgid "No bookings for today"
 msgstr "Heute gibt es keine Buchungen"
-
-msgid "Upcoming Events"
-msgstr "Kommende Veranstaltungen"
 
 msgid "My booking series"
 msgstr "Meine Serienbuchungen"
@@ -1019,29 +1260,50 @@ msgstr "Keine Ergebnisse gefunden."
 msgid "First"
 msgstr "Erste"
 
-msgid "Previous"
-msgstr "Vorherige"
-
 msgid "Page"
 msgstr "Seite"
 
 msgid "of"
 msgstr "von"
 
-msgid "Next"
-msgstr "Nächste"
-
 msgid "Last"
 msgstr "Letzte"
+
+msgid "Manage Equipment Bookings"
+msgstr "Materialverleih verwalten"
+
+msgid "Cancelled"
+msgstr "Storniert"
+
+msgid "All statuses"
+msgstr "Alle Status"
+
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "Period"
+msgstr "Zeitraum"
+
+msgid "Amount"
+msgstr "Betrag"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Confirm"
+msgstr "Bestätigen"
+
+msgid "Cancel"
+msgstr "Stornieren"
+
+msgid "No equipment bookings found."
+msgstr "Keine Materialverleih-Buchungen gefunden."
 
 msgid "Manage booking series"
 msgstr "Serienbuchungen verwalten"
 
 msgid "show past booking series"
 msgstr "zeige vergangene Serienbuchungen"
-
-msgid "Created"
-msgstr "Erstellt"
 
 msgid "Start - End"
 msgstr "Start - Ende"
@@ -1052,34 +1314,23 @@ msgstr "Zeitraum"
 msgid "Are you sure you want to confirm all bookings?"
 msgstr "Möchest du alle Buchungen bestätigen?"
 
-msgid "Confirm"
-msgstr "Bestätigen"
-
 msgid "Are you sure you want to cancel all bookings?"
 msgstr "Möchest du alle zukünftigen Buchungen stornieren?"
-
-msgid "Cancel"
-msgstr "Stornieren"
 
 msgid "Manage bookings"
 msgstr "Buchungen verwalten"
 
-#| msgid "All locations"
 msgid "all locations"
 msgstr "Alle Standorte"
 
 msgid "all resources"
 msgstr "alle Ressourcen"
 
-#, fuzzy
-#| msgid "Start date"
 msgid "From date"
-msgstr "Startdatum"
+msgstr "Von Datum"
 
-#, fuzzy
-#| msgid "End date"
 msgid "Until date"
-msgstr "Enddatum"
+msgstr "Bis Datum"
 
 msgid "show"
 msgstr "zeige"
@@ -1099,6 +1350,66 @@ msgstr "nur ohne Rechnungsnummer"
 msgid "Admin-Link"
 msgstr "Admin-Link"
 
+msgid "Equipment Booking Details"
+msgstr "Materialverleih-Details"
+
+msgid "Booking Information"
+msgstr "Buchungsinformationen"
+
+msgid "Confirm All"
+msgstr "Alle bestätigen"
+
+msgid "Are you sure you want to cancel this entire booking?"
+msgstr "Möchtest du diese gesamte Buchung wirklich stornieren?"
+
+msgid "Cancel All"
+msgstr "Alle stornieren"
+
+msgid "Last Updated"
+msgstr "Zuletzt aktualisiert"
+
+msgid "Invoice Address"
+msgstr "Rechnungsadresse"
+
+msgid "Invoice Number"
+msgstr "Rechnungsnummer"
+
+msgid "Booked Items"
+msgstr "Gebuchte Gegenstände"
+
+msgid "Qty"
+msgstr "Anz."
+
+msgid "Picked up"
+msgstr "Abgeholt"
+
+msgid "Returned"
+msgstr "Zurückgegeben"
+
+msgid "Are you sure you want to cancel this item?"
+msgstr "Möchtest du diesen Gegenstand wirklich stornieren?"
+
+msgid "Total Amount"
+msgstr "Gesamtbetrag"
+
+msgid "Quick Actions"
+msgstr "Schnellaktionen"
+
+msgid "Back to List"
+msgstr "Zurück zur Liste"
+
+msgid "Status History"
+msgstr "Status-Verlauf"
+
+msgid "Booking created"
+msgstr "Buchung erstellt"
+
+msgid "Booking confirmed"
+msgstr "Buchung bestätigt"
+
+msgid "Booking cancelled"
+msgstr "Buchung storniert"
+
 msgid "Donation / Billing"
 msgstr "Spende / Rechnung"
 
@@ -1114,14 +1425,81 @@ msgstr "Diese Buchungen sind Teil dieser Serie"
 msgid "Resource not free at this date."
 msgstr "Die Ressource ist nicht frei an diesem Datum"
 
-msgid "Amount"
-msgstr "Betrag"
-
 msgid "Back"
 msgstr "Zurück"
 
 msgid "Book"
 msgstr "Buchen"
+
+msgid "Preview Equipment Booking"
+msgstr "Materialausleihe Vorschau"
+
+msgid "Please review your booking details before confirming."
+msgstr "Bitte überprüfe deine Buchungsdetails vor der Bestätigung."
+
+msgid "Booking Details"
+msgstr "Buchungsdetails"
+
+msgid "Duration"
+msgstr "Dauer"
+
+msgid "days"
+msgstr "Tage"
+
+msgid "Selected Items"
+msgstr "Ausgewählte Gegenstände"
+
+msgid "Important Information"
+msgstr "Wichtige Informationen"
+
+msgid "Your booking will need to be confirmed by a manager."
+msgstr "Deine Buchung muss von einem Manager bestätigt werden."
+
+msgid "You will be notified by email once your booking is confirmed."
+msgstr "Du wirst per E-Mail benachrichtigt, sobald deine Buchung bestätigt ist."
+
+msgid "Please pick up and return items within the specified time windows."
+msgstr "Bitte hole die Gegenstände innerhalb der angegebenen Zeitfenster ab und bringe sie zurück."
+
+msgid "Confirm Booking"
+msgstr "Buchung bestätigen"
+
+msgid "Equipment Booking"
+msgstr "Materialausleihe"
+
+msgid "Cancel Entire Booking"
+msgstr "Gesamte Buchung stornieren"
+
+msgid "Booked by"
+msgstr "Gebucht von"
+
+msgid "Pickup & Return"
+msgstr "Abholung & Rückgabe"
+
+msgid "Booking Confirmed"
+msgstr "Buchung bestätigt"
+
+msgid ""
+"Your equipment booking has been confirmed. Please pick up the items at the "
+"scheduled time."
+msgstr ""
+"Deine Materialausleihe wurde bestätigt. Bitte hole die Gegenstände zur "
+"geplanten Zeit ab."
+
+msgid "Awaiting Confirmation"
+msgstr "Warte auf Bestätigung"
+
+msgid ""
+"Your booking request is pending. You will be notified once it's confirmed."
+msgstr ""
+"Deine Buchungsanfrage ist ausstehend. Du wirst benachrichtigt, sobald sie "
+"bestätigt ist."
+
+msgid "Booking Cancelled"
+msgstr "Buchung storniert"
+
+msgid "This booking has been cancelled."
+msgstr "Diese Buchung wurde storniert."
 
 msgid "Access Code"
 msgstr "Zugangscode"
@@ -1155,17 +1533,11 @@ msgstr "(gelöschte:r Benutzer:in)"
 msgid "Booking has been changed"
 msgstr "Buchung wurde geändert"
 
-msgid "Booking created"
-msgstr "Buchung erstellt"
-
 msgid "Are you sure you want to cancel all future bookings?"
 msgstr "Möchest du alle zukünftigen Buchungen stornieren?"
 
 msgid "Cancel all future bookings"
 msgstr "Alle zukünfigen Buchungen stornieren"
-
-msgid "Weekday"
-msgstr "Wochentag"
 
 msgid "Are you sure you want to cancel this single booking?"
 msgstr "Möchest du diese einzelne Buchung wirklich stornieren?"
@@ -1217,9 +1589,6 @@ msgstr "Meine kommenden Buchungen und Anfragen"
 msgid "New Booking Request"
 msgstr "Neue Buchungsanfrage"
 
-msgid "Details"
-msgstr "Details"
-
 msgid "No upcoming bookings"
 msgstr "Keine kommenden Buchungen"
 
@@ -1232,29 +1601,26 @@ msgstr "oder"
 msgid "show booking series."
 msgstr "zeige Serienbuchungen"
 
-#, fuzzy
-#| msgid "Booking permission"
-msgid "Delete Booking Permission"
-msgstr "Buchungsberechtigung"
+msgid "My equipment loans"
+msgstr "Meine Materialausleihen"
 
-msgid "Back to List"
-msgstr "Zurück zur Liste"
+msgid "No equipment loans"
+msgstr "Keine Materialausleihen"
+
+msgid "Delete Booking Permission"
+msgstr "Buchungsberechtigung löschen"
 
 msgid "Are you sure?"
 msgstr "Bist du sicher?"
 
-#, fuzzy
-#| msgid "Are you sure you want to cancel this booking?"
 msgid "Are you sure you want to delete this booking permission?"
-msgstr "Möchest du diese Buchung wirklich stornieren?"
+msgstr "Möchtest du diese Buchungsberechtigung wirklich löschen?"
 
 msgid "Yes, Delete"
 msgstr "Ja, löschen"
 
-#, fuzzy
-#| msgid "Booking permissions"
 msgid "Booking Permission Details"
-msgstr "Buchungsberechtigungen"
+msgstr "Details der Buchungsberechtigung"
 
 msgid "Admin"
 msgstr "Admin"
@@ -1265,35 +1631,23 @@ msgstr "Geändert"
 msgid "Delete"
 msgstr "Löschen"
 
-#, fuzzy
-#| msgid "Booking permission"
 msgid "Edit Booking Permission"
-msgstr "Buchungsberechtigung"
+msgstr "Buchungsberechtigung bearbeiten"
 
-#, fuzzy
-#| msgid "Cancel booking permission"
 msgid "Create Booking Permission"
-msgstr "Buchungsberechtigung beenden"
+msgstr "Buchungsberechtigung erstellen"
 
-#, fuzzy
-#| msgid "Updated"
 msgid "Update"
-msgstr "Aktualisiert"
+msgstr "Aktualisieren"
 
-#, fuzzy
-#| msgid "Created"
 msgid "Create"
-msgstr "Erstellt"
+msgstr "Erstellen"
 
-#, fuzzy
-#| msgid "Booking permissions"
 msgid "Booking Permissions"
 msgstr "Buchungsberechtigungen"
 
-#, fuzzy
-#| msgid "Booking permissions"
 msgid "Filter Booking Permissions"
-msgstr "Buchungsberechtigungen"
+msgstr "Buchungsberechtigungen filtern"
 
 msgid "Apply Filters"
 msgstr "Filter anwenden"
@@ -1301,15 +1655,11 @@ msgstr "Filter anwenden"
 msgid "Clear Filters"
 msgstr "Filter zurücksetzen"
 
-#, fuzzy
-#| msgid "Locations"
 msgid "Actions"
-msgstr "Standorte"
+msgstr "Aktionen"
 
-#, fuzzy
-#| msgid "Booking permissions"
 msgid "No booking permissions found."
-msgstr "Buchungsberechtigungen"
+msgstr "Keine Buchungsberechtigungen gefunden."
 
 msgid "Edit organization"
 msgstr "Organisation bearbeiten"
@@ -1327,208 +1677,148 @@ msgstr ""
 "Nur registrierte Organisationen können Ressourcen buchen. Wenn deine "
 "Organisation noch nicht registriert ist, kannst du sie hier hinzufügen."
 
-#, fuzzy
-#| msgid "Search organizations"
 msgid "Send Custom Email to Organizations"
-msgstr "Organisationen suchen"
+msgstr "E-Mail an Organisationen senden"
 
-#, fuzzy
-#| msgid "Organizations"
 msgid "Filter Organizations"
-msgstr "Organisationen"
+msgstr "Organisationen filtern"
 
-#, fuzzy
-#| msgid "Organization groups"
 msgid "Include Organization Groups"
-msgstr "Organisationsgruppen"
+msgstr "Organisationsgruppen einschließen"
 
-#, fuzzy
-#| msgid "Organizations in these groups are exempt from this restriction."
 msgid "Only organizations in these groups will be included"
-msgstr ""
-"Organisationen in diesen Gruppen sind von der Einschränkung ausgenommen."
+msgstr "Nur Organisationen in diesen Gruppen werden eingeschlossen"
 
-#, fuzzy
-#| msgid "Exempt organization groups"
 msgid "Exclude Organization Groups"
 msgstr "Organisationsgruppen ausschließen"
 
-#, fuzzy
-#| msgid "Organizations in these groups are exempt from this restriction."
 msgid "Organizations in these groups will be excluded"
-msgstr ""
-"Organisationen in diesen Gruppen sind von der Einschränkung ausgenommen."
+msgstr "Organisationen in diesen Gruppen werden ausgeschlossen"
 
-#, fuzzy
-#| msgid "Bookings"
 msgid "Minimum Bookings"
-msgstr "Buchungen"
+msgstr "Mindestanzahl Buchungen"
 
-#, fuzzy
-#| msgid "Maximum Number of Persons"
 msgid "Minimum number of bookings required"
-msgstr "Maximale Anzahl an Personen"
+msgstr "Erforderliche Mindestanzahl an Buchungen"
 
 msgid "In Last X Months"
-msgstr ""
+msgstr "In den letzten X Monaten"
 
 msgid "Number of months to look back"
-msgstr ""
+msgstr "Anzahl der Monate für den Rückblick"
 
 msgid "Maximum Total Amount (€)"
-msgstr ""
+msgstr "Maximaler Gesamtbetrag (€)"
 
 msgid "Exclude organizations above this amount"
-msgstr ""
+msgstr "Organisationen über diesem Betrag ausschließen"
 
-#, fuzzy
-#| msgid "New Organization"
 msgid "Preview Organizations"
-msgstr "Neue Organisation"
+msgstr "Organisationen Vorschau"
 
-#, fuzzy
-#| msgid "Organizations"
 msgid "Filtered Organizations"
-msgstr "Organisationen"
+msgstr "Gefilterte Organisationen"
 
 msgid "Select/Deselect All"
-msgstr ""
+msgstr "Alle auswählen/abwählen"
 
 msgid "Email"
-msgstr ""
-
-#, fuzzy
-#| msgid "Total amount"
-msgid "Total Amount"
-msgstr "Gesamtbetrag"
+msgstr "E-Mail"
 
 msgid "Compose Email"
-msgstr ""
+msgstr "E-Mail verfassen"
 
 msgid "Subject"
-msgstr ""
+msgstr "Betreff"
 
 msgid "You can use template tags like"
-msgstr ""
+msgstr "Du kannst Vorlagen-Tags verwenden wie"
 
 msgid "Body"
-msgstr ""
+msgstr "Nachricht"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "Available template tags:"
-msgstr "E-Mail Vorlage"
+msgstr "Verfügbare Vorlagen-Tags:"
 
-#, fuzzy
-#| msgid "Booking reminder"
 msgid "Bookings in selected period"
-msgstr "Buchungserinnerung"
+msgstr "Buchungen im ausgewählten Zeitraum"
 
-#, fuzzy
-#| msgid "Total amount per booking"
 msgid "Total amount in selected period"
-msgstr "Betrag pro Buchung"
+msgstr "Gesamtbetrag im ausgewählten Zeitraum"
 
-#, fuzzy
-#| msgid "Number of persons"
 msgid "Number of months"
-msgstr "Anzahl an Personen"
+msgstr "Anzahl der Monate"
 
-#, fuzzy
-#| msgid "Send this email out."
 msgid "Send Email to"
-msgstr "Sende diese E-Mails"
+msgstr "E-Mail senden an"
 
 msgid "Please select at least one organization to send emails to."
-msgstr ""
+msgstr "Bitte wähle mindestens eine Organisation aus."
 
-#, fuzzy
-#| msgid "Are you sure you want to cancel this organization?"
 msgid "Are you sure you want to send this email to"
-msgstr "Möchest du die Organisation wirklich stornieren?"
+msgstr "Möchtest du diese E-Mail wirklich senden an"
 
-#, fuzzy
-#| msgid "Organizations"
 msgid "organizations?"
-msgstr "Organisationen"
+msgstr "Organisationen?"
 
 msgid "Help"
-msgstr ""
+msgstr "Hilfe"
 
 msgid "Use this page to send custom emails to filtered organizations."
-msgstr ""
+msgstr "Verwende diese Seite um E-Mails an gefilterte Organisationen zu senden."
 
 msgid "Filtering"
-msgstr ""
+msgstr "Filterung"
 
-#, fuzzy
-#| msgid "Included Equipment"
 msgid "Include Groups"
-msgstr "Vorhandene Ausstattung"
+msgstr "Gruppen einschließen"
 
 msgid "Only organizations belonging to these groups will be included"
-msgstr ""
+msgstr "Nur Organisationen in diesen Gruppen werden eingeschlossen"
 
 msgid "Exclude Groups"
-msgstr ""
+msgstr "Gruppen ausschließen"
 
 msgid "Organizations belonging to these groups will be excluded"
-msgstr ""
+msgstr "Organisationen in diesen Gruppen werden ausgeschlossen"
 
 msgid ""
 "Only organizations with at least this many bookings in the specified period"
 msgstr ""
+"Nur Organisationen mit mindestens dieser Anzahl an Buchungen im Zeitraum"
 
-#, fuzzy
-#| msgid "Total amount"
 msgid "Maximum Total Amount"
-msgstr "Gesamtbetrag"
+msgstr "Maximaler Gesamtbetrag"
 
 msgid "Organizations with a total amount above this threshold will be excluded"
-msgstr ""
+msgstr "Organisationen über diesem Betrag werden ausgeschlossen"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "Delete E-Mail Template"
-msgstr "E-Mail Vorlage"
+msgstr "E-Mail-Vorlage löschen"
 
-#, fuzzy
-#| msgid "Are you sure you want to delete the organization?"
 msgid "Are you sure you want to delete this email template?"
-msgstr "Möchest du Organisation wirklich löschen?"
+msgstr "Möchtest du diese E-Mail-Vorlage wirklich löschen?"
 
 msgid "Email Type"
-msgstr ""
+msgstr "E-Mail-Typ"
 
-#, fuzzy
-#| msgid "Active"
 msgid "Inactive"
-msgstr "Aktiv"
+msgstr "Inaktiv"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "E-Mail Template Details"
-msgstr "E-Mail Vorlage"
+msgstr "E-Mail-Vorlage Details"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "Edit E-Mail Template"
-msgstr "E-Mail Vorlage"
+msgstr "E-Mail-Vorlage bearbeiten"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "Create E-Mail Template"
-msgstr "E-Mail Vorlage"
+msgstr "E-Mail-Vorlage erstellen"
 
-#, fuzzy
-#| msgid "E-Mail template"
 msgid "Filter E-Mail Templates"
-msgstr "E-Mail Vorlage"
+msgstr "E-Mail-Vorlagen filtern"
 
-#, fuzzy
-#| msgid "No results found."
 msgid "No email templates found."
-msgstr "Keine Ergebnisse gefunden."
+msgstr "Keine E-Mail-Vorlagen gefunden."
 
 msgid ""
 "Here you can find all organizations, that decided to share some information "
@@ -1734,47 +2024,34 @@ msgstr ""
 msgid "Here you can find more detailed instructions."
 msgstr "Hier findest du eine ausführlichere Anleitung und weitere Infos."
 
-#, fuzzy
-#| msgid "Access Code"
 msgid "Delete Access Code"
-msgstr "Zugangscode"
+msgstr "Zugangscode löschen"
 
-#, fuzzy, python-format
-#| msgid "Are you sure you want to delete the organization?"
+#, python-format
 msgid ""
 "Are you sure you want to delete the access code \"%(code)s\"? This action "
 "cannot be undone."
-msgstr "Möchest du Organisation wirklich löschen?"
+msgstr ""
+"Möchtest du den Zugangscode \"%(code)s\" wirklich löschen? Diese Aktion kann "
+"nicht rückgängig gemacht werden."
 
-#, fuzzy
-#| msgid "Validity start"
 msgid "Validity Start"
 msgstr "Gültigkeitsbeginn"
 
-#, fuzzy
-#| msgid "Access Code"
 msgid "Access Code Details"
-msgstr "Zugangscode"
+msgstr "Zugangscode Details"
 
-#, fuzzy
-#| msgid "Access Code"
 msgid "Edit Access Code"
-msgstr "Zugangscode"
+msgstr "Zugangscode bearbeiten"
 
-#, fuzzy
-#| msgid "Access Code"
 msgid "Create Access Code"
-msgstr "Zugangscode"
+msgstr "Zugangscode erstellen"
 
-#, fuzzy
-#| msgid "Access Code"
 msgid "Filter Access Codes"
-msgstr "Zugangscode"
+msgstr "Zugangscodes filtern"
 
-#, fuzzy
-#| msgid "No results found."
 msgid "No access codes found."
-msgstr "Keine Ergebnisse gefunden."
+msgstr "Keine Zugangscodes gefunden."
 
 msgid "HdE | Rooms"
 msgstr "HdE | Räume"
@@ -1787,13 +2064,8 @@ msgstr ""
 "Du kannst verfügbare Zeiträume auch im <a href=\"%(planner_url)s\">Planer</"
 "a> finden."
 
-#, fuzzy
-#| msgid "End time"
 msgid "Any time"
-msgstr "Enduhrzeit"
-
-msgid "Duration"
-msgstr "Dauer"
+msgstr "Jede Zeit"
 
 msgid "Number of persons"
 msgstr "Anzahl an Personen"
@@ -1822,9 +2094,6 @@ msgstr ""
 "Wir haben Räume an unterschiedliche Standorten, bitte wähle den gewünschten:"
 
 msgid "Days to display"
-msgstr "Tage"
-
-msgid "days"
 msgstr "Tage"
 
 msgid "bookable"
@@ -1887,27 +2156,6 @@ msgstr "E-Mail Adresse"
 
 msgid "Information successfully updated"
 msgstr "Informationen erfolgreich aktualisiert"
-
-msgid "Monday"
-msgstr "Montag"
-
-msgid "Tuesday"
-msgstr "Dienstag"
-
-msgid "Wednesday"
-msgstr "Mittwoch"
-
-msgid "Thursday"
-msgstr "Donnerstag"
-
-msgid "Friday"
-msgstr "Freitag"
-
-msgid "Saturday"
-msgstr "Samstag"
-
-msgid "Sunday"
-msgstr "Sonntag"
 
 msgid "first monday"
 msgstr "erster Montag"
@@ -2252,11 +2500,17 @@ msgstr "jeden 31. Tag"
 msgid "Updated"
 msgstr "Aktualisiert"
 
-msgid "Cancelled"
-msgstr "Storniert"
-
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Square Meters"
+#~ msgstr "Quadratmeter"
+
+#~ msgid "All Access Types"
+#~ msgstr "Alle Zugänge"
+
+#~ msgid "Upcoming Events"
+#~ msgstr "Kommende Veranstaltungen"
 
 #~ msgid "Submit"
 #~ msgstr "Absenden"

@@ -142,6 +142,7 @@ Django connects to a Postgres Database. The database can be recreated with these
 
 * Delete the database: `dropdb re-sharing`
 * Create database: `createdb re-sharing`
+* pg_restore -d re_sharing     -U finn     -h localhost     --clean     --if-exists     --no-owner     --no-privileges     ~/Downloads/pg-dump-postgres-1762080929.dmp
 
 After creating the new (empty) database, migrations need to be applied again.
 

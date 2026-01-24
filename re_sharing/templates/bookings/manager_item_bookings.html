@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <h1 class="mt-4">{% trans "Manage Equipment Bookings" %}</h1>
+  <form class="row gx-3 gy-2 align-items-center mt-3"
+        method="get"
+        hx-get="{% url 'bookings:manager-item-bookings' %}"
+        hx-target="#booking-groups-list"
+        hx-trigger="change"
+        hx-indicator="#spinner"
+        hx-push-url="true"
+        hx-sync="closest form:replace">
+    <div class="col-auto" id="div_id_status">
+      <select name="status" class="select form-select" id="id_status">
+        <option value="1" {% if selected_status == "1" %}selected{% endif %}>{% trans "Pending" %}</option>
+        <option value="2" {% if selected_status == "2" %}selected{% endif %}>{% trans "Confirmed" %}</option>
+        <option value="3" {% if selected_status == "3" %}selected{% endif %}>{% trans "Cancelled" %}</option>
+        <option value="all" {% if selected_status == "all" %}selected{% endif %}>{% trans "All statuses" %}</option>
+      </select>
+    </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </form>
+  <div id="booking-groups-list">
+    {% partialdef manager-item-bookings-list inline %}
+    <div class="table-responsive mt-4">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Created" %}</th>
+            <th scope="col">{% trans "Organization" %}</th>
+            <th scope="col">{% trans "User" %}</th>
+            <th scope="col">{% trans "Items" %}</th>
+            <th scope="col">{% trans "Period" %}</th>
+            <th scope="col">{% trans "Amount" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking_group in booking_groups %}
+            <tr id="tr-{{ booking_group.slug }}">
+              {% partialdef manager-booking-group-item inline %}
+              <td>{{ booking_group.created|date:"d.m.Y H:i" }}</td>
+              <td>
+                <a href="{% url 'organizations:show-organization' booking_group.organization.slug %}">{{ booking_group.organization.name }}</a>
+              </td>
+              <td>{{ booking_group.user.get_full_name }}</td>
+              <td>
+                {% for booking in booking_group.bookings_of_bookinggroup.all %}
+                  {{ booking.quantity }}x {{ booking.resource.name }}
+                  {% if not forloop.last %},{% endif %}
+                {% endfor %}
+              </td>
+              <td>
+                {% with first_booking=booking_group.bookings_of_bookinggroup.first %}
+                  {% if first_booking %}
+                    {{ first_booking.timespan.lower|date:"d.m." }} - {{ first_booking.timespan.upper|date:"d.m.Y" }}
+                  {% endif %}
+                {% endwith %}
+              </td>
+              <td>{{ booking_group.total_amount|floatformat:2 }} €</td>
+              <td>
+                <span class="fs-6 badge text-bg-status-{{ booking_group.status }}">{{ booking_group.get_status_display }}</span>
+              </td>
+              <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   href="{% url 'bookings:manager-show-booking-group' slug=booking_group.slug %}">
+                  <svg width="1em" height="1em">
+                    <use href="#bi-eye" />
+                  </svg>
+                  {% trans "Details" %}
+                </a>
+              </td>
+              <td>
+                {% if booking_group.is_confirmable %}
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-success"
+                          hx-patch="{% url 'bookings:manager-confirm-booking-group' slug=booking_group.slug %}"
+                          hx-target="#tr-{{ booking_group.slug }}"
+                          hx-swap="innerHTML">{% trans "Confirm" %}</button>
+                {% endif %}
+              </td>
+              <td>
+                {% if booking_group.is_cancelable %}
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-danger"
+                          hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
+                          hx-patch="{% url 'bookings:manager-cancel-booking-group' slug=booking_group.slug %}"
+                          hx-target="#tr-{{ booking_group.slug }}"
+                          hx-swap="innerHTML">{% trans "Cancel" %}</button>
+                {% endif %}
+              </td>
+            {% endpartialdef %}
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-4">{% trans "No equipment bookings found." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endpartialdef %}
+</div>
+{% endblock content %}
