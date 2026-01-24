@@ -23,6 +23,7 @@ from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 from .models import Booking
+from .models import BookingGroup
 from .models import BookingMessage
 from .models import BookingSeries
 from .services_booking_series import generate_bookings
@@ -287,3 +288,42 @@ class BookingMessageAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "user", "booking"]
     search_fields = ["id", "user", "booking"]
     ordering = ["id"]
+
+
+class BookingInline(admin.TabularInline):
+    model = Booking
+    extra = 0
+    fields = ["resource", "quantity", "status", "timespan", "total_amount"]
+    readonly_fields = ["resource", "timespan"]
+    can_delete = False
+
+
+@admin.register(BookingGroup)
+class BookingGroupAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "created",
+        "organization",
+        "user",
+        "status",
+        "items_count",
+        "total_amount",
+    ]
+    list_filter = ["status", "organization"]
+    search_fields = [
+        "id",
+        "slug",
+        "organization__name",
+        "user__email",
+    ]
+    readonly_fields = ["uuid", "slug", "created", "updated"]
+    inlines = [BookingInline]
+    ordering = ["-created"]
+
+    @admin.display(description=_("Items"))
+    def items_count(self, obj):
+        return obj.bookings_of_bookinggroup.count()
+
+    @admin.display(description=_("Total"))
+    def total_amount(self, obj):
+        return f"{obj.total_amount:.2f} €"

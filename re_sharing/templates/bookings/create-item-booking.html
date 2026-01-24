@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url 'dashboards:users_bookings_and_permissions' %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Borrow Equipment" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">{% trans "Borrow Equipment" %}</h1>
+  <p class="lead">
+    {% trans "Select items you want to borrow, choose pickup and return dates, then confirm your request." %}
+  </p>
+  <form method="post"
+        action="{% url 'bookings:preview-item-booking' %}"
+        id="item-booking-form">
+    {% csrf_token %}
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h3>{% trans "Select Dates" %}</h3>
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="pickup_date" class="form-label">{% trans "Pickup Date" %}</label>
+                <input type="date"
+                       class="form-control"
+                       id="pickup_date"
+                       name="pickup_date"
+                       value="{{ pickup_date|default:'' }}"
+                       required
+                       hx-get="{% url 'bookings:create-item-booking' %}"
+                       hx-trigger="change"
+                       hx-target="#items-list"
+                       hx-include="[name='return_date']" />
+                <small class="text-muted">
+                  {% trans "Available:" %}
+                  {% for slot in pickup_slots %}
+                    {{ slot.get_weekday_short_name }} ({{ slot.start_time|time:"H:i" }}-{{ slot.end_time|time:"H:i" }})
+                    {% if not forloop.last %},{% endif %}
+                  {% endfor %}
+                </small>
+              </div>
+              <div class="col-md-6">
+                <label for="return_date" class="form-label">{% trans "Return Date" %}</label>
+                <input type="date"
+                       class="form-control"
+                       id="return_date"
+                       name="return_date"
+                       value="{{ return_date|default:'' }}"
+                       required
+                       hx-get="{% url 'bookings:create-item-booking' %}"
+                       hx-trigger="change"
+                       hx-target="#items-list"
+                       hx-include="[name='pickup_date']" />
+                <small class="text-muted">
+                  {% trans "Available:" %}
+                  {% for slot in return_slots %}
+                    {{ slot.get_weekday_short_name }} ({{ slot.start_time|time:"H:i" }}-{{ slot.end_time|time:"H:i" }})
+                    {% if not forloop.last %},{% endif %}
+                  {% endfor %}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h3>{% trans "Organization" %}</h3>
+        <div class="card">
+          <div class="card-body">
+            <label for="organization" class="form-label">{% trans "Booking for" %}</label>
+            <select class="form-select" id="organization" name="organization" required>
+              {% for org in organizations %}<option value="{{ org.pk }}">{{ org.name }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h3>{% trans "Available Equipment" %}</h3>
+    <div id="items-list">
+      {% partialdef item-list inline %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th class="col-1"></th>
+              <th>{% trans "Item" %}</th>
+              <th class="text-end col-2">{% trans "Price/Day" %}</th>
+              <th class="text-center col-2">{% trans "Available" %}</th>
+              <th class="text-center col-2">{% trans "Quantity" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+              <tr {% if item.available == 0 %}class="table-secondary"{% endif %}>
+                <td>
+                  {% with first_image=item.resource.resourceimages_of_resource.first %}
+                    {% if first_image %}
+                      <img src="{{ first_image.image.url }}"
+                           alt="{{ item.resource.name }}"
+                           class="img-thumbnail object-fit-cover"
+                           width="48"
+                           height="48" />
+                    {% else %}
+                      <span class="bg-light rounded d-inline-flex align-items-center justify-content-center p-2">
+                        <svg width="24" height="24" class="text-muted">
+                          <use href="#bi-box" />
+                        </svg>
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                <td>
+                  <strong>{{ item.resource.name }}</strong>
+                  {% if item.resource.description or item.resource.resourceimages_of_resource.exists %}
+                    <a href="#"
+                       class="ms-2 text-decoration-none"
+                       data-bs-toggle="modal"
+                       data-bs-target="#itemModal{{ item.resource.pk }}"
+                       title="{% trans 'Show details' %}">
+                      <svg width="1em" height="1em">
+                        <use href="#bi-info-circle" />
+                      </svg>
+                    </a>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if item.daily_rate %}
+                    {{ item.daily_rate }} €
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <span class="badge {% if item.available > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                    {{ item.available }} / {{ item.total }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <input type="number"
+                         class="form-control form-control-sm text-center"
+                         name="quantity_{{ item.resource.pk }}"
+                         min="0"
+                         max="{{ item.available }}"
+                         value="0"
+                         data-daily-rate="{{ item.daily_rate|default:0 }}"
+                         {% if item.available == 0 %}disabled{% endif %} />
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4">
+                  <div class="alert alert-info mb-0">{% trans "No equipment available for lending." %}</div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endpartialdef %}
+  </div>
+  <div class="mt-4 d-flex justify-content-end">
+    <button type="submit" class="btn btn-primary btn-lg">
+      <svg width="1em" height="1em">
+        <use href="#bi-arrow-right" />
+      </svg>
+      {% trans "Continue to Preview" %}
+    </button>
+  </div>
+</form>
+{% endblock content %}
+{% block modal %}
+  {% for item in items %}
+    {% if item.resource.description or item.resource.resourceimages_of_resource.exists %}
+      <div class="modal fade"
+           id="itemModal{{ item.resource.pk }}"
+           tabindex="-1"
+           aria-labelledby="itemModalLabel{{ item.resource.pk }}"
+           aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="itemModalLabel{{ item.resource.pk }}">{{ item.resource.name }}</h5>
+              <button type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              {% if item.resource.resourceimages_of_resource.exists %}
+                <div id="carousel{{ item.resource.pk }}" class="carousel slide mb-3">
+                  <div class="carousel-inner">
+                    {% for img in item.resource.resourceimages_of_resource.all %}
+                      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{{ img.image.url }}"
+                             class="d-block w-100 rounded object-fit-contain"
+                             alt="{{ item.resource.name }}" />
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% if item.resource.resourceimages_of_resource.count > 1 %}
+                    <button class="carousel-control-prev"
+                            type="button"
+                            data-bs-target="#carousel{{ item.resource.pk }}"
+                            data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon bg-dark rounded-circle p-3"
+                            aria-hidden="true"></span>
+                      <span class="visually-hidden">{% trans "Previous" %}</span>
+                    </button>
+                    <button class="carousel-control-next"
+                            type="button"
+                            data-bs-target="#carousel{{ item.resource.pk }}"
+                            data-bs-slide="next">
+                      <span class="carousel-control-next-icon bg-dark rounded-circle p-3"
+                            aria-hidden="true"></span>
+                      <span class="visually-hidden">{% trans "Next" %}</span>
+                    </button>
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% if item.resource.description %}<div class="mt-3">{{ item.resource.description|safe }}</div>{% endif %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endblock modal %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url 'dashboards:users_bookings_and_permissions' %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Equipment Booking" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {% trans "Equipment Booking" %}
+    <span class="fs-4 badge text-bg-status-{{ booking_group.status }}">{{ booking_group.get_status_display }}</span>
+  </h1>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% trans "Booking Details" %}</h5>
+          {% partialdef booking-group-status inline %}
+          <div id="booking-group-actions">
+            {% if booking_group.is_cancelable %}
+              <button class="btn btn-outline-danger btn-sm"
+                      hx-confirm="{% trans 'Are you sure you want to cancel this entire booking?' %}"
+                      hx-post="{% url 'bookings:cancel-booking-group' slug=booking_group.slug %}"
+                      hx-target="#booking-group-actions"
+                      hx-swap="outerHTML">
+                <svg width="1em" height="1em">
+                  <use href="#bi-x-octagon" />
+                </svg>
+                {% trans "Cancel Entire Booking" %}
+              </button>
+            {% endif %}
+          </div>
+        {% endpartialdef %}
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>{% trans "Organization" %}:</strong>
+            <p>
+              <a href="{% url 'organizations:show-organization' booking_group.organization.slug %}">{{ booking_group.organization.name }}</a>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <strong>{% trans "Booked by" %}:</strong>
+            <p>{{ booking_group.user.get_full_name }} ({{ booking_group.user.email }})</p>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>{% trans "Created" %}:</strong>
+            <p>{{ booking_group.created|date:"d.m.Y H:i" }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">{% trans "Booked Items" %}</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>{% trans "Item" %}</th>
+              <th>{% trans "Period" %}</th>
+              <th class="text-center">{% trans "Quantity" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th class="text-end">{% trans "Amount" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+              <tr id="booking-item-{{ booking.pk }}">
+                {% partialdef booking-group-item inline %}
+                <td>{{ booking.resource.name }}</td>
+                <td>{{ booking.timespan.lower|date:"d.m.Y" }} - {{ booking.timespan.upper|date:"d.m.Y" }}</td>
+                <td class="text-center">{{ booking.quantity }}</td>
+                <td>
+                  <span class="badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                </td>
+                <td class="text-end">
+                  {% if booking.total_amount %}
+                    {{ booking.total_amount|floatformat:2 }} €
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if booking.is_cancelable %}
+                    <button class="btn btn-outline-danger btn-sm"
+                            hx-confirm="{% trans 'Are you sure you want to cancel this item?' %}"
+                            hx-post="{% url 'bookings:cancel-item-in-group' slug=booking_group.slug booking_id=booking.pk %}"
+                            hx-target="#booking-item-{{ booking.pk }}"
+                            hx-swap="innerHTML">
+                      <svg width="1em" height="1em">
+                        <use href="#bi-x" />
+                      </svg>
+                      {% trans "Cancel" %}
+                    </button>
+                  {% endif %}
+                </td>
+              {% endpartialdef %}
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th colspan="4" class="text-end">{% trans "Total Amount" %}:</th>
+            <th class="text-end">{{ booking_group.total_amount|floatformat:2 }} €</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="col-md-4">
+  <div class="card bg-light mb-4">
+    <div class="card-body">
+      <h5 class="card-title">{% trans "Pickup & Return" %}</h5>
+      {% with first_booking=bookings.first %}
+        {% if first_booking %}
+          <p>
+            <strong>{% trans "Pickup" %}:</strong>
+            <br />
+            {{ first_booking.timespan.lower|date:"l, d.m.Y" }}
+            <br />
+            {{ first_booking.timespan.lower|time:"H:i" }}
+          </p>
+          <p>
+            <strong>{% trans "Return" %}:</strong>
+            <br />
+            {{ first_booking.timespan.upper|date:"l, d.m.Y" }}
+            <br />
+            {{ first_booking.timespan.upper|time:"H:i" }}
+          </p>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+  {% if booking_group.status == 2 %}
+    <div class="card border-success mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-success">
+          <svg width="1em" height="1em">
+            <use href="#bi-check-circle" />
+          </svg>
+          {% trans "Booking Confirmed" %}
+        </h5>
+        <p class="card-text">
+          {% trans "Your equipment booking has been confirmed. Please pick up the items at the scheduled time." %}
+        </p>
+      </div>
+    </div>
+  {% elif booking_group.status == 1 %}
+    <div class="card border-warning mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-warning">
+          <svg width="1em" height="1em">
+            <use href="#bi-hourglass-split" />
+          </svg>
+          {% trans "Awaiting Confirmation" %}
+        </h5>
+        <p class="card-text">{% trans "Your booking request is pending. You will be notified once it's confirmed." %}</p>
+      </div>
+    </div>
+  {% elif booking_group.status == 3 %}
+    <div class="card border-danger mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-danger">
+          <svg width="1em" height="1em">
+            <use href="#bi-x-circle" />
+          </svg>
+          {% trans "Booking Cancelled" %}
+        </h5>
+        <p class="card-text">{% trans "This booking has been cancelled." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+</div>
+{% endblock content %}

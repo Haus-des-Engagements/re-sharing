@@ -63,6 +63,11 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'resources:list-resources' %}">{% trans "Rooms" %}</a>
                 </li>
+                {% if request.user.is_manager %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'bookings:create-item-booking' %}">{% trans "Lendable Items" %}</a>
+                  </li>
+                {% endif %}
                 <div class="vr"></div>
                 <li class="nav-item">
                   <a class="nav-link"
@@ -79,6 +84,10 @@
                       <li>
                         <a class="dropdown-item"
                            href="{% url 'bookings:manager-list-bookings' %}">{% translate "Bookings" %}</a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item"
+                           href="{% url 'bookings:manager-item-bookings' %}">{% translate "Equipment Bookings" %}</a>
                       </li>
                       <li>
                         <a class="dropdown-item"

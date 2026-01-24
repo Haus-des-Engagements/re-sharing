@@ -93,6 +93,7 @@ class Resource(Model):
     class ResourceTypeChoices(TextChoices):
         ROOM = "room", _("Room")
         PARKING_LOT = "parking_lot", _("Parking lot")
+        LENDABLE_ITEM = "lendable_item", _("Lendable item")
 
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     name = CharField(_("Title"), max_length=160)
@@ -108,8 +109,9 @@ class Resource(Model):
     )
     description = HTMLField(_("Description"), max_length=5000, blank=True)
     accessibility = HTMLField(_("Accessibility"), max_length=5000, blank=True)
-    square_meters = PositiveIntegerField(_("Square Meters"), null=True, blank=True)
-    max_persons = PositiveIntegerField(_("Maximum Number of Persons"), default=5)
+    max_persons = PositiveIntegerField(
+        _("Maximum Number of Persons"), null=True, blank=True
+    )
     bookable_times = CharField(_("General Bookable Times"), max_length=128, blank=True)
     included_equipment = TextField(_("Included Equipment"), max_length=512, blank=True)
     location = ForeignKey(
@@ -127,6 +129,12 @@ class Resource(Model):
         default=False,
     )
     type = CharField(max_length=50, choices=ResourceTypeChoices)
+    quantity_available = PositiveIntegerField(
+        _("Quantity available"),
+        null=True,
+        blank=True,
+        help_text=_("Number of items in stock. Only applicable for lendable items."),
+    )
 
     class Meta:
         verbose_name = _("Resource")
@@ -325,6 +333,12 @@ class Compensation(TimeStampedModel):
     )
     conditions = CharField(_("Conditions"), max_length=512, blank=True)
     hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
+    daily_rate = IntegerField(
+        _("Daily Rate"),
+        null=True,
+        blank=True,
+        help_text=_("Price per calendar day. Only applicable for lendable items."),
+    )
     is_active = BooleanField(_("Active"), default=True)
     organization_groups = ManyToManyField(
         "organizations.OrganizationGroup",
@@ -344,9 +358,11 @@ class Compensation(TimeStampedModel):
         ordering = [Lower("name")]
 
     def __str__(self):
-        if self.hourly_rate is None:
-            return self.name
-        return self.name + " (" + str(self.hourly_rate) + " €)"
+        if self.hourly_rate is not None:
+            return self.name + " (" + str(self.hourly_rate) + " €/h)"
+        if self.daily_rate is not None:
+            return self.name + " (" + str(self.daily_rate) + " €/day)"
+        return self.name
 
     def is_bookable_by_organization(self, organization):
         # if no OrganizationGroup is specified for the Compensation, anyone can book it

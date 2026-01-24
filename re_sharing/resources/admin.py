@@ -10,16 +10,61 @@ from .models import ResourceImage
 from .models import ResourceRestriction
 
 
+class CompensationInline(admin.TabularInline):
+    """Inline admin for managing compensations linked to a resource."""
+
+    model = Compensation.resource.through
+    extra = 1
+    verbose_name = "Compensation"
+    verbose_name_plural = "Compensations"
+    autocomplete_fields = ["compensation"]
+    readonly_fields = ["hourly_rate", "daily_rate", "organization_groups_display"]
+
+    @admin.display(description="Hourly Rate")
+    def hourly_rate(self, obj):
+        if obj.pk and obj.compensation:
+            rate = obj.compensation.hourly_rate
+            return f"{rate} €/h" if rate is not None else "-"
+        return "-"
+
+    @admin.display(description="Daily Rate")
+    def daily_rate(self, obj):
+        if obj.pk and obj.compensation:
+            rate = obj.compensation.daily_rate
+            return f"{rate} €/day" if rate is not None else "-"
+        return "-"
+
+    @admin.display(description="Organization Groups")
+    def organization_groups_display(self, obj):
+        if obj.pk and obj.compensation:
+            groups = obj.compensation.organization_groups.all()
+            if groups:
+                return ", ".join(g.name for g in groups)
+            return "(all organizations)"
+        return "-"
+
+
+class ResourceImageInline(admin.TabularInline):
+    """Inline admin for managing images of a resource."""
+
+    model = ResourceImage
+    extra = 1
+    fields = ["image", "description"]
+
+
 @admin.register(Resource)
 class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name", "square_meters", "max_persons", "type", "location"]
+    list_display = ["id", "name", "max_persons", "type", "location"]
+    list_filter = ["type", "access", "location"]
     search_fields = ["id", "name"]
     ordering = ["id"]
+    inlines = [ResourceImageInline, CompensationInline]
 
 
 @admin.register(Compensation)
 class CompensationAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "name", "conditions", "hourly_rate"]
+    list_filter = ["is_active"]
     search_fields = ["id", "name"]
     ordering = ["id"]
 

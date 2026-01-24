@@ -40,7 +40,6 @@ class ResourceFactory(DjangoModelFactory):
     name = Faker("word")
     slug = LazyAttribute(lambda o: slugify(o.name))
     description = Faker("text", max_nb_chars=512)
-    square_meters = Faker("random_int", min=1, max=400)
     max_persons = Faker("random_int", min=1, max=100)
     bookable_times = Faker("sentence", nb_words=6)
     included_equipment = Faker("sentence", nb_words=6)

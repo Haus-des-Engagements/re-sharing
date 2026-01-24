@@ -20,6 +20,17 @@ from .views import preview_and_save_booking_view
 from .views import show_booking_series_view
 from .views import show_booking_view
 from .views import update_booking_view
+from .views_item_bookings import cancel_booking_group_view
+from .views_item_bookings import cancel_item_in_group_view
+from .views_item_bookings import confirm_item_booking_view
+from .views_item_bookings import create_item_booking_view
+from .views_item_bookings import manager_cancel_booking_group_view
+from .views_item_bookings import manager_cancel_item_in_group_view
+from .views_item_bookings import manager_confirm_booking_group_view
+from .views_item_bookings import manager_item_bookings_view
+from .views_item_bookings import manager_show_booking_group_view
+from .views_item_bookings import preview_item_booking_view
+from .views_item_bookings import show_booking_group_view
 
 app_name = "bookings"
 urlpatterns = [
@@ -51,6 +62,51 @@ urlpatterns = [
         "manage-bookings/<uuid:booking_series_uuid>/confirm-booking-series/",
         manager_confirm_booking_series_view,
         name="manager-confirm-booking-series",
+    ),
+    # Item bookings (lendable items)
+    path("items/", create_item_booking_view, name="create-item-booking"),
+    path("items/preview/", preview_item_booking_view, name="preview-item-booking"),
+    path("items/confirm/", confirm_item_booking_view, name="confirm-item-booking"),
+    path(
+        "items/<slug:slug>/",
+        show_booking_group_view,
+        name="show-booking-group",
+    ),
+    path(
+        "items/<slug:slug>/cancel/",
+        cancel_booking_group_view,
+        name="cancel-booking-group",
+    ),
+    path(
+        "items/<slug:slug>/cancel-item/<int:booking_id>/",
+        cancel_item_in_group_view,
+        name="cancel-item-in-group",
+    ),
+    # Manager item bookings
+    path(
+        "manager/items/",
+        manager_item_bookings_view,
+        name="manager-item-bookings",
+    ),
+    path(
+        "manager/items/<slug:slug>/",
+        manager_show_booking_group_view,
+        name="manager-show-booking-group",
+    ),
+    path(
+        "manager/items/<slug:slug>/confirm/",
+        manager_confirm_booking_group_view,
+        name="manager-confirm-booking-group",
+    ),
+    path(
+        "manager/items/<slug:slug>/cancel/",
+        manager_cancel_booking_group_view,
+        name="manager-cancel-booking-group",
+    ),
+    path(
+        "manager/items/<slug:slug>/cancel-item/<int:booking_id>/",
+        manager_cancel_item_in_group_view,
+        name="manager-cancel-item-in-group",
     ),
     path(
         "<slug:booking_slug>/edit/",

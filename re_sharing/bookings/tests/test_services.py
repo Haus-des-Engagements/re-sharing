@@ -24,6 +24,7 @@ from re_sharing.bookings.services import create_bookingmessage
 from re_sharing.bookings.services import filter_bookings_list
 from re_sharing.bookings.services import generate_booking
 from re_sharing.bookings.services import get_booking_activity_stream
+from re_sharing.bookings.services import get_external_events
 from re_sharing.bookings.services import is_bookable_by_organization
 from re_sharing.bookings.services import manager_cancel_booking
 from re_sharing.bookings.services import manager_confirm_booking
@@ -67,6 +68,7 @@ TEST_ATTENDEES_15 = 15
 TEST_ATTENDEES_20 = 20
 TEST_TOTAL_AMOUNT_100 = 100  # 2 hours * 50/hour
 TEST_TOTAL_AMOUNT_225 = 225  # 3 hours * 75/hour
+TEST_EXPECTED_FUTURE_EVENTS = 2  # Number of future events in test ICS data
 
 
 class TestCancelBooking(TestCase):
@@ -2029,3 +2031,238 @@ class TestDeletedEntityHandling(TestCase):
         # Verify that the user is None for deleted actor
         assert change_entry is not None
         assert change_entry["user"] is None
+
+
+class TestGetExternalEvents(TestCase):
+    """Test get_external_events function for ICS feed parsing"""
+
+    def setUp(self):
+        # Sample ICS content with events
+        self.sample_ics = b"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test Calendar//EN
+BEGIN:VEVENT
+DTSTART:20260201T100000Z
+DTEND:20260201T120000Z
+SUMMARY:Future Event 1
+LOCATION:Conference Room A
+DESCRIPTION:A test event in the future
+URL:https://example.com/event1
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20260301T140000Z
+DTEND:20260301T160000Z
+SUMMARY:Future Event 2
+LOCATION:Conference Room B
+DESCRIPTION:Another future event
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20200101T100000Z
+DTEND:20200101T120000Z
+SUMMARY:Past Event
+LOCATION:Old Room
+DESCRIPTION:This event is in the past
+END:VEVENT
+END:VCALENDAR"""
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_parses_ics_feed_correctly(self, mock_get, mock_cache):
+        """Test that ICS feed is parsed correctly"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = self.sample_ics
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_events"
+        )
+
+        # Should have 2 future events (past event filtered out)
+        assert len(events) == TEST_EXPECTED_FUTURE_EVENTS
+        assert events[0]["title"] == "Future Event 1"
+        assert events[0]["location"] == "Conference Room A"
+        assert events[0]["description"] == "A test event in the future"
+        assert events[1]["title"] == "Future Event 2"
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_filters_past_events(self, mock_get, mock_cache):
+        """Test that past events are filtered out"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = self.sample_ics
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_filter"
+        )
+
+        # Verify no past events
+        for event in events:
+            assert event["title"] != "Past Event"
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_sorts_events_by_start_date(self, mock_get, mock_cache):
+        """Test that events are sorted by start date"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = self.sample_ics
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_sort"
+        )
+
+        # Check that events are sorted by start date
+        if len(events) >= TEST_EXPECTED_FUTURE_EVENTS:
+            assert events[0]["start"] <= events[1]["start"]
+
+    @patch("django.core.cache.cache")
+    def test_returns_cached_events(self, mock_cache):
+        """Test that cached events are returned without fetching"""
+        cached_events = [
+            {"title": "Cached Event", "start": timezone.now(), "end": None}
+        ]
+        mock_cache.get.return_value = cached_events
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_cached"
+        )
+
+        assert events == cached_events
+        mock_cache.get.assert_called_once_with("test_cached")
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_caches_fetched_events(self, mock_get, mock_cache):
+        """Test that fetched events are cached for 24 hours"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = self.sample_ics
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        get_external_events(
+            "https://example.com/events.ics", cache_key="test_cache_set"
+        )
+
+        # Verify cache.set was called with 24 hour TTL (86400 seconds)
+        mock_cache.set.assert_called_once()
+        args = mock_cache.set.call_args[0]
+        assert args[0] == "test_cache_set"  # cache key
+        assert args[2] == 60 * 60 * 24  # 24 hours in seconds
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_handles_request_error_gracefully(self, mock_get, mock_cache):
+        """Test that request errors are handled gracefully"""
+        import requests
+
+        mock_cache.get.return_value = None
+        mock_get.side_effect = requests.RequestException("Connection failed")
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_error"
+        )
+
+        # Should return empty list on error
+        assert events == []
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_handles_invalid_ics_gracefully(self, mock_get, mock_cache):
+        """Test that invalid ICS content is handled gracefully"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = b"This is not valid ICS content"
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_invalid"
+        )
+
+        # Should return empty list for invalid content
+        assert events == []
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_handles_empty_calendar(self, mock_get, mock_cache):
+        """Test that empty calendar is handled correctly"""
+        empty_ics = b"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test Calendar//EN
+END:VCALENDAR"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = empty_ics
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_empty"
+        )
+
+        assert events == []
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_handles_event_without_dtstart(self, mock_get, mock_cache):
+        """Test that events without DTSTART are skipped"""
+        ics_no_dtstart = b"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test Calendar//EN
+BEGIN:VEVENT
+SUMMARY:Event without start
+DESCRIPTION:This event has no start date
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20260401T100000Z
+DTEND:20260401T120000Z
+SUMMARY:Valid Event
+END:VEVENT
+END:VCALENDAR"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = ics_no_dtstart
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_no_dtstart"
+        )
+
+        # Only the valid event should be included
+        assert len(events) == 1
+        assert events[0]["title"] == "Valid Event"
+
+    @patch("django.core.cache.cache")
+    @patch("requests.get")
+    def test_handles_all_day_events(self, mock_get, mock_cache):
+        """Test that all-day events (date only) are handled correctly"""
+        ics_all_day = b"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test Calendar//EN
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:20260501
+DTEND;VALUE=DATE:20260502
+SUMMARY:All Day Event
+END:VEVENT
+END:VCALENDAR"""
+        mock_cache.get.return_value = None
+        mock_response = Mock()
+        mock_response.content = ics_all_day
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        events = get_external_events(
+            "https://example.com/events.ics", cache_key="test_all_day"
+        )
+
+        assert len(events) == 1
+        assert events[0]["title"] == "All Day Event"

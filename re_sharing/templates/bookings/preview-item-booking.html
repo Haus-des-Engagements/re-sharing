@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url 'dashboards:users_bookings_and_permissions' %}">{% trans "My Dashboard" %}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url 'bookings:create-item-booking' %}">{% trans "Borrow Equipment" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Preview" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">{% trans "Preview Equipment Booking" %}</h1>
+  <p class="lead">{% trans "Please review your booking details before confirming." %}</p>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">{% trans "Booking Details" %}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>{% trans "Pickup Date" %}:</strong>
+              <p>{{ booking_data.pickup_date }} {{ booking_data.pickup_time }}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>{% trans "Return Date" %}:</strong>
+              <p>{{ booking_data.return_date }} {{ booking_data.return_time }}</p>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>{% trans "Organization" %}:</strong>
+              <p>{{ booking_data.organization_name }}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>{% trans "Duration" %}:</strong>
+              <p>{{ booking_data.num_days }} {% trans "days" %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">{% trans "Selected Items" %}</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Item" %}</th>
+                <th class="text-center">{% trans "Quantity" %}</th>
+                <th class="text-center">{% trans "Days" %}</th>
+                <th class="text-end">{% trans "Daily Rate" %}</th>
+                <th class="text-end">{% trans "Total" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in booking_data.items %}
+                <tr>
+                  <td>{{ item.resource_name }}</td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-center">{{ booking_data.num_days }}</td>
+                  <td class="text-end">
+                    {% if item.daily_rate %}
+                      {{ item.daily_rate|floatformat:2 }} €
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    {% if item.total %}
+                      {{ item.total|floatformat:2 }} €
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th colspan="4" class="text-end">{% trans "Total Amount" %}:</th>
+                <th class="text-end">{{ booking_data.total_amount|floatformat:2 }} €</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title">{% trans "Important Information" %}</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2">
+              <svg width="1em" height="1em">
+                <use href="#bi-info-circle" />
+              </svg>
+              {% trans "Your booking will need to be confirmed by a manager." %}
+            </li>
+            <li class="mb-2">
+              <svg width="1em" height="1em">
+                <use href="#bi-calendar-check" />
+              </svg>
+              {% trans "You will be notified by email once your booking is confirmed." %}
+            </li>
+            <li class="mb-2">
+              <svg width="1em" height="1em">
+                <use href="#bi-clock" />
+              </svg>
+              {% trans "Please pick up and return items within the specified time windows." %}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-between mt-4">
+    <a href="{% url 'bookings:create-item-booking' %}"
+       class="btn btn-secondary">
+      <svg width="1em" height="1em">
+        <use href="#bi-arrow-left" />
+      </svg>
+      {% trans "Back" %}
+    </a>
+    <form method="post" action="{% url 'bookings:confirm-item-booking' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-lg">
+        <svg width="1em" height="1em">
+          <use href="#bi-check-lg" />
+        </svg>
+        {% trans "Confirm Booking" %}
+      </button>
+    </form>
+  </div>
+{% endblock content %}
