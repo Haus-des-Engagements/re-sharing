@@ -146,12 +146,24 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     """
     View that renders a reporting dashboard.
     """
-    bookings_by_resource = (
-        Booking.objects.filter(start_date__year=2025, status=BookingStatus.CONFIRMED)
-        .values("resource__name", "start_date__month")
-        .annotate(bookings_count=Count("id"), amount=Sum("total_amount"))
-        .order_by("resource__name", "start_date__month")
+    # Get available years (years with at least one booking)
+    available_years = (
+        Booking.objects.filter(status=BookingStatus.CONFIRMED)
+        .values_list("start_date__year", flat=True)
+        .distinct()
+        .order_by("-start_date__year")
     )
+    available_years = list(available_years)
+
+    # Get selected year from request, default to current year or
+    # latest year with bookings
+    selected_year = request.GET.get("year")
+    if selected_year:
+        selected_year = int(selected_year)
+    elif available_years:
+        selected_year = available_years[0]
+    else:
+        selected_year = timezone.now().year
 
     months = list(range(1, 13))
     resources = Resource.objects.all().order_by("location__id")
@@ -159,15 +171,21 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     bookings_by_resource = []
     for resource in resources:
         for month in months:
-            booking_data = Booking.objects.filter(
-                start_date__year=2025,
-                start_date__month=month,
-                resource=resource,
-                status=BookingStatus.CONFIRMED,
-            ).aggregate(
-                bookings_count=Count("id"),
-                amount=Sum("total_amount"),
-                not_invoiced_amount=Sum("total_amount", filter=Q(invoice_number="")),
+            booking_data = (
+                Booking.objects.filter(
+                    start_date__year=selected_year,
+                    start_date__month=month,
+                    resource=resource,
+                    status=BookingStatus.CONFIRMED,
+                )
+                .exclude(resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
+                .aggregate(
+                    bookings_count=Count("id"),
+                    amount=Sum("total_amount"),
+                    not_invoiced_amount=Sum(
+                        "total_amount", filter=Q(invoice_number="")
+                    ),
+                )
             )
 
             bookings_by_resource.append(
@@ -181,7 +199,9 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
             )
 
     monthly_totals = (
-        Booking.objects.filter(start_date__year=2025, status=BookingStatus.CONFIRMED)
+        Booking.objects.filter(
+            start_date__year=selected_year, status=BookingStatus.CONFIRMED
+        )
         .values("start_date__month")
         .annotate(
             bookings_count=Count("id"),
@@ -191,31 +211,34 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
         .order_by("start_date__month")
     )
     yearly_totals = Booking.objects.filter(
-        start_date__year=2025, status=BookingStatus.CONFIRMED
+        start_date__year=selected_year, status=BookingStatus.CONFIRMED
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
     realized_yearly_totals = Booking.objects.filter(
-        start_date__year=2025,
+        start_date__year=selected_year,
         start_date__lt=timezone.now(),
         status=BookingStatus.CONFIRMED,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
     not_yet_invoiced = Booking.objects.filter(
-        start_date__year=2025,
+        start_date__year=selected_year,
         status=BookingStatus.CONFIRMED,
         invoice_number="",
         total_amount__gt=0,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
-    # Render to the template
-    return render(
-        request,
-        "dashboards/reporting.html",
-        context={
-            "bookings_by_resource": bookings_by_resource,
-            "months": range(1, 13),
-            "monthly_totals": monthly_totals,
-            "yearly_totals": yearly_totals,
-            "realized_yearly_totals": realized_yearly_totals,
-            "not_yet_invoiced": not_yet_invoiced,
-        },
-    )
+    context = {
+        "available_years": available_years,
+        "selected_year": selected_year,
+        "bookings_by_resource": bookings_by_resource,
+        "months": range(1, 13),
+        "monthly_totals": monthly_totals,
+        "yearly_totals": yearly_totals,
+        "realized_yearly_totals": realized_yearly_totals,
+        "not_yet_invoiced": not_yet_invoiced,
+    }
+
+    # If HTMX request, return only the report content
+    if request.headers.get("HX-Request"):
+        return render(request, "dashboards/reporting.html#report-content", context)
+
+    return render(request, "dashboards/reporting.html", context=context)

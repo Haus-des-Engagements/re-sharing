@@ -225,6 +225,8 @@ class TestReportingView(TestCase):
         assert "yearly_totals" in response.context
         assert "realized_yearly_totals" in response.context
         assert "not_yet_invoiced" in response.context
+        assert "available_years" in response.context
+        assert "selected_year" in response.context
 
     def test_reporting_view_aggregates_bookings(self):
         """Test that reporting view aggregates bookings correctly"""

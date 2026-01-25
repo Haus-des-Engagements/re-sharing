@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-23 20:58+0100\n"
+"POT-Creation-Date: 2026-01-25 20:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -245,9 +245,6 @@ msgstr "Tag"
 msgid "User"
 msgstr "Nutzer:in"
 
-msgid "Invoice number"
-msgstr "Rechnungsnummer"
-
 msgid "Booking group"
 msgstr "Buchungsgruppe"
 
@@ -281,6 +278,9 @@ msgstr "Enduhrzeit"
 msgid "Total amount"
 msgstr "Gesamtbetrag"
 
+msgid "Invoice number"
+msgstr "Rechnungsnummer"
+
 msgid "Automatically generated on"
 msgstr "Automatisch erzeugt am"
 
@@ -290,7 +290,8 @@ msgstr "ist Materialbuchung"
 msgid ""
 "True for lendable item bookings. Used to exclude from overlap constraint."
 msgstr ""
-"aktiviert bei Materialverleihgegenständen, damit sie nicht über das DB-Constraint validiert werden."
+"aktiviert bei Materialverleihgegenständen, damit sie nicht über das DB-"
+"Constraint validiert werden."
 
 msgid "Booking"
 msgstr "Buchung"
@@ -348,8 +349,14 @@ msgstr "%(item)s ist nicht verfügbar für deine Organisation."
 msgid "You don't have permission to book for this organization"
 msgstr "Du hast nicht die Berechtigung für diese Organisation zu buchen."
 
+#, fuzzy, python-format
+#| msgid "Only %(n)s available for %(item)s"
+msgid "No compensation available for %(item)s"
+msgstr "Nur %(n)s mal verfügbar für %(item)s"
+
 msgid "Some items are no longer available. Please adjust your selection."
-msgstr "Manche Gegenstände sind nicht mehr verfügbar. Bitte aktualisere deine Auswahl"
+msgstr ""
+"Manche Gegenstände sind nicht mehr verfügbar. Bitte aktualisere deine Auswahl"
 
 msgid "Equipment loan"
 msgstr "Materialverleih"
@@ -976,7 +983,8 @@ msgid "Quantity available"
 msgstr "Verfügbare Menge"
 
 msgid "Number of items in stock. Only applicable for lendable items."
-msgstr "Anzahl der vorhandenen Exemplare. Nur anwendbar auf ausleihbare Gegenstände."
+msgstr ""
+"Anzahl der vorhandenen Exemplare. Nur anwendbar auf ausleihbare Gegenstände."
 
 msgid "Resource Image"
 msgstr "Bild der Ressource"
@@ -1148,12 +1156,6 @@ msgstr "Rückgabedatum"
 
 msgid "Booking for"
 msgstr "Buchung für"
-
-msgid "Invoice address (optional)"
-msgstr "Rechnungsadresse (optional)"
-
-msgid "Leave empty to use organization address"
-msgstr "Leer lassen um die Adresse der Organisation zu verwenden"
 
 msgid "Available Equipment"
 msgstr "Verfügbares Material"
@@ -1368,12 +1370,6 @@ msgstr "Alle stornieren"
 msgid "Last Updated"
 msgstr "Zuletzt aktualisiert"
 
-msgid "Invoice Address"
-msgstr "Rechnungsadresse"
-
-msgid "Invoice Number"
-msgstr "Rechnungsnummer"
-
 msgid "Booked Items"
 msgstr "Gebuchte Gegenstände"
 
@@ -1449,6 +1445,9 @@ msgstr "Tage"
 msgid "Selected Items"
 msgstr "Ausgewählte Gegenstände"
 
+msgid "Days"
+msgstr ""
+
 msgid "Important Information"
 msgstr "Wichtige Informationen"
 
@@ -1456,10 +1455,13 @@ msgid "Your booking will need to be confirmed by a manager."
 msgstr "Deine Buchung muss von einem Manager bestätigt werden."
 
 msgid "You will be notified by email once your booking is confirmed."
-msgstr "Du wirst per E-Mail benachrichtigt, sobald deine Buchung bestätigt ist."
+msgstr ""
+"Du wirst per E-Mail benachrichtigt, sobald deine Buchung bestätigt ist."
 
 msgid "Please pick up and return items within the specified time windows."
-msgstr "Bitte hole die Gegenstände innerhalb der angegebenen Zeitfenster ab und bringe sie zurück."
+msgstr ""
+"Bitte hole die Gegenstände innerhalb der angegebenen Zeitfenster ab und "
+"bringe sie zurück."
 
 msgid "Confirm Booking"
 msgstr "Buchung bestätigen"
@@ -1551,21 +1553,22 @@ msgstr "Wir werden die weiteren Termine immer zwei Jahre im Voraus buchen."
 msgid "Report"
 msgstr "Bericht"
 
-msgid "Report 2025"
-msgstr "Bericht 2025"
+msgid "Year"
+msgstr "Jahr"
 
-#, python-format
-msgid "There are %(yearly_bookings)s bookings and %(yearly_total)s€ for 2025."
+#, ython-format
+msgid ""
+"There are %(yearly_bookings)s bookings and %(yearly_total)s€ for %(year)s."
 msgstr ""
-"2025 gibt es bisher insgesamt %(yearly_bookings)s Buchungen mit einem "
+"%(year)s gibt es bisher insgesamt %(yearly_bookings)s Buchungen mit einem "
 "Gesamtbetrag von %(yearly_total)s€."
 
 #, python-format
 msgid ""
 "Until today, %(realized_bookings)s bookings and %(realized_total)s€ have "
-"been realized in 2025."
+"been realized in %(year)s."
 msgstr ""
-"2025 wurden bisher %(realized_bookings)s Buchungen realisiert, bei einem "
+"%(year)s wurden bisher %(realized_bookings)s Buchungen realisiert, bei einem "
 "Gesamtbetrag von %(realized_total)s€."
 
 msgid "Dashboard"
@@ -1765,7 +1768,8 @@ msgid "Help"
 msgstr "Hilfe"
 
 msgid "Use this page to send custom emails to filtered organizations."
-msgstr "Verwende diese Seite um E-Mails an gefilterte Organisationen zu senden."
+msgstr ""
+"Verwende diese Seite um E-Mails an gefilterte Organisationen zu senden."
 
 msgid "Filtering"
 msgstr "Filterung"
@@ -2502,6 +2506,21 @@ msgstr "Aktualisiert"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Invoice address (optional)"
+#~ msgstr "Rechnungsadresse (optional)"
+
+#~ msgid "Leave empty to use organization address"
+#~ msgstr "Leer lassen um die Adresse der Organisation zu verwenden"
+
+#~ msgid "Invoice Address"
+#~ msgstr "Rechnungsadresse"
+
+#~ msgid "Invoice Number"
+#~ msgstr "Rechnungsnummer"
+
+#~ msgid "Report 2025"
+#~ msgstr "Bericht 2025"
 
 #~ msgid "Square Meters"
 #~ msgstr "Quadratmeter"

@@ -13,49 +13,66 @@
       </ol>
     </nav>
   </div>
-  <div class="row mt-4">
-    <h1>{% trans "Report 2025" %}</h1>
-  </div>
-  {% blocktranslate with yearly_bookings=yearly_totals.bookings_count yearly_total=yearly_totals.amount  %}There are {{ yearly_bookings }} bookings and {{ yearly_total }}€ for 2025.{% endblocktranslate %}
-  <br />
-  {% blocktranslate with realized_bookings=realized_yearly_totals.bookings_count realized_total=realized_yearly_totals.amount %}Until today, {{ realized_bookings }} bookings and {{ realized_total }}€ have been realized in 2025.{% endblocktranslate %}
-  <br />
-  2025 wurden {{ not_yet_invoiced.bookings_count }} realisierte und ausstehende Buchungen in Höhe von insgesamt {{ not_yet_invoiced.amount }} € noch nicht in Rechnung gestellt.
-  <table class="table table-bordered table-sm text-end">
-    <thead>
-      <tr>
-        <th></th>
-        {% for month in months %}<th colspan="3">{{ month }}/2025</th>{% endfor %}
-      </tr>
-      <tr>
-        <th>Resource</th>
-        {% for month in months %}
-          <th title="total bookings">#</th>
-          <th title="total amount">€</th>
-          <th title="not yet invoiced amount">ni</th>
+  <div class="row mt-4 mb-3">
+    <h1>{% trans "Report" %}</h1>
+    <div class="col-md-6">
+      <label for="year-select" class="form-label me-2">{% trans "Year" %}:</label>
+      <select id="year-select"
+              class="form-select d-inline-block w-auto"
+              hx-get="{% url 'dashboards:reports' %}"
+              hx-target="#report-content"
+              hx-include="#year-select"
+              name="year">
+        {% for year in available_years %}
+          <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
         {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% regroup bookings_by_resource by resource__name as resource_list %}
-      {% for resource in resource_list %}
+      </select>
+    </div>
+  </div>
+  <div id="report-content">
+    {% partialdef report-content inline %}
+    {% blocktranslate with yearly_bookings=yearly_totals.bookings_count yearly_total=yearly_totals.amount year=selected_year %}There are {{ yearly_bookings }} bookings and {{ yearly_total }}€ for {{ year }}.{% endblocktranslate %}
+    <br />
+    {% blocktranslate with realized_bookings=realized_yearly_totals.bookings_count realized_total=realized_yearly_totals.amount year=selected_year %}Until today, {{ realized_bookings }} bookings and {{ realized_total }}€ have been realized in {{ year }}.{% endblocktranslate %}
+    <br />
+    {{ selected_year }} wurden {{ not_yet_invoiced.bookings_count }} realisierte und ausstehende Buchungen in Höhe von insgesamt {{ not_yet_invoiced.amount }} € noch nicht in Rechnung gestellt.
+    <table class="table table-bordered table-sm text-end">
+      <thead>
         <tr>
-          <td class="w-25 text-truncate">{{ resource.grouper }}</td>
-          {% for key in resource.list %}
-            <td>{{ key.bookings_count }}</td>
-            <td>{{ key.amount|default_if_none:"" }}</td>
-            <td>{{ key.not_invoiced_amount|default_if_none:"" }}</td>
+          <th></th>
+          {% for month in months %}<th colspan="3">{{ month }}/{{ selected_year }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <th>Resource</th>
+          {% for month in months %}
+            <th title="total bookings">#</th>
+            <th title="total amount">€</th>
+            <th title="not yet invoiced amount">ni</th>
           {% endfor %}
         </tr>
-      {% endfor %}
-      <tr class="table-light">
-        <td>Total</td>
-        {% for total in monthly_totals %}
-          <td>{{ total.bookings_count }}</td>
-          <td>{{ total.amount|default_if_none:"0,00" }}</td>
-          <td>{{ total.not_invoiced_amount|default_if_none:"" }}</td>
+      </thead>
+      <tbody>
+        {% regroup bookings_by_resource by resource__name as resource_list %}
+        {% for resource in resource_list %}
+          <tr>
+            <td class="w-25 text-truncate">{{ resource.grouper }}</td>
+            {% for key in resource.list %}
+              <td>{{ key.bookings_count }}</td>
+              <td>{{ key.amount|default_if_none:"" }}</td>
+              <td>{{ key.not_invoiced_amount|default_if_none:"" }}</td>
+            {% endfor %}
+          </tr>
         {% endfor %}
-      </tr>
-    </tbody>
-  </table>
+        <tr class="table-light">
+          <td>Total</td>
+          {% for total in monthly_totals %}
+            <td>{{ total.bookings_count }}</td>
+            <td>{{ total.amount|default_if_none:"0,00" }}</td>
+            <td>{{ total.not_invoiced_amount|default_if_none:"" }}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  {% endpartialdef %}
+</div>
 {% endblock content %}
