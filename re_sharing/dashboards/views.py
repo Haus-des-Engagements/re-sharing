@@ -155,8 +155,7 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     )
     available_years = list(available_years)
 
-    # Get selected year from request, default to current year or
-    # latest year with bookings
+    # Get selected year from request, default to latest year with bookings
     selected_year = request.GET.get("year")
     if selected_year:
         selected_year = int(selected_year)

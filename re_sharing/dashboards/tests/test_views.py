@@ -243,7 +243,7 @@ class TestReportingView(TestCase):
         )
 
         self.client.force_login(self.staff_user)
-        response = self.client.get(reverse("dashboards:reports"))
+        response = self.client.get(reverse("dashboards:reports") + "?year=2025")
 
         expected_min_amount = 100
         assert response.status_code == HTTPStatus.OK
@@ -277,7 +277,7 @@ class TestReportingView(TestCase):
         )
 
         self.client.force_login(self.staff_user)
-        response = self.client.get(reverse("dashboards:reports"))
+        response = self.client.get(reverse("dashboards:reports") + "?year=2025")
 
         expected_min_not_invoiced_amount = 150
         assert response.status_code == HTTPStatus.OK
@@ -307,7 +307,7 @@ class TestReportingView(TestCase):
         )
 
         self.client.force_login(self.staff_user)
-        response = self.client.get(reverse("dashboards:reports"))
+        response = self.client.get(reverse("dashboards:reports") + "?year=2025")
 
         expected_min_months = 2
         assert response.status_code == HTTPStatus.OK
