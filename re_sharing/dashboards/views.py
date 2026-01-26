@@ -155,14 +155,9 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     )
     available_years = list(available_years)
 
-    # Get selected year from request, default to latest year with bookings
+    # Get selected year from request, default to current year
     selected_year = request.GET.get("year")
-    if selected_year:
-        selected_year = int(selected_year)
-    elif available_years:
-        selected_year = available_years[0]
-    else:
-        selected_year = timezone.now().year
+    selected_year = int(selected_year) if selected_year else timezone.now().year
 
     months = list(range(1, 13))
     resources = Resource.objects.all().order_by("location__id")
