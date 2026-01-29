@@ -560,8 +560,10 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         bookings = bookings.filter(resource__location__slug=location)
     if status != "all":
         bookings = bookings.filter(status__in=status)
-    if not show_recurring_bookings:
-        bookings = bookings.filter(booking_series__isnull=True)
+    if show_recurring_bookings:
+        bookings = bookings.filter(booking_series__isnull=False)
+    else:
+        bookings = bookings.filter(booking_series__status=BookingStatus.CONFIRMED)
 
     # Date range filtering
     if from_date_string:

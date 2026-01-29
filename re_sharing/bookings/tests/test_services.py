@@ -498,7 +498,7 @@ def test_filter_bookings_list(
         "show_past_bookings",
         "organization_search",
         "status",
-        "hide_recurring_bookings",
+        "show_recurring_bookings",
         "resource",
         "location",
         "from_date_string",
@@ -506,10 +506,10 @@ def test_filter_bookings_list(
         "expected",
     ),
     [
-        (True, None, "all", True, "all", "all", None, None, 2),
-        (True, None, [1], True, "all", "all", None, None, 1),
-        (False, None, "all", True, "all", "all", None, None, 1),
-        (True, "org1", "all", True, "all", "all", None, None, 0),
+        (True, None, "all", False, "all", "all", None, None, 2),
+        (True, None, [1], False, "all", "all", None, None, 1),
+        (False, None, "all", False, "all", "all", None, None, 1),
+        (True, "org1", "all", False, "all", "all", None, None, 0),
     ],
 )
 @pytest.mark.django_db()
@@ -517,7 +517,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     show_past_bookings,
     organization_search,
     status,
-    hide_recurring_bookings,
+    show_recurring_bookings,
     resource,
     location,
     from_date_string,
@@ -537,11 +537,15 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     res = ResourceFactory()
     manager.resources.add(res)
 
+    # Create bookings with CONFIRMED booking series so they appear when
+    # show_recurring_bookings=False (which filters booking_series__status=CONFIRMED)
+    booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
     BookingFactory(
         user=user,
         organization=org,
         status=BookingStatus.PENDING,
         resource=res,
+        booking_series=booking_series,
         timespan=(
             timezone.now() + timezone.timedelta(days=1),
             timezone.now() + timezone.timedelta(days=1, hours=1),
@@ -551,6 +555,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         user=user,
         organization=org,
         resource=res,
+        booking_series=booking_series,
         timespan=(
             timezone.now() - timezone.timedelta(days=1, hours=2),
             timezone.now() - timezone.timedelta(days=1),
@@ -561,7 +566,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         organization_search,
         show_past_bookings,
         status,
-        hide_recurring_bookings,
+        show_recurring_bookings,
         resource,
         location,
         from_date_string,
@@ -1468,14 +1473,19 @@ class TestManagerFilterBookingsListExtended(TestCase):
         organization = OrganizationFactory()
         organization.organization_groups.add(org_group)
 
+        # Create bookings with CONFIRMED series so they appear
+        # when show_recurring_bookings=False
+        booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
         BookingFactory(
             resource=resource1,
             organization=organization,
+            booking_series=booking_series,
             status=BookingStatus.CONFIRMED,
         )
         BookingFactory(
             resource=resource2,
             organization=organization,
+            booking_series=booking_series,
             status=BookingStatus.CONFIRMED,
         )
 
@@ -1483,7 +1493,7 @@ class TestManagerFilterBookingsListExtended(TestCase):
             organization_search=None,
             show_past_bookings=True,
             status="all",
-            show_recurring_bookings=True,
+            show_recurring_bookings=False,
             resource=resource1.slug,
             location="all",
             from_date_string=None,
@@ -1494,15 +1504,95 @@ class TestManagerFilterBookingsListExtended(TestCase):
         assert bookings.filter(resource=resource1).exists()
         assert bookings.count() >= 1
 
-    def test_filter_hide_recurring_bookings(self):
-        """Test filtering out recurring bookings"""
+    def test_filter_show_only_recurring_bookings(self):
+        """Test showing only recurring bookings"""
         manager_user = UserFactory()
-        ManagerFactory(user=manager_user)
+        manager = ManagerFactory(user=manager_user)
 
-        booking_series = BookingSeriesFactory()
-        BookingFactory(booking_series=booking_series, status=BookingStatus.CONFIRMED)
-        BookingFactory(booking_series=None, status=BookingStatus.CONFIRMED)
+        # Setup organization group and resource for manager
+        org_group = OrganizationGroupFactory()
+        organization = OrganizationFactory()
+        organization.organization_groups.add(org_group)
+        manager.organization_groups.add(org_group)
 
+        resource = ResourceFactory()
+        manager.resources.add(resource)
+
+        # Create one recurring booking and one standalone booking
+        booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
+        BookingFactory(
+            booking_series=booking_series,
+            status=BookingStatus.CONFIRMED,
+            organization=organization,
+            resource=resource,
+        )
+        BookingFactory(
+            booking_series=None,
+            status=BookingStatus.CONFIRMED,
+            organization=organization,
+            resource=resource,
+        )
+
+        # When show_recurring_bookings=True, should only show recurring bookings
+        bookings, _, _ = manager_filter_bookings_list(
+            organization_search=None,
+            show_past_bookings=True,
+            status="all",
+            show_recurring_bookings=True,
+            resource="all",
+            location="all",
+            from_date_string=None,
+            until_date_string=None,
+            user=manager_user,
+        )
+
+        # Should only contain the recurring booking
+        assert bookings.count() == 1
+        assert bookings.filter(booking_series__isnull=False).exists()
+        assert not bookings.filter(booking_series__isnull=True).exists()
+
+    def test_filter_show_confirmed_series_bookings(self):
+        """
+        Test showing only bookings from confirmed series
+        when show_recurring_bookings=False
+        """
+        manager_user = UserFactory()
+        manager = ManagerFactory(user=manager_user)
+
+        # Setup organization group and resource for manager
+        org_group = OrganizationGroupFactory()
+        organization = OrganizationFactory()
+        organization.organization_groups.add(org_group)
+        manager.organization_groups.add(org_group)
+
+        resource = ResourceFactory()
+        manager.resources.add(resource)
+
+        # Create bookings with different series statuses and standalone
+        confirmed_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
+        pending_series = BookingSeriesFactory(status=BookingStatus.PENDING)
+
+        booking_confirmed = BookingFactory(
+            booking_series=confirmed_series,
+            status=BookingStatus.CONFIRMED,
+            organization=organization,
+            resource=resource,
+        )
+        BookingFactory(
+            booking_series=pending_series,
+            status=BookingStatus.CONFIRMED,
+            organization=organization,
+            resource=resource,
+        )
+        BookingFactory(
+            booking_series=None,
+            status=BookingStatus.CONFIRMED,
+            organization=organization,
+            resource=resource,
+        )
+
+        # When show_recurring_bookings=False, should only show bookings
+        # from CONFIRMED series
         bookings, _, _ = manager_filter_bookings_list(
             organization_search=None,
             show_past_bookings=True,
@@ -1515,7 +1605,9 @@ class TestManagerFilterBookingsListExtended(TestCase):
             user=manager_user,
         )
 
-        assert not bookings.filter(booking_series__isnull=False).exists()
+        # Should only contain the booking from confirmed series
+        assert bookings.count() == 1
+        assert booking_confirmed in bookings
 
     def test_filter_by_date(self):
         """Test filtering bookings by specific date"""
@@ -1543,9 +1635,13 @@ class TestManagerFilterBookingsListExtended(TestCase):
 
         from psycopg.types.range import Range
 
+        # Create booking with CONFIRMED series so it appears
+        # when show_recurring_bookings=False
+        booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
         BookingFactory(
             resource=resource,
             organization=organization,
+            booking_series=booking_series,
             timespan=Range(start_dt, end_dt),
             start_date=specific_date,
             status=BookingStatus.CONFIRMED,
@@ -1555,7 +1651,7 @@ class TestManagerFilterBookingsListExtended(TestCase):
             organization_search=None,
             show_past_bookings=True,
             status="all",
-            show_recurring_bookings=True,
+            show_recurring_bookings=False,
             resource="all",
             location="all",
             from_date_string=specific_date.isoformat(),
