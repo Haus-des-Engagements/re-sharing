@@ -496,7 +496,7 @@ def test_filter_bookings_list(
 @pytest.mark.parametrize(
     (
         "show_past_bookings",
-        "organization",
+        "organization_search",
         "status",
         "hide_recurring_bookings",
         "resource",
@@ -506,16 +506,16 @@ def test_filter_bookings_list(
         "expected",
     ),
     [
-        (True, "all", "all", True, "all", "all", None, None, 2),
-        (True, "all", [1], True, "all", "all", None, None, 1),
-        (False, "all", "all", True, "all", "all", None, None, 1),
+        (True, None, "all", True, "all", "all", None, None, 2),
+        (True, None, [1], True, "all", "all", None, None, 1),
+        (False, None, "all", True, "all", "all", None, None, 1),
         (True, "org1", "all", True, "all", "all", None, None, 0),
     ],
 )
 @pytest.mark.django_db()
 def test_manger_filter_bookings_list(  # noqa: PLR0913
     show_past_bookings,
-    organization,
+    organization_search,
     status,
     hide_recurring_bookings,
     resource,
@@ -557,8 +557,8 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         ),
     )
     # Act
-    bookings, organizations, resources, locations = manager_filter_bookings_list(
-        organization,
+    bookings, resources, locations = manager_filter_bookings_list(
+        organization_search,
         show_past_bookings,
         status,
         hide_recurring_bookings,
@@ -1479,8 +1479,8 @@ class TestManagerFilterBookingsListExtended(TestCase):
             status=BookingStatus.CONFIRMED,
         )
 
-        bookings, _, _, _ = manager_filter_bookings_list(
-            organization="all",
+        bookings, _, _ = manager_filter_bookings_list(
+            organization_search=None,
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=True,
@@ -1503,8 +1503,8 @@ class TestManagerFilterBookingsListExtended(TestCase):
         BookingFactory(booking_series=booking_series, status=BookingStatus.CONFIRMED)
         BookingFactory(booking_series=None, status=BookingStatus.CONFIRMED)
 
-        bookings, _, _, _ = manager_filter_bookings_list(
-            organization="all",
+        bookings, _, _ = manager_filter_bookings_list(
+            organization_search=None,
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=False,
@@ -1551,8 +1551,8 @@ class TestManagerFilterBookingsListExtended(TestCase):
             status=BookingStatus.CONFIRMED,
         )
 
-        bookings, _, _, _ = manager_filter_bookings_list(
-            organization="all",
+        bookings, _, _ = manager_filter_bookings_list(
+            organization_search=None,
             show_past_bookings=True,
             status="all",
             show_recurring_bookings=True,
@@ -1782,8 +1782,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_number="",
         )
 
-        bookings, organizations, resources = manager_filter_invoice_bookings_list(
-            organization="all",
+        bookings, resources = manager_filter_invoice_bookings_list(
+            organization_search=None,
             invoice_filter="all",
             invoice_number=None,
             resource="all",
@@ -1791,7 +1791,6 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
 
         expected_min_count = 2
         assert bookings.count() >= expected_min_count
-        assert organizations.exists()
         assert resources.exists()
 
     def test_filter_invoice_bookings_with_invoice(self):
@@ -1810,8 +1809,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_number="",
         )
 
-        bookings, _, _ = manager_filter_invoice_bookings_list(
-            organization="all",
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
             invoice_filter="with_invoice",
             invoice_number=None,
             resource="all",
@@ -1836,8 +1835,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_number="",
         )
 
-        bookings, _, _ = manager_filter_invoice_bookings_list(
-            organization="all",
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
             invoice_filter="without_invoice",
             invoice_number=None,
             resource="all",
@@ -1862,8 +1861,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             total_amount=200,
         )
 
-        bookings, _, _ = manager_filter_invoice_bookings_list(
-            organization=org1.slug,
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=org1.name,
             invoice_filter="all",
             invoice_number=None,
             resource="all",
@@ -1885,8 +1884,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_number="INV-2025-002",
         )
 
-        bookings, _, _ = manager_filter_invoice_bookings_list(
-            organization="all",
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
             invoice_filter="all",
             invoice_number="2024",
             resource="all",
@@ -1910,8 +1909,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             total_amount=200,
         )
 
-        bookings, _, _ = manager_filter_invoice_bookings_list(
-            organization="all",
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
             invoice_filter="all",
             invoice_number=None,
             resource=resource1.slug,

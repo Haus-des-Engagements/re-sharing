@@ -21,19 +21,16 @@
         method="get"
         hx-get="{% url 'bookings:manager-list-bookings' %}"
         hx-target="#booking-list"
-        hx-trigger="change"
+        hx-trigger="input changed delay:300ms, keyup, change"
         hx-indicator="#spinner"
         hx-push-url="true"
         hx-sync="closest form:replace">
     <div id="div_id_organization" class="col-3">
-      <select name="organization" class="form-select" id="id_organization">
-        <option value="all"
-                {% if selected_organization == "all" %}selected{% endif %}>{% trans "all organizations" %}</option>
-        {% for organization in organizations %}
-          <option value="{{ organization.slug }}"
-                  {% if selected_organization == organization.slug %}selected{% endif %}>{{ organization }}</option>
-        {% endfor %}
-      </select>
+      <input type="text"
+             name="organization_search"
+             class="form-control"
+             placeholder="{% trans 'Search organizations...' %}"
+             {% if organization_search %}value="{{ organization_search }}"{% endif %} />
     </div>
     {% if locations.count > 1 %}
       <div id="div_id_location" class="col-auto">

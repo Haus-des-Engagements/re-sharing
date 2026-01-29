@@ -517,7 +517,7 @@ def bookings_webview(access="all"):
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913
-    organization,
+    organization_search,
     show_past_bookings,
     status,
     show_recurring_bookings,
@@ -552,8 +552,8 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     )
     if not show_past_bookings:
         bookings = bookings.filter(timespan__endswith__gte=timezone.now())
-    if organization != "all":
-        bookings = bookings.filter(organization__slug=organization)
+    if organization_search:
+        bookings = bookings.filter(organization__name__icontains=organization_search)
     if resource != "all":
         bookings = bookings.filter(resource__slug=resource)
     if location != "all":
@@ -580,7 +580,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
 
     bookings = bookings.order_by("created")
 
-    return bookings, organizations, resources, locations
+    return bookings, resources, locations
 
 
 def manager_cancel_booking(user, booking_slug):
@@ -641,9 +641,8 @@ def manager_confirm_booking_series(user, booking_series_uuid):
 
 
 def manager_filter_invoice_bookings_list(
-    organization, invoice_filter, invoice_number, resource
+    organization_search, invoice_filter, invoice_number, resource
 ):
-    organizations = Organization.objects.all()
     resources = Resource.objects.all()
     related_fields = [
         "organization",
@@ -657,8 +656,8 @@ def manager_filter_invoice_bookings_list(
         .filter(status=BookingStatus.CONFIRMED)
         .prefetch_related(*related_fields)
     )
-    if organization != "all":
-        bookings = bookings.filter(organization__slug=organization)
+    if organization_search:
+        bookings = bookings.filter(organization__name__icontains=organization_search)
     if invoice_number:
         bookings = bookings.filter(invoice_number__icontains=invoice_number)
     if resource != "all":
@@ -670,7 +669,7 @@ def manager_filter_invoice_bookings_list(
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, organizations, resources
+    return bookings, resources
 
 
 def get_external_events(ics_url: str, cache_key: str = "external_events") -> list[dict]:

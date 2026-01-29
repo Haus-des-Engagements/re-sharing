@@ -365,15 +365,15 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     """
     show_past_bookings = request.GET.get("show_past_bookings") or False
     status = request.GET.get("status") or "1"
-    organization = request.GET.get("organization") or "all"
+    organization_search = request.GET.get("organization_search")
     resource = request.GET.get("resource") or "all"
     location = request.GET.get("location") or "all"
     from_date_string = request.GET.get("from_date") or None
     until_date_string = request.GET.get("until_date") or None
     show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
 
-    bookings, organizations, resources, locations = manager_filter_bookings_list(
-        organization,
+    bookings, resources, locations = manager_filter_bookings_list(
+        organization_search,
         show_past_bookings,
         status,
         show_recurring_bookings,
@@ -387,11 +387,10 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     context = {
         "bookings": bookings,
         "current_time": timezone.now(),
-        "organizations": organizations,
         "statuses": BookingStatus.choices,
         "resources": resources,
         "locations": locations,
-        "selected_organization": organization,
+        "organization_search": organization_search,
         "selected_resource": resource,
         "selected_location": location,
         "selected_status": status,
@@ -443,16 +442,16 @@ def manager_list_booking_series_view(request: HttpRequest) -> HttpResponse:
     """
     show_past_booking_series = request.GET.get("show_past_booking_series") or False
     status = request.GET.get("status") or 1
-    organization = request.GET.get("organization") or "all"
+    organization_search = request.GET.get("organization_search")
 
-    booking_series_list, organizations = manager_filter_booking_series_list(
-        organization, show_past_booking_series, status
+    booking_series_list = manager_filter_booking_series_list(
+        organization_search, show_past_booking_series, status
     )
 
     context = {
         "booking_series_list": booking_series_list,
         "current_time": timezone.now(),
-        "organizations": organizations,
+        "organization_search": organization_search,
         "statuses": BookingStatus.choices,
     }
 
@@ -498,16 +497,16 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     confirmed or cancelled
     """
     invoice_filter = request.GET.get("invoice_filter", "all")
-    organization = request.GET.get("organization", "all")
+    organization_search = request.GET.get("organization_search")
     invoice_number = request.GET.get("invoice_number") or None
     resource = request.GET.get("resource") or "all"
-    bookings, organizations, resources = manager_filter_invoice_bookings_list(
-        organization, invoice_filter, invoice_number, resource
+    bookings, resources = manager_filter_invoice_bookings_list(
+        organization_search, invoice_filter, invoice_number, resource
     )
 
     context = {
         "bookings": bookings,
-        "organizations": organizations,
+        "organization_search": organization_search,
         "resources": resources,
         "invoice_number": invoice_number,
     }

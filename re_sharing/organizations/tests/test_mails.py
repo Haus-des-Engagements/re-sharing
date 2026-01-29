@@ -560,14 +560,22 @@ class SendMonthlyBookingsOverviewTest(TestCase):
         )
 
     def test_sends_monthly_overview_for_organizations_with_bulk_access_codes(self):
+        from dateutil.relativedelta import relativedelta
+
         organization = OrganizationFactory(
             email="org@example.com", monthly_bulk_access_codes=True
         )
-        next_month = timezone.now() + timedelta(days=32)
+        next_month = timezone.now() + relativedelta(months=+1)
+        next_month_start = next_month.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         BookingFactory(
             organization=organization,
             status=BookingStatus.CONFIRMED,
-            timespan=Range(next_month, next_month + timedelta(hours=2)),
+            timespan=Range(
+                next_month_start + timedelta(days=5),
+                next_month_start + timedelta(days=5, hours=2),
+            ),
             title="Next Month Booking",
         )
 
@@ -579,12 +587,20 @@ class SendMonthlyBookingsOverviewTest(TestCase):
         assert organization.name in result["organizations_list"]
 
     def test_does_not_send_for_organizations_without_bulk_access_codes(self):
+        from dateutil.relativedelta import relativedelta
+
         organization = OrganizationFactory(monthly_bulk_access_codes=False)
-        next_month = timezone.now() + timedelta(days=32)
+        next_month = timezone.now() + relativedelta(months=+1)
+        next_month_start = next_month.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         BookingFactory(
             organization=organization,
             status=BookingStatus.CONFIRMED,
-            timespan=Range(next_month, next_month + timedelta(hours=2)),
+            timespan=Range(
+                next_month_start + timedelta(days=5),
+                next_month_start + timedelta(days=5, hours=2),
+            ),
         )
 
         result = send_monthly_bookings_overview()

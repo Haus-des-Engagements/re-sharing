@@ -712,7 +712,7 @@ class TestManagerListBookingsViewHTMX(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_bookings_list")
     def test_htmx_request_returns_partial(self, mock_filter):
-        mock_filter.return_value = ([], [], [], [])
+        mock_filter.return_value = ([], [], [])
 
         response = self.client.get(
             reverse("bookings:manager-list-bookings"), headers={"hx-request": "true"}
@@ -729,7 +729,7 @@ class TestManagerListBookingSeriesView(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_booking_series_list")
     def test_manager_list_booking_series(self, mock_filter):
-        mock_filter.return_value = ([], [])
+        mock_filter.return_value = []
 
         response = self.client.get(reverse("bookings:manager-list-booking_series"))
 
@@ -739,7 +739,7 @@ class TestManagerListBookingSeriesView(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_booking_series_list")
     def test_manager_list_booking_series_htmx(self, mock_filter):
-        mock_filter.return_value = ([], [])
+        mock_filter.return_value = []
 
         response = self.client.get(
             reverse("bookings:manager-list-booking_series"),
@@ -801,7 +801,7 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_invoice_bookings_list")
     def test_manager_filter_invoice_bookings_list(self, mock_filter):
-        mock_filter.return_value = ([], [], [])
+        mock_filter.return_value = ([], [])
 
         response = self.client.get(reverse("bookings:manager-list-invoices"))
 
@@ -811,7 +811,7 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_invoice_bookings_list")
     def test_manager_filter_invoice_bookings_list_htmx(self, mock_filter):
-        mock_filter.return_value = ([], [], [])
+        mock_filter.return_value = ([], [])
 
         response = self.client.get(
             reverse("bookings:manager-list-invoices"), headers={"hx-request": "true"}
@@ -822,20 +822,20 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
 
     @patch("re_sharing.bookings.views.manager_filter_invoice_bookings_list")
     def test_manager_filter_invoice_bookings_with_filters(self, mock_filter):
-        mock_filter.return_value = ([], [], [])
+        mock_filter.return_value = ([], [])
 
         response = self.client.get(
             reverse("bookings:manager-list-invoices"),
             {
                 "invoice_filter": "paid",
-                "organization": "123",
+                "organization_search": "test org",
                 "invoice_number": "INV-001",
                 "resource": "456",
             },
         )
 
         assert response.status_code == HTTPStatus.OK
-        mock_filter.assert_called_once_with("123", "paid", "INV-001", "456")
+        mock_filter.assert_called_once_with("test org", "paid", "INV-001", "456")
 
     def test_non_staff_user_forbidden(self):
         regular_user = UserFactory(is_staff=False)

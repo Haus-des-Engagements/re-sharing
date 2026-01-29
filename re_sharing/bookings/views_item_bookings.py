@@ -369,12 +369,19 @@ def manager_item_bookings_view(request: HttpRequest) -> HttpResponse:
     booking_groups = BookingGroup.objects.all()
 
     status = request.GET.get("status", "1")  # Default to pending
+    organization_search = request.GET.get("organization_search")
+
     if status != "all":
         booking_groups = booking_groups.filter(status=int(status))
+    if organization_search:
+        booking_groups = booking_groups.filter(
+            organization__name__icontains=organization_search
+        )
 
     context = {
         "booking_groups": booking_groups,
         "selected_status": status,
+        "organization_search": organization_search,
     }
 
     if request.headers.get("HX-Request"):

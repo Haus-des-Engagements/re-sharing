@@ -10,10 +10,17 @@
         method="get"
         hx-get="{% url 'bookings:manager-item-bookings' %}"
         hx-target="#booking-groups-list"
-        hx-trigger="change"
+        hx-trigger="input changed delay:300ms, keyup, change"
         hx-indicator="#spinner"
         hx-push-url="true"
         hx-sync="closest form:replace">
+    <div id="div_id_organization" class="col-3">
+      <input type="text"
+             name="organization_search"
+             class="form-control"
+             placeholder="{% trans 'Search organizations...' %}"
+             {% if organization_search %}value="{{ organization_search }}"{% endif %} />
+    </div>
     <div class="col-auto" id="div_id_status">
       <select name="status" class="select form-select" id="id_status">
         <option value="1" {% if selected_status == "1" %}selected{% endif %}>{% trans "Pending" %}</option>

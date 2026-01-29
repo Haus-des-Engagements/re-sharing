@@ -225,22 +225,22 @@ def get_bookings_of_booking_series(user, booking_series_slug):
     return bs, bookings, is_cancelable
 
 
-def manager_filter_booking_series_list(organization, show_past_booking_series, status):
-    organizations = Organization.objects.all()
+def manager_filter_booking_series_list(
+    organization_search, show_past_booking_series, status
+):
     bs_list = BookingSeries.objects.all().distinct()
     if not show_past_booking_series:
         bs_list = bs_list.filter(
             Q(last_booking_date__gte=timezone.now()) | Q(last_booking_date__isnull=True)
         )
-    if organization != "all":
+    if organization_search:
         bs_list = bs_list.filter(
-            booking_of_bookingseries__organization__slug=organization
+            booking_of_bookingseries__organization__name__icontains=organization_search
         )
     if status != "all":
         bs_list = bs_list.filter(status=status)
-    bs_list = bs_list.order_by("created")
 
-    return bs_list, organizations
+    return bs_list.order_by("created")
 
 
 def manager_cancel_booking_series(user, booking_series_uuid):
