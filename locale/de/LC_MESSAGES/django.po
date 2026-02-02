@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-02 12:23+0100\n"
+"POT-Creation-Date: 2026-02-02 15:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -564,6 +564,9 @@ msgstr ""
 "anmelden (enthält Tipps zu Fortbildungen, Veranstaltungen, Fördermitteln und "
 "Stellenanzeigen im Bereich Engagement in Freiburg)."
 
+msgid "Please select at least one organization group."
+msgstr "Bitte wähle mindestens eine Zugehörigkeit aus."
+
 msgid "Address"
 msgstr "Adresse"
 
@@ -576,9 +579,8 @@ msgstr "Benachrichtigungen"
 msgid "Affiliation"
 msgstr "Zugehörigkeit"
 
-msgid "An affiliation is not needed to book resources."
-msgstr ""
-"Eine Zugehörigkeit ist nicht notwendig um eine Ressource buchen zu können."
+msgid "At least one affiliation is mandatory"
+msgstr "Mindestens eine Gruppe muss gewählt werden."
 
 msgid ""
 "We need some more information of your organization. If you don'thave an "
@@ -2509,40 +2511,3 @@ msgstr "Aktualisiert"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
-
-#~ msgid "Invoice address (optional)"
-#~ msgstr "Rechnungsadresse (optional)"
-
-#~ msgid "Leave empty to use organization address"
-#~ msgstr "Leer lassen um die Adresse der Organisation zu verwenden"
-
-#~ msgid "Invoice Address"
-#~ msgstr "Rechnungsadresse"
-
-#~ msgid "Invoice Number"
-#~ msgstr "Rechnungsnummer"
-
-#~ msgid "Report 2025"
-#~ msgstr "Bericht 2025"
-
-#~ msgid "Square Meters"
-#~ msgstr "Quadratmeter"
-
-#~ msgid "All Access Types"
-#~ msgstr "Alle Zugänge"
-
-#~ msgid "Upcoming Events"
-#~ msgstr "Kommende Veranstaltungen"
-
-#~ msgid "Submit"
-#~ msgstr "Absenden"
-
-#~ msgid "Planner"
-#~ msgstr "Planer"
-
-#~ msgid ""
-#~ "In this view, you can see the free times for all resources. Click on a "
-#~ "free slot to go directly to the booking page."
-#~ msgstr ""
-#~ "In dieser Ansicht siehst du die freien Zeiten für alle Ressourcen. Klicke "
-#~ "auf einen freien Zeitraum, um direkt zur Buchung zu gelangen."

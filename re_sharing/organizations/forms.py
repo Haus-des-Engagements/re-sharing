@@ -137,8 +137,11 @@ class OrganizationForm(forms.ModelForm):
     organization_groups = ModelMultipleChoiceField(
         queryset=OrganizationGroup.objects.filter(show_on_organization_creation=True),
         widget=CheckboxSelectMultiple,
-        required=False,
+        required=True,
         label="",
+        error_messages={
+            "required": _("Please select at least one organization group."),
+        },
     )
 
     class Meta:
@@ -204,7 +207,7 @@ class OrganizationForm(forms.ModelForm):
         consent = _("Consent")
         notifications = _("Notifications")
         affiliation = _("Affiliation")
-        affiliation_description = _("An affiliation is not needed to book resources.")
+        affiliation_description = _("At least one affiliation is mandatory")
 
         # Build layout components
         layout_fields = [
@@ -286,3 +289,12 @@ class OrganizationForm(forms.ModelForm):
         layout_fields.append(Submit("submit", _("Save organization")))
 
         self.helper.layout = Layout(*layout_fields)
+
+    def clean_organization_groups(self):
+        """Ensure at least one organization group is selected when field is present."""
+        organization_groups = self.cleaned_data.get("organization_groups")
+        if "organization_groups" in self.fields and not organization_groups:
+            raise forms.ValidationError(
+                _("Please select at least one organization group.")
+            )
+        return organization_groups

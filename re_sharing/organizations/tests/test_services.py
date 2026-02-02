@@ -104,7 +104,9 @@ def test_create_organization():
     test_user = UserFactory()
 
     # Create organization groups - one default and one non-default
-    default_group = OrganizationGroupFactory(default_group=True)
+    default_group = OrganizationGroupFactory(
+        default_group=True, show_on_organization_creation=True
+    )
     non_default_group = OrganizationGroupFactory(default_group=False)
 
     # Create a dummy PDF file
@@ -127,6 +129,7 @@ def test_create_organization():
         "is_charitable": True,
         "values_approval": True,
         "usage_agreement_date": timezone.now().date(),
+        "organization_groups": [default_group.id],
     }
 
     # For file uploads, we need to pass files separately from data

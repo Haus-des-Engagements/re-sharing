@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 from neapolitan.views import CRUDView
 
@@ -103,6 +104,11 @@ def create_organization_view(request):
         if form.is_valid():
             organization = create_organization(request.user, form)
             return redirect("organizations:show-organization", organization.slug)
+        if "organization_groups" in form.errors:
+            messages.error(
+                request,
+                _("Please select at least one organization group."),
+            )
 
     return render(request, "organizations/create_organization.html", {"form": form})
 
@@ -127,6 +133,11 @@ def update_organization_view(request, organization):
             organization = update_organization(request.user, form, organization)
             messages.success(request, "Organization updated successfully.")
             return redirect("organizations:show-organization", organization.slug)
+        if "organization_groups" in form.errors:
+            messages.error(
+                request,
+                _("Please select at least one organization group."),
+            )
 
     return render(
         request,

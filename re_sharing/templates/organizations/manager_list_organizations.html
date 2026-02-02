@@ -90,7 +90,7 @@
   <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
 </td>
 <td>
-  <a href="{% url "bookings:manager-list-bookings" %}?organization={{ organization.slug }}&show_past_bookings=on">{{ organization.bookings_count }}</a>
+  <a href="{% url "bookings:manager-list-bookings" %}?organization_search={{ organization.name }}&show_past_bookings=on&show_recurring_bookings=on&status=all">{{ organization.bookings_count }}</a>
 </td>
 <td sorttable_customkey="{{ organization.usage_agreement_date|date:"Ymd" }}">
   {% if organization.usage_agreement %}

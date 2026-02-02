@@ -209,7 +209,7 @@ class Organization(TimeStampedModel):
         verbose_name=_("Organization group"),
         related_name="organizations_of_organizationgroups",
         related_query_name="organization_of_organizationgroups",
-        blank=True,
+        blank=False,
     )
 
     class Meta:
