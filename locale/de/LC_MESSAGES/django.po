@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-25 20:45+0100\n"
+"POT-Creation-Date: 2026-02-02 12:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1098,6 +1098,9 @@ msgstr "E-Mail Vorlagen"
 msgid "Reports"
 msgstr "Berichte"
 
+msgid "Custom E-Mail"
+msgstr "E-Mail an Organisation"
+
 msgid "Find a free room"
 msgstr "Finde einen freien Raum"
 
@@ -1273,6 +1276,9 @@ msgstr "Letzte"
 
 msgid "Manage Equipment Bookings"
 msgstr "Materialverleih verwalten"
+
+msgid "Search organizations..."
+msgstr "Organisationen suchen"
 
 msgid "Cancelled"
 msgstr "Storniert"
@@ -1556,7 +1562,7 @@ msgstr "Bericht"
 msgid "Year"
 msgstr "Jahr"
 
-#, ython-format
+#, python-format
 msgid ""
 "There are %(yearly_bookings)s bookings and %(yearly_total)s€ for %(year)s."
 msgstr ""
@@ -1836,9 +1842,6 @@ msgstr "Organisationen suchen"
 
 msgid "Manage organizations"
 msgstr "Organisationen verwalten"
-
-msgid "Search organizations..."
-msgstr "Organisationen suchen"
 
 msgid "all groups"
 msgstr "alle Gruppen"

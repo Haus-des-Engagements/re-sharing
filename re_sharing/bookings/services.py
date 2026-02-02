@@ -631,17 +631,18 @@ def manager_confirm_booking_series(user, booking_series_uuid):
     booking_series.status = BookingStatus.CONFIRMED
     booking_series.save()
     for booking in bookings:
-        overlapping_bookings = Booking.objects.filter(
-            status=BookingStatus.CONFIRMED,
-            resource=booking.resource,
-            timespan__overlap=booking.timespan,
-        ).exclude(id=booking.id)
-        with set_actor(user):
-            if overlapping_bookings.exists():
-                booking.status = BookingStatus.UNAVAILABLE
-            else:
-                booking.status = BookingStatus.CONFIRMED
-        booking.save()
+        if booking.status != BookingStatus.CANCELLED:
+            overlapping_bookings = Booking.objects.filter(
+                status=BookingStatus.CONFIRMED,
+                resource=booking.resource,
+                timespan__overlap=booking.timespan,
+            ).exclude(id=booking.id)
+            with set_actor(user):
+                if overlapping_bookings.exists():
+                    booking.status = BookingStatus.UNAVAILABLE
+                else:
+                    booking.status = BookingStatus.CONFIRMED
+                booking.save()
 
     send_booking_series_confirmation_email(booking_series)
     return booking_series

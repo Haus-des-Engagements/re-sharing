@@ -947,6 +947,34 @@ def test_manager_confirm_booking_series(mock_is_confirmable):
     assert booking2.status == BookingStatus.CONFIRMED
 
 
+@pytest.mark.django_db()
+@patch.object(Booking, "is_confirmable", return_value=True)
+def test_manager_confirm_booking_series_preserves_cancelled_bookings(
+    mock_is_confirmable,
+):
+    """Test that cancelled bookings in a series remain cancelled after confirmation"""
+    user = UserFactory(is_staff=True)
+    booking_series = BookingSeriesFactory()
+    booking1 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
+    booking2 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.CANCELLED
+    )
+    booking3 = BookingFactory(
+        booking_series=booking_series, status=BookingStatus.PENDING
+    )
+
+    manager_confirm_booking_series(user, booking_series.uuid)
+
+    booking1.refresh_from_db()
+    assert booking1.status == BookingStatus.CONFIRMED
+    booking2.refresh_from_db()
+    assert booking2.status == BookingStatus.CANCELLED  # Should remain cancelled
+    booking3.refresh_from_db()
+    assert booking3.status == BookingStatus.CONFIRMED
+
+
 @pytest.mark.parametrize(
     ("startdate", "starttime", "endtime", "expected_data"),
     [

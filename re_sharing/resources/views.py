@@ -57,6 +57,7 @@ def list_resources_view(request):
     start_time = request.GET.get("start_time")
     duration = request.GET.get("duration", "60")  # Default to 60 minutes (1 hour)
     location_slug = request.GET.get("location")
+    resource_type = request.GET.get("type", "room")  # Default to room
 
     # Combine date and time into datetime string if both are provided
     start_datetime = None
@@ -64,7 +65,12 @@ def list_resources_view(request):
         start_datetime = f"{start_date}T{start_time}"
 
     resources = filter_resources(
-        request.user, persons_count, start_datetime, location_slug, duration
+        request.user,
+        persons_count,
+        start_datetime,
+        location_slug,
+        duration,
+        resource_type,
     )
     locations = get_user_accessible_locations(request.user)
 

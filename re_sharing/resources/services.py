@@ -95,12 +95,17 @@ def show_resource(resource_slug, date_string):
     return resource, time_slots, weekdays, dates, compensations, restrictions
 
 
-def filter_resources(
-    user, persons_count, start_datetime, location_slug=None, duration=None
+def filter_resources(  # noqa: PLR0913
+    user,
+    persons_count,
+    start_datetime,
+    location_slug=None,
+    duration=None,
+    resource_type=None,
 ):
     """
     Filters resources based on persons_count, start_datetime, location,
-    duration, and user's permissions.
+    duration, resource_type, and user's permissions.
 
     Args:
         persons_count (int): Minimum number of persons the resource must accommodate.
@@ -110,6 +115,8 @@ def filter_resources(
         location_slug (str, optional): Slug of the location to filter by.
         duration (str or int, optional): Duration in minutes for the booking.
         Defaults to 30 minutes.
+        resource_type (str, optional): Type of resource to filter by (e.g., 'room',
+        'parking_lot'). Defaults to None (all types).
 
     Returns:
         QuerySet: A filtered queryset of resources, including only the resources the
@@ -119,6 +126,10 @@ def filter_resources(
         resources = user.get_resources()
     else:
         resources = Resource.objects.filter(is_private=False)
+
+    # Filter resources by type
+    if resource_type:
+        resources = resources.filter(type=resource_type)
 
     # Filter resources based on persons_count
     if persons_count:
