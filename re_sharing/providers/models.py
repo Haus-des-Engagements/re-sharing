@@ -3,9 +3,11 @@ from django.db import models
 from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import Count
 from django.db.models import IntegerField
 from django.db.models import ManyToManyField
 from django.db.models import OneToOneField
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import TimeField
 from django.utils.translation import gettext_lazy as _
@@ -142,18 +144,25 @@ class Manager(TimeStampedModel):
 
     def get_organizations(self) -> QuerySet[Organization]:
         """
-        Returns all organizations that belong to this manager's organization groups.
+        Returns all organizations that belong to this manager's organization groups,
+        as well as organizations that are not in any organization group.
         If the manager has no organization groups, returns an empty queryset.
         Returns:
             QuerySet[Organization]: A queryset containing all distinct organizations
-                                   associated with this manager's organization groups.
+                                   associated with this manager's organization groups
+                                   or organizations with no groups.
         """
         if not self.organization_groups.exists():
             return Organization.objects.none()
 
-        return Organization.objects.filter(
-            organization_groups__in=self.organization_groups.all()
-        ).distinct()
+        return (
+            Organization.objects.annotate(group_count=Count("organization_groups"))
+            .filter(
+                Q(organization_groups__in=self.organization_groups.all())
+                | Q(group_count=0)
+            )
+            .distinct()
+        )
 
     def get_resources(self) -> QuerySet[Resource]:
         """

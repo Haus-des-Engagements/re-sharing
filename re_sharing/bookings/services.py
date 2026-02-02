@@ -560,10 +560,8 @@ def manager_filter_bookings_list(  # noqa: PLR0913
         bookings = bookings.filter(resource__location__slug=location)
     if status != "all":
         bookings = bookings.filter(status__in=status)
-    if show_recurring_bookings:
-        bookings = bookings.filter(booking_series__isnull=False)
-    else:
-        bookings = bookings.filter(booking_series__status=BookingStatus.CONFIRMED)
+    if not show_recurring_bookings:
+        bookings = bookings.exclude(booking_series__isnull=False)
 
     # Date range filtering
     if from_date_string:
@@ -633,10 +631,17 @@ def manager_confirm_booking_series(user, booking_series_uuid):
     booking_series.status = BookingStatus.CONFIRMED
     booking_series.save()
     for booking in bookings:
-        if booking.is_confirmable():
-            with set_actor(user):
+        overlapping_bookings = Booking.objects.filter(
+            status=BookingStatus.CONFIRMED,
+            resource=booking.resource,
+            timespan__overlap=booking.timespan,
+        ).exclude(id=booking.id)
+        with set_actor(user):
+            if overlapping_bookings.exists():
+                booking.status = BookingStatus.UNAVAILABLE
+            else:
                 booking.status = BookingStatus.CONFIRMED
-                booking.save()
+        booking.save()
 
     send_booking_series_confirmation_email(booking_series)
     return booking_series

@@ -537,15 +537,14 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
     res = ResourceFactory()
     manager.resources.add(res)
 
-    # Create bookings with CONFIRMED booking series so they appear when
-    # show_recurring_bookings=False (which filters booking_series__status=CONFIRMED)
-    booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
+    # Create standalone bookings (no booking_series) so they appear when
+    # show_recurring_bookings=False (which excludes bookings with a series)
     BookingFactory(
         user=user,
         organization=org,
         status=BookingStatus.PENDING,
         resource=res,
-        booking_series=booking_series,
+        booking_series=None,
         timespan=(
             timezone.now() + timezone.timedelta(days=1),
             timezone.now() + timezone.timedelta(days=1, hours=1),
@@ -555,7 +554,7 @@ def test_manger_filter_bookings_list(  # noqa: PLR0913
         user=user,
         organization=org,
         resource=res,
-        booking_series=booking_series,
+        booking_series=None,
         timespan=(
             timezone.now() - timezone.timedelta(days=1, hours=2),
             timezone.now() - timezone.timedelta(days=1),
@@ -1473,19 +1472,17 @@ class TestManagerFilterBookingsListExtended(TestCase):
         organization = OrganizationFactory()
         organization.organization_groups.add(org_group)
 
-        # Create bookings with CONFIRMED series so they appear
-        # when show_recurring_bookings=False
-        booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
+        # Create standalone bookings so they appear when show_recurring_bookings=False
         BookingFactory(
             resource=resource1,
             organization=organization,
-            booking_series=booking_series,
+            booking_series=None,
             status=BookingStatus.CONFIRMED,
         )
         BookingFactory(
             resource=resource2,
             organization=organization,
-            booking_series=booking_series,
+            booking_series=None,
             status=BookingStatus.CONFIRMED,
         )
 
@@ -1505,7 +1502,7 @@ class TestManagerFilterBookingsListExtended(TestCase):
         assert bookings.count() >= 1
 
     def test_filter_show_only_recurring_bookings(self):
-        """Test showing only recurring bookings"""
+        """Test showing all bookings when show_recurring_bookings=True"""
         manager_user = UserFactory()
         manager = ManagerFactory(user=manager_user)
 
@@ -1533,7 +1530,7 @@ class TestManagerFilterBookingsListExtended(TestCase):
             resource=resource,
         )
 
-        # When show_recurring_bookings=True, should only show recurring bookings
+        # When show_recurring_bookings=True, should show all bookings
         bookings, _, _ = manager_filter_bookings_list(
             organization_search=None,
             show_past_bookings=True,
@@ -1546,14 +1543,14 @@ class TestManagerFilterBookingsListExtended(TestCase):
             user=manager_user,
         )
 
-        # Should only contain the recurring booking
-        assert bookings.count() == 1
+        # Should contain both bookings
+        assert bookings.count() == 2  # noqa: PLR2004
         assert bookings.filter(booking_series__isnull=False).exists()
-        assert not bookings.filter(booking_series__isnull=True).exists()
+        assert bookings.filter(booking_series__isnull=True).exists()
 
     def test_filter_show_confirmed_series_bookings(self):
         """
-        Test showing only bookings from confirmed series
+        Test showing only standalone bookings
         when show_recurring_bookings=False
         """
         manager_user = UserFactory()
@@ -1572,7 +1569,7 @@ class TestManagerFilterBookingsListExtended(TestCase):
         confirmed_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
         pending_series = BookingSeriesFactory(status=BookingStatus.PENDING)
 
-        booking_confirmed = BookingFactory(
+        BookingFactory(
             booking_series=confirmed_series,
             status=BookingStatus.CONFIRMED,
             organization=organization,
@@ -1584,15 +1581,14 @@ class TestManagerFilterBookingsListExtended(TestCase):
             organization=organization,
             resource=resource,
         )
-        BookingFactory(
+        standalone_booking = BookingFactory(
             booking_series=None,
             status=BookingStatus.CONFIRMED,
             organization=organization,
             resource=resource,
         )
 
-        # When show_recurring_bookings=False, should only show bookings
-        # from CONFIRMED series
+        # When show_recurring_bookings=False, should only show standalone bookings
         bookings, _, _ = manager_filter_bookings_list(
             organization_search=None,
             show_past_bookings=True,
@@ -1605,9 +1601,9 @@ class TestManagerFilterBookingsListExtended(TestCase):
             user=manager_user,
         )
 
-        # Should only contain the booking from confirmed series
+        # Should only contain the standalone booking
         assert bookings.count() == 1
-        assert booking_confirmed in bookings
+        assert standalone_booking in bookings
 
     def test_filter_by_date(self):
         """Test filtering bookings by specific date"""
@@ -1635,13 +1631,11 @@ class TestManagerFilterBookingsListExtended(TestCase):
 
         from psycopg.types.range import Range
 
-        # Create booking with CONFIRMED series so it appears
-        # when show_recurring_bookings=False
-        booking_series = BookingSeriesFactory(status=BookingStatus.CONFIRMED)
+        # Create standalone booking so it appears when show_recurring_bookings=False
         BookingFactory(
             resource=resource,
             organization=organization,
-            booking_series=booking_series,
+            booking_series=None,
             timespan=Range(start_dt, end_dt),
             start_date=specific_date,
             status=BookingStatus.CONFIRMED,
@@ -2137,16 +2131,16 @@ class TestGetExternalEvents(TestCase):
 VERSION:2.0
 PRODID:-//Test Calendar//EN
 BEGIN:VEVENT
-DTSTART:20260201T100000Z
-DTEND:20260201T120000Z
+DTSTART:20260301T100000Z
+DTEND:20260301T120000Z
 SUMMARY:Future Event 1
 LOCATION:Conference Room A
 DESCRIPTION:A test event in the future
 URL:https://example.com/event1
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20260301T140000Z
-DTEND:20260301T160000Z
+DTSTART:20260401T140000Z
+DTEND:20260401T160000Z
 SUMMARY:Future Event 2
 LOCATION:Conference Room B
 DESCRIPTION:Another future event
