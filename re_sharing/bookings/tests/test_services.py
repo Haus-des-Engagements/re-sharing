@@ -1175,28 +1175,28 @@ class TestBookingsWebview(TestCase):
         assert bookings.count() == 1
         assert bookings.first().status == BookingStatus.CONFIRMED
 
-    def test_bookings_webview_access_filter(self):
+    def test_bookings_webview_location_filter(self):
         from datetime import time
 
-        from re_sharing.resources.tests.factories import AccessFactory
+        from re_sharing.resources.tests.factories import LocationFactory
 
         today = timezone.now().date()
 
-        # Create two different accesses
-        access1 = AccessFactory(name="Key Card")
-        access2 = AccessFactory(name="Digital Code")
+        # Create two different locations
+        location1 = LocationFactory(name="Building A")
+        location2 = LocationFactory(name="Building B")
 
-        # Create resources with different accesses
-        resource_with_access1 = ResourceFactory(
-            type=Resource.ResourceTypeChoices.ROOM, access=access1
+        # Create resources at different locations
+        resource_at_location1 = ResourceFactory(
+            type=Resource.ResourceTypeChoices.ROOM, location=location1
         )
-        resource_with_access2 = ResourceFactory(
-            type=Resource.ResourceTypeChoices.ROOM, access=access2
+        resource_at_location2 = ResourceFactory(
+            type=Resource.ResourceTypeChoices.ROOM, location=location2
         )
 
         # Create bookings for both resources
         BookingFactory(
-            resource=resource_with_access1,
+            resource=resource_at_location1,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime.combine(today, time(10, 0))),
@@ -1204,7 +1204,7 @@ class TestBookingsWebview(TestCase):
             ),
         )
         BookingFactory(
-            resource=resource_with_access2,
+            resource=resource_at_location2,
             status=BookingStatus.CONFIRMED,
             timespan=(
                 timezone.make_aware(timezone.datetime.combine(today, time(14, 0))),
@@ -1212,11 +1212,11 @@ class TestBookingsWebview(TestCase):
             ),
         )
 
-        # Test filtering by specific access
-        bookings, access = bookings_webview(access1.slug)
+        # Test filtering by specific location
+        bookings, location = bookings_webview(location1.slug)
 
         assert bookings.count() == 1
-        assert bookings.first().resource == resource_with_access1
+        assert bookings.first().resource == resource_at_location1
 
 
 @pytest.mark.django_db()

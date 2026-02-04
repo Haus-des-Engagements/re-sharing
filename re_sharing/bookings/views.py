@@ -340,8 +340,8 @@ def list_bookings_webview(request: HttpRequest) -> HttpResponse:
 
     from .services import get_external_events
 
-    access = request.GET.get("access") or "all"
-    bookings, access = bookings_webview(access)
+    location = request.GET.get("location") or "all"
+    bookings, location = bookings_webview(location)
 
     # Fetch external events from ICS feed
     external_events = []
@@ -357,7 +357,7 @@ def list_bookings_webview(request: HttpRequest) -> HttpResponse:
         {
             "bookings": bookings,
             "date": timezone.now(),
-            "access": access,
+            "location": location,
             "external_events": external_events,
         },
     )

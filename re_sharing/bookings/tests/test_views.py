@@ -681,7 +681,7 @@ class TestListBookingsWebview(TestCase):
 
         response = self.client.get(
             reverse("bookings:list-bookings-webview"),
-            {"access": "public"},
+            {"location": "public"},
         )
 
         assert response.status_code == HTTPStatus.OK

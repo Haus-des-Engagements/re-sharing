@@ -28,7 +28,6 @@ from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
 from re_sharing.organizations.services import user_has_bookingpermission
-from re_sharing.resources.models import Access
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
@@ -494,15 +493,15 @@ def filter_bookings_list(  # noqa: PLR0913
     return bookings, organizations
 
 
-def bookings_webview(access="all"):
+def bookings_webview(location="all"):
     bookings = Booking.objects.filter(
         resource__type=Resource.ResourceTypeChoices.ROOM, status=BookingStatus.CONFIRMED
     )
 
-    # Filter by access if not "all"
-    if access != "all":
-        access = get_object_or_404(Access, slug=access)
-        bookings = bookings.filter(resource__access=access)
+    # Filter by location if not "all"
+    if location != "all":
+        location = get_object_or_404(Location, slug=location)
+        bookings = bookings.filter(resource__location=location)
 
     bookings = bookings.filter(
         timespan__overlap=(
@@ -513,7 +512,7 @@ def bookings_webview(access="all"):
 
     bookings = bookings.order_by("timespan")
 
-    return bookings, access
+    return bookings, location
 
 
 def manager_filter_bookings_list(  # noqa: PLR0913
