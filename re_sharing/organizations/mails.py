@@ -120,7 +120,10 @@ def send_booking_confirmation_email(booking):
 
 def send_booking_reminder_emails(days=5):
     bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
+    # Exclude bookings from organizations that use the "sent bulk access codes"
     bookings = bookings.exclude(organization__monthly_bulk_access_codes=True)
+    # Filter for bookings that are not part of a booking series
+    # or a part of booking series where the reminder mails should be sent out
     bookings = bookings.filter(
         Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
     )

@@ -245,7 +245,13 @@ def cancel_bookings_of_booking_series_view(request, booking_series):
     booking_series, bookings, is_cancelable = get_bookings_of_booking_series(
         request.user, booking_series.slug
     )
-    messages.success(request, _("Successfully cancelled all future bookings."))
+    messages.success(
+        request,
+        _(
+            "Successfully cancelled the entire booking series. "
+            "All future bookings have been deleted."
+        ),
+    )
 
     return render(
         request,

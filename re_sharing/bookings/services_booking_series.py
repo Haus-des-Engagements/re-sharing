@@ -198,12 +198,12 @@ def cancel_bookings_of_booking_series(user, booking_series_uuid):
     bs.status = BookingStatus.CANCELLED
     bs.save()
 
+    now = timezone.now()
     for booking in bookings:
-        if booking.is_cancelable():
+        # Delete future bookings, keep past bookings
+        if booking.timespan.lower > now:
             with set_actor(user):
-                booking.status = BookingStatus.CANCELLED
-                booking.save()
-
+                booking.delete()
     return bs
 
 
@@ -249,11 +249,18 @@ def manager_cancel_booking_series(user, booking_series_uuid):
     booking_series.status = BookingStatus.CANCELLED
     booking_series.save()
 
+    now = timezone.now()
     for booking in bookings:
         if booking.is_cancelable():
-            with set_actor(user):
-                booking.status = BookingStatus.CANCELLED
-                booking.save()
+            # Delete future bookings, keep past bookings
+            if booking.timespan.upper and booking.timespan.upper > now:
+                with set_actor(user):
+                    booking.delete()
+            else:
+                # Past bookings are just cancelled, not deleted
+                with set_actor(user):
+                    booking.status = BookingStatus.CANCELLED
+                    booking.save()
     send_booking_series_cancellation_email(booking_series)
     return booking_series
 
