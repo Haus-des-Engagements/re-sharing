@@ -122,21 +122,23 @@ def test_cancel_bookings_of_booking_series():
     )
 
     booking_series = BookingSeriesFactory()
-    booking1 = BookingFactory(
+    # Past booking - should remain untouched
+    booking_past = BookingFactory(
         user=user,
         organization=organization,
         booking_series=booking_series,
         start_date=timezone.now().date() - timedelta(days=5),
         status=BookingStatus.PENDING,
     )
-    booking2 = BookingFactory(
+    # Future bookings - should be deleted
+    booking_future1 = BookingFactory(
         user=user,
         organization=organization,
         booking_series=booking_series,
         start_date=timezone.now().date() + timedelta(days=10),
         status=BookingStatus.PENDING,
     )
-    booking3 = BookingFactory(
+    booking_future2 = BookingFactory(
         user=user,
         organization=organization,
         booking_series=booking_series,
@@ -146,13 +148,13 @@ def test_cancel_bookings_of_booking_series():
 
     cancel_bookings_of_booking_series(user, booking_series.uuid)
 
-    booking1.refresh_from_db()
-    booking2.refresh_from_db()
-    booking3.refresh_from_db()
+    # Past booking stays, status unchanged
+    booking_past.refresh_from_db()
+    assert booking_past.status == BookingStatus.PENDING
 
-    assert booking1.status == BookingStatus.PENDING
-    assert booking2.status == BookingStatus.CANCELLED
-    assert booking3.status == BookingStatus.CANCELLED
+    # Future bookings are deleted
+    assert not Booking.objects.filter(id=booking_future1.id).exists()
+    assert not Booking.objects.filter(id=booking_future2.id).exists()
 
 
 @skip
