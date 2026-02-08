@@ -334,7 +334,6 @@ def preview_and_save_booking_series_view(request):
 
 
 @require_http_methods(["GET"])
-@login_required
 def list_bookings_webview(request: HttpRequest) -> HttpResponse:
     from django.conf import settings
 
