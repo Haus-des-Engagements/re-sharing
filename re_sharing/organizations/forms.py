@@ -72,6 +72,14 @@ class OrganizationForm(forms.ModelForm):
         ),
         required=False,
     )
+    show_bookings_on_info_screens = forms.BooleanField(
+        label=_(
+            "Your bookings can be displayed on info screens at the entrance "
+            "of the meeting location."
+        ),
+        help_text=_("Only organization name, time and room will be displayed."),
+        required=False,
+    )
     email = forms.EmailField(label=_("E-Mail address of the organization"))
     send_booking_emails_only_to_organization = forms.BooleanField(
         label=_("Send all emails to this address."),
@@ -275,6 +283,7 @@ class OrganizationForm(forms.ModelForm):
                     ),
                 ),
                 "is_public",
+                "show_bookings_on_info_screens",
                 "values_approval",
             ]
         )

@@ -495,7 +495,9 @@ def filter_bookings_list(  # noqa: PLR0913
 
 def bookings_webview(location="all"):
     bookings = Booking.objects.filter(
-        resource__type=Resource.ResourceTypeChoices.ROOM, status=BookingStatus.CONFIRMED
+        resource__type=Resource.ResourceTypeChoices.ROOM,
+        status=BookingStatus.CONFIRMED,
+        organization__show_bookings_on_info_screens=True,
     )
 
     # Filter by location if not "all"
