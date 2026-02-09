@@ -189,6 +189,17 @@ class Organization(TimeStampedModel):
             "description, city, website, area of activity"
         ),
     )
+    show_bookings_on_info_screens = BooleanField(
+        _(
+            "Show bookings on public info screens at the entrance of "
+            "the meeting location"
+        ),
+        default=True,
+        help_text=_(
+            "If enabled, your bookings will show up on the info screens at "
+            "the entrance of the meeting location."
+        ),
+    )
     values_approval = BooleanField(_("Approval of values"))
     notes = CharField(
         _("Notes"), max_length=512, blank=True, help_text=_("Internal notes")
