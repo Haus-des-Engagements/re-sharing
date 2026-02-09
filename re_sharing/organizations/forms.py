@@ -175,6 +175,7 @@ class OrganizationForm(forms.ModelForm):
             "usage_agreement",
             "organization_groups",
             "usage_agreement_date",
+            "show_bookings_on_info_screens",
         )
 
     def __init__(self, user, *args, **kwargs):
