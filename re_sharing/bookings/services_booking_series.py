@@ -183,7 +183,7 @@ def save_booking_series(user, bookings, booking_series):
     for booking in bookings:
         booking.user = booking_series.user
         booking.save()
-    send_manager_new_booking_series_email(booking_series)
+    send_manager_new_booking_series_email.enqueue(booking_series.id)
 
     return bookings, booking_series
 
@@ -261,7 +261,7 @@ def manager_cancel_booking_series(user, booking_series_uuid):
                 with set_actor(user):
                     booking.status = BookingStatus.CANCELLED
                     booking.save()
-    send_booking_series_cancellation_email(booking_series)
+    send_booking_series_cancellation_email.enqueue(booking_series.id)
     return booking_series
 
 

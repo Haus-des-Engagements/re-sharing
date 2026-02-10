@@ -915,18 +915,22 @@ def test_manager_cancel_booking_series(mock_is_cancelable):
     user = UserFactory(is_staff=True)
     booking_series = BookingSeriesFactory()
     booking1 = BookingFactory(
-        booking_series=booking_series, status=BookingStatus.PENDING
+        booking_series=booking_series,
+        status=BookingStatus.PENDING,
+        start_date=(timezone.now().date() - timedelta(weeks=1)),
     )
     booking2 = BookingFactory(
-        booking_series=booking_series, status=BookingStatus.PENDING
+        booking_series=booking_series,
+        start_date=(timezone.now().date() + timedelta(weeks=1)),
+        status=BookingStatus.PENDING,
     )
 
     manager_cancel_booking_series(user, booking_series.uuid)
 
     booking1.refresh_from_db()
     assert booking1.status == BookingStatus.CANCELLED
-    booking2.refresh_from_db()
-    assert booking2.status == BookingStatus.CANCELLED
+    with pytest.raises(Booking.DoesNotExist):
+        Booking.objects.get(id=booking2.id)
 
 
 @pytest.mark.django_db()

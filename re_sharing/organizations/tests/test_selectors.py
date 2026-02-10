@@ -20,6 +20,7 @@ from re_sharing.organizations.selectors import user_has_admin_permission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -260,6 +261,7 @@ class TestGetFilteredOrganizations(TestCase):
         for _ in range(2):
             BookingFactory(
                 organization=self.org1,
+                resource=ResourceFactory(),
                 status=BookingStatus.CONFIRMED,
                 timespan=(now, now + timedelta(hours=1)),
             )
@@ -268,6 +270,7 @@ class TestGetFilteredOrganizations(TestCase):
         for _ in range(3):
             BookingFactory(
                 organization=self.org2,
+                resource=ResourceFactory(),
                 status=BookingStatus.CONFIRMED,
                 timespan=(now, now + timedelta(hours=1)),
             )

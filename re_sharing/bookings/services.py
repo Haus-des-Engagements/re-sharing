@@ -214,7 +214,7 @@ def save_booking(user, booking):
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
     if booking.status == BookingStatus.PENDING:
-        send_manager_new_booking_email(booking)
+        send_manager_new_booking_email.enqueue(booking.id)
 
     return booking
 
@@ -254,7 +254,7 @@ def save_bookingmessage(booking, message, user):
         user=user,
     )
     booking_message.save()
-    send_new_booking_message_email(booking_message)
+    send_new_booking_message_email.enqueue(booking_message.id)
 
     return booking_message
 
@@ -591,7 +591,7 @@ def manager_cancel_booking(user, booking_slug):
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
-        send_booking_cancellation_email(booking)
+        send_booking_cancellation_email.enqueue(booking.id)
 
         return booking
 
@@ -613,13 +613,13 @@ def manager_confirm_booking(user, booking_slug):
             with set_actor(user):
                 booking.status = BookingStatus.UNAVAILABLE
                 booking.save()
-            send_booking_not_available_email(booking)
+            send_booking_not_available_email.enqueue(booking.id)
         else:
             # No overlap, confirm the booking
             with set_actor(user):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
-            send_booking_confirmation_email(booking)
+            send_booking_confirmation_email.enqueue(booking.id)
 
         return booking
 
@@ -645,7 +645,7 @@ def manager_confirm_booking_series(user, booking_series_uuid):
                     booking.status = BookingStatus.CONFIRMED
                 booking.save()
 
-    send_booking_series_confirmation_email(booking_series)
+    send_booking_series_confirmation_email.enqueue(booking_series.id)
     return booking_series
 
 

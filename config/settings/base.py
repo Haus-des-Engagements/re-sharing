@@ -91,6 +91,8 @@ THIRD_PARTY_APPS = [
     "import_export",
     "hijack",
     "hijack.contrib.admin",
+    "django_tasks",
+    "django_tasks.backends.database",
 ]
 
 LOCAL_APPS = [
@@ -334,3 +336,13 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 # Your stuff...
 # ------------------------------------------------------------------------------
 AUDITLOG_DISABLE_REMOTE_ADDR = True
+
+# DJANGO TASKS
+# ------------------------------------------------------------------------------
+# https://github.com/RealOrangeOne/django-tasks
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.database.DatabaseBackend",
+        "QUEUES": ["default", "email"],
+    }
+}

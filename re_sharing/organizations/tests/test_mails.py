@@ -16,14 +16,14 @@ from re_sharing.organizations.mails import organization_confirmation_email
 from re_sharing.organizations.mails import send_booking_cancellation_email
 from re_sharing.organizations.mails import send_booking_confirmation_email
 from re_sharing.organizations.mails import send_booking_not_available_email
-from re_sharing.organizations.mails import send_booking_reminder_emails
+from re_sharing.organizations.mails import send_booking_reminder_email
 from re_sharing.organizations.mails import send_booking_series_cancellation_email
 from re_sharing.organizations.mails import send_booking_series_confirmation_email
 from re_sharing.organizations.mails import send_custom_organization_email
 from re_sharing.organizations.mails import send_email_with_template
 from re_sharing.organizations.mails import send_manager_new_booking_email
 from re_sharing.organizations.mails import send_manager_new_booking_series_email
-from re_sharing.organizations.mails import send_monthly_bookings_overview
+from re_sharing.organizations.mails import send_monthly_overview_email
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
@@ -197,7 +197,7 @@ class SendBookingConfirmationEmailTest(TestCase):
         end = timezone.now() + timedelta(days=10, hours=2)
         booking = BookingFactory(title="Test Booking", timespan=Range(start, end))
 
-        send_booking_confirmation_email(booking)
+        send_booking_confirmation_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert "Booking confirmed: Test Booking" in mail.outbox[0].subject
@@ -218,7 +218,7 @@ class SendBookingCancellationEmailTest(TestCase):
         )
         booking = BookingFactory(title="Test Booking")
 
-        send_booking_cancellation_email(booking)
+        send_booking_cancellation_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert "Booking cancelled: Test Booking" in mail.outbox[0].subject
@@ -244,7 +244,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         )
         booking = BookingFactory(title="Test Booking", status=BookingStatus.UNAVAILABLE)
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert "Booking not available: Test Booking" in mail.outbox[0].subject
@@ -261,7 +261,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         )
         booking = BookingFactory(status=BookingStatus.UNAVAILABLE)
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 0
 
@@ -269,7 +269,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         """Test that no email is sent when template does not exist"""
         booking = BookingFactory(status=BookingStatus.UNAVAILABLE)
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 0
 
@@ -290,7 +290,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         )
         BookingPermissionFactory(user=user, organization=organization)
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["user@example.com"]
@@ -311,7 +311,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
             user=user, organization=organization, status=BookingStatus.UNAVAILABLE
         )
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["org@example.com"]
@@ -339,7 +339,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
             status=BookingStatus.UNAVAILABLE,
         )
 
-        send_booking_not_available_email(booking)
+        send_booking_not_available_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert "Important Meeting" in mail.outbox[0].subject
@@ -347,7 +347,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         assert "Meeting Room A" in mail.outbox[0].body
 
 
-class SendBookingReminderEmailsTest(TestCase):
+class SendBookingReminderEmailTest(TestCase):
     def setUp(self):
         mail.outbox.clear()
         EmailTemplateFactory(
@@ -357,7 +357,7 @@ class SendBookingReminderEmailsTest(TestCase):
             active=True,
         )
 
-    def test_sends_reminder_for_booking_in_5_days(self):
+    def test_sends_reminder_email(self):
         future_time = timezone.now() + timedelta(days=5)
         future_time = future_time.replace(hour=10, minute=0, second=0, microsecond=0)
         booking = BookingFactory(
@@ -366,36 +366,11 @@ class SendBookingReminderEmailsTest(TestCase):
             timespan=Range(future_time, future_time + timedelta(hours=2)),
         )
 
-        slugs, date = send_booking_reminder_emails(days=5)
+        result = send_booking_reminder_email.call(booking.id)
 
         assert len(mail.outbox) == 1
-        assert booking.slug in slugs
         assert "Booking reminder: Future Booking" in mail.outbox[0].subject
-
-    def test_does_not_send_reminder_for_booking_too_far_future(self):
-        future_time = timezone.now() + timedelta(days=10)
-        BookingFactory(
-            status=BookingStatus.CONFIRMED,
-            timespan=Range(future_time, future_time + timedelta(hours=2)),
-        )
-
-        slugs, date = send_booking_reminder_emails(days=5)
-
-        assert len(mail.outbox) == 0
-        assert len(slugs) == 0
-
-    def test_does_not_send_reminder_for_unconfirmed_booking(self):
-        future_time = timezone.now() + timedelta(days=5)
-        future_time = future_time.replace(hour=10, minute=0, second=0, microsecond=0)
-        BookingFactory(
-            status=BookingStatus.PENDING,
-            timespan=Range(future_time, future_time + timedelta(hours=2)),
-        )
-
-        slugs, date = send_booking_reminder_emails(days=5)
-
-        assert len(mail.outbox) == 0
-        assert len(slugs) == 0
+        assert result["booking_slug"] == booking.slug
 
 
 class SendManagerNewBookingEmailTest(TestCase):
@@ -415,7 +390,7 @@ class SendManagerNewBookingEmailTest(TestCase):
         )
         booking = BookingFactory(title="Test Booking")
 
-        send_manager_new_booking_email(booking)
+        send_manager_new_booking_email.call(booking.id)
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["manager@example.com"]
@@ -435,7 +410,7 @@ class SendBookingSeriesConfirmationEmailTest(TestCase):
         )
         booking_series = BookingSeriesFactory()
 
-        send_booking_series_confirmation_email(booking_series)
+        send_booking_series_confirmation_email.call(booking_series.id)
 
         assert len(mail.outbox) == 1
         assert "Series confirmed" in mail.outbox[0].subject
@@ -454,7 +429,7 @@ class SendBookingSeriesCancellationEmailTest(TestCase):
         )
         booking_series = BookingSeriesFactory()
 
-        send_booking_series_cancellation_email(booking_series)
+        send_booking_series_cancellation_email.call(booking_series.id)
 
         assert len(mail.outbox) == 1
         assert "Series cancelled" in mail.outbox[0].subject
@@ -477,7 +452,7 @@ class SendManagerNewBookingSeriesEmailTest(TestCase):
         )
         booking_series = BookingSeriesFactory()
 
-        send_manager_new_booking_series_email(booking_series)
+        send_manager_new_booking_series_email.call(booking_series.id)
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["manager@example.com"]
@@ -498,7 +473,7 @@ class OrganizationConfirmationEmailTest(TestCase):
             email="org@example.com", send_booking_emails_only_to_organization=True
         )
 
-        organization_confirmation_email(organization)
+        organization_confirmation_email.call(organization.id)
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["org@example.com"]
@@ -521,7 +496,7 @@ class OrganizationConfirmationEmailTest(TestCase):
             status=BookingPermission.Status.CONFIRMED,
         )
 
-        organization_confirmation_email(organization)
+        organization_confirmation_email.call(organization.id)
 
         assert len(mail.outbox) == 1
         assert "admin@example.com" in mail.outbox[0].to
@@ -542,13 +517,13 @@ class OrganizationCancellationEmailTest(TestCase):
             email="org@example.com", send_booking_emails_only_to_organization=True
         )
 
-        organization_cancellation_email(organization)
+        organization_cancellation_email.call(organization.id)
 
         assert len(mail.outbox) == 1
         assert "Organization cancelled" in mail.outbox[0].subject
 
 
-class SendMonthlyBookingsOverviewTest(TestCase):
+class SendMonthlyOverviewEmailTest(TestCase):
     def setUp(self):
         mail.outbox.clear()
         EmailTemplateFactory(
@@ -559,54 +534,31 @@ class SendMonthlyBookingsOverviewTest(TestCase):
             active=True,
         )
 
-    def test_sends_monthly_overview_for_organizations_with_bulk_access_codes(self):
-        from dateutil.relativedelta import relativedelta
-
+    def test_sends_monthly_overview_email(self):
         organization = OrganizationFactory(
             email="org@example.com", monthly_bulk_access_codes=True
         )
-        next_month = timezone.now() + relativedelta(months=+1)
-        next_month_start = next_month.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        BookingFactory(
+        next_month = timezone.now() + timedelta(days=35)
+        booking = BookingFactory(
             organization=organization,
             status=BookingStatus.CONFIRMED,
             timespan=Range(
-                next_month_start + timedelta(days=5),
-                next_month_start + timedelta(days=5, hours=2),
+                next_month,
+                next_month + timedelta(hours=2),
             ),
             title="Next Month Booking",
         )
 
-        result = send_monthly_bookings_overview()
+        result = send_monthly_overview_email.call(
+            organization.id,
+            [booking.id],
+            next_month.isoformat(),
+        )
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["org@example.com"]
-        assert result["organizations_processed"] == 1
-        assert organization.name in result["organizations_list"]
-
-    def test_does_not_send_for_organizations_without_bulk_access_codes(self):
-        from dateutil.relativedelta import relativedelta
-
-        organization = OrganizationFactory(monthly_bulk_access_codes=False)
-        next_month = timezone.now() + relativedelta(months=+1)
-        next_month_start = next_month.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        BookingFactory(
-            organization=organization,
-            status=BookingStatus.CONFIRMED,
-            timespan=Range(
-                next_month_start + timedelta(days=5),
-                next_month_start + timedelta(days=5, hours=2),
-            ),
-        )
-
-        result = send_monthly_bookings_overview()
-
-        assert len(mail.outbox) == 0
-        assert result["organizations_processed"] == 0
+        assert result["organization"] == organization.name
+        assert result["booking_count"] == 1
 
 
 class SendCustomOrganizationEmailTest(TestCase):

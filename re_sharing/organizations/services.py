@@ -107,7 +107,7 @@ def create_organization(user, form):
 
     from re_sharing.organizations.mails import manager_new_organization_email
 
-    manager_new_organization_email(new_org)
+    manager_new_organization_email.enqueue(new_org.id)
     return new_org
 
 
@@ -204,7 +204,7 @@ def manager_cancel_organization(user, organization_slug):
             organization.save()
         from re_sharing.organizations.mails import organization_cancellation_email
 
-        organization_cancellation_email(organization)
+        organization_cancellation_email.enqueue(organization.id)
         return organization
 
     raise InvalidOrganizationOperationError
@@ -219,7 +219,7 @@ def manager_confirm_organization(user, organization_slug):
             organization.save()
         from re_sharing.organizations.mails import organization_confirmation_email
 
-        organization_confirmation_email(organization)
+        organization_confirmation_email.enqueue(organization.id)
         return organization
 
     raise InvalidOrganizationOperationError
@@ -235,7 +235,7 @@ def save_organizationmessage(organization, message, user):
 
     from re_sharing.organizations.mails import send_new_organization_message_email
 
-    send_new_organization_message_email(organization_message)
+    send_new_organization_message_email.enqueue(organization_message.id)
 
     return organization_message
 

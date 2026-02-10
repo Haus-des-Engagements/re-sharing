@@ -7,4 +7,14 @@ set -o nounset
 
 python /app/manage.py collectstatic --noinput
 python /app/manage.py migrate
+
+# Start the background task worker with auto-restart
+(
+  while true; do
+    echo "[$(date)] Starting db_worker..."
+    python /app/manage.py db_worker --queue-name default --queue-name email || echo "[$(date)] WARNING: db_worker crashed with exit code $?, restarting in 5s..."
+    sleep 5
+  done
+) &
+
 exec gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app

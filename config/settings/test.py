@@ -38,3 +38,13 @@ MEDIA_URL = "http://media.testserver"
 # ------------------------------------------------------------------------------
 
 LANGUAGE_CODE = "en"
+
+# DJANGO TASKS
+# ------------------------------------------------------------------------------
+# Use ImmediateBackend for tests so tasks run synchronously
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
+        "QUEUES": ["default", "email"],
+    }
+}

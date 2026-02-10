@@ -1,11 +1,25 @@
+"""
+Email functions for the organizations app.
+
+All email sending functions are implemented as background tasks using django-tasks.
+This provides resilience against SMTP failures and allows emails to be processed
+asynchronously.
+
+Usage:
+    # Enqueue for background processing (recommended)
+    send_booking_confirmation_email.enqueue(booking.id)
+
+    # Synchronous call (for testing)
+    send_booking_confirmation_email.call(booking.id)
+"""
+
 import logging
 from datetime import timedelta
 
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
-from django.db.models import Q
+from django.tasks import task
 from django.template import Context
 from django.template import Template
 from django.urls import reverse
@@ -14,12 +28,14 @@ from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
 from icalendar import Event
 
-from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import EmailTemplate
-from re_sharing.resources.services import get_access_code
-from re_sharing.utils.models import BookingStatus
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Helper functions (not tasks)
+# =============================================================================
 
 
 def get_email_template(email_type):
@@ -94,7 +110,21 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
     email.send(fail_silently=False)
 
 
-def send_booking_confirmation_email(booking):
+# =============================================================================
+# Booking email tasks
+# =============================================================================
+
+
+@task(queue_name="email")
+def send_booking_confirmation_email(booking_id: int) -> dict:
+    """Send confirmation email for a booking."""
+    from re_sharing.bookings.models import Booking
+    from re_sharing.resources.services import get_access_code
+
+    booking = Booking.objects.select_related(
+        "resource", "resource__location", "organization", "user"
+    ).get(id=booking_id)
+
     access_code = get_access_code(
         booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
@@ -117,108 +147,82 @@ def send_booking_confirmation_email(booking):
         get_recipient_booking(booking),
     )
 
+    return {"booking_id": booking_id, "recipient": get_recipient_booking(booking)}
 
-def send_booking_reminder_emails(days=5):
-    bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
-    # Exclude bookings from organizations that use the "sent bulk access codes"
-    bookings = bookings.exclude(organization__monthly_bulk_access_codes=True)
-    # Filter for bookings that are not part of a booking series
-    # or a part of booking series where the reminder mails should be sent out
-    bookings = bookings.filter(
-        Q(booking_series__isnull=True) | Q(booking_series__reminder_emails=True)
+
+@task(queue_name="email")
+def send_booking_reminder_email(booking_id: int) -> dict:
+    """Send reminder email for a single booking."""
+    from re_sharing.bookings.models import Booking
+    from re_sharing.resources.services import get_access_code
+
+    booking = Booking.objects.select_related("resource", "organization", "user").get(
+        id=booking_id
     )
-    dt_in_days = timezone.now() + timedelta(days=days)
-    dt_in_days = dt_in_days.replace(hour=0, minute=0, second=0, microsecond=0)
-    dt_in_next_day = dt_in_days + timedelta(days=1)
-    bookings = bookings.filter(timespan__startswith__gte=dt_in_days)
-    bookings = bookings.filter(timespan__startswith__lt=dt_in_next_day)
-    domain = Site.objects.get_current().domain
 
-    for booking in bookings:
-        access_code = get_access_code(
-            booking.resource.slug, booking.organization.slug, booking.timespan.lower
-        )
-        context = {"booking": booking, "access_code": access_code, "domain": domain}
-
-        send_email_with_template(
-            EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
-            context,
-            get_recipient_booking(booking),
-        )
-    return list(bookings.values_list("slug", flat=True)), dt_in_days.date()
-
-
-def send_monthly_bookings_overview(months=1, organizations=None):
-    next_month = timezone.now() + relativedelta(months=+months)
-    next_month_start = next_month.replace(
-        day=1, hour=0, minute=0, second=0, microsecond=0
+    access_code = get_access_code(
+        booking.resource.slug, booking.organization.slug, booking.timespan.lower
     )
     domain = Site.objects.get_current().domain
-    bookings = Booking.objects.filter(
-        status=BookingStatus.CONFIRMED, organization__monthly_bulk_access_codes=True
+    context = {"booking": booking, "access_code": access_code, "domain": domain}
+    recipient = get_recipient_booking(booking)
+
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.BOOKING_REMINDER,
+        context,
+        recipient,
     )
 
-    # Filter by specific organizations if provided
-    if organizations is not None:
-        bookings = bookings.filter(organization__in=organizations)
-    bookings = bookings.filter(
-        timespan__startswith__gte=next_month_start,
-        timespan__startswith__lt=next_month_start + relativedelta(months=1),
-    )
-    # Group bookings by organization to send bulk emails
-    from collections import defaultdict
-
-    bookings_by_org = defaultdict(list)
-
-    for booking in bookings:
-        booking.access_code = booking.get_access_code()
-        # Add access_code as an attribute to the booking object
-        bookings_by_org[booking.organization].append(booking)
-
-    # Send emails for each organization
-    for organization, booking_list in bookings_by_org.items():
-        context = {
-            "organization": organization,
-            "bookings": booking_list,
-            "next_month": next_month,
-            "domain": domain,
-        }
-        send_email_with_template(
-            EmailTemplate.EmailTypeChoices.MONTHLY_BOOKINGS,
-            context,
-            [organization.email],
-        )
-
-    return {
-        "next_month_start": next_month_start.date(),
-        "organizations_processed": len(bookings_by_org),
-        "organizations_list": [org.name for org in bookings_by_org],
-    }
+    return {"booking_slug": booking.slug, "recipient": recipient}
 
 
-def send_booking_cancellation_email(booking):
+@task(queue_name="email")
+def send_booking_cancellation_email(booking_id: int) -> dict:
+    """Send cancellation email for a booking."""
+    from re_sharing.bookings.models import Booking
+
+    booking = Booking.objects.select_related("organization", "user").get(id=booking_id)
+
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}
+    recipient = get_recipient_booking(booking)
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_CANCELLATION,
         context,
-        get_recipient_booking(booking),
+        recipient,
     )
 
+    return {"booking_id": booking_id, "recipient": recipient}
 
-def send_booking_not_available_email(booking):
+
+@task(queue_name="email")
+def send_booking_not_available_email(booking_id: int) -> dict:
+    """Send 'not available' email for a booking."""
+    from re_sharing.bookings.models import Booking
+
+    booking = Booking.objects.select_related("organization", "user").get(id=booking_id)
+
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}
+    recipient = get_recipient_booking(booking)
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
         context,
-        get_recipient_booking(booking),
+        recipient,
     )
 
+    return {"booking_id": booking_id, "recipient": recipient}
 
-def send_manager_new_booking_email(booking):
+
+@task(queue_name="email")
+def send_manager_new_booking_email(booking_id: int) -> dict:
+    """Send notification email to manager about new booking."""
+    from re_sharing.bookings.models import Booking
+
+    booking = Booking.objects.select_related("organization", "user").get(id=booking_id)
+
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "domain": domain}
 
@@ -228,8 +232,47 @@ def send_manager_new_booking_email(booking):
         [settings.DEFAULT_MANAGER_EMAIL],
     )
 
+    return {"booking_id": booking_id}
 
-def send_booking_series_confirmation_email(booking_series):
+
+@task(queue_name="email")
+def send_new_booking_message_email(booking_message_id: int) -> dict:
+    """Send notification email about a new booking message."""
+    from re_sharing.bookings.models import BookingMessage
+
+    booking_message = BookingMessage.objects.select_related(
+        "booking", "booking__organization", "user"
+    ).get(id=booking_message_id)
+
+    domain = Site.objects.get_current().domain
+    context = {"booking": booking_message.booking, "domain": domain}
+    confirmed_users = booking_message.booking.organization.get_confirmed_users()
+    if confirmed_users.filter(id=booking_message.user.id).exists():
+        recipient = [settings.DEFAULT_MANAGER_EMAIL]
+    else:
+        recipient = get_recipient_booking(booking_message.booking)
+
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.NEW_BOOKING_MESSAGE, context, recipient
+    )
+
+    return {"booking_message_id": booking_message_id, "recipient": recipient}
+
+
+# =============================================================================
+# Booking series email tasks
+# =============================================================================
+
+
+@task(queue_name="email")
+def send_booking_series_confirmation_email(booking_series_id: int) -> dict:
+    """Send confirmation email for a booking series."""
+    from re_sharing.bookings.models import BookingSeries
+
+    booking_series = BookingSeries.objects.select_related("organization", "user").get(
+        id=booking_series_id
+    )
+
     domain = Site.objects.get_current().domain
     first_booking = booking_series.get_first_booking()
     context = {
@@ -237,15 +280,26 @@ def send_booking_series_confirmation_email(booking_series):
         "domain": domain,
         "first_booking": first_booking,
     }
+    recipient = get_recipient_booking_series(booking_series)
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_SERIES_CONFIRMATION,
         context,
-        get_recipient_booking_series(booking_series),
+        recipient,
     )
 
+    return {"booking_series_id": booking_series_id, "recipient": recipient}
 
-def send_booking_series_cancellation_email(booking_series):
+
+@task(queue_name="email")
+def send_booking_series_cancellation_email(booking_series_id: int) -> dict:
+    """Send cancellation email for a booking series."""
+    from re_sharing.bookings.models import BookingSeries
+
+    booking_series = BookingSeries.objects.select_related("organization", "user").get(
+        id=booking_series_id
+    )
+
     domain = Site.objects.get_current().domain
     first_booking = booking_series.get_first_booking()
     context = {
@@ -253,17 +307,28 @@ def send_booking_series_cancellation_email(booking_series):
         "domain": domain,
         "first_booking": first_booking,
     }
+    recipient = get_recipient_booking_series(booking_series)
 
     send_email_with_template(
         EmailTemplate.EmailTypeChoices.BOOKING_SERIES_CANCELLATION,
         context,
-        get_recipient_booking_series(booking_series),
+        recipient,
     )
 
+    return {"booking_series_id": booking_series_id, "recipient": recipient}
 
-def send_manager_new_booking_series_email(booking_series):
+
+@task(queue_name="email")
+def send_manager_new_booking_series_email(booking_series_id: int) -> dict:
+    """Send notification email to manager about new booking series."""
+    from re_sharing.bookings.models import BookingSeries
+
+    booking_series = BookingSeries.objects.select_related("organization", "user").get(
+        id=booking_series_id
+    )
+
     domain = Site.objects.get_current().domain
-    first_booking = booking_series.get_first_booking
+    first_booking = booking_series.get_first_booking()
     context = {
         "booking_series": booking_series,
         "domain": domain,
@@ -276,8 +341,21 @@ def send_manager_new_booking_series_email(booking_series):
         [settings.DEFAULT_MANAGER_EMAIL],
     )
 
+    return {"booking_series_id": booking_series_id}
 
-def organization_confirmation_email(organization):
+
+# =============================================================================
+# Organization email tasks
+# =============================================================================
+
+
+@task(queue_name="email")
+def organization_confirmation_email(organization_id: int) -> dict:
+    """Send confirmation email when organization is approved."""
+    from re_sharing.organizations.models import Organization
+
+    organization = Organization.objects.get(id=organization_id)
+
     domain = Site.objects.get_current().domain
     context = {
         "organization": organization,
@@ -296,8 +374,16 @@ def organization_confirmation_email(organization):
         recipient_list,
     )
 
+    return {"organization_id": organization_id, "recipient": recipient_list}
 
-def organization_cancellation_email(organization):
+
+@task(queue_name="email")
+def organization_cancellation_email(organization_id: int) -> dict:
+    """Send cancellation email when organization is cancelled."""
+    from re_sharing.organizations.models import Organization
+
+    organization = Organization.objects.get(id=organization_id)
+
     domain = Site.objects.get_current().domain
     context = {
         "organization": organization,
@@ -316,8 +402,16 @@ def organization_cancellation_email(organization):
         recipient_list,
     )
 
+    return {"organization_id": organization_id, "recipient": recipient_list}
 
-def manager_new_organization_email(organization):
+
+@task(queue_name="email")
+def manager_new_organization_email(organization_id: int) -> dict:
+    """Send notification email to manager about new organization."""
+    from re_sharing.organizations.models import Organization
+
+    organization = Organization.objects.get(id=organization_id)
+
     domain = Site.objects.get_current().domain
     context = {
         "organization": organization,
@@ -330,21 +424,18 @@ def manager_new_organization_email(organization):
         [settings.DEFAULT_MANAGER_EMAIL],
     )
 
-
-def send_new_booking_message_email(booking_message):
-    domain = Site.objects.get_current().domain
-    context = {"booking": booking_message.booking, "domain": domain}
-    confirmed_users = booking_message.booking.organization.get_confirmed_users()
-    if confirmed_users.filter(id=booking_message.user.id).exists():
-        recipient = [settings.DEFAULT_MANAGER_EMAIL]
-    else:
-        recipient = get_recipient_booking(booking_message.booking)
-    send_email_with_template(
-        EmailTemplate.EmailTypeChoices.NEW_BOOKING_MESSAGE, context, recipient
-    )
+    return {"organization_id": organization_id}
 
 
-def send_new_organization_message_email(organization_message):
+@task(queue_name="email")
+def send_new_organization_message_email(organization_message_id: int) -> dict:
+    """Send notification email about a new organization message."""
+    from re_sharing.organizations.models import OrganizationMessage
+
+    organization_message = OrganizationMessage.objects.select_related(
+        "organization", "user"
+    ).get(id=organization_message_id)
+
     domain = Site.objects.get_current().domain
     context = {
         "organization": organization_message.organization,
@@ -378,6 +469,60 @@ def send_new_organization_message_email(organization_message):
             recipient_list,
         )
 
+    return {
+        "organization_message_id": organization_message_id,
+        "recipient": recipient_list,
+    }
+
+
+# =============================================================================
+# Monthly overview email task (used by management command)
+# =============================================================================
+
+
+@task(queue_name="email")
+def send_monthly_overview_email(
+    organization_id: int, booking_ids: list[int], next_month_iso: str
+) -> dict:
+    """Send monthly bookings overview email to a single organization."""
+    from re_sharing.bookings.models import Booking
+    from re_sharing.organizations.models import Organization
+
+    organization = Organization.objects.get(id=organization_id)
+    bookings = list(
+        Booking.objects.filter(id__in=booking_ids).select_related("resource")
+    )
+
+    # Add access codes to bookings
+    for booking in bookings:
+        booking.access_code = booking.get_access_code()
+
+    domain = Site.objects.get_current().domain
+    next_month = timezone.datetime.fromisoformat(next_month_iso)
+
+    context = {
+        "organization": organization,
+        "bookings": bookings,
+        "next_month": next_month,
+        "domain": domain,
+    }
+
+    send_email_with_template(
+        EmailTemplate.EmailTypeChoices.MONTHLY_BOOKINGS,
+        context,
+        [organization.email],
+    )
+
+    return {
+        "organization": organization.name,
+        "booking_count": len(bookings),
+    }
+
+
+# =============================================================================
+# Custom email function (not a task - admin action with complex arguments)
+# =============================================================================
+
 
 def send_custom_organization_email(
     organizations,
@@ -387,6 +532,9 @@ def send_custom_organization_email(
 ):
     """
     Send a custom email to multiple organizations.
+
+    This is NOT a task because it takes complex arguments (querysets, templates).
+    It's used for admin actions where synchronous feedback is preferred.
 
     Args:
         organizations: QuerySet or list of Organization objects

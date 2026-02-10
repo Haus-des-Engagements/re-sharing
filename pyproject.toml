@@ -30,6 +30,7 @@ dependencies = [
     "boto3>=1.35.54",
     "botocore>=1.35.54",
     "django-ical>=1.9.2",
+    "django-tasks>=0.11.0",
 ]
 
 [project.optional-dependencies]

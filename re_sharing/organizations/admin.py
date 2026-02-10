@@ -1,9 +1,16 @@
+from collections import defaultdict
+
 from auditlog.context import set_actor
+from dateutil.relativedelta import relativedelta
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportMixin
 
-from .mails import send_monthly_bookings_overview
+from re_sharing.bookings.models import Booking
+from re_sharing.utils.models import BookingStatus
+
+from .mails import send_monthly_overview_email
 from .models import BookingPermission
 from .models import EmailTemplate
 from .models import Organization
@@ -46,7 +53,32 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
 
     @admin.action(description=_("Send monthly bookings overview"))
     def admin_send_monthly_bookings_overview(self, request, queryset):
-        send_monthly_bookings_overview(organizations=queryset)
+        # Get next month's date range
+        next_month = timezone.now() + relativedelta(months=+1)
+        next_month_start = next_month.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        # Get bookings for the selected organizations
+        bookings = Booking.objects.filter(
+            status=BookingStatus.CONFIRMED,
+            organization__in=queryset,
+            timespan__startswith__gte=next_month_start,
+            timespan__startswith__lt=next_month_start + relativedelta(months=1),
+        )
+
+        # Group bookings by organization
+        bookings_by_org = defaultdict(list)
+        for booking in bookings:
+            bookings_by_org[booking.organization].append(booking.id)
+
+        # Enqueue tasks for each organization
+        for organization, booking_ids in bookings_by_org.items():
+            send_monthly_overview_email.enqueue(
+                organization.id,
+                booking_ids,
+                next_month.isoformat(),
+            )
 
 
 @admin.register(EmailTemplate)

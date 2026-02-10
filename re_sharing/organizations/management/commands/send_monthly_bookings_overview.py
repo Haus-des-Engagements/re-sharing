@@ -1,11 +1,17 @@
-from django.core.management.base import BaseCommand
+from collections import defaultdict
 
-from re_sharing.organizations.mails import send_monthly_bookings_overview
+from dateutil.relativedelta import relativedelta
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from re_sharing.bookings.models import Booking
+from re_sharing.organizations.mails import send_monthly_overview_email
 from re_sharing.organizations.models import Organization
+from re_sharing.utils.models import BookingStatus
 
 
 class Command(BaseCommand):
-    help = "Send monthly bookings overview"
+    help = "Enqueue monthly bookings overview emails as background tasks"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -37,14 +43,46 @@ class Command(BaseCommand):
                     )
                 )
 
-        result = send_monthly_bookings_overview(
-            months=months, organizations=organizations
+        # Calculate the target month
+        next_month = timezone.now() + relativedelta(months=+months)
+        next_month_start = next_month.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
         )
-        # Optionally, log the result
+
+        # Get bookings for organizations with bulk access codes
+        bookings = Booking.objects.filter(
+            status=BookingStatus.CONFIRMED, organization__monthly_bulk_access_codes=True
+        )
+
+        # Filter by specific organizations if provided
+        if organizations is not None:
+            bookings = bookings.filter(organization__in=organizations)
+
+        bookings = bookings.filter(
+            timespan__startswith__gte=next_month_start,
+            timespan__startswith__lt=next_month_start + relativedelta(months=1),
+        )
+
+        # Group bookings by organization
+        bookings_by_org = defaultdict(list)
+        for booking in bookings:
+            bookings_by_org[booking.organization].append(booking.id)
+
+        # Enqueue a task for each organization
+        enqueued_count = 0
+        organization_names = []
+        for organization, booking_ids in bookings_by_org.items():
+            send_monthly_overview_email.enqueue(
+                organization.id,
+                booking_ids,
+                next_month.isoformat(),
+            )
+            organization_names.append(organization.name)
+            enqueued_count += 1
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"Reminders send for {result['next_month_start']} for  "
-                f"{result['organizations_processed']} organizations: "
-                f"{result['organizations_list']}"
+                f"Enqueued {enqueued_count} monthly overview email tasks "
+                f"for {next_month_start.date()}: {organization_names}"
             )
         )

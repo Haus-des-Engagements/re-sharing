@@ -175,7 +175,7 @@ def test_manager_confirm_organization(mock_is_confirmable, mock_send_email):
 
     assert organization.status == BookingStatus.CONFIRMED
 
-    mock_send_email.assert_called_once_with(organization)
+    mock_send_email.enqueue.assert_called_once_with(organization.id)
 
 
 @pytest.mark.django_db()
