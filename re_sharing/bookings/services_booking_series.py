@@ -218,7 +218,7 @@ def get_bookings_of_booking_series(user, booking_series_slug):
     bs = get_object_or_404(BookingSeries, slug=booking_series_slug)
     bookings = Booking.objects.select_related("resource").filter(booking_series=bs)
 
-    if not user_has_bookingpermission(user, bookings[0]):
+    if bookings and not user_has_bookingpermission(user, bookings[0]):
         raise PermissionDenied
 
     is_cancelable = bs.is_cancelable()
