@@ -155,7 +155,13 @@ def planner_view(request):
     if request.user.is_authenticated:
         resources = request.user.get_resources()
     else:
-        resources = Resource.objects.filter(is_private=False)
+        resources = Resource.objects.filter(
+            is_private=False,
+            type__in=[
+                Resource.ResourceTypeChoices.ROOM,
+                Resource.ResourceTypeChoices.PARKING_LOT,
+            ],
+        )
 
     # Filter resources by location if specified
     if location_slug:

@@ -286,6 +286,7 @@ def _process_bookings(resource_data, bookings, resource, day, user_context):
 
                 if user.is_authenticated and booking.organization.is_public:
                     timeslot["organization"] = booking.organization.name
+                    timeslot["link"] = f"/organizations/{booking.organization.slug}/"
 
                 if user.is_authenticated and user.is_manager():
                     timeslot["organization"] = booking.organization.name
