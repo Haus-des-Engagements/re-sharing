@@ -155,14 +155,13 @@ def planner_view(request):
     if request.user.is_authenticated:
         resources = request.user.get_resources()
     else:
-        resources = Resource.objects.filter(
-            is_private=False,
-            type__in=[
-                Resource.ResourceTypeChoices.ROOM,
-                Resource.ResourceTypeChoices.PARKING_LOT,
-            ],
-        )
-
+        resources = Resource.objects.filter(is_private=False)
+    resources = resources.filter(
+        type__in=[
+            Resource.ResourceTypeChoices.ROOM,
+            Resource.ResourceTypeChoices.PARKING_LOT,
+        ]
+    )
     # Filter resources by location if specified
     if location_slug:
         resources = resources.filter(location__slug=location_slug)
@@ -170,7 +169,7 @@ def planner_view(request):
     if selected_resources_slugs:
         selected_resources = resources.filter(slug__in=selected_resources_slugs)
     else:
-        selected_resources = resources.filter(type=Resource.ResourceTypeChoices.ROOM)
+        selected_resources = resources
 
     grouped_resources = {}
     for access_type in resources.values_list("access__name", flat=True).distinct():
