@@ -5,6 +5,7 @@ from .models import Access
 from .models import AccessCode
 from .models import Compensation
 from .models import Location
+from .models import PermanentCode
 from .models import Resource
 from .models import ResourceImage
 from .models import ResourceRestriction
@@ -74,6 +75,14 @@ class AccessCodeAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "access", "code", "validity_start", "organization"]
     search_fields = ["id", "access", "code"]
     list_filter = ["access", "organization"]
+    ordering = ["id"]
+
+
+@admin.register(PermanentCode)
+class PermanentCodeAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ["id", "organization", "code", "validity_start", "validity_end"]
+    search_fields = ["id", "organization", "code", "validity_start", "validity_end"]
+    list_filter = ["organization"]
     ordering = ["id"]
 
 

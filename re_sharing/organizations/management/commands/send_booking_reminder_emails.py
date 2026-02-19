@@ -26,6 +26,7 @@ class Command(BaseCommand):
         # Get bookings that need reminders
         bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
         # Exclude bookings from organizations that use the "sent bulk access codes"
+        # TODO: SERIENBUCHUNGEN die neu sind müssen einzelnd versendet werden
         bookings = bookings.exclude(organization__monthly_bulk_access_codes=True)
         # Filter for bookings that are not part of a booking series
         # or a part of booking series where the reminder mails should be sent out

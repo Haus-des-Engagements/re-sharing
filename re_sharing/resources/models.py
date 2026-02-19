@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 
+from auditlog.registry import auditlog
 from django.core.files.storage import storages
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
@@ -22,6 +23,7 @@ from django.db.models import TimeField
 from django.db.models import UUIDField
 from django.db.models.functions import Lower
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 from tinymce.models import HTMLField
@@ -49,6 +51,15 @@ class Access(TimeStampedModel):
     name = CharField(_("Name"), max_length=255)
     slug = AutoSlugField(_("Slug"), populate_from="name", editable=True)
     instructions = TextField(_("Instructions"), max_length=512)
+    smartlock_id = CharField(_("Smartlock ID"), max_length=255, blank=True)
+    parent_access = ForeignKey(
+        "self",
+        verbose_name=_("Parent Access"),
+        null=True,
+        blank=True,
+        on_delete=SET_NULL,
+        related_name="parent_accesses",
+    )
 
     class Meta:
         verbose_name = _("Access")
@@ -87,6 +98,39 @@ class AccessCode(TimeStampedModel):
 
     def __str__(self):
         return self.access.name + " " + self.validity_start.strftime("%Y-%m-%d %H:%M")
+
+
+class PermanentCode(TimeStampedModel):
+    uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = CharField(_("Name"), max_length=256, blank=True)
+    accesses = ManyToManyField(
+        Access,
+        verbose_name=_("Accesses"),
+        related_name="permanentcodes_of_access",
+        related_query_name="permanentcode_of_access",
+    )
+    code = CharField(_("Code"), max_length=256)
+    validity_start = DateTimeField(
+        _("Validity start"), null=False, default=timezone.now
+    )
+    validity_end = DateTimeField(_("Validity end"), null=True, blank=True)
+    organization = ForeignKey(
+        "organizations.Organization",
+        verbose_name=_("Organization"),
+        on_delete=CASCADE,
+        related_name="organizations_of_permanentcode",
+        related_query_name="organization_of_permanentcode",
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Permanent code")
+        verbose_name_plural = _("Permanent codes")
+        ordering = ["validity_start"]
+
+    def __str__(self):
+        return str(self.id) + " " + self.validity_start.strftime("%Y-%m-%d %H:%M")
 
 
 class Resource(Model):
@@ -375,3 +419,6 @@ class Compensation(TimeStampedModel):
         ).exists():
             return True
         return False
+
+
+auditlog.register(PermanentCode, exclude_fields=["updated"])

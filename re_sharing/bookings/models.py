@@ -1,3 +1,4 @@
+import random
 import uuid
 
 from auditlog.models import AuditlogHistoryField
@@ -287,6 +288,15 @@ class BookingGroup(TimeStampedModel):
         self.bookings_of_bookinggroup.update(status=BookingStatus.CANCELLED)
 
 
+def _generate_booking_access_code() -> str:
+    """Generate a random 6-digit access code (no zeros, cannot start with '12')."""
+    digits = "123456789"
+    while True:
+        code = "".join(random.choices(digits, k=6))  # noqa: S311
+        if not code.startswith("12"):
+            return code
+
+
 class Booking(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, editable=False)
     history = AuditlogHistoryField()
@@ -385,6 +395,9 @@ class Booking(TimeStampedModel):
         help_text=_(
             "True for lendable item bookings. Used to exclude from overlap constraint."
         ),
+    )
+    access_code = CharField(
+        _("Code"), max_length=256, blank=True, default=_generate_booking_access_code
     )
 
     class Meta:
