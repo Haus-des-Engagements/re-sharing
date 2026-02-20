@@ -259,6 +259,7 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.smtp.EmailBackend",
 )
 NEWSLETTER_API_URL = env("NEWSLETTER_API_URL", default="none")
+NUKI_API_TOKEN = env("NUKI_API_TOKEN", default="")
 EXTERNAL_EVENTS_ICS_URL = env(
     "EXTERNAL_EVENTS_ICS_URL",
     default="https://haus-des-engagements.de/angebote/fortbildungen/events.ics",

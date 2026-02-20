@@ -244,10 +244,28 @@ def manager_filter_booking_series_list(
 
 
 def manager_cancel_booking_series(user, booking_series_uuid):
+    from re_sharing.resources.services_nuki import sync_all_smartlock_codes
+
     booking_series = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
     bookings = get_list_or_404(Booking, booking_series=booking_series)
     booking_series.status = BookingStatus.CANCELLED
     booking_series.save()
+
+    # Check if any today's confirmed bookings have smartlock access
+    today = timezone.now().date()
+    should_sync_smartlocks = False
+    for booking in bookings:
+        if (
+            booking.status == BookingStatus.CONFIRMED
+            and booking.timespan.lower.date() == today
+            and booking.resource.access
+        ):
+            access = booking.resource.access
+            if access.smartlock_id or (
+                access.parent_access and access.parent_access.smartlock_id
+            ):
+                should_sync_smartlocks = True
+                break
 
     now = timezone.now()
     for booking in bookings:
@@ -261,7 +279,12 @@ def manager_cancel_booking_series(user, booking_series_uuid):
                 with set_actor(user):
                     booking.status = BookingStatus.CANCELLED
                     booking.save()
+
     send_booking_series_cancellation_email.enqueue(booking_series.id)
+
+    if should_sync_smartlocks:
+        sync_all_smartlock_codes.enqueue()
+
     return booking_series
 
 

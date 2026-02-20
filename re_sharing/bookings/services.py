@@ -37,6 +37,24 @@ from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import get_booking_status
 
 
+def _enqueue_smartlock_sync_if_today(booking) -> None:
+    """Enqueue a NUKI smartlock sync for all smartlocks if the booking starts today."""
+    from re_sharing.resources.services_nuki import sync_all_smartlock_codes
+
+    if booking.timespan.lower.date() != timezone.now().date():
+        return
+
+    access = booking.resource.access
+    if not access:
+        return
+
+    # Only enqueue if this access has a smartlock configured
+    if access.smartlock_id or (
+        access.parent_access and access.parent_access.smartlock_id
+    ):
+        sync_all_smartlock_codes.enqueue()
+
+
 class InvalidBookingOperationError(Exception):
     def __init__(self):
         self.message = "You cannot perform this action."
@@ -215,6 +233,8 @@ def save_booking(user, booking):
     booking.refresh_from_db()
     if booking.status == BookingStatus.PENDING:
         send_manager_new_booking_email.enqueue(booking.id)
+    elif booking.status == BookingStatus.CONFIRMED:
+        _enqueue_smartlock_sync_if_today(booking)
 
     return booking
 
@@ -588,10 +608,13 @@ def manager_cancel_booking(user, booking_slug):
     booking = get_object_or_404(Booking, slug=booking_slug)
 
     if booking.is_cancelable():
+        was_confirmed = booking.status == BookingStatus.CONFIRMED
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
         send_booking_cancellation_email.enqueue(booking.id)
+        if was_confirmed:
+            _enqueue_smartlock_sync_if_today(booking)
 
         return booking
 
@@ -620,6 +643,7 @@ def manager_confirm_booking(user, booking_slug):
                 booking.status = BookingStatus.CONFIRMED
                 booking.save()
             send_booking_confirmation_email.enqueue(booking.id)
+            _enqueue_smartlock_sync_if_today(booking)
 
         return booking
 
@@ -646,6 +670,11 @@ def manager_confirm_booking_series(user, booking_series_uuid):
                 booking.save()
 
     send_booking_series_confirmation_email.enqueue(booking_series.id)
+
+    for booking in bookings:
+        if booking.status == BookingStatus.CONFIRMED:
+            _enqueue_smartlock_sync_if_today(booking)
+
     return booking_series
 
 

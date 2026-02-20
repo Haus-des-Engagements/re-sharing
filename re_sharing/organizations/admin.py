@@ -29,7 +29,7 @@ class OrganizationAdmin(ImportExportMixin, admin.ModelAdmin):
         "usage_agreement_date",
         "monthly_bulk_access_codes",
     ]
-    search_fields = ["name", "id"]
+    search_fields = ["name", "id", "email"]
     ordering = ["name"]
     actions = [
         "activate_bulk_sending",

@@ -73,15 +73,28 @@ class CompensationAdmin(ImportExportMixin, admin.ModelAdmin):
 @admin.register(AccessCode)
 class AccessCodeAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ["id", "access", "code", "validity_start", "organization"]
-    search_fields = ["id", "access", "code"]
+    search_fields = ["id", "code", "organization__name"]
     list_filter = ["access", "organization"]
     ordering = ["id"]
 
 
 @admin.register(PermanentCode)
 class PermanentCodeAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "organization", "code", "validity_start", "validity_end"]
-    search_fields = ["id", "organization", "code", "validity_start", "validity_end"]
+    list_display = [
+        "id",
+        "organization",
+        "name",
+        "code",
+        "validity_start",
+        "validity_end",
+    ]
+    search_fields = [
+        "id",
+        "organization__name",
+        "code",
+        "validity_start",
+        "validity_end",
+    ]
     list_filter = ["organization"]
     ordering = ["id"]
 
