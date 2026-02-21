@@ -61,6 +61,7 @@
             <th scope="col">{% trans "Bookings" %}</th>
             <th scope="col">{% trans "Agreement" %}</th>
             <th scope="col">{% trans "Organization groups" %}</th>
+            <th scope="col">{% trans "Permanent Code" %}</th>
             <th scope="col"></th>
             <th scope="col"></th>
           </tr>
@@ -82,12 +83,44 @@
 {% partialdef organization-item %}
 <td sorttable_customkey="{{ organization.created|date:"YmdHi" }}">{{ organization.created|date:"d.m.Y" }}</td>
 <td>
-  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 400px;"><!-- djlint:on -->
+  <!-- djlint:off --><span class="d-inline-block text-truncate" style="max-width: 300px;"><!-- djlint:on -->
   <a href="{% url "organizations:show-organization" organization.slug %}">{{ organization.name }}</a>
 </span>
 </td>
 <td>
-  <span class="fs-6 badge text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
+  <div class="dropdown">
+    <button class="btn btn-secondary btn-sm dropdown-toggle text-bg-status-{{ organization.status }}"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">{{ organization.get_status_display }}</button>
+    <ul class="dropdown-menu">
+      {% if organization.is_cancelable %}
+        <li>
+          <a href="#"
+             id="cancel-button"
+             class="dropdown-item"
+             type="submit"
+             value="Submit"
+             hx-confirm="{% trans 'Are you sure you want to cancel this organization?' %}"
+             hx-patch="{% url 'organizations:manager-cancel-organization' organization_slug=organization.slug %}"
+             hx-target="#tr-{{ organization.slug }}"
+             hx-swap="innerHTML">{% trans "Cancel" %}</a>
+        </li>
+      {% endif %}
+      {% if organization.is_confirmable %}
+        <li>
+          <a href="#"
+             id="confirm-button"
+             type="submit"
+             class="dropdown-item"
+             value="Submit"
+             hx-patch="{% url 'organizations:manager-confirm-organization' organization_slug=organization.slug %}"
+             hx-target="#tr-{{ organization.slug }}"
+             hx-swap="innerHTML">{% trans "Confirm" %}</a>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
 </td>
 <td>
   <a href="{% url "bookings:manager-list-bookings" %}?organization_search={{ organization.name }}&show_past_bookings=on&show_recurring_bookings=on&status=all">{{ organization.bookings_count }}</a>
@@ -101,26 +134,10 @@
 </td>
 <td>{{ organization.organization_groups.all|join:", " }}</td>
 <td>
-  {% if organization.is_confirmable %}
-    <button id="confirm-button"
-            type="submit"
-            class="btn btn-sm btn-outline-success"
-            value="Submit"
-            hx-patch="{% url 'organizations:manager-confirm-organization' organization_slug=organization.slug %}"
-            hx-target="#tr-{{ organization.slug }}"
-            hx-swap="innerHTML">{% trans "Confirm" %}</button>
-  {% endif %}
-</td>
-<td>
-  {% if organization.is_cancelable %}
-    <button id="cancel-button"
-            type="submit"
-            class="btn btn-sm btn-outline-danger"
-            value="Submit"
-            hx-confirm="{% trans 'Are you sure you want to cancel this organization?' %}"
-            hx-patch="{% url 'organizations:manager-cancel-organization' organization_slug=organization.slug %}"
-            hx-target="#tr-{{ organization.slug }}"
-            hx-swap="innerHTML">{% trans "Cancel" %}</button>
+  {% if organization.permanent_code %}
+    <code>{{ organization.permanent_code }}</code>
+  {% else %}
+    {% trans "n.a." %}
   {% endif %}
 </td>
 {% endpartialdef %}

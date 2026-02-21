@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.db.models import F
+from django.db.models import OuterRef
+from django.db.models import Subquery
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 
@@ -172,6 +174,8 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
     If manager is provided and has organization_groups assigned, only organizations
     that are part of those groups will be returned.
     """
+    from re_sharing.resources.models import PermanentCode
+
     organizations = Organization.objects.all()
 
     # Filter by manager's organization groups if manager is provided
@@ -188,8 +192,14 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
     if search:
         organizations = organizations.filter(name__icontains=search)
 
+    # Subquery to get the first permanent code for each organization
+    permanent_code_subquery = PermanentCode.objects.filter(
+        organization=OuterRef("pk")
+    ).values("code")[:1]
+
     organizations = organizations.annotate(
-        bookings_count=Count("booking_of_organization", distinct=True)
+        bookings_count=Count("booking_of_organization", distinct=True),
+        permanent_code=Subquery(permanent_code_subquery),
     ).prefetch_related("organization_groups")
 
     return organizations.order_by(Lower("name"))
