@@ -6,11 +6,14 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
@@ -201,6 +204,74 @@ def manager_cancel_organization_view(request, organization_slug):
 @manager_required
 def manager_confirm_organization_view(request, organization_slug):
     organization = manager_confirm_organization(request.user, organization_slug)
+    return render(
+        request,
+        "organizations/manager_list_organizations.html#organization-item",
+        {"organization": organization},
+    )
+
+
+@require_http_methods(["PATCH", "POST"])
+@manager_required
+def manager_permanent_code_action_view(request, organization_slug):
+    """Handle permanent code actions: create, invalidate, renew."""
+    from re_sharing.resources.services_permanent_code import (
+        create_permanent_code_for_organization,
+    )
+    from re_sharing.resources.services_permanent_code import invalidate_permanent_code
+    from re_sharing.resources.services_permanent_code import renew_permanent_code
+
+    action = request.POST.get("action")
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    try:
+        if action == "create":
+            create_permanent_code_for_organization(organization_slug, request.user)
+
+        elif action == "invalidate":
+            permanent_code_id = request.POST.get("permanent_code_id")
+            validity_end_str = request.POST.get("validity_end", "")
+
+            if not permanent_code_id:
+                return HttpResponseBadRequest("Missing permanent_code_id")
+
+            # Parse datetime and make timezone-aware
+            # Empty string means invalidate immediately
+            if validity_end_str:
+                from dateutil.parser import isoparse
+
+                validity_end = isoparse(validity_end_str)
+                # Make timezone-aware if naive
+                if timezone.is_naive(validity_end):
+                    validity_end = timezone.make_aware(validity_end)
+            else:
+                # Empty validity_end means invalidate immediately
+                validity_end = timezone.now()
+
+            invalidate_permanent_code(
+                int(permanent_code_id), validity_end, request.user
+            )
+
+        elif action == "renew":
+            permanent_code_id = request.POST.get("permanent_code_id")
+            if not permanent_code_id:
+                return HttpResponseBadRequest("Missing permanent_code_id")
+
+            renew_permanent_code(int(permanent_code_id), request.user)
+
+        else:
+            return HttpResponseBadRequest(f"Unknown action: {action}")
+
+    except ValidationError as e:
+        return HttpResponseBadRequest(str(e))
+
+    # Re-fetch organization with annotations for the template
+    from re_sharing.organizations.services import manager_filter_organizations_list
+
+    manager = request.user.get_manager()
+    organizations = manager_filter_organizations_list("all", "all", manager, None)
+    organization = organizations.get(slug=organization_slug)
+
     return render(
         request,
         "organizations/manager_list_organizations.html#organization-item",

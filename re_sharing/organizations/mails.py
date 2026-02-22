@@ -602,3 +602,205 @@ def send_custom_organization_email(
         "sent_count": sent_count,
         "sent_organizations": sent_organizations,
     }
+
+
+@task(queue_name="email")
+def send_permanent_code_created_email(permanent_code_id: int) -> dict:
+    """Send email notification when a permanent code is created."""
+    from re_sharing.resources.models import PermanentCode
+
+    permanent_code = PermanentCode.objects.get(id=permanent_code_id)
+    organization = permanent_code.organization
+
+    email_template = get_email_template(
+        EmailTemplate.EmailTypeChoices.PERMANENT_CODE_CREATED
+    )
+
+    if not email_template or not email_template.active:
+        logger.info("Permanent code created email template is not active.")
+        return {"sent": False, "reason": "template_not_active"}
+
+    if not organization.email:
+        logger.warning(
+            "Organization %s has no email address for permanent code notification",
+            organization.name,
+        )
+        return {"sent": False, "reason": "no_email"}
+
+    # Template context
+    accesses = ", ".join(permanent_code.accesses.values_list("name", flat=True))
+    context_dict = {
+        "organization": organization,
+        "permanent_code": permanent_code,
+        "code": permanent_code.code,
+        "accesses": accesses,
+    }
+    context = Context(context_dict)
+
+    # Render subject and body
+    subject_template = Template(email_template.subject)
+    body_template = Template(email_template.body)
+
+    subject = subject_template.render(context)
+    body = body_template.render(context)
+
+    # Send email
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[organization.email],
+        bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    )
+
+    try:
+        email.send(fail_silently=False)
+    except Exception:
+        logger.exception(
+            "Failed to send permanent code created email to %s", organization.email
+        )
+        return {"sent": False, "reason": "smtp_error"}
+    else:
+        logger.info(
+            "Sent permanent code created email to %s for code %s",
+            organization.email,
+            permanent_code.code,
+        )
+        return {"sent": True, "email": organization.email}
+
+
+@task(queue_name="email")
+def send_permanent_code_renewed_email(new_code_id: int, old_code_id: int) -> dict:
+    """Send email notification when a permanent code is renewed."""
+    from re_sharing.resources.models import PermanentCode
+
+    new_code = PermanentCode.objects.get(id=new_code_id)
+    old_code = PermanentCode.objects.get(id=old_code_id)
+    organization = new_code.organization
+
+    email_template = get_email_template(
+        EmailTemplate.EmailTypeChoices.PERMANENT_CODE_RENEWED
+    )
+
+    if not email_template or not email_template.active:
+        logger.info("Permanent code renewed email template is not active.")
+        return {"sent": False, "reason": "template_not_active"}
+
+    if not organization.email:
+        logger.warning(
+            "Organization %s has no email address for permanent code notification",
+            organization.name,
+        )
+        return {"sent": False, "reason": "no_email"}
+
+    # Template context
+    accesses = ", ".join(new_code.accesses.values_list("name", flat=True))
+    context_dict = {
+        "organization": organization,
+        "new_code": new_code,
+        "old_code": old_code,
+        "new_code_value": new_code.code,
+        "old_code_value": old_code.code,
+        "old_code_valid_until": old_code.validity_end,
+        "accesses": accesses,
+    }
+    context = Context(context_dict)
+
+    # Render subject and body
+    subject_template = Template(email_template.subject)
+    body_template = Template(email_template.body)
+
+    subject = subject_template.render(context)
+    body = body_template.render(context)
+
+    # Send email
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[organization.email],
+        bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    )
+
+    try:
+        email.send(fail_silently=False)
+    except Exception:
+        logger.exception(
+            "Failed to send permanent code renewed email to %s", organization.email
+        )
+        return {"sent": False, "reason": "smtp_error"}
+    else:
+        logger.info(
+            "Sent permanent code renewed email to %s (new: %s, old: %s)",
+            organization.email,
+            new_code.code,
+            old_code.code,
+        )
+        return {"sent": True, "email": organization.email}
+
+
+@task(queue_name="email")
+def send_permanent_code_invalidated_email(permanent_code_id: int) -> dict:
+    """Send email notification when a permanent code is invalidated."""
+    from re_sharing.resources.models import PermanentCode
+
+    permanent_code = PermanentCode.objects.get(id=permanent_code_id)
+    organization = permanent_code.organization
+
+    email_template = get_email_template(
+        EmailTemplate.EmailTypeChoices.PERMANENT_CODE_INVALIDATED
+    )
+
+    if not email_template or not email_template.active:
+        logger.info("Permanent code invalidated email template is not active.")
+        return {"sent": False, "reason": "template_not_active"}
+
+    if not organization.email:
+        logger.warning(
+            "Organization %s has no email address for permanent code notification",
+            organization.name,
+        )
+        return {"sent": False, "reason": "no_email"}
+
+    # Template context
+    accesses = ", ".join(permanent_code.accesses.values_list("name", flat=True))
+    context_dict = {
+        "organization": organization,
+        "permanent_code": permanent_code,
+        "code": permanent_code.code,
+        "validity_end": permanent_code.validity_end,
+        "accesses": accesses,
+    }
+    context = Context(context_dict)
+
+    # Render subject and body
+    subject_template = Template(email_template.subject)
+    body_template = Template(email_template.body)
+
+    subject = subject_template.render(context)
+    body = body_template.render(context)
+
+    # Send email
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[organization.email],
+        bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    )
+
+    try:
+        email.send(fail_silently=False)
+    except Exception:
+        logger.exception(
+            "Failed to send permanent code invalidated email to %s",
+            organization.email,
+        )
+        return {"sent": False, "reason": "smtp_error"}
+    else:
+        logger.info(
+            "Sent permanent code invalidated email to %s for code %s",
+            organization.email,
+            permanent_code.code,
+        )
+        return {"sent": True, "email": organization.email}

@@ -378,6 +378,18 @@ class EmailTemplate(TimeStampedModel):
             "booking_not_available",
             _("Booking not available"),
         )
+        PERMANENT_CODE_CREATED = (
+            "permanent_code_created",
+            _("Permanent code created"),
+        )
+        PERMANENT_CODE_RENEWED = (
+            "permanent_code_renewed",
+            _("Permanent code renewed"),
+        )
+        PERMANENT_CODE_INVALIDATED = (
+            "permanent_code_invalidated",
+            _("Permanent code invalidated"),
+        )
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)

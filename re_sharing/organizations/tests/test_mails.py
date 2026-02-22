@@ -29,6 +29,7 @@ from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import EmailTemplateFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -724,4 +725,258 @@ class SendCustomOrganizationEmailTest(TestCase):
         assert result["sent_count"] == 1
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["org1@example.com"]
-        assert "Total: 250" in mail.outbox[0].body
+
+
+class SendPermanentCodeCreatedEmailTest(TestCase):
+    """Test permanent code created email sending."""
+
+    def setUp(self):
+        mail.outbox.clear()
+        self.organization = OrganizationFactory(email="org@example.com")
+        self.access1 = AccessFactory(name="Main Door")
+        self.access2 = AccessFactory(name="Side Door")
+
+        # Import PermanentCodeFactory here to avoid circular imports
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        self.permanent_code = PermanentCodeFactory(
+            code="123456",
+            organization=self.organization,
+            accesses=[self.access1, self.access2],
+        )
+
+    def test_sends_permanent_code_created_email(self):
+        """Test that permanent code created email is sent when template is active."""
+        from re_sharing.organizations.mails import send_permanent_code_created_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_CREATED,
+            subject="Permanent code created for {{ organization.name }}",
+            body=(
+                "Your permanent code is {{ permanent_code.code }}. "
+                "Valid from {{ permanent_code.validity_start }}. "
+                "Accesses: {{ accesses }}."
+            ),
+            active=True,
+        )
+
+        send_permanent_code_created_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 1
+        assert (
+            f"Permanent code created for {self.organization.name}"
+            in mail.outbox[0].subject
+        )
+        assert "123456" in mail.outbox[0].body
+        assert mail.outbox[0].to == ["org@example.com"]
+
+    def test_does_not_send_email_when_template_inactive(self):
+        """Test that no email is sent when template is inactive."""
+        from re_sharing.organizations.mails import send_permanent_code_created_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_CREATED,
+            active=False,
+        )
+
+        send_permanent_code_created_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_does_not_send_email_when_template_does_not_exist(self):
+        """Test that no email is sent when template does not exist."""
+        from re_sharing.organizations.mails import send_permanent_code_created_email
+
+        send_permanent_code_created_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_includes_access_names_in_context(self):
+        """Test that access names are available in the email context."""
+        from re_sharing.organizations.mails import send_permanent_code_created_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_CREATED,
+            subject="Permanent code",
+            body="Accesses: {{ accesses }}",
+            active=True,
+        )
+
+        send_permanent_code_created_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 1
+        assert "Main Door" in mail.outbox[0].body
+        assert "Side Door" in mail.outbox[0].body
+
+
+class SendPermanentCodeRenewedEmailTest(TestCase):
+    """Test permanent code renewed email sending."""
+
+    def setUp(self):
+        mail.outbox.clear()
+        self.organization = OrganizationFactory(email="org@example.com")
+        self.access1 = AccessFactory(name="Main Door")
+
+        # Import PermanentCodeFactory here to avoid circular imports
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        self.old_code = PermanentCodeFactory(
+            code="111111",
+            organization=self.organization,
+            validity_end=timezone.now() + timedelta(weeks=1),
+            accesses=[self.access1],
+        )
+        self.new_code = PermanentCodeFactory(
+            code="222222",
+            organization=self.organization,
+            validity_end=None,
+            accesses=[self.access1],
+        )
+
+    def test_sends_permanent_code_renewed_email(self):
+        """Test that permanent code renewed email is sent when template is active."""
+        from re_sharing.organizations.mails import send_permanent_code_renewed_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_RENEWED,
+            subject="Permanent code renewed for {{ organization.name }}",
+            body=(
+                "Your new permanent code is {{ new_code.code }}. "
+                "Old code {{ old_code.code }} expires {{ old_code.validity_end }}. "
+                "Accesses: {{ accesses }}."
+            ),
+            active=True,
+        )
+
+        send_permanent_code_renewed_email.call(self.new_code.id, self.old_code.id)
+
+        assert len(mail.outbox) == 1
+        assert "Permanent code renewed for" in mail.outbox[0].subject
+        assert "222222" in mail.outbox[0].body  # new code
+        assert "111111" in mail.outbox[0].body  # old code
+        assert mail.outbox[0].to == ["org@example.com"]
+
+    def test_does_not_send_email_when_template_inactive(self):
+        """Test that no email is sent when template is inactive."""
+        from re_sharing.organizations.mails import send_permanent_code_renewed_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_RENEWED,
+            active=False,
+        )
+
+        send_permanent_code_renewed_email.call(self.new_code.id, self.old_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_does_not_send_email_when_template_does_not_exist(self):
+        """Test that no email is sent when template does not exist."""
+        from re_sharing.organizations.mails import send_permanent_code_renewed_email
+
+        send_permanent_code_renewed_email.call(self.new_code.id, self.old_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_includes_both_codes_in_context(self):
+        """Test that both old and new codes are available in the email context."""
+        from re_sharing.organizations.mails import send_permanent_code_renewed_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_RENEWED,
+            subject="Code renewed",
+            body=(
+                "New: {{ new_code.code }}, "
+                "Old: {{ old_code.code }}, "
+                "Expires: {{ old_code.validity_end }}"
+            ),
+            active=True,
+        )
+
+        send_permanent_code_renewed_email.call(self.new_code.id, self.old_code.id)
+
+        assert len(mail.outbox) == 1
+        assert "New: 222222" in mail.outbox[0].body
+        assert "Old: 111111" in mail.outbox[0].body
+        assert "Expires:" in mail.outbox[0].body
+
+
+class SendPermanentCodeInvalidatedEmailTest(TestCase):
+    """Test permanent code invalidated email sending."""
+
+    def setUp(self):
+        mail.outbox.clear()
+        self.organization = OrganizationFactory(email="org@example.com")
+        self.access1 = AccessFactory(name="Main Door")
+
+        # Import PermanentCodeFactory here to avoid circular imports
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        self.permanent_code = PermanentCodeFactory(
+            code="123456",
+            organization=self.organization,
+            validity_end=timezone.now() + timedelta(days=7),
+            accesses=[self.access1],
+        )
+
+    def test_sends_permanent_code_invalidated_email(self):
+        """Test that permanent code invalidated email is sent."""
+        from re_sharing.organizations.mails import send_permanent_code_invalidated_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_INVALIDATED,
+            subject="Permanent code invalidated for {{ organization.name }}",
+            body=(
+                "Your permanent code {{ permanent_code.code }} "
+                "will expire on {{ validity_end }}."
+            ),
+            active=True,
+        )
+
+        send_permanent_code_invalidated_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 1
+        assert (
+            f"Permanent code invalidated for {self.organization.name}"
+            in mail.outbox[0].subject
+        )
+        assert "123456" in mail.outbox[0].body
+        assert mail.outbox[0].to == ["org@example.com"]
+
+    def test_does_not_send_email_when_template_inactive(self):
+        """Test that no email is sent when template is inactive."""
+        from re_sharing.organizations.mails import send_permanent_code_invalidated_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_INVALIDATED,
+            active=False,
+        )
+
+        send_permanent_code_invalidated_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_does_not_send_email_when_template_does_not_exist(self):
+        """Test that no email is sent when template does not exist."""
+        from re_sharing.organizations.mails import send_permanent_code_invalidated_email
+
+        send_permanent_code_invalidated_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 0
+
+    def test_includes_validity_end_in_context(self):
+        """Test that validity_end is available in the email context."""
+        from re_sharing.organizations.mails import send_permanent_code_invalidated_email
+
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_INVALIDATED,
+            subject="Code invalidated",
+            body="Code {{ permanent_code.code }} expires {{ validity_end }}",
+            active=True,
+        )
+
+        send_permanent_code_invalidated_email.call(self.permanent_code.id)
+
+        assert len(mail.outbox) == 1
+        assert "123456" in mail.outbox[0].body
+        # validity_end should be in the body
+        assert "expires" in mail.outbox[0].body.lower()

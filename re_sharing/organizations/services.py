@@ -6,10 +6,9 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.db.models import F
-from django.db.models import OuterRef
-from django.db.models import Subquery
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
@@ -174,6 +173,9 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
     If manager is provided and has organization_groups assigned, only organizations
     that are part of those groups will be returned.
     """
+    from django.db.models import Prefetch
+    from django.db.models import Q
+
     from re_sharing.resources.models import PermanentCode
 
     organizations = Organization.objects.all()
@@ -192,15 +194,21 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
     if search:
         organizations = organizations.filter(name__icontains=search)
 
-    # Subquery to get the first permanent code for each organization
-    permanent_code_subquery = PermanentCode.objects.filter(
-        organization=OuterRef("pk")
-    ).values("code")[:1]
+    # Prefetch active permanent codes (currently valid)
+    active_codes = PermanentCode.objects.filter(
+        validity_start__lte=timezone.now()
+    ).filter(Q(validity_end__isnull=True) | Q(validity_end__gte=timezone.now()))
 
     organizations = organizations.annotate(
         bookings_count=Count("booking_of_organization", distinct=True),
-        permanent_code=Subquery(permanent_code_subquery),
-    ).prefetch_related("organization_groups")
+    ).prefetch_related(
+        "organization_groups",
+        Prefetch(
+            "organizations_of_permanentcode",
+            queryset=active_codes,
+            to_attr="active_codes",
+        ),
+    )
 
     return organizations.order_by(Lower("name"))
 

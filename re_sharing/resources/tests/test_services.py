@@ -191,7 +191,7 @@ class TestGetAccessCode(TestCase):
         )
 
     def test_get_general_access_code(self):
-        # gets as access_code1, as there is no access_key having a specific organization
+        # Gets access_code1 (general code) as there's no PermanentCode
         assert (
             get_access_code(
                 resource_slug=self.resource1.slug,
@@ -201,8 +201,8 @@ class TestGetAccessCode(TestCase):
             == self.access_code1
         )
 
-        # we should still get back access_code1,
-        # because access_code2 is only for organization2
+        # Should still get back access_code1 (general code)
+        # Organization-specific AccessCodes are now ignored
         assert (
             get_access_code(
                 resource_slug=self.resource1.slug,
@@ -212,17 +212,18 @@ class TestGetAccessCode(TestCase):
             == self.access_code1
         )
 
-        # we should get back access_code2,
-        # because access_code2 is only for organization2
+        # Even for organization2, should get general access_code1
+        # (organization-specific AccessCode is no longer used)
         assert (
             get_access_code(
                 resource_slug=self.resource1.slug,
                 organization_slug=self.organization2.slug,
                 timestamp=(self.timestamp + timedelta(days=10)),
             )
-            == self.access_code2
+            == self.access_code1
         )
 
+        # No access code exists for resource2/access2
         assert (
             get_access_code(
                 resource_slug=self.resource2.slug,
@@ -231,6 +232,48 @@ class TestGetAccessCode(TestCase):
             )
             is None
         )
+
+    def test_get_permanent_code_takes_precedence(self):
+        """Test that PermanentCode is returned when available."""
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        # Create a permanent code for organization1 and access1
+        permanent_code = PermanentCodeFactory(
+            organization=self.organization1,
+            validity_start=self.timestamp - timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access1],
+        )
+
+        # Even though there's an access_code1, the permanent code should be returned
+        result = get_access_code(
+            resource_slug=self.resource1.slug,
+            organization_slug=self.organization1.slug,
+            timestamp=(self.timestamp + timedelta(days=1)),
+        )
+
+        assert result == permanent_code
+
+    def test_get_permanent_code_respects_validity_end(self):
+        """Test that expired PermanentCode is not returned."""
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        # Create an expired permanent code
+        PermanentCodeFactory(
+            organization=self.organization1,
+            validity_start=self.timestamp - timedelta(days=10),
+            validity_end=self.timestamp - timedelta(days=1),
+            accesses=[self.access1],
+        )
+
+        # Should fall back to access_code1 since permanent code is expired
+        result = get_access_code(
+            resource_slug=self.resource1.slug,
+            organization_slug=self.organization1.slug,
+            timestamp=(self.timestamp + timedelta(days=1)),
+        )
+
+        assert result == self.access_code1
 
 
 @skip

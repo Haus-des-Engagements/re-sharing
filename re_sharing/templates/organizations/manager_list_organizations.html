@@ -134,10 +134,128 @@
 </td>
 <td>{{ organization.organization_groups.all|join:", " }}</td>
 <td>
-  {% if organization.permanent_code %}
-    <code>{{ organization.permanent_code }}</code>
-  {% else %}
-    {% trans "n.a." %}
-  {% endif %}
+  <div class="dropdown">
+    <button class="btn btn-secondary btn-sm dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+      {% if organization.active_codes %}
+        {% for code in organization.active_codes %}
+          <code class="text-white">
+            {{ code.code }}
+            {% if code.validity_end %}({{ code.validity_end|date:"d.m.Y" }}){% endif %}
+          </code>
+          {% if not forloop.last %}<br />{% endif %}
+        {% endfor %}
+      {% else %}
+        {% trans "No code" %}
+      {% endif %}
+    </button>
+    <ul class="dropdown-menu">
+      {% if not organization.active_codes %}
+        {# Create action - only show when no code exists #}
+        <li>
+          <a href="#"
+             class="dropdown-item"
+             hx-post="{% url 'organizations:manager-permanent-code-action' organization_slug=organization.slug %}"
+             hx-vals='{"action": "create"}'
+             hx-target="#tr-{{ organization.slug }}"
+             hx-swap="innerHTML"
+             hx-confirm="{% trans 'Create a new permanent code for this organization?' %}">
+            <svg width="1em" height="1em" class="me-1">
+              <use href="#bi-plus-lg" />
+            </svg>
+            {% trans "Create Code" %}
+          </a>
+        </li>
+      {% else %}
+        {# Invalidate and Renew actions - show for each active code #}
+        {% for code in organization.active_codes %}
+          <li>
+            <h6 class="dropdown-header">
+              <code>{{ code.code }}</code>
+            </h6>
+          </li>
+          <li>
+            <a href="#"
+               class="dropdown-item"
+               data-bs-toggle="modal"
+               data-bs-target="#invalidateModal-{{ organization.slug }}-{{ code.id }}">
+              <svg width="1em" height="1em" class="me-1">
+                <use href="#bi-x-circle" />
+              </svg>
+              {% trans "Invalidate" %}
+            </a>
+          </li>
+          <li>
+            <a href="#"
+               class="dropdown-item"
+               hx-post="{% url 'organizations:manager-permanent-code-action' organization_slug=organization.slug %}"
+               hx-vals='{"action": "renew", "permanent_code_id": "{{ code.id }}"}'
+               hx-target="#tr-{{ organization.slug }}"
+               hx-swap="innerHTML"
+               hx-confirm="{% trans 'Renew the permanent code? The old code will remain valid for 1 week.' %}">
+              <svg width="1em" height="1em" class="me-1">
+                <use href="#bi-arrow-repeat" />
+              </svg>
+              {% trans "Renew" %}
+            </a>
+          </li>
+          {% if not forloop.last %}
+            <li>
+              <hr class="dropdown-divider" />
+            </li>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </ul>
+  </div>
+  {# Modals for Invalidate action - one per code #}
+  {% for code in organization.active_codes %}
+    <div class="modal fade"
+         id="invalidateModal-{{ organization.slug }}-{{ code.id }}"
+         tabindex="-1"
+         aria-labelledby="invalidateModalLabel-{{ organization.slug }}-{{ code.id }}"
+         aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"
+                id="invalidateModalLabel-{{ organization.slug }}-{{ code.id }}">
+              {% trans "Invalidate Permanent Code" %} <code>{{ code.code }}</code>
+            </h5>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="invalidateForm-{{ organization.slug }}-{{ code.id }}">
+              <div class="mb-3">
+                <label for="validity_end-{{ organization.slug }}-{{ code.id }}"
+                       class="form-label">{% trans "Code will become invalid at:" %}</label>
+                <input type="datetime-local"
+                       class="form-control"
+                       id="validity_end-{{ organization.slug }}-{{ code.id }}"
+                       name="validity_end"
+                       required />
+                <div class="form-text">{% trans "Leave empty to invalidate immediately" %}</div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+            <button type="button"
+                    class="btn btn-danger"
+                    hx-post="{% url 'organizations:manager-permanent-code-action' organization_slug=organization.slug %}"
+                    hx-vals='js:{"action": "invalidate", "permanent_code_id": "{{ code.id }}", "validity_end": document.getElementById("validity_end-{{ organization.slug }}-{{ code.id }}").value}'
+                    hx-target="#tr-{{ organization.slug }}"
+                    hx-swap="innerHTML"
+                    data-bs-dismiss="modal">{% trans "Invalidate" %}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
 </td>
 {% endpartialdef %}

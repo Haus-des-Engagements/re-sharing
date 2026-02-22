@@ -12,6 +12,7 @@ from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
+from re_sharing.resources.models import PermanentCode
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
 
@@ -119,4 +120,29 @@ class ResourceRestrictionFactory(DjangoModelFactory):
 
     class Meta:
         model = ResourceRestriction
+        skip_postgeneration_save = True
+
+
+class PermanentCodeFactory(DjangoModelFactory):
+    code = Faker("lexify", text="??????", letters="123456789")
+    organization = SubFactory(
+        "re_sharing.organizations.tests.factories.OrganizationFactory"
+    )
+    validity_start = timezone.now() - timedelta(days=1)
+    validity_end = None
+    name = Faker("sentence", nb_words=4)
+
+    @post_generation
+    def accesses(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing
+            return
+
+        if extracted:
+            # A list of accesses was passed in, use it
+            for access in extracted:
+                self.accesses.add(access)
+
+    class Meta:
+        model = PermanentCode
         skip_postgeneration_save = True

@@ -159,17 +159,21 @@ def filter_resources(  # noqa: PLR0913
 
 
 def get_access_code(resource_slug, organization_slug, timestamp):
+    from re_sharing.resources.models import PermanentCode
+
     resource = get_object_or_404(Resource, slug=resource_slug)
     organization = get_object_or_404(Organization, slug=organization_slug)
 
+    # First, check for a PermanentCode for this organization and access
     access_code = (
-        AccessCode.objects.filter(
-            Q(access=resource.access)
+        PermanentCode.objects.filter(
+            Q(organization=organization)
+            & Q(accesses=resource.access)
             & Q(validity_start__lte=timestamp)
-            & Q(organization=organization)
+            & (Q(validity_end__isnull=True) | Q(validity_end__gte=timestamp))
         )
         .order_by("-validity_start")
-        .first()
+        .last()
     )
 
     # when there is no organization specific AccessCode,
