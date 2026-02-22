@@ -8,11 +8,20 @@ set -o nounset
 python /app/manage.py collectstatic --noinput
 python /app/manage.py migrate
 
-# Start the background task worker with auto-restart
+# Start the default queue worker with auto-restart
 (
   while true; do
-    echo "[$(date)] Starting db_worker..."
-    python /app/manage.py db_worker --queue-name default --queue-name email || echo "[$(date)] WARNING: db_worker crashed with exit code $?, restarting in 5s..."
+    echo "[$(date)] Starting db_worker for default queue..."
+    python /app/manage.py db_worker --queue-name default || echo "[$(date)] WARNING: default db_worker crashed with exit code $?, restarting in 5s..."
+    sleep 5
+  done
+) &
+
+# Start the email queue worker with auto-restart
+(
+  while true; do
+    echo "[$(date)] Starting db_worker for email queue..."
+    python /app/manage.py db_worker --queue-name email || echo "[$(date)] WARNING: email db_worker crashed with exit code $?, restarting in 5s..."
     sleep 5
   done
 ) &
