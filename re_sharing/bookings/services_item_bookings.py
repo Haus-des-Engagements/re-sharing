@@ -176,7 +176,7 @@ def calculate_item_total(daily_rate, quantity, num_days):
     """Calculate total amount for an item booking."""
     if daily_rate is None:
         return Decimal("0.00")
-    return Decimal(daily_rate) * quantity * num_days
+    return daily_rate * quantity * num_days
 
 
 def get_booking_timespan(pickup_date, return_date):

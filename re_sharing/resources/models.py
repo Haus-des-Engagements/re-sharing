@@ -10,6 +10,7 @@ from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateField
 from django.db.models import DateTimeField
+from django.db.models import DecimalField
 from django.db.models import ForeignKey
 from django.db.models import ImageField
 from django.db.models import IntegerField
@@ -377,9 +378,11 @@ class Compensation(TimeStampedModel):
     )
     conditions = CharField(_("Conditions"), max_length=512, blank=True)
     hourly_rate = IntegerField(_("Hourly Rate"), null=True, blank=True)
-    daily_rate = IntegerField(
+    daily_rate = DecimalField(
         _("Daily Rate"),
         null=True,
+        decimal_places=2,
+        max_digits=6,
         blank=True,
         help_text=_("Price per calendar day. Only applicable for lendable items."),
     )
