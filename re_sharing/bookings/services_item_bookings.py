@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingGroup
 from re_sharing.organizations.models import Organization
-from re_sharing.organizations.services import user_has_bookingpermission
+from re_sharing.organizations.services import user_has_normal_bookingpermission
 from re_sharing.providers.models import LendingTimeSlot
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
@@ -297,7 +297,7 @@ def create_item_booking_group(
         ValidationError: If validation fails
     """
     # Check permission
-    if not user_has_bookingpermission(user, organization):
+    if not user_has_normal_bookingpermission(user, organization):
         raise PermissionDenied(
             _("You don't have permission to book for this organization")
         )
@@ -313,7 +313,7 @@ def create_item_booking_group(
     booking_group = BookingGroup.objects.create(
         organization=organization,
         user=user,
-        status=BookingStatus.PENDING,
+        status=BookingStatus.CONFIRMED,
     )
 
     # Create individual bookings
@@ -358,7 +358,7 @@ def create_item_booking_group(
             user=user,
             resource=resource,
             timespan=(start_datetime, end_datetime),
-            status=BookingStatus.PENDING,
+            status=BookingStatus.CONFIRMED,
             booking_group=booking_group,
             quantity=item["quantity"],
             start_date=pickup_date,
@@ -397,7 +397,7 @@ def get_booking_group(user: User, slug: str) -> BookingGroup:
     # Check if user has access
     if booking_group.user != user and not user.is_staff:
         # Check if user has permission for the organization
-        if not user_has_bookingpermission(user, booking_group.organization):
+        if not user_has_normal_bookingpermission(user, booking_group.organization):
             raise PermissionDenied
 
     return booking_group

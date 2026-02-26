@@ -98,6 +98,7 @@ class User(AbstractUser, TimeStampedModel):
                         autoconfirmedresource_of_organizationgroup__in=user_org_groups
                     )  # Auto-confirmed private
                 )
+                .exclude(type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
                 .select_related()
                 .distinct()
             )

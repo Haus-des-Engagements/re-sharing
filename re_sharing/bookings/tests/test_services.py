@@ -2389,3 +2389,95 @@ END:VCALENDAR"""
 
         assert len(events) == 1
         assert events[0]["title"] == "All Day Event"
+
+
+class TestCreateItemBookingGroup(TestCase):
+    """Tests for create_item_booking_group service."""
+
+    def setUp(self):
+        from datetime import time
+
+        from re_sharing.bookings.services_item_bookings import create_item_booking_group
+        from re_sharing.providers.models import LendingTimeSlot
+        from re_sharing.resources.models import Resource
+
+        self.create_item_booking_group = create_item_booking_group
+
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        # is_private=False (default) so any organization can book it
+        self.resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=5,
+        )
+
+        # No organization_groups on compensation → bookable by all organizations
+        self.compensation = CompensationFactory(daily_rate=10)
+        self.compensation.resource.add(self.resource)
+
+        # Monday pickup, Tuesday return
+        LendingTimeSlot.objects.create(
+            slot_type=LendingTimeSlot.SlotType.PICKUP,
+            weekday=0,
+            start_time=time(10, 0),
+            end_time=time(12, 0),
+        )
+        LendingTimeSlot.objects.create(
+            slot_type=LendingTimeSlot.SlotType.RETURN,
+            weekday=1,
+            start_time=time(14, 0),
+            end_time=time(16, 0),
+        )
+
+        # Next Monday and Tuesday
+        today = timezone.now.date()
+        days_until_monday = (7 - today.weekday()) % 7 or 7
+        self.pickup_date = today + datetime.timedelta(days=days_until_monday)
+        self.return_date = self.pickup_date + datetime.timedelta(days=1)
+
+    def test_booking_group_is_confirmed_immediately(self):
+        """Item booking groups are confirmed without manager approval."""
+
+        booking_group = self.create_item_booking_group(
+            user=self.user,
+            organization=self.organization,
+            pickup_date=self.pickup_date,
+            return_date=self.return_date,
+            items=[{"resource_id": self.resource.pk, "quantity": 1}],
+        )
+
+        assert booking_group.status == BookingStatus.CONFIRMED
+
+    def test_individual_bookings_are_confirmed_immediately(self):
+        """Each booking within the group is confirmed without manager approval."""
+        booking_group = self.create_item_booking_group(
+            user=self.user,
+            organization=self.organization,
+            pickup_date=self.pickup_date,
+            return_date=self.return_date,
+            items=[{"resource_id": self.resource.pk, "quantity": 2}],
+        )
+
+        bookings = booking_group.bookings_of_bookinggroup.all()
+        assert bookings.count() == 1
+        assert bookings.first().status == BookingStatus.CONFIRMED
+
+    def test_no_booking_permission_raises(self):
+        """Users without booking permission cannot create item bookings."""
+        from django.core.exceptions import PermissionDenied
+
+        other_user = UserFactory()
+        with pytest.raises(PermissionDenied):
+            self.create_item_booking_group(
+                user=other_user,
+                organization=self.organization,
+                pickup_date=self.pickup_date,
+                return_date=self.return_date,
+                items=[{"resource_id": self.resource.pk, "quantity": 1}],
+            )

@@ -51,11 +51,27 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
         )
         return redirect("bookings:list-bookings")
 
+    from re_sharing.resources.models import Resource
+    from re_sharing.resources.models import ResourceRestriction
+
     items = get_lendable_items()
     pickup_slots = get_pickup_slots()
     return_slots = get_return_slots()
     pickup_days = get_pickup_days()
     return_days = get_return_days()
+
+    restrictions = ResourceRestriction.objects.filter(
+        resources__type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+        is_active=True,
+    ).distinct()
+    restricted_ranges = [
+        {
+            "start_date": r.start_date.isoformat() if r.start_date else None,
+            "end_date": r.end_date.isoformat() if r.end_date else None,
+            "days": [int(d.strip()) for d in r.days_of_week.split(",")],
+        }
+        for r in restrictions
+    ]
 
     # Get selected dates from form or session
     pickup_date = request.POST.get("pickup_date") or request.GET.get("pickup_date")
@@ -128,6 +144,7 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
         "return_days": return_days,
         "pickup_date": pickup_date,
         "return_date": return_date,
+        "restricted_ranges": restricted_ranges,
     }
 
     if request.headers.get("HX-Request"):
@@ -148,10 +165,16 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
         if not booking_data:
             return redirect("bookings:create-item-booking")
 
+        from datetime import date as date_type
+
         return render(
             request,
             "bookings/preview-item-booking.html",
-            {"booking_data": booking_data},
+            {
+                "booking_data": booking_data,
+                "pickup_date": date_type.fromisoformat(booking_data["pickup_date"]),
+                "return_date": date_type.fromisoformat(booking_data["return_date"]),
+            },
         )
 
     # POST - save booking data to session and show preview
@@ -215,7 +238,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
                     compensation = compensations.filter(
                         daily_rate__isnull=False
                     ).first()
-                    daily_rate = compensation.daily_rate if compensation else 0
+                    daily_rate = float(compensation.daily_rate) if compensation else 0
 
                     items.append(
                         {
@@ -248,7 +271,13 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
     request.session["item_booking_data"] = booking_data
 
     return render(
-        request, "bookings/preview-item-booking.html", {"booking_data": booking_data}
+        request,
+        "bookings/preview-item-booking.html",
+        {
+            "booking_data": booking_data,
+            "pickup_date": pickup_date_obj,
+            "return_date": return_date_obj,
+        },
     )
 
 
@@ -286,7 +315,7 @@ def confirm_item_booking_view(request: HttpRequest) -> HttpResponse:
 
         messages.success(
             request,
-            _("Equipment booking created successfully! Please await confirmation."),
+            _("Equipment booking successfully!"),
         )
         return redirect("bookings:show-booking-group", slug=booking_group.slug)
 

@@ -17,7 +17,7 @@
   </div>
   <h1 class="mt-4">{% trans "Borrow Equipment" %}</h1>
   <p class="lead">
-    {% trans "Select items you want to borrow, choose pickup and return dates, then confirm your request." %}
+    {% trans "Choose pickup and return dates, select items you want to borrow, then confirm your request." %}
   </p>
   <form method="post"
         action="{% url 'bookings:preview-item-booking' %}"
@@ -238,3 +238,103 @@
     {% endif %}
   {% endfor %}
 {% endblock modal %}
+{% block inline_javascript %}
+  {{ pickup_days|json_script:"pickup-days-data" }}
+  {{ return_days|json_script:"return-days-data" }}
+  {{ restricted_ranges|json_script:"restricted-ranges-data" }}
+  <script>
+    (function() {
+      // Python weekday: 0=Monday…6=Sunday → JS weekday: 0=Sunday…6=Saturday
+      function jsToPy(jsDay) {
+        return (jsDay + 6) % 7;
+      }
+
+      const pickupDays = JSON.parse(document.getElementById("pickup-days-data").textContent);
+      const returnDays = JSON.parse(document.getElementById("return-days-data").textContent);
+      const restrictedRanges = JSON.parse(document.getElementById("restricted-ranges-data").textContent);
+
+      function isDateRestricted(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        const pyDay = jsToPy(d.getDay());
+        for (const r of restrictedRanges) {
+          if (r.start_date && dateStr < r.start_date) continue;
+          if (r.end_date && dateStr > r.end_date) continue;
+          if (r.days.includes(pyDay)) return true;
+        }
+        return false;
+      }
+
+      function validateDateInput(input, allowedDays, errorMsg) {
+        if (!input.value) return;
+        const pyDay = jsToPy(new Date(input.value + "T00:00:00").getDay());
+        if (!allowedDays.includes(pyDay) || isDateRestricted(input.value)) {
+          input.setCustomValidity(errorMsg);
+          input.reportValidity();
+          input.value = "";
+          input.setCustomValidity("");
+        }
+      }
+
+      const pickupInput = document.getElementById("pickup_date");
+      const returnInput = document.getElementById("return_date");
+
+      pickupInput.addEventListener("change", () => validateDateInput(pickupInput, pickupDays, "{% trans 'Pickup not available on this date.' %}"));
+      returnInput.addEventListener("change", () => validateDateInput(returnInput, returnDays, "{% trans 'Return not available on this date.' %}"));
+
+      // Persist quantities across HTMX date-change swaps and back-navigation
+      let savedQuantities = {};
+      let restoringFromSession = false;
+      const itemsList = document.getElementById("items-list");
+
+      itemsList.addEventListener("htmx:beforeSwap", () => {
+        if (!restoringFromSession) {
+          savedQuantities = {};
+          itemsList.querySelectorAll("input[name^='quantity_']").forEach(input => {
+            savedQuantities[input.name] = input.value;
+          });
+        }
+      });
+      itemsList.addEventListener("htmx:afterSwap", () => {
+        itemsList.querySelectorAll("input[name^='quantity_']").forEach(input => {
+          if (savedQuantities[input.name] !== undefined) {
+            input.value = savedQuantities[input.name];
+          }
+        });
+        restoringFromSession = false;
+      });
+
+      // Save form state to sessionStorage on submit so back-navigation restores it
+      document.getElementById("item-booking-form").addEventListener("submit", () => {
+        const quantities = {};
+        itemsList.querySelectorAll("input[name^='quantity_']").forEach(input => {
+          quantities[input.name] = input.value;
+        });
+        sessionStorage.setItem("itemBookingFormState", JSON.stringify({
+          pickup_date: pickupInput.value,
+          return_date: returnInput.value,
+          organization: document.getElementById("organization").value,
+          quantities,
+        }));
+      });
+
+      // Restore state after back-navigation
+      const savedState = sessionStorage.getItem("itemBookingFormState");
+      if (savedState) {
+        sessionStorage.removeItem("itemBookingFormState");
+        const formData = JSON.parse(savedState);
+        if (formData.pickup_date) pickupInput.value = formData.pickup_date;
+        if (formData.return_date) returnInput.value = formData.return_date;
+        if (formData.organization) document.getElementById("organization").value = formData.organization;
+        if (formData.quantities && Object.keys(formData.quantities).length > 0) {
+          savedQuantities = formData.quantities;
+          restoringFromSession = true;
+        }
+        if (formData.pickup_date && formData.return_date) {
+          pickupInput.dispatchEvent(new Event("change", {
+            bubbles: true
+          }));
+        }
+      }
+    })();
+  </script>
+{% endblock inline_javascript %}
