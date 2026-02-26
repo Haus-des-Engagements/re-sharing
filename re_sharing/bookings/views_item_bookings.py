@@ -349,17 +349,18 @@ def show_booking_group_view(request: HttpRequest, slug: str) -> HttpResponse:
 def cancel_booking_group_view(request: HttpRequest, slug: str) -> HttpResponse:
     """Cancel an entire BookingGroup."""
     try:
-        booking_group = cancel_booking_group(request.user, slug)
+        cancel_booking_group(request.user, slug)
         messages.success(request, _("Equipment booking cancelled successfully."))
     except (PermissionDenied, ValidationError) as e:
         messages.error(request, str(e))
 
+    from django.urls import reverse
+
+    redirect_url = reverse("bookings:show-booking-group", kwargs={"slug": slug})
     if request.headers.get("HX-Request"):
-        return render(
-            request,
-            "bookings/show-booking-group.html#booking-group-status",
-            {"booking_group": booking_group},
-        )
+        response = HttpResponse()
+        response["HX-Redirect"] = redirect_url
+        return response
 
     return redirect("bookings:show-booking-group", slug=slug)
 
