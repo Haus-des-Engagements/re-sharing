@@ -153,6 +153,17 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
     return render(request, "bookings/create-item-booking.html", context)
 
 
+def _htmx_redirect(request: HttpRequest, url_name: str) -> HttpResponse:
+    """For HTMX requests, trigger a full-page redirect via HX-Redirect header."""
+    from django.urls import reverse
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse(url_name)
+        return response
+    return redirect(url_name)
+
+
 @require_http_methods(["GET", "POST"])
 def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912, PLR0915
     """Preview item booking before confirmation."""
@@ -183,7 +194,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
 
     if not pickup_date or not return_date or not organization_id:
         messages.error(request, _("Please fill in all required fields."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     try:
         pickup_date_obj = date_type.fromisoformat(pickup_date)
@@ -191,7 +202,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
         organization = Organization.objects.get(pk=organization_id)
     except (ValueError, Organization.DoesNotExist):
         messages.error(request, _("Invalid data provided."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     # Only authenticated users whose organization is in the eligible group may proceed
     if not request.user.is_authenticated or not organization_can_book_items(
@@ -207,15 +218,15 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
     # Validate dates
     if not is_valid_pickup_date(pickup_date_obj):
         messages.error(request, _("Pickup not available on this date."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     if not is_valid_return_date(return_date_obj):
         messages.error(request, _("Return not available on this date."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     if pickup_date_obj >= return_date_obj:
         messages.error(request, _("Return date must be after pickup date."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     # Collect items
     items = []
@@ -239,7 +250,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
                             _("Only %(n)s available for %(item)s")
                             % {"n": available, "item": resource.name},
                         )
-                        return redirect("bookings:create-item-booking")
+                        return _htmx_redirect(request, "bookings:create-item-booking")
 
                     # Get daily rate
                     compensations = resource.get_bookable_compensations(organization)
@@ -262,7 +273,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
 
     if not items:
         messages.error(request, _("Please select at least one item."))
-        return redirect("bookings:create-item-booking")
+        return _htmx_redirect(request, "bookings:create-item-booking")
 
     # Store in session
     booking_data = {
