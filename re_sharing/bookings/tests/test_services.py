@@ -54,9 +54,9 @@ from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.tests.factories import ManagerFactory
 from re_sharing.resources.models import Resource
-from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import CompensationFactory
+from re_sharing.resources.tests.factories import PermanentCodeFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -213,8 +213,8 @@ class TestShowBooking(TestCase):
             timespan=(self.start_datetime, self.start_datetime + timedelta(hours=2)),
         )
         validity_start = self.start_datetime - timedelta(days=1)
-        self.access_code = AccessCodeFactory(
-            access=self.access,
+        self.access_code = PermanentCodeFactory(
+            accesses=[self.access],
             validity_start=validity_start,
             organization=self.organization,
         )

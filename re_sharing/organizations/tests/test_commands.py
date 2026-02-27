@@ -2,6 +2,7 @@ from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
 
+from dateutil.relativedelta import relativedelta
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
@@ -90,9 +91,8 @@ class TestSendMonthlyBookingsOverviewCommand(TestCase):
         """Test command enqueues tasks for organizations with bookings"""
         resource = ResourceFactory()
         organization = OrganizationFactory(monthly_bulk_access_codes=True)
-        # Booking next month
-        next_month = timezone.now() + timedelta(days=35)
-        next_month = next_month.replace(
+        # Booking next month (using relativedelta to stay in the correct calendar month)
+        next_month = (timezone.now() + relativedelta(months=1)).replace(
             day=10, hour=10, minute=0, second=0, microsecond=0
         )
         booking = BookingFactory(
@@ -118,9 +118,9 @@ class TestSendMonthlyBookingsOverviewCommand(TestCase):
         """Test command with custom months parameter"""
         resource = ResourceFactory()
         organization = OrganizationFactory(monthly_bulk_access_codes=True)
-        # Booking 2 months from now
-        two_months = timezone.now() + timedelta(days=65)
-        two_months = two_months.replace(
+        # Booking 2 months from now (using relativedelta to stay in the
+        # correct calendar month)
+        two_months = (timezone.now() + relativedelta(months=2)).replace(
             day=10, hour=10, minute=0, second=0, microsecond=0
         )
         BookingFactory(
@@ -161,8 +161,7 @@ class TestSendMonthlyBookingsOverviewCommand(TestCase):
         resource2 = ResourceFactory()
         org1 = OrganizationFactory(name="Test Org One", monthly_bulk_access_codes=True)
         org2 = OrganizationFactory(name="Test Org Two", monthly_bulk_access_codes=True)
-        next_month = timezone.now() + timedelta(days=35)
-        next_month = next_month.replace(
+        next_month = (timezone.now() + relativedelta(months=1)).replace(
             day=10, hour=10, minute=0, second=0, microsecond=0
         )
         BookingFactory(

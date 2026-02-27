@@ -149,11 +149,7 @@
                     -
                   {% endif %}
                 </td>
-                <td class="text-center">
-                  <span class="badge {% if item.available > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                    {{ item.available }} / {{ item.total }}
-                  </span>
-                </td>
+                <td class="text-center">{{ item.available }} / {{ item.total }}</td>
                 <td class="text-center">
                   <input type="number"
                          class="form-control form-control-sm text-center"

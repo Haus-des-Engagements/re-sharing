@@ -150,7 +150,6 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
 
 
 @require_http_methods(["GET", "POST"])
-@login_required
 def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912, PLR0915
     """Preview item booking before confirmation."""
     if request.method == "GET":
