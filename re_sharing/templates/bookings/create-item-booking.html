@@ -17,7 +17,10 @@
   </div>
   <h1 class="mt-4">{% trans "Borrow Equipment" %}</h1>
   <p class="lead">
-    {% trans "Choose pickup and return dates, select items you want to borrow, then confirm your request." %}
+    {% blocktrans trimmed %}
+      Choose pickup and return dates, select items you want to borrow, then confirm your request.
+      For more info <a href="https://haus-des-engagements.de/angebote/materialverleih/">go here</a>.
+    {% endblocktrans %}
   </p>
   {% if show_login_notice %}
     <div id="item-booking-login-notice" class="alert alert-info" role="alert">

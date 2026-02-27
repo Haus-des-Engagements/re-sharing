@@ -63,11 +63,9 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'resources:list-resources' %}">{% trans "Rooms" %}</a>
                 </li>
-                {% if request.user.is_manager %}
-                  <li class="nav-item">
-                    <a class="nav-link" href="{% url 'bookings:create-item-booking' %}">{% trans "Lendable Items" %}</a>
-                  </li>
-                {% endif %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'bookings:create-item-booking' %}">{% trans "Lendable Items" %}</a>
+                </li>
                 <div class="vr"></div>
                 <li class="nav-item">
                   <a class="nav-link"
