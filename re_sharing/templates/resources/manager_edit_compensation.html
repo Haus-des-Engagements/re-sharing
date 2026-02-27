@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <nav class="breadcrumb-nav my-3" aria-label="breadcrumb">
+    <ol class="breadcrumb rounded-3">
+      <li class="breadcrumb-item">
+        <a href="{% url 'resources:manager-list-resources' %}">{% trans "Manage Resources" %}</a>
+      </li>
+      {% if resource %}
+        <li class="breadcrumb-item">
+          <a href="{% url 'resources:manager-show-resource' resource_slug=resource.slug %}">{{ resource.name }}</a>
+        </li>
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">
+        {% if compensation %}
+          {% trans "Edit Compensation" %}
+        {% else %}
+          {% trans "New Compensation" %}
+        {% endif %}
+      </li>
+    </ol>
+  </nav>
+  <h1 class="mt-2">
+    {% if compensation %}
+      {% trans "Edit Compensation" %}
+    {% else %}
+      {% trans "New Compensation" %}
+    {% endif %}
+  </h1>
+  {% if affected_resources %}
+    <div class="alert alert-warning mt-3" role="alert">
+      <strong>{% trans "Attention:" %}</strong>
+      {% blocktrans trimmed count n=affected_resources|length %}
+        This compensation is also used by {{ n }} other resource. Changes will affect all of them:
+      {% plural %}
+        This compensation is used by {{ n }} resources. Changes will affect all of them:
+      {% endblocktrans %}
+      <ul class="mb-0 mt-1">
+        {% for res in affected_resources %}
+          <li>
+            <a href="{% url 'resources:manager-show-resource' resource_slug=res.slug %}">{{ res.name }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  <div class="row mt-4">
+    <div class="col-md-6">{% crispy form %}</div>
+  </div>
+{% endblock content %}

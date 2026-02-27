@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+  <nav class="breadcrumb-nav my-3" aria-label="breadcrumb">
+    <ol class="breadcrumb rounded-3">
+      <li class="breadcrumb-item">
+        <a href="{% url 'resources:manager-list-resources' %}">{% trans "Manage Resources" %}</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">{{ resource.name }}</li>
+    </ol>
+  </nav>
+  <div class="d-flex justify-content-between align-items-center mt-2 mb-0">
+    <h1 class="mb-0">{{ resource.name }}</h1>
+    <a href="{% url 'resources:manager-edit-resource' resource_slug=resource.slug %}"
+       class="btn btn-outline-primary btn-sm">{% trans "Edit resource" %}</a>
+  </div>
+  <div class="row mt-4 g-4">
+    {# ---- Resource info ---- #}
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">{% trans "Details" %}</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-5">{% trans "Type" %}</dt>
+            <dd class="col-7">
+              {{ resource.get_type_display }}
+            </dd>
+            <dt class="col-5">{% trans "Location" %}</dt>
+            <dd class="col-7">
+              {{ resource.location.name|default:"—" }}
+            </dd>
+            <dt class="col-5">{% trans "Quantity" %}</dt>
+            <dd class="col-7">
+              {{ resource.quantity_available|default:"—" }}
+            </dd>
+            <dt class="col-5">{% trans "Private" %}</dt>
+            <dd class="col-7">
+              {% if resource.is_private %}
+                <span class="badge bg-warning text-dark">{% trans "Yes" %}</span>
+              {% else %}
+                <span class="badge bg-success">{% trans "No" %}</span>
+              {% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    {# ---- Compensations ---- #}
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          {% trans "Compensations" %}
+          <a class="btn btn-sm btn-primary"
+             href="{% url 'resources:manager-create-compensation' resource_slug=resource.slug %}">
+            {% trans "Create new" %}
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Conditions" %}</th>
+                <th class="text-end">{% trans "Hourly rate" %}</th>
+                <th class="text-end">{% trans "Daily rate" %}</th>
+                <th class="text-center">{% trans "Active" %}</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for comp in compensations %}
+                <tr>
+                  <td>{{ comp.name }}</td>
+                  <td class="text-muted small">{{ comp.conditions|truncatechars:60 }}</td>
+                  <td class="text-end">
+                    {% if comp.hourly_rate %}
+                      {{ comp.hourly_rate }} €
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    {% if comp.daily_rate %}
+                      {{ comp.daily_rate }} €
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if comp.is_active %}
+                      <span class="badge bg-success">{% trans "Yes" %}</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{% trans "No" %}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a class="btn btn-sm btn-outline-secondary"
+                       href="{% url 'resources:manager-edit-compensation' compensation_id=comp.pk %}?resource={{ resource.slug }}">
+                      {% trans "Edit" %}
+                    </a>
+                  </td>
+                  <td>
+                    <form method="post"
+                          action="{% url 'resources:manager-unlink-compensation' resource_slug=resource.slug compensation_id=comp.pk %}">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="btn btn-sm btn-outline-danger"
+                              onclick="return confirm('{% trans "Remove this compensation from the resource?" %}')">
+                        {% trans "Remove" %}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">{% trans "No compensations linked yet." %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if available_compensations %}
+          <div class="card-footer">
+            <form method="post"
+                  action="{% url 'resources:manager-link-compensation' resource_slug=resource.slug %}"
+                  class="row g-2 align-items-center">
+              {% csrf_token %}
+              <div class="col-auto">
+                <label class="col-form-label">{% trans "Add existing:" %}</label>
+              </div>
+              <div class="col">
+                <select name="compensation_id" class="form-select form-select-sm">
+                  {% for comp in available_compensations %}<option value="{{ comp.pk }}">{{ comp }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Add" %}</button>
+              </div>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {# ---- Images ---- #}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">{% trans "Images" %}</div>
+        <div class="card-body">
+          <div class="row g-3 mb-4">
+            {% for img in images %}
+              <div class="col-6 col-md-3 col-lg-2">
+                <div class="card h-100">
+                  <img src="{{ img.image.url }}"
+                       class="card-img-top object-fit-cover"
+                       style="height: 120px"
+                       alt="{{ img.description }}" />
+                  <div class="card-body p-2">
+                    <p class="card-text small text-muted mb-2">{{ img.description|default:"—" }}</p>
+                    <form method="post"
+                          action="{% url 'resources:manager-delete-resource-image' resource_slug=resource.slug image_id=img.pk %}">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="btn btn-sm btn-outline-danger w-100"
+                              onclick="return confirm('{% trans "Delete this image?" %}')">
+                        {% trans "Delete" %}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted">{% trans "No images yet." %}</p>
+            {% endfor %}
+          </div>
+          {# Upload form #}
+          <h6>{% trans "Upload new image" %}</h6>
+          <form method="post"
+                enctype="multipart/form-data"
+                action="{% url 'resources:manager-add-resource-image' resource_slug=resource.slug %}">
+            {% csrf_token %}
+            <div class="row g-2 align-items-end">
+              <div class="col-auto">{{ image_form.image }}</div>
+              <div class="col-auto">{{ image_form.description }}</div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% trans "Upload" %}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

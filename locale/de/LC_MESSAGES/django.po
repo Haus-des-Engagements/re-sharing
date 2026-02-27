@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-27 07:27+0100\n"
+"POT-Creation-Date: 2026-02-27 11:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -951,6 +951,9 @@ msgstr ""
 msgid "Manager"
 msgstr "Manager"
 
+msgid "Image"
+msgstr "Bild"
+
 msgid "Slug"
 msgstr "Kurzbezeichnung"
 
@@ -1104,6 +1107,30 @@ msgstr ""
 msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
 
+msgid "Resource updated."
+msgstr "Ressource aktualisiert."
+
+msgid "Compensation updated."
+msgstr "Gegenleistung aktualisiert."
+
+msgid "Compensation linked."
+msgstr "Gegenleistung verknüpft"
+
+msgid "Compensation removed from this resource."
+msgstr "Gegenleistung für diese Resource entfernt."
+
+msgid "Compensation created and linked."
+msgstr "Gegenleistung erstellt und verknüpft."
+
+msgid "Image uploaded."
+msgstr "Bild hochgeladen."
+
+msgid "Invalid image."
+msgstr "Ungültiges Bild."
+
+msgid "Image deleted."
+msgstr "Bild gelöscht."
+
 msgid "Sign In"
 msgstr "Anmelden"
 
@@ -1125,14 +1152,17 @@ msgstr "Meine Übersicht"
 msgid "Management"
 msgstr "Verwaltung"
 
+msgid "Room Bookings"
+msgstr "Raumbuchungen"
+
+msgid "Room Booking Series"
+msgstr "Raumbuchungen - Serien"
+
 msgid "Equipment Bookings"
-msgstr "Materialverleih-Buchungen"
+msgstr "Materialbuchungen"
 
 msgid "Invoices"
 msgstr "Rechnungen"
-
-msgid "Access Codes"
-msgstr "Zugangscodes"
 
 msgid "Permissions"
 msgstr "Berechtigungen"
@@ -1140,11 +1170,11 @@ msgstr "Berechtigungen"
 msgid "Email templates"
 msgstr "E-Mail Vorlagen"
 
-msgid "Reports"
-msgstr "Berichte"
-
 msgid "Custom E-Mail"
 msgstr "E-Mail an Organisation"
+
+msgid "Reports"
+msgstr "Berichte"
 
 msgid "Find a free room"
 msgstr "Finde einen freien Raum"
@@ -1349,6 +1379,18 @@ msgstr "Storniert"
 msgid "All statuses"
 msgstr "Alle Status"
 
+msgid "Pickups & Returns"
+msgstr "Abholungen & Rückgaben"
+
+msgid "Only Pickups"
+msgstr "Nur Abholungen"
+
+msgid "Only Returns"
+msgstr "Nur Rückgaben"
+
+msgid "#"
+msgstr "#"
+
 msgid "Created"
 msgstr "Erstellt"
 
@@ -1421,8 +1463,8 @@ msgstr "nur ohne Rechnungsnummer"
 msgid "Admin-Link"
 msgstr "Admin-Link"
 
-msgid "Equipment Booking Details"
-msgstr "Materialverleih-Details"
+msgid "Equipment Booking"
+msgstr "Materialausleihe"
 
 msgid "Booking Information"
 msgstr "Buchungsinformationen"
@@ -1456,12 +1498,6 @@ msgstr "Möchtest du diesen Gegenstand wirklich stornieren?"
 
 msgid "Total Amount"
 msgstr "Gesamtbetrag"
-
-msgid "Quick Actions"
-msgstr "Schnellaktionen"
-
-msgid "Back to List"
-msgstr "Zurück zur Liste"
 
 msgid "Status History"
 msgstr "Status-Verlauf"
@@ -1520,9 +1556,6 @@ msgstr "Tage"
 msgid "Confirm Booking"
 msgstr "Buchung bestätigen"
 
-msgid "Equipment Booking"
-msgstr "Materialausleihe"
-
 msgid "Cancel Entire Booking"
 msgstr "Gesamte Buchung stornieren"
 
@@ -1536,10 +1569,9 @@ msgid "Booking Confirmed"
 msgstr "Buchung bestätigt"
 
 msgid ""
-"Your equipment booking has been confirmed. Please pick up the items at the "
-"scheduled time."
+"Your equipment is confirmed. Please pick up the items at the scheduled time."
 msgstr ""
-"Deine Materialausleihe wurde bestätigt. Bitte hole die Gegenstände zur "
+"Deine Materialausleihe ist bestätigt. Bitte hole die Gegenstände zur "
 "geplanten Zeit ab."
 
 msgid "Awaiting Confirmation"
@@ -1669,6 +1701,9 @@ msgstr "Keine Materialausleihen"
 
 msgid "Delete Booking Permission"
 msgstr "Buchungsberechtigung löschen"
+
+msgid "Back to List"
+msgstr "Zurück zur Liste"
 
 msgid "Are you sure?"
 msgstr "Bist du sicher?"
@@ -2136,6 +2171,9 @@ msgstr "Zugangscode bearbeiten"
 msgid "Create Access Code"
 msgstr "Zugangscode erstellen"
 
+msgid "Access Codes"
+msgstr "Zugangscodes"
+
 msgid "Filter Access Codes"
 msgstr "Zugangscodes filtern"
 
@@ -2170,6 +2208,101 @@ msgstr "buchen"
 
 msgid "No resource matches your filter."
 msgstr "Es wurde keine passende Ressource gefunden."
+
+msgid "Manage Resources"
+msgstr "Ressourcen verwalten"
+
+msgid "Edit Compensation"
+msgstr "Gegenleistung bearbeiten"
+
+msgid "New Compensation"
+msgstr "Neue Gegenleistung"
+
+msgid "Attention:"
+msgstr "Vorsicht:"
+
+#, python-format
+msgid ""
+"This compensation is also used by %(n)s other resource. Changes will affect "
+"all of them:"
+msgid_plural ""
+"This compensation is used by %(n)s resources. Changes will affect all of "
+"them:"
+msgstr[0] ""
+"Die Gegenleistung ist auch mit %(n)s anderen Ressource verknüpft. "
+"Änderungen betreffen alle Ressourcen:"
+msgstr[1] ""
+"Die Gegenleistung ist auch mit %(n)s anderen Ressourcen verknüpft. "
+"Änderungen betreffen alle Ressourcen:"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Edit Resource"
+msgstr "Ressource bearbeiten"
+
+msgid "All types"
+msgstr "Alle Arten"
+
+msgid "Loading..."
+msgstr "Lädt..."
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Public"
+msgstr "Öffentlich"
+
+msgid "No resources found."
+msgstr "Keine Resourcen gefunden."
+
+msgid "Edit resource"
+msgstr "Ressource bearbeiten"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nein"
+
+msgid "Create new"
+msgstr "Neu erstellen"
+
+msgid "Hourly rate"
+msgstr "Preis pro Stunde"
+
+msgid "Daily rate"
+msgstr "Preis pro Tag"
+
+msgid "Remove this compensation from the resource?"
+msgstr "Die Gegenleistung von der Ressource entfernen?"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "No compensations linked yet."
+msgstr "Noch keine Gegenleistung verknüpft."
+
+msgid "Add existing:"
+msgstr "Bestehende hinzufügen:"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Images"
+msgstr "Bilder"
+
+msgid "Delete this image?"
+msgstr "Dieses Bild löschen?"
+
+msgid "No images yet."
+msgstr "Noch keine Bilder."
+
+msgid "Upload new image"
+msgstr "Neues Bild hochladen"
+
+msgid "Upload"
+msgstr "Hochladen"
 
 msgid ""
 "In this view, you can see the free times for all resources. Click on a free "
@@ -2591,3 +2724,9 @@ msgstr "Aktualisiert"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+#~ msgid "Equipment Booking Details"
+#~ msgstr "Materialverleih-Details"
+
+#~ msgid "Quick Actions"
+#~ msgstr "Schnellaktionen"

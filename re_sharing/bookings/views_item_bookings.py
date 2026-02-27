@@ -49,7 +49,10 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
     from re_sharing.resources.models import Resource
     from re_sharing.resources.models import ResourceRestriction
 
+    is_manager = request.user.is_authenticated and request.user.is_manager()
     items = get_lendable_items()
+    if not is_manager:
+        items = items.filter(is_private=False)
     pickup_slots = get_pickup_slots()
     return_slots = get_return_slots()
     pickup_days = get_pickup_days()

@@ -1037,3 +1037,56 @@ class TestManagerItemBookingOrganizationSelection(TestCase):
         org_ids = [org.pk for org in response.context["organizations"]]
         assert self.own_org.pk in org_ids
         assert self.other_org.pk not in org_ids
+
+
+class TestPrivateLendableItemVisibility(TestCase):
+    """Private lendable items are only shown to managers."""
+
+    URL = "bookings:create-item-booking"
+
+    def setUp(self):
+        from re_sharing.resources.models import Resource
+        from re_sharing.resources.tests.factories import ResourceFactory
+
+        self.client = Client()
+        self.public_item = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=3,
+            is_private=False,
+        )
+        self.private_item = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=2,
+            is_private=True,
+        )
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+
+        self.regular_user = UserFactory()
+        org = OrganizationFactory()
+        BookingPermissionFactory(
+            user=self.regular_user,
+            organization=org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def _item_pks(self, response):
+        return [item["resource"].pk for item in response.context["items"]]
+
+    def test_private_item_hidden_from_anonymous_user(self):
+        response = self.client.get(reverse(self.URL))
+        assert self.public_item.pk in self._item_pks(response)
+        assert self.private_item.pk not in self._item_pks(response)
+
+    def test_private_item_hidden_from_regular_user(self):
+        self.client.force_login(self.regular_user)
+        response = self.client.get(reverse(self.URL))
+        assert self.public_item.pk in self._item_pks(response)
+        assert self.private_item.pk not in self._item_pks(response)
+
+    def test_private_item_visible_to_manager(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL))
+        pks = self._item_pks(response)
+        assert self.public_item.pk in pks
+        assert self.private_item.pk in pks

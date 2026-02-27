@@ -2499,3 +2499,61 @@ class TestCreateItemBookingGroup(TestCase):
         )
 
         assert booking_group.status == BookingStatus.CONFIRMED
+
+    def test_regular_user_cannot_book_private_item(self):
+        """Regular users cannot book private lendable items."""
+        from django.core.exceptions import ValidationError
+
+        from re_sharing.resources.models import Resource
+
+        private_resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=5,
+            is_private=True,
+        )
+        self.compensation.resource.add(private_resource)
+
+        regular_user = UserFactory()
+        BookingPermissionFactory(
+            user=regular_user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        with pytest.raises(ValidationError):
+            self.create_item_booking_group(
+                user=regular_user,
+                organization=self.organization,
+                pickup_date=self.pickup_date,
+                return_date=self.return_date,
+                items=[{"resource_id": private_resource.pk, "quantity": 1}],
+            )
+
+    def test_manager_can_book_private_item(self):
+        """Managers can book private lendable items."""
+        from re_sharing.providers.tests.factories import ManagerFactory
+        from re_sharing.resources.models import Resource
+
+        private_resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=5,
+            is_private=True,
+        )
+        self.compensation.resource.add(private_resource)
+
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        BookingPermissionFactory(
+            user=manager_user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        booking_group = self.create_item_booking_group(
+            user=manager_user,
+            organization=self.organization,
+            pickup_date=self.pickup_date,
+            return_date=self.return_date,
+            items=[{"resource_id": private_resource.pk, "quantity": 1}],
+        )
+        assert booking_group.status == BookingStatus.CONFIRMED

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block content %}
+  <h1 class="mt-4">{% trans "Manage Resources" %}</h1>
+  <form class="row gx-3 gy-2 align-items-center mt-3"
+        method="get"
+        hx-get="{% url 'resources:manager-list-resources' %}"
+        hx-target="#resource-list"
+        hx-trigger="input changed delay:300ms, keyup, change"
+        hx-indicator="#spinner"
+        hx-push-url="true"
+        hx-sync="closest form:replace">
+    <div class="col-auto">
+      <select name="type" class="form-select" id="id_type">
+        <option value="" {% if not selected_type %}selected{% endif %}>{% trans "All types" %}</option>
+        {% for value, label in resource_type_choices %}
+          <option value="{{ value }}"
+                  {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="location" class="form-select" id="id_location">
+        <option value="" {% if not selected_location %}selected{% endif %}>{% trans "All locations" %}</option>
+        {% for loc in locations %}
+          <option value="{{ loc.slug }}"
+                  {% if selected_location == loc.slug %}selected{% endif %}>{{ loc.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="spinner"
+         class="spinner-border col-auto htmx-indicator"
+         role="status">
+      <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
+  </form>
+  <div id="resource-list">
+    {% partialdef resource-list inline %}
+    <div class="table-responsive mt-4">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Location" %}</th>
+            <th class="text-center">{% trans "Qty" %}</th>
+            <th class="text-center">{% trans "Private" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for resource in resources %}
+            <tr>
+              <td>
+                <strong>{{ resource.name }}</strong>
+              </td>
+              <td>{{ resource.get_type_display }}</td>
+              <td>{{ resource.location.name|default:"—" }}</td>
+              <td class="text-center">{{ resource.quantity_available|default:"—" }}</td>
+              <td class="text-center">
+                {% if resource.is_private %}
+                  <span class="badge bg-warning text-dark">{% trans "Private" %}</span>
+                {% else %}
+                  <span class="badge bg-success">{% trans "Public" %}</span>
+                {% endif %}
+              </td>
+              <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   href="{% url 'resources:manager-show-resource' resource_slug=resource.slug %}">
+                  {% trans "Details" %}
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">{% trans "No resources found." %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endpartialdef %}
+</div>
+{% endblock content %}

@@ -4,13 +4,18 @@ from datetime import time
 from datetime import timedelta
 
 import django_filters
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.models import Site
 from django.db.models import Q
+from django.http import HttpRequest
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 from django_ical.views import ICalFeed
 from neapolitan.views import CRUDView
@@ -18,10 +23,16 @@ from neapolitan.views import CRUDView
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
 from re_sharing.providers.decorators import ManagerRequiredMixin
+from re_sharing.providers.decorators import manager_required
+from re_sharing.resources.forms import CompensationEditForm
+from re_sharing.resources.forms import ResourceEditForm
+from re_sharing.resources.forms import ResourceImageForm
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
+from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
+from re_sharing.resources.models import ResourceImage
 from re_sharing.resources.models import ResourceRestriction
 from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_user_accessible_locations
@@ -346,3 +357,222 @@ class ResourceIcalFeed(ICalFeed):
     def item_link(self, item):
         domain = Site.objects.get_current().domain
         return f"https://{domain}{item.get_absolute_url()}"
+
+
+# ---------------------------------------------------------------------------
+# Manager resource views
+# ---------------------------------------------------------------------------
+
+
+@require_http_methods(["GET"])
+@manager_required
+def manager_list_resources_view(request: HttpRequest) -> HttpResponse:
+    """Manager list view for all resources with type and location filters."""
+    resources = Resource.objects.select_related("location").order_by("name")
+
+    type_filter = request.GET.get("type", "")
+    location_filter = request.GET.get("location", "")
+
+    if type_filter:
+        resources = resources.filter(type=type_filter)
+    if location_filter:
+        resources = resources.filter(location__slug=location_filter)
+
+    locations = Location.objects.order_by("name")
+
+    context = {
+        "resources": resources,
+        "locations": locations,
+        "selected_type": type_filter,
+        "selected_location": location_filter,
+        "resource_type_choices": Resource.ResourceTypeChoices.choices,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "resources/manager_list_resources.html#resource-list",
+            context,
+        )
+
+    return render(request, "resources/manager_list_resources.html", context)
+
+
+@require_http_methods(["GET"])
+@manager_required
+def manager_show_resource_view(
+    request: HttpRequest, resource_slug: str
+) -> HttpResponse:
+    """Manager detail view for a single resource."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+    compensations = resource.compensations_of_resource.all()
+    linked_ids = compensations.values_list("pk", flat=True)
+    available_compensations = Compensation.objects.exclude(pk__in=linked_ids).order_by(
+        "name"
+    )
+    images = resource.resourceimages_of_resource.all()
+    image_form = ResourceImageForm()
+
+    return render(
+        request,
+        "resources/manager_show_resource.html",
+        {
+            "resource": resource,
+            "compensations": compensations,
+            "available_compensations": available_compensations,
+            "images": images,
+            "image_form": image_form,
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+@manager_required
+def manager_edit_resource_view(
+    request: HttpRequest, resource_slug: str
+) -> HttpResponse:
+    """Manager view to edit a Resource's core fields."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+
+    if request.method == "POST":
+        form = ResourceEditForm(request.POST, instance=resource)
+        if form.is_valid():
+            resource = form.save()
+            messages.success(request, _("Resource updated."))
+            return redirect(
+                "resources:manager-show-resource", resource_slug=resource.slug
+            )
+    else:
+        form = ResourceEditForm(instance=resource)
+
+    return render(
+        request,
+        "resources/manager_edit_resource.html",
+        {"form": form, "resource": resource},
+    )
+
+
+@require_http_methods(["GET", "POST"])
+@manager_required
+def manager_edit_compensation_view(
+    request: HttpRequest, compensation_id: int
+) -> HttpResponse:
+    """Manager view to edit a Compensation."""
+    compensation = get_object_or_404(Compensation, pk=compensation_id)
+    affected_resources = compensation.resource.all()
+
+    if request.method == "POST":
+        form = CompensationEditForm(request.POST, instance=compensation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Compensation updated."))
+            # Go back to the resource that linked here, if provided
+            back_slug = request.GET.get("resource")
+            if back_slug:
+                return redirect(
+                    "resources:manager-show-resource", resource_slug=back_slug
+                )
+            return redirect("resources:manager-list-resources")
+    else:
+        form = CompensationEditForm(instance=compensation)
+
+    return render(
+        request,
+        "resources/manager_edit_compensation.html",
+        {
+            "form": form,
+            "compensation": compensation,
+            "affected_resources": affected_resources,
+        },
+    )
+
+
+@require_http_methods(["POST"])
+@manager_required
+def manager_link_compensation_view(
+    request: HttpRequest, resource_slug: str
+) -> HttpResponse:
+    """Link an existing compensation to a resource."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+    compensation_id = request.POST.get("compensation_id")
+    compensation = get_object_or_404(Compensation, pk=compensation_id)
+    compensation.resource.add(resource)
+    messages.success(request, _("Compensation linked."))
+    return redirect("resources:manager-show-resource", resource_slug=resource_slug)
+
+
+@require_http_methods(["POST"])
+@manager_required
+def manager_unlink_compensation_view(
+    request: HttpRequest, resource_slug: str, compensation_id: int
+) -> HttpResponse:
+    """Remove the link between a compensation and a resource (does not delete it)."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+    compensation = get_object_or_404(Compensation, pk=compensation_id)
+    compensation.resource.remove(resource)
+    messages.success(request, _("Compensation removed from this resource."))
+    return redirect("resources:manager-show-resource", resource_slug=resource_slug)
+
+
+@require_http_methods(["GET", "POST"])
+@manager_required
+def manager_create_compensation_view(
+    request: HttpRequest, resource_slug: str
+) -> HttpResponse:
+    """Create a new compensation and link it to the resource."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+
+    if request.method == "POST":
+        form = CompensationEditForm(request.POST)
+        if form.is_valid():
+            compensation = form.save()
+            compensation.resource.add(resource)
+            messages.success(request, _("Compensation created and linked."))
+            return redirect(
+                "resources:manager-show-resource", resource_slug=resource_slug
+            )
+    else:
+        form = CompensationEditForm()
+
+    return render(
+        request,
+        "resources/manager_edit_compensation.html",
+        {
+            "form": form,
+            "resource": resource,
+            "compensation": None,
+            "affected_resources": [],
+        },
+    )
+
+
+@require_http_methods(["POST"])
+@manager_required
+def manager_add_resource_image_view(
+    request: HttpRequest, resource_slug: str
+) -> HttpResponse:
+    """Manager view to upload a new image for a resource."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+    form = ResourceImageForm(request.POST, request.FILES)
+    if form.is_valid():
+        image = form.save(commit=False)
+        image.resource = resource
+        image.save()
+        messages.success(request, _("Image uploaded."))
+    else:
+        messages.error(request, _("Invalid image."))
+
+    return redirect("resources:manager-show-resource", resource_slug=resource_slug)
+
+
+@require_http_methods(["POST"])
+@manager_required
+def manager_delete_resource_image_view(
+    request: HttpRequest, resource_slug: str, image_id: int
+) -> HttpResponse:
+    """Manager view to delete an image from a resource."""
+    resource = get_object_or_404(Resource, slug=resource_slug)
+    image = get_object_or_404(ResourceImage, pk=image_id, resource=resource)
+    image.delete()
+    messages.success(request, _("Image deleted."))
+    return redirect("resources:manager-show-resource", resource_slug=resource_slug)

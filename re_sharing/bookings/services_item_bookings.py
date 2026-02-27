@@ -262,8 +262,9 @@ def validate_item_booking_data(pickup_date, return_date, items, user, organizati
                 % {"n": available, "item": resource.name}
             )
 
-        # Check if resource is bookable by organization
-        if not resource.is_bookable_by_organization(organization):
+        # Managers bypass the org-bookability check for private items
+        is_manager = hasattr(user, "manager") or user.is_staff
+        if not is_manager and not resource.is_bookable_by_organization(organization):
             errors.append(
                 _("%(item)s is not available for your organization")
                 % {"item": resource.name}
