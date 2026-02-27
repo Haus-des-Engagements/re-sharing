@@ -31,25 +31,19 @@ from .services_item_bookings import is_valid_return_date
 from .services_item_bookings import manager_cancel_booking_group
 from .services_item_bookings import manager_cancel_item_in_booking_group
 from .services_item_bookings import manager_confirm_booking_group
+from .services_item_bookings import organization_can_book_items
 
 
 @require_http_methods(["GET", "POST"])
-@login_required
-@manager_required
 def create_item_booking_view(request: HttpRequest) -> HttpResponse:
     """View for creating item bookings - shows item list and date selection."""
-    # Get user's organizations
-    user_organizations = request.user.get_organizations_of_user()
-
-    if not user_organizations.exists():
-        messages.warning(
-            request,
-            _(
-                "You need to be a confirmed member of an organization "
-                "to borrow equipment."
-            ),
-        )
-        return redirect("bookings:list-bookings")
+    # Determine whether the user has a confirmed organisation (required to book)
+    user_organizations = (
+        request.user.get_organizations_of_user()
+        if request.user.is_authenticated
+        else Organization.objects.none()
+    )
+    show_login_notice = not user_organizations.exists()
 
     from re_sharing.resources.models import Resource
     from re_sharing.resources.models import ResourceRestriction
@@ -145,6 +139,7 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
         "pickup_date": pickup_date,
         "return_date": return_date,
         "restricted_ranges": restricted_ranges,
+        "show_login_notice": show_login_notice,
     }
 
     if request.headers.get("HX-Request"):
@@ -156,8 +151,7 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
 
 @require_http_methods(["GET", "POST"])
 @login_required
-@manager_required
-def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912
+def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912, PLR0915
     """Preview item booking before confirmation."""
     if request.method == "GET":
         # Get data from session
@@ -194,6 +188,17 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
         organization = Organization.objects.get(pk=organization_id)
     except (ValueError, Organization.DoesNotExist):
         messages.error(request, _("Invalid data provided."))
+        return redirect("bookings:create-item-booking")
+
+    # Only authenticated users whose organization is in the eligible group may proceed
+    if not request.user.is_authenticated or not organization_can_book_items(
+        organization
+    ):
+        if request.headers.get("HX-Request"):
+            return render(request, "bookings/item-booking-restriction-modal.html")
+        messages.error(
+            request, _("Your organisation is not eligible to borrow equipment.")
+        )
         return redirect("bookings:create-item-booking")
 
     # Validate dates
@@ -269,6 +274,13 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
         "total_amount": sum(item["total"] for item in items),
     }
     request.session["item_booking_data"] = booking_data
+
+    if request.headers.get("HX-Request"):
+        from django.urls import reverse
+
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("bookings:preview-item-booking")
+        return response
 
     return render(
         request,

@@ -2436,7 +2436,7 @@ class TestCreateItemBookingGroup(TestCase):
         )
 
         # Next Monday and Tuesday
-        today = timezone.now.date()
+        today = timezone.now().date()
         days_until_monday = (7 - today.weekday()) % 7 or 7
         self.pickup_date = today + datetime.timedelta(days=days_until_monday)
         self.return_date = self.pickup_date + datetime.timedelta(days=1)

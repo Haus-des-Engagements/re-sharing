@@ -19,6 +19,15 @@
   <p class="lead">
     {% trans "Choose pickup and return dates, select items you want to borrow, then confirm your request." %}
   </p>
+  {% if show_login_notice %}
+    <div id="item-booking-login-notice" class="alert alert-info" role="alert">
+      {% url 'account_login' as login_url %}
+      {% blocktrans trimmed with login_url=login_url %}
+        To borrow equipment you need to <a href="{{ login_url }}">log in</a>
+        and be a confirmed member of an eligible organisation.
+      {% endblocktrans %}
+    </div>
+  {% endif %}
   <form method="post"
         action="{% url 'bookings:preview-item-booking' %}"
         id="item-booking-form">
@@ -108,7 +117,7 @@
                       <img src="{{ first_image.image.url }}"
                            alt="{{ item.resource.name }}"
                            class="img-thumbnail object-fit-cover"
-                           width="48"
+                           width="64"
                            height="48" />
                     {% else %}
                       <span class="bg-light rounded d-inline-flex align-items-center justify-content-center p-2">
@@ -168,8 +177,14 @@
       </div>
     {% endpartialdef %}
   </div>
+  <div id="item-booking-modal-container"></div>
   <div class="mt-4 d-flex justify-content-end">
-    <button type="submit" class="btn btn-primary btn-lg">
+    <button type="button"
+            class="btn btn-primary btn-lg"
+            hx-post="{% url 'bookings:preview-item-booking' %}"
+            hx-include="#item-booking-form"
+            hx-target="#item-booking-modal-container"
+            hx-swap="innerHTML">
       <svg width="1em" height="1em">
         <use href="#bi-arrow-right" />
       </svg>

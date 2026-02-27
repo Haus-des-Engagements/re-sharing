@@ -843,3 +843,134 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
 
         response = self.client.get(reverse("bookings:manager-list-invoices"))
         assert response.status_code == HTTPStatus.FOUND  # Redirects to login
+
+
+class TestCreateItemBookingViewPublicAccess(TestCase):
+    """create_item_booking_view is public; shows a notice when login/org is missing."""
+
+    URL = "bookings:create-item-booking"
+    NOTICE_TEXT = b"item-booking-login-notice"
+
+    def setUp(self):
+        from re_sharing.resources.models import Resource
+        from re_sharing.resources.tests.factories import ResourceFactory
+
+        self.client = Client()
+        ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=3,
+        )
+
+    def test_anonymous_user_can_access_page(self):
+        """Non-logged-in users can view the item listing."""
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+
+    def test_anonymous_user_sees_items(self):
+        """Items are displayed for anonymous users."""
+        response = self.client.get(reverse(self.URL))
+        assert len(response.context["items"]) > 0
+
+    def test_anonymous_user_sees_notice(self):
+        """Anonymous users see the login/org notice."""
+        response = self.client.get(reverse(self.URL))
+        assert self.NOTICE_TEXT in response.content
+
+    def test_logged_in_user_without_org_sees_notice(self):
+        """Users without a confirmed organisation see the notice."""
+        user = UserFactory()
+        self.client.force_login(user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+        assert self.NOTICE_TEXT in response.content
+
+    def test_logged_in_user_with_approved_org_sees_no_notice(self):
+        """Users with a confirmed booking permission see no notice."""
+        user = UserFactory()
+        ManagerFactory(user=user)
+        org = OrganizationFactory()
+        BookingPermissionFactory(
+            user=user,
+            organization=org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+        assert self.NOTICE_TEXT not in response.content
+
+
+class TestPreviewItemBookingEligibility(TestCase):
+    """Only organizations in group 4 may proceed to the item booking preview."""
+
+    ELIGIBLE_GROUP_ID = 4
+    URL = "bookings:preview-item-booking"
+
+    def setUp(self):
+        from re_sharing.organizations.models import OrganizationGroup
+        from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+
+        self.client = Client()
+
+        # Ensure the eligible group with the fixed id exists
+        self.eligible_group, _ = OrganizationGroup.objects.get_or_create(
+            pk=self.ELIGIBLE_GROUP_ID,
+            defaults={"name": "Item Booking Eligible", "description": ""},
+        )
+
+        self.user = UserFactory()
+        ManagerFactory(user=self.user)
+
+        self.eligible_org = OrganizationFactory()
+        self.eligible_org.organization_groups.add(self.eligible_group)
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.eligible_org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        self.ineligible_org = OrganizationFactory()
+        other_group = OrganizationGroupFactory()
+        self.ineligible_org.organization_groups.add(other_group)
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.ineligible_org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def _htmx_post(self, org_id):
+        return self.client.post(
+            reverse(self.URL),
+            data={
+                "organization": org_id,
+                "pickup_date": "2026-03-02",
+                "return_date": "2026-03-03",
+            },
+            headers={"hx-request": "true"},
+        )
+
+    def test_ineligible_org_gets_restriction_modal(self):
+        """Users whose organization is not in group 4 receive the restriction modal."""
+        self.client.force_login(self.user)
+        response = self._htmx_post(self.ineligible_org.pk)
+        assert response.status_code == HTTPStatus.OK
+        assert b"item-booking-restriction-modal" in response.content
+
+    def test_eligible_org_does_not_get_modal(self):
+        """
+        Tests that an eligible organization does not render the modal when a request
+        is made. This ensures that appropriate modal content is not displayed for
+        eligible organizations when triggering the operation.
+
+        :param self: Represents the instance of the test case
+        :type self: TestCase
+        """
+        self.client.force_login(self.user)
+        response = self._htmx_post(self.eligible_org.pk)
+        assert b"item-booking-restriction-modal" not in response.content
+
+    def test_anonymous_user_gets_restriction_modal(self):
+        """Non-logged-in users receive the restriction modal."""
+        response = self._htmx_post(self.eligible_org.pk)
+        assert response.status_code == HTTPStatus.OK
+        assert b"item-booking-restriction-modal" in response.content

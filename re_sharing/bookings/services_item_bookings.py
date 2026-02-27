@@ -21,6 +21,16 @@ from re_sharing.resources.models import ResourceRestriction
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 
+ITEM_BOOKING_ELIGIBLE_GROUP_ID = 4
+
+
+def organization_can_book_items(organization) -> bool:
+    """Return True only if the organization belongs to
+    the item-booking eligible group."""
+    return organization.organization_groups.filter(
+        pk=ITEM_BOOKING_ELIGIBLE_GROUP_ID
+    ).exists()
+
 
 def get_lendable_items():
     """Get all lendable items."""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-02 15:11+0100\n"
+"POT-Creation-Date: 2026-02-27 07:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -293,6 +293,9 @@ msgstr ""
 "aktiviert bei Materialverleihgegenständen, damit sie nicht über das DB-"
 "Constraint validiert werden."
 
+msgid "Code"
+msgstr "Code"
+
 msgid "Booking"
 msgstr "Buchung"
 
@@ -349,10 +352,9 @@ msgstr "%(item)s ist nicht verfügbar für deine Organisation."
 msgid "You don't have permission to book for this organization"
 msgstr "Du hast nicht die Berechtigung für diese Organisation zu buchen."
 
-#, fuzzy, python-format
-#| msgid "Only %(n)s available for %(item)s"
+#, python-format
 msgid "No compensation available for %(item)s"
-msgstr "Nur %(n)s mal verfügbar für %(item)s"
+msgstr "Keine Gegenleistung verfügbar für %(item)s"
 
 msgid "Some items are no longer available. Please adjust your selection."
 msgstr ""
@@ -380,23 +382,23 @@ msgstr ""
 msgid "Sorry, something went wrong. Please try again."
 msgstr "Entschuldige, etwas ist schief gelaufen. Bitte probiere es erneut."
 
-msgid "Successfully cancelled all future bookings."
-msgstr "Alle zukünftigen Buchungen erfolgreich storniert."
+msgid ""
+"Successfully cancelled the entire booking series. All future bookings have "
+"been deleted."
+msgstr ""
+"Serienbuchung storniert. Alle zukünftigen Buchungen erfolgreich storniert."
 
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
-
-msgid ""
-"You need to be a confirmed member of an organization to borrow equipment."
-msgstr ""
-"Du musst ein bestätigtes Mitglied einer Organisation sein, um Material "
-"auszuleihen."
 
 msgid "Please fill in all required fields."
 msgstr "Bitte fülle alle Pflichtfelder aus."
 
 msgid "Invalid data provided."
 msgstr "Ungültige Daten übermittelt."
+
+msgid "Your organisation is not eligible to borrow equipment."
+msgstr ""
 
 msgid "Pickup not available on this date."
 msgstr "Abholung an diesem Datum nicht möglich."
@@ -410,9 +412,8 @@ msgstr "Das Rückgabedatum muss nach dem Abholdatum liegen."
 msgid "Please select at least one item."
 msgstr "Bitte wähle mindestens einen Gegenstand aus."
 
-msgid "Equipment booking created successfully! Please await confirmation."
-msgstr ""
-"Materialausleihe erfolgreich erstellt! Bitte warte auf die Bestätigung."
+msgid "Equipment booking successfully!"
+msgstr "Materialausleihe erfolgreich erstellt."
 
 msgid "Equipment booking cancelled successfully."
 msgstr "Materialausleihe erfolgreich storniert."
@@ -491,6 +492,14 @@ msgid ""
 msgstr ""
 "Nur Name der Organisation, Beschreibung, Ort, Webseite und Engagementbereich "
 "werden angezeigt."
+
+msgid ""
+"Your bookings can be displayed on info screens at the entrance of the "
+"meeting location."
+msgstr ""
+
+msgid "Only organization name, time and room will be displayed."
+msgstr "Nur Name der Organisation, Zeit, und Raum werden angezeigt."
 
 msgid "E-Mail address of the organization"
 msgstr "E-Mail der Organisation"
@@ -758,6 +767,15 @@ msgstr ""
 "Auch wenn du zustimmst zeigen wir lediglich diese Informationen: Name, "
 "Beschreibung, Gemeinde, Webseite, Engagementbereich."
 
+msgid ""
+"Show bookings on public info screens at the entrance of the meeting location"
+msgstr ""
+
+msgid ""
+"If enabled, your bookings will show up on the info screens at the entrance "
+"of the meeting location."
+msgstr ""
+
 msgid "Approval of values"
 msgstr "Bestätigung der Werte"
 
@@ -832,6 +850,15 @@ msgstr "Monatliche Buchungen"
 
 msgid "Booking not available"
 msgstr "Buchung nicht verfügbar"
+
+msgid "Permanent code created"
+msgstr ""
+
+msgid "Permanent code renewed"
+msgstr ""
+
+msgid "Permanent code invalidated"
+msgstr ""
 
 msgid "Send this email out."
 msgstr "Sende diese E-Mails"
@@ -936,14 +963,17 @@ msgstr "Standorte"
 msgid "Instructions"
 msgstr "Anleitung"
 
+msgid "Smartlock ID"
+msgstr ""
+
+msgid "Parent Access"
+msgstr "Übergeordneter Zugang"
+
 msgid "Access"
 msgstr "Zugang"
 
 msgid "Accesses"
 msgstr "Zugänge"
-
-msgid "Code"
-msgstr "Code"
 
 msgid "Validity start"
 msgstr "Gültigkeitsbeginn"
@@ -953,6 +983,15 @@ msgstr "Zugangscode"
 
 msgid "Access codes"
 msgstr "Zugangscodes"
+
+msgid "Validity end"
+msgstr "Gültigkeitsende"
+
+msgid "Permanent code"
+msgstr ""
+
+msgid "Permanent codes"
+msgstr ""
 
 msgid "Room"
 msgstr "Raum"
@@ -1058,6 +1097,10 @@ msgstr ""
 msgid "Compensations"
 msgstr "Gegenleistung"
 
+#, python-format
+msgid "Organization already has an active permanent code: %(code)s"
+msgstr ""
+
 msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
 
@@ -1141,11 +1184,17 @@ msgid "Borrow Equipment"
 msgstr "Material ausleihen"
 
 msgid ""
-"Select items you want to borrow, choose pickup and return dates, then "
+"Choose pickup and return dates, select items you want to borrow, then "
 "confirm your request."
 msgstr ""
-"Wähle die Gegenstände aus, die du ausleihen möchtest, wähle Abhol- und "
-"Rückgabedatum, und bestätige deine Anfrage."
+"Wähle Abhol- und Rückgabedatum, wähle die Gegenstände aus, die du ausleihen "
+"möchtest  und bestätige deine Anfrage."
+
+#, python-format
+msgid ""
+"To borrow equipment you need to <a href=\"%(login_url)s\">log in</a> and be "
+"a confirmed member of an eligible organisation."
+msgstr ""
 
 msgid "Select Dates"
 msgstr "Daten auswählen"
@@ -1191,6 +1240,18 @@ msgstr "Nächste"
 
 msgid "Close"
 msgstr "Schließen"
+
+#, fuzzy
+#| msgid "Booking not available"
+msgid "Borrowing not available"
+msgstr "Buchung nicht verfügbar"
+
+msgid ""
+"Borrowing equipment is only available to organisations that are members of "
+"the eligible group. Please contact us if you think you should have access."
+msgstr ""
+"Das Ausleihen von Gegenständen ist nur für Vereinsmitglieder möglich. Bitte "
+"kontaktiere uns, wenn du denkst, dass du Zugriff haben solltest."
 
 msgid "Room Schedule"
 msgstr "Raumbelegung"
@@ -1454,22 +1515,7 @@ msgid "Selected Items"
 msgstr "Ausgewählte Gegenstände"
 
 msgid "Days"
-msgstr ""
-
-msgid "Important Information"
-msgstr "Wichtige Informationen"
-
-msgid "Your booking will need to be confirmed by a manager."
-msgstr "Deine Buchung muss von einem Manager bestätigt werden."
-
-msgid "You will be notified by email once your booking is confirmed."
-msgstr ""
-"Du wirst per E-Mail benachrichtigt, sobald deine Buchung bestätigt ist."
-
-msgid "Please pick up and return items within the specified time windows."
-msgstr ""
-"Bitte hole die Gegenstände innerhalb der angegebenen Zeitfenster ab und "
-"bringe sie zurück."
+msgstr "Tage"
 
 msgid "Confirm Booking"
 msgstr "Buchung bestätigen"
@@ -1548,6 +1594,9 @@ msgstr "Möchest du alle zukünftigen Buchungen stornieren?"
 
 msgid "Cancel all future bookings"
 msgstr "Alle zukünfigen Buchungen stornieren"
+
+msgid "No bookings belong to this recurrence."
+msgstr "Keine Buchungen gehören zu dieser Serienbuchung"
 
 msgid "Are you sure you want to cancel this single booking?"
 msgstr "Möchest du diese einzelne Buchung wirklich stornieren?"
@@ -1851,14 +1900,45 @@ msgstr "alle Gruppen"
 msgid "Agreement"
 msgstr "Nutzungsvereinbarung"
 
+msgid "Permanent Code"
+msgstr "Dauerhafter Code"
+
+msgid "Are you sure you want to cancel this organization?"
+msgstr "Möchest du die Organisation wirklich stornieren?"
+
 msgid "without date"
 msgstr "ohne Datum"
 
 msgid "n.a."
 msgstr "k.A."
 
-msgid "Are you sure you want to cancel this organization?"
-msgstr "Möchest du die Organisation wirklich stornieren?"
+msgid "No code"
+msgstr "Kein Code"
+
+msgid "Create a new permanent code for this organization?"
+msgstr "Neuen dauerhaften Code für diese Organisation erstellen?"
+
+msgid "Create Code"
+msgstr "Code Erstellt"
+
+msgid "Invalidate"
+msgstr "Ungültig machen."
+
+msgid "Renew the permanent code? The old code will remain valid for 1 week."
+msgstr ""
+"Dauerhaften Code erneuern? Der alte Code wird noch eine Woche gültig bleiben."
+
+msgid "Renew"
+msgstr "Erneuern"
+
+msgid "Invalidate Permanent Code"
+msgstr "Dauerhaften Code ungültig machen"
+
+msgid "Code will become invalid at:"
+msgstr "Der Code wird ungültig am:"
+
+msgid "Leave empty to invalidate immediately"
+msgstr "Leer lassen um in sofort ungültig zu machen."
 
 msgid "Are you sure you want to delete the organization?"
 msgstr "Möchest du Organisation wirklich löschen?"

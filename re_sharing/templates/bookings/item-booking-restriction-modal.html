@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<div id="item-booking-restriction-modal"
+     class="modal fade"
+     tabindex="-1"
+     aria-labelledby="itemBookingRestrictionModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemBookingRestrictionModalLabel">{% trans "Borrowing not available" %}</h5>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans trimmed %}
+            Borrowing equipment is only available to organisations that are members
+            of the eligible group. Please contact us if you think you should have access.
+          {% endblocktrans %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function() {
+    const el = document.getElementById("item-booking-restriction-modal");
+    const modal = new bootstrap.Modal(el);
+    modal.show();
+    el.addEventListener("hidden.bs.modal", () => el.remove());
+  })();
+</script>
