@@ -974,3 +974,66 @@ class TestPreviewItemBookingEligibility(TestCase):
         response = self._htmx_post(self.eligible_org.pk)
         assert response.status_code == HTTPStatus.OK
         assert b"item-booking-restriction-modal" in response.content
+
+
+class TestManagerItemBookingOrganizationSelection(TestCase):
+    """Managers can book items for any organization, not just their own."""
+
+    URL = "bookings:create-item-booking"
+
+    def setUp(self):
+        from re_sharing.organizations.models import OrganizationGroup
+        from re_sharing.resources.models import Resource
+        from re_sharing.resources.tests.factories import ResourceFactory
+
+        self.client = Client()
+        ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            quantity_available=3,
+        )
+
+        eligible_group, _ = OrganizationGroup.objects.get_or_create(
+            pk=4,
+            defaults={"name": "Item Booking Eligible", "description": ""},
+        )
+
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+
+        # org the manager belongs to
+        self.own_org = OrganizationFactory()
+        self.own_org.organization_groups.add(eligible_group)
+        BookingPermissionFactory(
+            user=self.manager_user,
+            organization=self.own_org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+        # org the manager does NOT belong to
+        self.other_org = OrganizationFactory()
+        self.other_org.organization_groups.add(eligible_group)
+
+        self.regular_user = UserFactory()
+        BookingPermissionFactory(
+            user=self.regular_user,
+            organization=self.own_org,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+
+    def test_manager_sees_all_organizations_in_dropdown(self):
+        """Managers see every organization in the org dropdown, not just their own."""
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+        org_ids = [org.pk for org in response.context["organizations"]]
+        assert self.own_org.pk in org_ids
+        assert self.other_org.pk in org_ids
+
+    def test_regular_user_only_sees_own_organizations(self):
+        """Regular users only see organizations they belong to."""
+        self.client.force_login(self.regular_user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+        org_ids = [org.pk for org in response.context["organizations"]]
+        assert self.own_org.pk in org_ids
+        assert self.other_org.pk not in org_ids

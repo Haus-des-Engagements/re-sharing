@@ -306,8 +306,10 @@ def create_item_booking_group(
         PermissionDenied: If user doesn't have permission
         ValidationError: If validation fails
     """
-    # Check permission
-    if not user_has_normal_bookingpermission(user, organization):
+    # Check permission — managers may book for any organization
+    if not hasattr(user, "manager") and not user_has_normal_bookingpermission(
+        user, organization
+    ):
         raise PermissionDenied(
             _("You don't have permission to book for this organization")
         )

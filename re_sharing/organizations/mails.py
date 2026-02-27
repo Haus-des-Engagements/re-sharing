@@ -93,8 +93,10 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
     if email_template.active is False:
         return
 
-    subject = Template(email_template.subject).render(Context(context))
-    body = Template(email_template.body).render(Context(context))
+    subject = Template(email_template.subject).render(
+        Context(context, autoescape=False)
+    )
+    body = Template(email_template.body).render(Context(context, autoescape=False))
     email = EmailMessage(
         subject=subject,
         body=body,
@@ -577,8 +579,8 @@ def send_custom_organization_email(
                     # Note: total_amount not available without annotation
 
         # Render templates
-        subject = Template(subject_template).render(Context(context))
-        body = Template(body_template).render(Context(context))
+        subject = Template(subject_template).render(Context(context, autoescape=False))
+        body = Template(body_template).render(Context(context, autoescape=False))
 
         # Send email
         email = EmailMessage(
@@ -635,7 +637,7 @@ def send_permanent_code_created_email(permanent_code_id: int) -> dict:
         "code": permanent_code.code,
         "accesses": accesses,
     }
-    context = Context(context_dict)
+    context = Context(context_dict, autoescape=False)
 
     # Render subject and body
     subject_template = Template(email_template.subject)
@@ -704,7 +706,7 @@ def send_permanent_code_renewed_email(new_code_id: int, old_code_id: int) -> dic
         "old_code_valid_until": old_code.validity_end,
         "accesses": accesses,
     }
-    context = Context(context_dict)
+    context = Context(context_dict, autoescape=False)
 
     # Render subject and body
     subject_template = Template(email_template.subject)
@@ -771,7 +773,7 @@ def send_permanent_code_invalidated_email(permanent_code_id: int) -> dict:
         "validity_end": permanent_code.validity_end,
         "accesses": accesses,
     }
-    context = Context(context_dict)
+    context = Context(context_dict, autoescape=False)
 
     # Render subject and body
     subject_template = Template(email_template.subject)

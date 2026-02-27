@@ -2481,3 +2481,21 @@ class TestCreateItemBookingGroup(TestCase):
                 return_date=self.return_date,
                 items=[{"resource_id": self.resource.pk, "quantity": 1}],
             )
+
+    def test_manager_can_book_for_any_organization(self):
+        """Managers can create item bookings for organizations they don't belong to."""
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        # manager_user has NO BookingPermission for self.organization
+
+        booking_group = self.create_item_booking_group(
+            user=manager_user,
+            organization=self.organization,
+            pickup_date=self.pickup_date,
+            return_date=self.return_date,
+            items=[{"resource_id": self.resource.pk, "quantity": 1}],
+        )
+
+        assert booking_group.status == BookingStatus.CONFIRMED

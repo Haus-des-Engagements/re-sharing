@@ -37,12 +37,13 @@ from .services_item_bookings import organization_can_book_items
 @require_http_methods(["GET", "POST"])
 def create_item_booking_view(request: HttpRequest) -> HttpResponse:
     """View for creating item bookings - shows item list and date selection."""
-    # Determine whether the user has a confirmed organisation (required to book)
-    user_organizations = (
-        request.user.get_organizations_of_user()
-        if request.user.is_authenticated
-        else Organization.objects.none()
-    )
+    # Managers can book for any organization; regular users only see their own
+    if request.user.is_authenticated and request.user.is_manager():
+        user_organizations = Organization.objects.all()
+    elif request.user.is_authenticated:
+        user_organizations = request.user.get_organizations_of_user()
+    else:
+        user_organizations = Organization.objects.none()
     show_login_notice = not user_organizations.exists()
 
     from re_sharing.resources.models import Resource
