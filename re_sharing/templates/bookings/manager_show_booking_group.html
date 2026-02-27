@@ -16,7 +16,7 @@
     </nav>
   </div>
   <h1 class="mt-4">
-    {% trans "Equipment Booking Details" %}
+    {% trans "Equipment Booking" %} #{{ booking_group.id }}
     <span class="fs-4 badge text-bg-status-{{ booking_group.status }}">{{ booking_group.get_status_display }}</span>
   </h1>
   <div class="row">

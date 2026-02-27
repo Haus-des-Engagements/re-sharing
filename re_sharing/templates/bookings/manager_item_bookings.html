@@ -55,6 +55,7 @@
       <table class="table table-hover">
         <thead>
           <tr>
+            <th scope="col">{% trans "#" %}</th>
             <th scope="col">{% trans "Created" %}</th>
             <th scope="col">{% trans "Organization" %}</th>
             <th scope="col">{% trans "User" %}</th>
@@ -71,6 +72,9 @@
           {% for booking_group in booking_groups %}
             <tr id="tr-{{ booking_group.slug }}">
               {% partialdef manager-booking-group-item inline %}
+              <td>
+                <a href="{% url 'bookings:manager-show-booking-group' slug=booking_group.slug %}">#{{ booking_group.id }}</a>
+              </td>
               <td>{{ booking_group.created|date:"d.m.Y H:i" }}</td>
               <td>
                 <a href="{% url 'organizations:show-organization' booking_group.organization.slug %}">{{ booking_group.organization.name }}</a>
