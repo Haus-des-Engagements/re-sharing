@@ -338,7 +338,6 @@ def confirm_item_booking_view(request: HttpRequest) -> HttpResponse:
 
 @require_http_methods(["GET"])
 @login_required
-@manager_required
 def show_booking_group_view(request: HttpRequest, slug: str) -> HttpResponse:
     """Show details of a BookingGroup."""
     booking_group = get_booking_group(request.user, slug)
@@ -379,7 +378,6 @@ def cancel_booking_group_view(request: HttpRequest, slug: str) -> HttpResponse:
 
 @require_http_methods(["PATCH", "POST"])
 @login_required
-@manager_required
 def cancel_item_in_group_view(
     request: HttpRequest, slug: str, booking_id: int
 ) -> HttpResponse:
@@ -407,11 +405,16 @@ def cancel_item_in_group_view(
 @manager_required
 def manager_item_bookings_view(request: HttpRequest) -> HttpResponse:
     """Manager view for pending item BookingGroups."""
+    from datetime import date as date_type
+
+    from django.db.models import Q
 
     booking_groups = BookingGroup.objects.all()
 
-    status = request.GET.get("status", "1")  # Default to pending
+    status = request.GET.get("status", "2")  # Default to confirmed
     organization_search = request.GET.get("organization_search")
+    period_type = request.GET.get("period_type", "all")  # "all", "pickups", "returns"
+    date_filter = request.GET.get("date_filter", "")
 
     if status != "all":
         booking_groups = booking_groups.filter(status=int(status))
@@ -419,11 +422,32 @@ def manager_item_bookings_view(request: HttpRequest) -> HttpResponse:
         booking_groups = booking_groups.filter(
             organization__name__icontains=organization_search
         )
+    if date_filter:
+        try:
+            filter_date = date_type.fromisoformat(date_filter)
+            if period_type == "pickups":
+                booking_groups = booking_groups.filter(
+                    booking_of_bookinggroup__start_date=filter_date
+                )
+            elif period_type == "returns":
+                booking_groups = booking_groups.filter(
+                    booking_of_bookinggroup__end_date=filter_date
+                )
+            else:
+                booking_groups = booking_groups.filter(
+                    Q(booking_of_bookinggroup__start_date=filter_date)
+                    | Q(booking_of_bookinggroup__end_date=filter_date)
+                )
+            booking_groups = booking_groups.distinct()
+        except ValueError:
+            pass
 
     context = {
         "booking_groups": booking_groups,
         "selected_status": status,
         "organization_search": organization_search,
+        "period_type": period_type,
+        "date_filter": date_filter,
     }
 
     if request.headers.get("HX-Request"):
