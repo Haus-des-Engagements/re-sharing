@@ -231,7 +231,7 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
     # Collect items
     items = []
     start_dt, end_dt = get_booking_timespan(pickup_date_obj, return_date_obj)
-    num_days = (return_date_obj - pickup_date_obj).days + 1
+    num_days = (return_date_obj - pickup_date_obj).days
 
     for key, value in request.POST.items():
         if key.startswith("quantity_") and value:
