@@ -98,21 +98,34 @@
       </div>
     </div>
   </div>
-  <div class="d-flex justify-content-between mt-4">
-    <button type="button" class="btn btn-secondary" onclick="history.back()">
-      <svg width="1em" height="1em">
-        <use href="#bi-arrow-left" />
-      </svg>
-      {% trans "Back" %}
-    </button>
-    <form method="post" action="{% url 'bookings:confirm-item-booking' %}">
-      {% csrf_token %}
+  <form method="post" action="{% url 'bookings:preview-item-booking' %}">
+    {% csrf_token %}
+    <input type="hidden" name="confirm" value="1" />
+    <div class="form-check my-4">
+      <input class="form-check-input" type="checkbox" id="accept-terms" required />
+      <label class="form-check-label" for="accept-terms">
+        {% blocktrans trimmed %}
+          I accept the
+          <a href="https://haus-des-engagements.de/rechtliches/nutzungsbedingungen-materialverleih/"
+             target="_blank"
+             rel="noopener">terms and conditions</a>
+          for equipment lending.
+        {% endblocktrans %}
+      </label>
+    </div>
+    <div class="d-flex justify-content-between">
+      <button type="button" class="btn btn-secondary" onclick="history.back()">
+        <svg width="1em" height="1em">
+          <use href="#bi-arrow-left" />
+        </svg>
+        {% trans "Back" %}
+      </button>
       <button type="submit" class="btn btn-primary btn-lg">
         <svg width="1em" height="1em">
           <use href="#bi-check-lg" />
         </svg>
         {% trans "Confirm Booking" %}
       </button>
-    </form>
-  </div>
+    </div>
+  </form>
 {% endblock content %}

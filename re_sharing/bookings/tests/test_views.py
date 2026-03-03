@@ -918,13 +918,15 @@ class TestPreviewItemBookingEligibility(TestCase):
             defaults={"name": "Item Booking Eligible", "description": ""},
         )
 
-        self.user = UserFactory()
-        ManagerFactory(user=self.user)
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+
+        self.regular_user = UserFactory()
 
         self.eligible_org = OrganizationFactory()
         self.eligible_org.organization_groups.add(self.eligible_group)
         BookingPermissionFactory(
-            user=self.user,
+            user=self.regular_user,
             organization=self.eligible_org,
             status=BookingPermission.Status.CONFIRMED,
         )
@@ -933,7 +935,7 @@ class TestPreviewItemBookingEligibility(TestCase):
         other_group = OrganizationGroupFactory()
         self.ineligible_org.organization_groups.add(other_group)
         BookingPermissionFactory(
-            user=self.user,
+            user=self.regular_user,
             organization=self.ineligible_org,
             status=BookingPermission.Status.CONFIRMED,
         )
@@ -950,30 +952,29 @@ class TestPreviewItemBookingEligibility(TestCase):
         )
 
     def test_ineligible_org_gets_restriction_modal(self):
-        """Users whose organization is not in group 4 receive the restriction modal."""
-        self.client.force_login(self.user)
+        """Regular users with ineligible org get restriction modal."""
+        self.client.force_login(self.regular_user)
         response = self._htmx_post(self.ineligible_org.pk)
         assert response.status_code == HTTPStatus.OK
-        assert b"item-booking-restriction-modal" in response.content
+        assert b"not eligible" in response.content
 
-    def test_eligible_org_does_not_get_modal(self):
-        """
-        Tests that an eligible organization does not render the modal when a request
-        is made. This ensures that appropriate modal content is not displayed for
-        eligible organizations when triggering the operation.
-
-        :param self: Represents the instance of the test case
-        :type self: TestCase
-        """
-        self.client.force_login(self.user)
+    def test_eligible_org_does_not_get_restriction(self):
+        """Eligible org does not trigger the restriction message."""
+        self.client.force_login(self.regular_user)
         response = self._htmx_post(self.eligible_org.pk)
-        assert b"item-booking-restriction-modal" not in response.content
+        assert b"not eligible" not in response.content
 
-    def test_anonymous_user_gets_restriction_modal(self):
-        """Non-logged-in users receive the restriction modal."""
+    def test_manager_bypasses_eligibility_check(self):
+        """Managers can book for any org, even ineligible ones."""
+        self.client.force_login(self.manager_user)
+        response = self._htmx_post(self.ineligible_org.pk)
+        assert b"not eligible" not in response.content
+
+    def test_anonymous_user_gets_login_required_modal(self):
+        """Non-logged-in users receive a login-required modal."""
         response = self._htmx_post(self.eligible_org.pk)
         assert response.status_code == HTTPStatus.OK
-        assert b"item-booking-restriction-modal" in response.content
+        assert b"log in" in response.content
 
 
 class TestManagerItemBookingOrganizationSelection(TestCase):

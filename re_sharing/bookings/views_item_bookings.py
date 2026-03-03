@@ -153,28 +153,33 @@ def create_item_booking_view(request: HttpRequest) -> HttpResponse:
     return render(request, "bookings/create-item-booking.html", context)
 
 
-def _htmx_redirect(request: HttpRequest, url_name: str) -> HttpResponse:
-    """For HTMX requests, trigger a full-page redirect via HX-Redirect header."""
-    from django.urls import reverse
-
+def _render_error_modal(request, title, message):
+    """Return an error modal (HTMX) or redirect with message."""
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Redirect"] = reverse(url_name)
-        return response
-    return redirect(url_name)
+        return render(
+            request,
+            "bookings/item-booking-restriction-modal.html",
+            {"modal_title": title, "modal_message": message},
+        )
+    messages.error(request, message)
+    return redirect("bookings:create-item-booking")
 
 
 @require_http_methods(["GET", "POST"])
-def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912, PLR0915
-    """Preview item booking before confirmation."""
+def preview_item_booking_view(request: HttpRequest) -> HttpResponse:
+    """Item booking preview: validate form data, show preview, confirm.
+
+    POST from create form (HTMX): validate → error modal or redirect here.
+    GET: show preview from session data.
+    POST with ``confirm``: create the booking.
+    """
+    from datetime import date as date_type
+
+    # GET — show the preview page from session
     if request.method == "GET":
-        # Get data from session
         booking_data = request.session.get("item_booking_data")
         if not booking_data:
             return redirect("bookings:create-item-booking")
-
-        from datetime import date as date_type
-
         return render(
             request,
             "bookings/preview-item-booking.html",
@@ -185,50 +190,116 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
             },
         )
 
-    # POST - save booking data to session and show preview
+    # POST with confirm — create the booking
+    if request.POST.get("confirm"):
+        return _confirm_item_booking(request)
+
+    # POST from create form — validate and store in session
+    return _validate_item_booking(request)
+
+
+@login_required
+def _confirm_item_booking(request: HttpRequest) -> HttpResponse:
+    """Create the booking from session data."""
     from datetime import date as date_type
+
+    booking_data = request.session.get("item_booking_data")
+    if not booking_data:
+        return redirect("bookings:create-item-booking")
+
+    try:
+        pickup_date = date_type.fromisoformat(booking_data["pickup_date"])
+        return_date = date_type.fromisoformat(booking_data["return_date"])
+        organization = Organization.objects.get(pk=booking_data["organization_id"])
+
+        items = [
+            {
+                "resource_id": item["resource_id"],
+                "quantity": item["quantity"],
+            }
+            for item in booking_data["items"]
+        ]
+
+        booking_group = create_item_booking_group(
+            user=request.user,
+            organization=organization,
+            pickup_date=pickup_date,
+            return_date=return_date,
+            items=items,
+        )
+
+        del request.session["item_booking_data"]
+        messages.success(request, _("Equipment booking successfully!"))
+        return redirect("bookings:show-booking-group", slug=booking_group.slug)
+
+    except (ValueError, PermissionDenied, ValidationError) as e:
+        messages.error(request, str(e))
+        return redirect("bookings:create-item-booking")
+
+
+def _validate_item_booking(request: HttpRequest) -> HttpResponse:  # noqa: C901, PLR0911, PLR0912
+    """Validate form data, store in session, redirect to preview."""
+    from datetime import date as date_type
+
+    error_title = _("Booking error")
 
     pickup_date = request.POST.get("pickup_date")
     return_date = request.POST.get("return_date")
     organization_id = request.POST.get("organization")
 
     if not pickup_date or not return_date or not organization_id:
-        messages.error(request, _("Please fill in all required fields."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
+        return _render_error_modal(
+            request,
+            error_title,
+            _("Please fill in all required fields."),
+        )
 
     try:
         pickup_date_obj = date_type.fromisoformat(pickup_date)
         return_date_obj = date_type.fromisoformat(return_date)
         organization = Organization.objects.get(pk=organization_id)
     except (ValueError, Organization.DoesNotExist):
-        messages.error(request, _("Invalid data provided."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
+        return _render_error_modal(request, error_title, _("Invalid data provided."))
 
-    # Only authenticated users whose organization is in the eligible group may proceed
-    if not request.user.is_authenticated or not organization_can_book_items(
-        organization
-    ):
-        if request.headers.get("HX-Request"):
-            return render(request, "bookings/item-booking-restriction-modal.html")
-        messages.error(
-            request, _("Your organisation is not eligible to borrow equipment.")
+    # Must be logged in
+    if not request.user.is_authenticated:
+        return _render_error_modal(
+            request,
+            _("Login required"),
+            _("You need to log in before you can borrow equipment."),
         )
-        return redirect("bookings:create-item-booking")
+
+    # Must be eligible (managers bypass)
+    is_manager = request.user.is_manager()
+    if not is_manager and not organization_can_book_items(organization):
+        return _render_error_modal(
+            request,
+            _("Borrowing not available"),
+            _(
+                "Your organisation is not eligible to borrow equipment. "
+                "Please contact us if you think you should have access."
+            ),
+        )
 
     # Validate dates
     if not is_valid_pickup_date(pickup_date_obj):
-        messages.error(request, _("Pickup not available on this date."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
-
+        return _render_error_modal(
+            request, error_title, _("Pickup not available on this date.")
+        )
     if not is_valid_return_date(return_date_obj):
-        messages.error(request, _("Return not available on this date."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
-
+        return _render_error_modal(
+            request, error_title, _("Return not available on this date.")
+        )
     if pickup_date_obj >= return_date_obj:
-        messages.error(request, _("Return date must be after pickup date."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
+        return _render_error_modal(
+            request,
+            error_title,
+            _("Return date must be after pickup date."),
+        )
 
     # Collect items
+    from re_sharing.resources.models import Resource
+
     items = []
     start_dt, end_dt = get_booking_timespan(pickup_date_obj, return_date_obj)
     num_days = (return_date_obj - pickup_date_obj).days
@@ -239,20 +310,17 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
                 resource_id = int(key.replace("quantity_", ""))
                 quantity = int(value)
                 if quantity > 0:
-                    from re_sharing.resources.models import Resource
-
                     resource = Resource.objects.get(pk=resource_id)
                     available = get_available_quantity(resource, start_dt, end_dt)
 
                     if quantity > available:
-                        messages.error(
+                        return _render_error_modal(
                             request,
+                            error_title,
                             _("Only %(n)s available for %(item)s")
                             % {"n": available, "item": resource.name},
                         )
-                        return _htmx_redirect(request, "bookings:create-item-booking")
 
-                    # Get daily rate
                     compensations = resource.get_bookable_compensations(organization)
                     compensation = compensations.filter(
                         daily_rate__isnull=False
@@ -272,11 +340,14 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
                 continue
 
     if not items:
-        messages.error(request, _("Please select at least one item."))
-        return _htmx_redirect(request, "bookings:create-item-booking")
+        return _render_error_modal(
+            request, error_title, _("Please select at least one item.")
+        )
 
-    # Store in session
-    booking_data = {
+    # Store in session and redirect to preview
+    from django.urls import reverse
+
+    request.session["item_booking_data"] = {
         "pickup_date": pickup_date,
         "return_date": return_date,
         "pickup_time": start_dt.strftime("%H:%M"),
@@ -287,67 +358,12 @@ def preview_item_booking_view(request: HttpRequest) -> HttpResponse:  # noqa: C9
         "num_days": num_days,
         "total_amount": sum(item["total"] for item in items),
     }
-    request.session["item_booking_data"] = booking_data
 
     if request.headers.get("HX-Request"):
-        from django.urls import reverse
-
         response = HttpResponse()
         response["HX-Redirect"] = reverse("bookings:preview-item-booking")
         return response
-
-    return render(
-        request,
-        "bookings/preview-item-booking.html",
-        {
-            "booking_data": booking_data,
-            "pickup_date": pickup_date_obj,
-            "return_date": return_date_obj,
-        },
-    )
-
-
-@require_http_methods(["POST"])
-@login_required
-@manager_required
-def confirm_item_booking_view(request: HttpRequest) -> HttpResponse:
-    """Confirm and create the item booking."""
-    from datetime import date as date_type
-
-    booking_data = request.session.get("item_booking_data")
-    if not booking_data:
-        return redirect("bookings:create-item-booking")
-
-    try:
-        pickup_date = date_type.fromisoformat(booking_data["pickup_date"])
-        return_date = date_type.fromisoformat(booking_data["return_date"])
-        organization = Organization.objects.get(pk=booking_data["organization_id"])
-
-        items = [
-            {"resource_id": item["resource_id"], "quantity": item["quantity"]}
-            for item in booking_data["items"]
-        ]
-
-        booking_group = create_item_booking_group(
-            user=request.user,
-            organization=organization,
-            pickup_date=pickup_date,
-            return_date=return_date,
-            items=items,
-        )
-
-        # Clear session
-        del request.session["item_booking_data"]
-
-        messages.success(
-            request,
-            _("Equipment booking successfully!"),
-        )
-        return redirect("bookings:show-booking-group", slug=booking_group.slug)
-
-    except (ValueError, PermissionDenied, ValidationError) as e:
-        messages.error(request, str(e))
-        return redirect("bookings:create-item-booking")
+    return redirect("bookings:preview-item-booking")
 
 
 @require_http_methods(["GET"])

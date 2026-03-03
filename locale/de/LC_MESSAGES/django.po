@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-27 12:14+0100\n"
+"POT-Creation-Date: 2026-03-03 12:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -391,14 +391,33 @@ msgstr ""
 msgid "Booking series created successfully!"
 msgstr "Serienbuchung erfolgreich erstellt!"
 
+msgid "Equipment booking successfully!"
+msgstr "Materialausleihe erfolgreich erstellt."
+
+msgid "Booking error"
+msgstr "Buchungsfehler"
+
 msgid "Please fill in all required fields."
 msgstr "Bitte fülle alle Pflichtfelder aus."
 
 msgid "Invalid data provided."
 msgstr "Ungültige Daten übermittelt."
 
-msgid "Your organisation is not eligible to borrow equipment."
+msgid "Login required"
+msgstr "Login notwendig"
+
+msgid "You need to log in before you can borrow equipment."
+msgstr "Du musst eingeloggt sein um Material buchen zu können."
+
+msgid "Borrowing not available"
+msgstr "Ausleihe nicht verfügbar"
+
+msgid ""
+"Your organisation is not eligible to borrow equipment. Please contact us if "
+"you think you should have access."
 msgstr ""
+"Deine Organisation ist nicht berechtigt Material zu leihen. Das Ausleihen von Gegenständen ist nur für Vereinsmitglieder möglich. Bitte "
+"kontaktiere uns, wenn du denkst, dass du Zugriff haben solltest."
 
 msgid "Pickup not available on this date."
 msgstr "Abholung an diesem Datum nicht möglich."
@@ -411,9 +430,6 @@ msgstr "Das Rückgabedatum muss nach dem Abholdatum liegen."
 
 msgid "Please select at least one item."
 msgstr "Bitte wähle mindestens einen Gegenstand aus."
-
-msgid "Equipment booking successfully!"
-msgstr "Materialausleihe erfolgreich erstellt."
 
 msgid "Equipment booking cancelled successfully."
 msgstr "Materialausleihe erfolgreich storniert."
@@ -1216,15 +1232,15 @@ msgstr "Neue Organisation anlegen"
 msgid "Borrow Equipment"
 msgstr "Material ausleihen"
 
-
 msgid ""
 "Choose pickup and return dates, select items you want to borrow, then "
 "confirm your request. For more info <a href=\"https://haus-des-engagements."
 "de/angebote/materialverleih/\">go here</a>."
 msgstr ""
 "Wähle Abhol- und Rückgabedatum, wähle die Gegenstände aus, die du ausleihen "
-"möchtest  und bestätige deine Anfrage. <a href=\"https://haus-des-engagements."
-"de/angebote/materialverleih/\">Hier</a> findest du mehr Informationen."
+"möchtest  und bestätige deine Anfrage. <a href=\"https://haus-des-"
+"engagements.de/angebote/materialverleih/\">Hier</a> findest du mehr "
+"Informationen."
 
 #, python-format
 msgid ""
@@ -1276,11 +1292,6 @@ msgstr "Nächste"
 
 msgid "Close"
 msgstr "Schließen"
-
-#, fuzzy
-#| msgid "Booking not available"
-msgid "Borrowing not available"
-msgstr "Buchung nicht verfügbar"
 
 msgid ""
 "Borrowing equipment is only available to organisations that are members of "
@@ -1558,6 +1569,15 @@ msgstr "Ausgewählte Gegenstände"
 
 msgid "Days"
 msgstr "Tage"
+
+msgid ""
+"I accept the <a href=\"https://haus-des-engagements.de/rechtliches/"
+"nutzungsbedingungen-materialverleih/\" target=\"_blank\" "
+"rel=\"noopener\">terms and conditions</a> for equipment lending."
+msgstr ""
+"Ich akzeptiere die <a href=\"https://haus-des-engagements.de/rechtliches/"
+"nutzungsbedingungen-materialverleih/\" target=\"_blank\" "
+"rel=\"noopener\">Nutzungsbedingungen</a> des Materialverleihs."
 
 msgid "Confirm Booking"
 msgstr "Buchung bestätigen"

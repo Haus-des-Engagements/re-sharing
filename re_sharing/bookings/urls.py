@@ -22,7 +22,6 @@ from .views import show_booking_view
 from .views import update_booking_view
 from .views_item_bookings import cancel_booking_group_view
 from .views_item_bookings import cancel_item_in_group_view
-from .views_item_bookings import confirm_item_booking_view
 from .views_item_bookings import create_item_booking_view
 from .views_item_bookings import manager_cancel_booking_group_view
 from .views_item_bookings import manager_cancel_item_in_group_view
@@ -66,7 +65,6 @@ urlpatterns = [
     # Item bookings (lendable items)
     path("items/", create_item_booking_view, name="create-item-booking"),
     path("items/preview/", preview_item_booking_view, name="preview-item-booking"),
-    path("items/confirm/", confirm_item_booking_view, name="confirm-item-booking"),
     path(
         "items/<slug:slug>/",
         show_booking_group_view,
