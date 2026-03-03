@@ -414,7 +414,7 @@ class OrganizationMessage(TimeStampedModel):
         related_name="organizationmessages_of_organization",
         related_query_name="organizationmessage_of_organization",
     )
-    text = CharField(_("Message"), max_length=800)
+    text = CharField(_("Message"), max_length=2048)
     user = ForeignKey(
         "users.User",
         verbose_name=_("User"),
