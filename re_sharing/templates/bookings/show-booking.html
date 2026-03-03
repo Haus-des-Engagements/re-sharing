@@ -157,7 +157,11 @@
           hx-on::after-request="if(event.detail.successful) this.reset()">
       {% csrf_token %}
       <div class="mb-3">
-        <textarea class="form-control" name="text" rows="3" required="true"></textarea>
+        <textarea class="form-control"
+                  name="text"
+                  rows="3"
+                  required="true"
+                  maxlength="2048"></textarea>
       </div>
       <div class="row d-flex align-items-center">
         <div class="col-auto">

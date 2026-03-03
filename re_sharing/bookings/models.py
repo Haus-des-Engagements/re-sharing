@@ -473,7 +473,7 @@ class BookingMessage(TimeStampedModel):
         related_name="bookingmessages_of_booking",
         related_query_name="bookingmessage_of_booking",
     )
-    text = CharField(_("Message"), max_length=800)
+    text = CharField(_("Message"), max_length=2048)
     user = ForeignKey(
         User,
         verbose_name=_("User"),
