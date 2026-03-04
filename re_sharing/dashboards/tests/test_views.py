@@ -231,7 +231,7 @@ class TestReportingView(TestCase):
     def test_reporting_view_aggregates_bookings(self):
         """Test that reporting view aggregates bookings correctly"""
         # Create resource
-        resource = ResourceFactory()
+        resource = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
 
         # Create confirmed booking in 2025
         booking_date = datetime(2025, 3, 15, tzinfo=timezone.get_current_timezone())
@@ -252,8 +252,8 @@ class TestReportingView(TestCase):
 
     def test_reporting_view_not_yet_invoiced(self):
         """Test that reporting view tracks non-invoiced bookings"""
-        resource1 = ResourceFactory()
-        resource2 = ResourceFactory()
+        resource1 = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
+        resource2 = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
 
         # Create booking without invoice number
         booking_date = datetime(2025, 3, 15, tzinfo=timezone.get_current_timezone())
@@ -287,7 +287,7 @@ class TestReportingView(TestCase):
 
     def test_reporting_view_monthly_totals(self):
         """Test that reporting view calculates monthly totals"""
-        resource = ResourceFactory()
+        resource = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
 
         # Create bookings in different months
         march_booking = datetime(2025, 3, 15, tzinfo=timezone.get_current_timezone())
@@ -317,7 +317,7 @@ class TestReportingView(TestCase):
 
     def test_reporting_view_realized_vs_total(self):
         """Test that reporting view distinguishes realized vs total bookings"""
-        resource = ResourceFactory()
+        resource = ResourceFactory(type=Resource.ResourceTypeChoices.ROOM)
 
         # Create past booking (realized)
         past_date = timezone.now() - timedelta(days=30)

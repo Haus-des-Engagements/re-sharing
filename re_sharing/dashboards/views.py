@@ -159,27 +159,33 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     selected_year = request.GET.get("year")
     selected_year = int(selected_year) if selected_year else timezone.now().year
 
+    # Resource type filter (multiselect)
+    all_types = Resource.ResourceTypeChoices.choices
+    selected_types = request.GET.getlist("resource_type")
+    if not selected_types:
+        selected_types = [Resource.ResourceTypeChoices.ROOM]
+
     months = list(range(1, 13))
-    resources = Resource.objects.all().order_by("location__id")
+    resources = Resource.objects.filter(type__in=selected_types).order_by(
+        "location__id"
+    )
+
+    base_bookings = Booking.objects.filter(
+        start_date__year=selected_year,
+        status=BookingStatus.CONFIRMED,
+        resource__type__in=selected_types,
+    )
 
     bookings_by_resource = []
     for resource in resources:
         for month in months:
-            booking_data = (
-                Booking.objects.filter(
-                    start_date__year=selected_year,
-                    start_date__month=month,
-                    resource=resource,
-                    status=BookingStatus.CONFIRMED,
-                )
-                .exclude(resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
-                .aggregate(
-                    bookings_count=Count("id"),
-                    amount=Sum("total_amount"),
-                    not_invoiced_amount=Sum(
-                        "total_amount", filter=Q(invoice_number="")
-                    ),
-                )
+            booking_data = base_bookings.filter(
+                start_date__month=month,
+                resource=resource,
+            ).aggregate(
+                bookings_count=Count("id"),
+                amount=Sum("total_amount"),
+                not_invoiced_amount=Sum("total_amount", filter=Q(invoice_number="")),
             )
 
             bookings_by_resource.append(
@@ -193,10 +199,7 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
             )
 
     monthly_totals = (
-        Booking.objects.filter(
-            start_date__year=selected_year, status=BookingStatus.CONFIRMED
-        )
-        .values("start_date__month")
+        base_bookings.values("start_date__month")
         .annotate(
             bookings_count=Count("id"),
             amount=Sum("total_amount"),
@@ -204,18 +207,14 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
         )
         .order_by("start_date__month")
     )
-    yearly_totals = Booking.objects.filter(
-        start_date__year=selected_year, status=BookingStatus.CONFIRMED
-    ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
-    realized_yearly_totals = Booking.objects.filter(
-        start_date__year=selected_year,
+    yearly_totals = base_bookings.aggregate(
+        bookings_count=Count("id"), amount=Sum("total_amount")
+    )
+    realized_yearly_totals = base_bookings.filter(
         start_date__lt=timezone.now(),
-        status=BookingStatus.CONFIRMED,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
 
-    not_yet_invoiced = Booking.objects.filter(
-        start_date__year=selected_year,
-        status=BookingStatus.CONFIRMED,
+    not_yet_invoiced = base_bookings.filter(
         invoice_number="",
         total_amount__gt=0,
     ).aggregate(bookings_count=Count("id"), amount=Sum("total_amount"))
@@ -223,6 +222,8 @@ def reporting_view(request: HttpRequest) -> HttpResponse:
     context = {
         "available_years": available_years,
         "selected_year": selected_year,
+        "resource_types": all_types,
+        "selected_types": selected_types,
         "bookings_by_resource": bookings_by_resource,
         "months": range(1, 13),
         "monthly_totals": monthly_totals,

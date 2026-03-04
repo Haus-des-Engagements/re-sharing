@@ -15,18 +15,35 @@
   </div>
   <div class="row mt-4 mb-3">
     <h1>{% trans "Report" %}</h1>
-    <div class="col-md-6">
-      <label for="year-select" class="form-label me-2">{% trans "Year" %}:</label>
-      <select id="year-select"
-              class="form-select d-inline-block w-auto"
-              hx-get="{% url 'dashboards:reports' %}"
-              hx-target="#report-content"
-              hx-include="#year-select"
-              name="year">
-        {% for year in available_years %}
-          <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-        {% endfor %}
-      </select>
+    <div class="col-md-6 d-flex align-items-end gap-3">
+      <div>
+        <label for="year-select" class="form-label">{% trans "Year" %}</label>
+        <select id="year-select"
+                class="form-select"
+                hx-get="{% url 'dashboards:reports' %}"
+                hx-target="#report-content"
+                hx-include="#report-filters"
+                name="year">
+          {% for year in available_years %}
+            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="report-filters">
+        <label for="type-select" class="form-label">{% trans "Resource types" %}</label>
+        <select id="type-select"
+                class="form-select"
+                name="resource_type"
+                multiple
+                hx-get="{% url 'dashboards:reports' %}"
+                hx-target="#report-content"
+                hx-include="#year-select">
+          {% for value, label in resource_types %}
+            <option value="{{ value }}"
+                    {% if value in selected_types %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
   </div>
   <div id="report-content">
