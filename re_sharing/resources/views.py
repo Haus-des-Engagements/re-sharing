@@ -3,9 +3,8 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 
-import django_filters
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import Q
 from django.http import HttpRequest
@@ -13,22 +12,17 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 from django_ical.views import ICalFeed
-from neapolitan.views import CRUDView
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
-from re_sharing.providers.decorators import ManagerRequiredMixin
 from re_sharing.providers.decorators import manager_required
 from re_sharing.resources.forms import CompensationEditForm
 from re_sharing.resources.forms import ResourceEditForm
 from re_sharing.resources.forms import ResourceImageForm
-from re_sharing.resources.models import Access
-from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
@@ -39,26 +33,6 @@ from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
 from re_sharing.utils.models import BookingStatus
-
-
-class AccessCodeFilterSet(django_filters.FilterSet):
-    """Custom filterset for AccessCode to limit Access choices dynamically."""
-
-    access = django_filters.ModelChoiceFilter(queryset=Access.objects.none())
-
-    class Meta:
-        model = AccessCode
-        fields = ["access", "code", "validity_start", "organization"]
-
-    def __init__(self, *args, **kwargs):
-        # Extract the request from kwargs to get the user
-        request = kwargs.pop("request", None)
-        super().__init__(*args, **kwargs)
-
-        # If we have a request and the user is a manager, limit Access choices
-        if request and hasattr(request, "user") and request.user.is_manager():
-            manager = request.user.get_manager()
-            self.filters["access"].queryset = manager.get_accessible_accesses()
 
 
 @require_http_methods(["GET"])
@@ -226,6 +200,7 @@ def planner_view(request):
 
 
 @require_http_methods(["POST"])
+@login_required
 def get_compensations(request, selected_compensation=None):
     resource_id = request.POST.get("resource")
     organization_id = request.POST.get("organization")
@@ -286,33 +261,6 @@ def get_compensations(request, selected_compensation=None):
             "restriction_message": restriction_message,
         },
     )
-
-
-class AccessCodeView(LoginRequiredMixin, ManagerRequiredMixin, CRUDView):
-    model = AccessCode
-    fields = ["access", "code", "validity_start", "organization"]
-    lookup_field = "uuid"
-    path_converter = "uuid"
-    filterset_class = AccessCodeFilterSet
-
-    def get_queryset(self):
-        """
-        Filter AccessCodes to only show codes for resources the manager has access
-        to.
-        """
-        manager = self.request.user.get_manager()
-        return manager.get_accessible_access_codes()
-
-    def get_filterset_kwargs(self, filterset_class):
-        """
-        Pass the request to the filterset so it can limit Access choices.
-        """
-        kwargs = super().get_filterset_kwargs(filterset_class)
-        kwargs["request"] = self.request
-        return kwargs
-
-    def get_success_url(self):
-        return reverse("resources:accesscode-list")
 
 
 class ResourceIcalFeed(ICalFeed):

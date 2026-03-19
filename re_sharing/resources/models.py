@@ -71,36 +71,6 @@ class Access(TimeStampedModel):
         return self.name
 
 
-class AccessCode(TimeStampedModel):
-    uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    access = ForeignKey(
-        Access,
-        verbose_name=_("Access"),
-        on_delete=CASCADE,
-        related_name="accesscodes_of_access",
-        related_query_name="accesscode_of_access",
-    )
-    code = CharField(_("Code"), max_length=256)
-    validity_start = DateTimeField(_("Validity start"))
-    organization = ForeignKey(
-        "organizations.Organization",
-        verbose_name=_("Organization"),
-        on_delete=CASCADE,
-        related_name="organizations_of_access",
-        related_query_name="organization_of_access",
-        null=True,
-        blank=True,
-    )
-
-    class Meta:
-        verbose_name = _("Access code")
-        verbose_name_plural = _("Access codes")
-        ordering = ["validity_start"]
-
-    def __str__(self):
-        return self.access.name + " " + self.validity_start.strftime("%Y-%m-%d %H:%M")
-
-
 class PermanentCode(TimeStampedModel):
     uuid = UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = CharField(_("Name"), max_length=256, blank=True)

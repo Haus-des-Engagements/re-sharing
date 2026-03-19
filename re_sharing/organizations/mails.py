@@ -124,12 +124,15 @@ def send_booking_confirmation_email(booking_id: int) -> dict:
     from re_sharing.resources.services import get_access_code
 
     booking = Booking.objects.select_related(
-        "resource", "resource__location", "organization", "user"
+        "resource",
+        "resource__access",
+        "resource__access__parent_access",
+        "resource__location",
+        "organization",
+        "user",
     ).get(id=booking_id)
 
-    access_code = get_access_code(
-        booking.resource.slug, booking.organization.slug, booking.timespan.lower
-    )
+    access_code = get_access_code(booking)
     send_access_code = False
     dt_in_5_days = timezone.now() + timedelta(days=5)
     dt_in_5_days = dt_in_5_days.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -158,13 +161,15 @@ def send_booking_reminder_email(booking_id: int) -> dict:
     from re_sharing.bookings.models import Booking
     from re_sharing.resources.services import get_access_code
 
-    booking = Booking.objects.select_related("resource", "organization", "user").get(
-        id=booking_id
-    )
+    booking = Booking.objects.select_related(
+        "resource",
+        "resource__access",
+        "resource__access__parent_access",
+        "organization",
+        "user",
+    ).get(id=booking_id)
 
-    access_code = get_access_code(
-        booking.resource.slug, booking.organization.slug, booking.timespan.lower
-    )
+    access_code = get_access_code(booking)
     domain = Site.objects.get_current().domain
     context = {"booking": booking, "access_code": access_code, "domain": domain}
     recipient = get_recipient_booking(booking)

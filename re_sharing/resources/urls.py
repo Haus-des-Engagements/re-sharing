@@ -1,7 +1,5 @@
-from django.urls import include
 from django.urls import path
 
-from .views import AccessCodeView
 from .views import ResourceIcalFeed
 from .views import get_compensations
 from .views import list_resources_view
@@ -26,7 +24,6 @@ urlpatterns = [
         name="get-compensations",
     ),
     path("planner/", planner_view, name="planner"),
-    path("access-codes/", include(AccessCodeView.get_urls())),
     # Manager resource views
     path("manager/", manager_list_resources_view, name="manager-list-resources"),
     path(

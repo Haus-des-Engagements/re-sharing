@@ -9,8 +9,6 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
-from re_sharing.organizations.models import Organization
-from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
@@ -158,38 +156,66 @@ def filter_resources(  # noqa: PLR0913
     )
 
 
-def get_access_code(resource_slug, organization_slug, timestamp):
-    from re_sharing.resources.models import PermanentCode
-
-    resource = get_object_or_404(Resource, slug=resource_slug)
-    organization = get_object_or_404(Organization, slug=organization_slug)
-
-    # First, check for a PermanentCode for this organization and access
-    access_code = (
-        PermanentCode.objects.filter(
-            Q(organization=organization)
-            & Q(accesses=resource.access)
-            & Q(validity_start__lte=timestamp)
-            & (Q(validity_end__isnull=True) | Q(validity_end__gte=timestamp))
-        )
-        .order_by("-validity_start")
-        .last()
+def _has_smartlock(access):
+    """Check if an access (or its parent) has a smartlock configured."""
+    if not access:
+        return False
+    return bool(
+        access.smartlock_id
+        or (access.parent_access and access.parent_access.smartlock_id)
     )
 
-    # when there is no organization specific AccessCode,
-    # we try to get the general, unspecific one
-    if not access_code:
-        access_code = (
-            AccessCode.objects.filter(
-                Q(access=resource.access)
-                & Q(validity_start__lte=timestamp)
-                & Q(organization=None)
-            )
-            .order_by("-validity_start")
-            .first()
-        )
 
-    return access_code
+def get_access_code(booking):
+    """
+    Return the access code string for a booking, or None.
+
+    Logic:
+    1. If the organization has a PermanentCode for this access, return it.
+    2. If the resource's access has a smartlock, return the booking's
+       auto-generated access_code (synced to the smartlock via Nuki).
+    3. If the resource's access has no smartlock, return the PermanentCode
+       with no organization (manually maintained code list).
+    """
+    from re_sharing.resources.models import PermanentCode
+
+    resource = booking.resource
+    organization = booking.organization
+    timestamp = booking.timespan.lower
+
+    if not resource.access:
+        return None
+
+    # First, check for a PermanentCode for this organization and access
+    permanent_code = (
+        PermanentCode.objects.filter(
+            organization=organization,
+            accesses=resource.access,
+            validity_start__lte=timestamp,
+        )
+        .filter(Q(validity_end__isnull=True) | Q(validity_end__gte=timestamp))
+        .order_by("-validity_start")
+        .first()
+    )
+    if permanent_code:
+        return permanent_code.code
+
+    # For resources with a smartlock, return the booking's auto-generated code
+    if _has_smartlock(resource.access):
+        return booking.access_code
+
+    # For resources without a smartlock, return the general (no-org) PermanentCode
+    general_code = (
+        PermanentCode.objects.filter(
+            accesses=resource.access,
+            validity_start__lte=timestamp,
+            organization=None,
+        )
+        .filter(Q(validity_end__isnull=True) | Q(validity_end__gte=timestamp))
+        .order_by("-validity_start")
+        .first()
+    )
+    return general_code.code if general_code else None
 
 
 def _get_timeslot_status(slot_time, resource_restrictions):

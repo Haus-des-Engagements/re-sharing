@@ -9,7 +9,6 @@ from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from re_sharing.resources.models import Access
-from re_sharing.resources.models import AccessCode
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import PermanentCode
@@ -52,20 +51,6 @@ class ResourceFactory(DjangoModelFactory):
     class Meta:
         model = Resource
         django_get_or_create = ["slug"]
-
-
-class AccessCodeFactory(DjangoModelFactory):
-    uuid = Faker("uuid4")
-    access = SubFactory(AccessFactory)
-    code = Faker("lexify", text="??????", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    validity_start = timezone.now() - timedelta(days=10)
-    organization = SubFactory(
-        "re_sharing.organizations.tests.factories.OrganizationFactory"
-    )
-
-    class Meta:
-        model = AccessCode
-        django_get_or_create = ["uuid"]
 
 
 class CompensationFactory(DjangoModelFactory):

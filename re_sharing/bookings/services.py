@@ -247,9 +247,7 @@ def show_booking(user, booking_slug):
 
     activity_stream = get_booking_activity_stream(booking)
 
-    access_code = get_access_code(
-        booking.resource.slug, booking.organization.slug, booking.timespan.lower
-    )
+    access_code = get_access_code(booking)
 
     if access_code and booking.status in [
         BookingStatus.PENDING,
@@ -259,8 +257,6 @@ def show_booking(user, booking_slug):
     elif access_code and booking.status == BookingStatus.CONFIRMED:
         if booking.timespan.lower > (timezone.now() + timedelta(days=7)):
             access_code = _("only shown 7 days before booking")
-        else:
-            access_code = access_code.code
     else:
         access_code = "not necessary"
 

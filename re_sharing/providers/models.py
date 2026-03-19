@@ -200,16 +200,5 @@ class Manager(TimeStampedModel):
 
         return Access.objects.filter(id__in=self.get_accessible_access_ids())
 
-    def get_accessible_access_codes(self) -> QuerySet:
-        """
-        Get AccessCodes that this manager can see based on their resources.
-
-        Returns:
-            QuerySet: Queryset of AccessCode objects filtered by manager's access
-        """
-        from re_sharing.resources.models import AccessCode
-
-        return AccessCode.objects.filter(access_id__in=self.get_accessible_access_ids())
-
 
 auditlog.register(Manager, exclude_fields=["updated"])

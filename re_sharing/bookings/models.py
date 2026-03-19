@@ -459,9 +459,7 @@ class Booking(TimeStampedModel):
     def get_access_code(self):
         from re_sharing.resources.services import get_access_code
 
-        return get_access_code(
-            self.resource.slug, self.organization.slug, self.timespan.lower
-        )
+        return get_access_code(self)
 
 
 class BookingMessage(TimeStampedModel):

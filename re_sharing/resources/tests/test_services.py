@@ -14,7 +14,6 @@ from re_sharing.resources.services import get_access_code
 from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
 from re_sharing.resources.services import show_resource
-from re_sharing.resources.tests.factories import AccessCodeFactory
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import LocationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
@@ -163,117 +162,109 @@ def test_filter_resources(persons_count, start_datetime, expected):
 
 class TestGetAccessCode(TestCase):
     """
-    Given an organization, resource and a timestamp,
-    when I ask for an access code for that resource,
-    I get back the correct code.
+    Given a booking, get_access_code returns the correct code string.
+
+    - PermanentCode for the organization takes precedence.
+    - For resources with a smartlock, return the booking's auto-generated code.
+    - For resources without a smartlock, return the general PermanentCode (no org).
     """
 
     def setUp(self):
-        self.timestamp = timezone.make_aware(timezone.datetime(2024, 7, 23, 13, 30))
-        self.access1 = AccessFactory()
-        self.access2 = AccessFactory()
-        self.resource1 = ResourceFactory(access=self.access1)
-        self.resource2 = ResourceFactory(access=self.access2)
-        self.organization1 = OrganizationFactory()
-        self.organization2 = OrganizationFactory()
-        self.access_code1 = AccessCodeFactory(
-            access=self.access1, validity_start=self.timestamp, organization=None
-        )
-        self.access_code2 = AccessCodeFactory(
-            access=self.access1,
-            validity_start=self.timestamp + timedelta(days=7),
-            organization=self.organization2,
-        )
-        self.access_code3 = AccessCodeFactory(
-            access=self.access1,
-            validity_start=self.timestamp + timedelta(days=14),
-            organization=None,
-        )
-
-    def test_get_general_access_code(self):
-        # Gets access_code1 (general code) as there's no PermanentCode
-        assert (
-            get_access_code(
-                resource_slug=self.resource1.slug,
-                organization_slug=self.organization1.slug,
-                timestamp=(self.timestamp + timedelta(days=1)),
-            )
-            == self.access_code1
-        )
-
-        # Should still get back access_code1 (general code)
-        # Organization-specific AccessCodes are now ignored
-        assert (
-            get_access_code(
-                resource_slug=self.resource1.slug,
-                organization_slug=self.organization1.slug,
-                timestamp=(self.timestamp + timedelta(days=10)),
-            )
-            == self.access_code1
-        )
-
-        # Even for organization2, should get general access_code1
-        # (organization-specific AccessCode is no longer used)
-        assert (
-            get_access_code(
-                resource_slug=self.resource1.slug,
-                organization_slug=self.organization2.slug,
-                timestamp=(self.timestamp + timedelta(days=10)),
-            )
-            == self.access_code1
-        )
-
-        # No access code exists for resource2/access2
-        assert (
-            get_access_code(
-                resource_slug=self.resource2.slug,
-                organization_slug=self.organization1.slug,
-                timestamp=(self.timestamp + timedelta(days=1)),
-            )
-            is None
-        )
-
-    def test_get_permanent_code_takes_precedence(self):
-        """Test that PermanentCode is returned when available."""
         from re_sharing.resources.tests.factories import PermanentCodeFactory
 
-        # Create a permanent code for organization1 and access1
-        permanent_code = PermanentCodeFactory(
-            organization=self.organization1,
+        self.timestamp = timezone.make_aware(timezone.datetime(2024, 7, 23, 13, 30))
+        self.access_with_smartlock = AccessFactory(smartlock_id="smartlock-123")
+        self.access_no_smartlock = AccessFactory(smartlock_id="")
+        self.resource_smartlock = ResourceFactory(access=self.access_with_smartlock)
+        self.resource_no_smartlock = ResourceFactory(access=self.access_no_smartlock)
+        self.resource_no_access = ResourceFactory(access=None)
+        self.organization = OrganizationFactory()
+
+        # General PermanentCode (no org) for the non-smartlock access
+        self.general_code = PermanentCodeFactory(
+            code="GENERAL1",
+            organization=None,
             validity_start=self.timestamp - timedelta(days=1),
             validity_end=None,
-            accesses=[self.access1],
+            accesses=[self.access_no_smartlock],
         )
 
-        # Even though there's an access_code1, the permanent code should be returned
-        result = get_access_code(
-            resource_slug=self.resource1.slug,
-            organization_slug=self.organization1.slug,
-            timestamp=(self.timestamp + timedelta(days=1)),
+    def _make_booking(self, resource, **kwargs):
+        ts = kwargs.pop("timestamp", self.timestamp)
+        booking = BookingFactory(
+            resource=resource,
+            organization=self.organization,
+            status=BookingStatus.CONFIRMED,
+            timespan=(ts, ts + timedelta(hours=2)),
+            **kwargs,
         )
+        booking.refresh_from_db()
+        return booking
 
-        assert result == permanent_code
+    def test_smartlock_resource_returns_booking_access_code(self):
+        booking = self._make_booking(self.resource_smartlock)
+        result = get_access_code(booking)
+        assert result == booking.access_code
 
-    def test_get_permanent_code_respects_validity_end(self):
-        """Test that expired PermanentCode is not returned."""
+    def test_no_smartlock_resource_returns_general_permanent_code(self):
+        booking = self._make_booking(self.resource_no_smartlock)
+        result = get_access_code(booking)
+        assert result == "GENERAL1"
+
+    def test_no_access_returns_none(self):
+        booking = self._make_booking(self.resource_no_access)
+        result = get_access_code(booking)
+        assert result is None
+
+    def test_permanent_code_for_org_takes_precedence_over_smartlock(self):
         from re_sharing.resources.tests.factories import PermanentCodeFactory
 
-        # Create an expired permanent code
+        pc = PermanentCodeFactory(
+            code="ORG-PERM",
+            organization=self.organization,
+            validity_start=self.timestamp - timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_with_smartlock],
+        )
+        booking = self._make_booking(self.resource_smartlock)
+        result = get_access_code(booking)
+        assert result == pc.code
+
+    def test_permanent_code_for_org_takes_precedence_over_general(self):
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
+        pc = PermanentCodeFactory(
+            code="ORG-PERM",
+            organization=self.organization,
+            validity_start=self.timestamp - timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_no_smartlock],
+        )
+        booking = self._make_booking(self.resource_no_smartlock)
+        result = get_access_code(booking)
+        assert result == pc.code
+
+    def test_expired_permanent_code_falls_back(self):
+        from re_sharing.resources.tests.factories import PermanentCodeFactory
+
         PermanentCodeFactory(
-            organization=self.organization1,
+            code="EXPIRED",
+            organization=self.organization,
             validity_start=self.timestamp - timedelta(days=10),
             validity_end=self.timestamp - timedelta(days=1),
-            accesses=[self.access1],
+            accesses=[self.access_no_smartlock],
         )
+        booking = self._make_booking(self.resource_no_smartlock)
+        result = get_access_code(booking)
+        assert result == "GENERAL1"
 
-        # Should fall back to access_code1 since permanent code is expired
-        result = get_access_code(
-            resource_slug=self.resource1.slug,
-            organization_slug=self.organization1.slug,
-            timestamp=(self.timestamp + timedelta(days=1)),
-        )
-
-        assert result == self.access_code1
+    def test_no_general_code_returns_none(self):
+        """Resource without smartlock and no general PermanentCode returns None."""
+        access = AccessFactory(smartlock_id="")
+        resource = ResourceFactory(access=access)
+        booking = self._make_booking(resource)
+        result = get_access_code(booking)
+        assert result is None
 
 
 @skip
@@ -495,13 +486,8 @@ class TestManagerAccessibleMethods(TestCase):
             user=self.manager_user, resources=[self.resource1, self.resource2]
         )
 
-        # Create access codes for manager's resources
-        self.access_code1 = AccessCodeFactory(access=self.resource1.access)
-        self.access_code2 = AccessCodeFactory(access=self.resource2.access)
-
-        # Create another resource and access code that manager doesn't have access to
+        # Create another resource that manager doesn't have access to
         self.other_resource = ResourceFactory()
-        self.other_access_code = AccessCodeFactory(access=self.other_resource.access)
 
     def test_get_accessible_access_ids(self):
         """Test that we get correct Access IDs for manager's resources."""
@@ -525,17 +511,6 @@ class TestManagerAccessibleMethods(TestCase):
         # Should NOT include other accesses
         assert self.other_resource.access not in accessible_accesses
 
-    def test_get_accessible_access_codes(self):
-        """Test that we get correct AccessCodes for manager's resources."""
-        accessible_codes = self.manager.get_accessible_access_codes()
-
-        # Should include access codes for manager's resources
-        assert self.access_code1 in accessible_codes
-        assert self.access_code2 in accessible_codes
-
-        # Should NOT include other access codes
-        assert self.other_access_code not in accessible_codes
-
     def test_manager_with_no_resources(self):
         """Test that a manager with no resources gets empty results."""
         from re_sharing.providers.tests.factories import ManagerFactory
@@ -546,11 +521,9 @@ class TestManagerAccessibleMethods(TestCase):
 
         accessible_ids = list(empty_manager.get_accessible_access_ids())
         accessible_accesses = empty_manager.get_accessible_accesses()
-        accessible_codes = empty_manager.get_accessible_access_codes()
 
         assert len(accessible_ids) == 0
         assert accessible_accesses.count() == 0
-        assert accessible_codes.count() == 0
 
     def test_manager_with_duplicate_access_ids(self):
         """Test that duplicate Access IDs are properly deduplicated."""
