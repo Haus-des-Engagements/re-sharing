@@ -295,9 +295,13 @@ def cancel_booking(user, booking_slug):
         raise PermissionDenied
 
     if booking.is_cancelable():
+        was_confirmed = booking.status == BookingStatus.CONFIRMED
         with set_actor(user):
             booking.status = BookingStatus.CANCELLED
             booking.save()
+
+        if was_confirmed:
+            _enqueue_smartlock_sync_if_today(booking)
 
         return booking
 

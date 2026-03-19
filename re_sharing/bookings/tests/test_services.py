@@ -112,6 +112,36 @@ class TestCancelBooking(TestCase):
 
         assert self.booking.status == BookingStatus.CANCELLED
 
+    @patch("re_sharing.bookings.services._enqueue_smartlock_sync_if_today")
+    def test_cancel_confirmed_booking_enqueues_smartlock_sync(self, mock_sync):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking.status = BookingStatus.CONFIRMED
+        start = timezone.now() + timedelta(days=1)
+        self.booking.timespan = (start, start + timedelta(hours=2))
+        self.booking.save()
+        cancel_booking(self.user, self.booking.slug)
+
+        mock_sync.assert_called_once()
+
+    @patch("re_sharing.bookings.services._enqueue_smartlock_sync_if_today")
+    def test_cancel_pending_booking_does_not_enqueue_smartlock_sync(self, mock_sync):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.booking.status = BookingStatus.PENDING
+        start = timezone.now() + timedelta(days=1)
+        self.booking.timespan = (start, start + timedelta(hours=2))
+        self.booking.save()
+        cancel_booking(self.user, self.booking.slug)
+
+        mock_sync.assert_not_called()
+
 
 @pytest.mark.django_db()
 def test_cancel_bookings_of_booking_series():
