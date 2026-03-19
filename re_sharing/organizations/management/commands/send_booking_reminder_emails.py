@@ -25,9 +25,31 @@ class Command(BaseCommand):
 
         # Get bookings that need reminders
         bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
-        # Exclude bookings from organizations that use the "sent bulk access codes"
-        # TODO: SERIENBUCHUNGEN die neu sind müssen einzelnd versendet werden
-        bookings = bookings.exclude(organization__monthly_bulk_access_codes=True)
+        # Exclude bookings from organizations that use the monthly bulk overview,
+        # but only if the booking was created before the 20th of the previous month
+        # (i.e. it was already included in the monthly overview email).
+        # Bookings created after the cutoff date were not part of the overview
+        # and still need an individual reminder.
+        now = timezone.now()
+        monthly_overview_cutoff = now.replace(
+            day=20, hour=0, minute=0, second=0, microsecond=0
+        )
+        if now.day >= 20:  # noqa: PLR2004
+            # We're past the 20th: the overview for next month has been sent,
+            # so only exclude bookings created before today's month's 20th.
+            pass
+        elif monthly_overview_cutoff.month == 1:
+            monthly_overview_cutoff = monthly_overview_cutoff.replace(
+                year=monthly_overview_cutoff.year - 1, month=12
+            )
+        else:
+            monthly_overview_cutoff = monthly_overview_cutoff.replace(
+                month=monthly_overview_cutoff.month - 1
+            )
+        bookings = bookings.exclude(
+            organization__monthly_bulk_access_codes=True,
+            created__lt=monthly_overview_cutoff,
+        )
         # Filter for bookings that are not part of a booking series
         # or a part of booking series where the reminder mails should be sent out
         bookings = bookings.filter(

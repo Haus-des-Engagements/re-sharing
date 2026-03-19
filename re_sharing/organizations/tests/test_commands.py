@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.utils import timezone
 from psycopg.types.range import Range
 
+from re_sharing.bookings.models import Booking
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
@@ -63,13 +64,39 @@ class TestSendBookingReminderEmailsCommand(TestCase):
     @patch(
         "re_sharing.organizations.management.commands.send_booking_reminder_emails.send_booking_reminder_email"
     )
-    def test_command_excludes_bulk_access_code_organizations(self, mock_task):
-        """Test that bookings from organizations with bulk codes are excluded"""
+    def test_command_excludes_bulk_org_bookings_created_before_cutoff(self, mock_task):
+        """Bookings from bulk-overview orgs created before the cutoff are excluded."""
         resource = ResourceFactory()
         organization = OrganizationFactory(monthly_bulk_access_codes=True)
         dt_in_5_days = timezone.now() + timedelta(days=5)
         dt_in_5_days = dt_in_5_days.replace(hour=10, minute=0, second=0, microsecond=0)
-        BookingFactory(
+        booking = BookingFactory(
+            resource=resource,
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            timespan=Range(dt_in_5_days, dt_in_5_days + timedelta(hours=2)),
+        )
+        # Backdate the booking so it was created before the monthly overview cutoff
+        Booking.objects.filter(pk=booking.pk).update(
+            created=timezone.now() - timedelta(days=35)
+        )
+        out = StringIO()
+
+        call_command("send_booking_reminder_emails", stdout=out)
+
+        mock_task.enqueue.assert_not_called()
+        assert "Enqueued 0 reminder email tasks" in out.getvalue()
+
+    @patch(
+        "re_sharing.organizations.management.commands.send_booking_reminder_emails.send_booking_reminder_email"
+    )
+    def test_command_includes_bulk_org_bookings_created_after_cutoff(self, mock_task):
+        """Bookings from bulk-overview orgs created after the cutoff get reminders."""
+        resource = ResourceFactory()
+        organization = OrganizationFactory(monthly_bulk_access_codes=True)
+        dt_in_5_days = timezone.now() + timedelta(days=5)
+        dt_in_5_days = dt_in_5_days.replace(hour=10, minute=0, second=0, microsecond=0)
+        booking = BookingFactory(
             resource=resource,
             organization=organization,
             status=BookingStatus.CONFIRMED,
@@ -79,8 +106,8 @@ class TestSendBookingReminderEmailsCommand(TestCase):
 
         call_command("send_booking_reminder_emails", stdout=out)
 
-        mock_task.enqueue.assert_not_called()
-        assert "Enqueued 0 reminder email tasks" in out.getvalue()
+        mock_task.enqueue.assert_called_once_with(booking.id)
+        assert "Enqueued 1 reminder email tasks" in out.getvalue()
 
 
 class TestSendMonthlyBookingsOverviewCommand(TestCase):
