@@ -347,3 +347,14 @@ TASKS = {
         "QUEUES": ["default", "email"],
     }
 }
+
+# TINYMCE
+# ------------------------------------------------------------------------------
+# https://django-tinymce.readthedocs.io/
+TINYMCE_DEFAULT_CONFIG = {
+    "menubar": False,
+    "plugins": "lists link autolink",
+    "toolbar": "bold italic | bullist numlist | link | removeformat",
+    "valid_elements": "p,br,strong/b,em/i,ul,ol,li,a[href|target]",
+    "height": 300,
+}

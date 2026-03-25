@@ -40,8 +40,6 @@ class ResourceEditForm(forms.ModelForm):
             "included_equipment",
         ]
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 4}),
-            "accessibility": forms.Textarea(attrs={"rows": 4}),
             "included_equipment": forms.Textarea(attrs={"rows": 3}),
         }
 
