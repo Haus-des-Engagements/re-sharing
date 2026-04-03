@@ -192,6 +192,7 @@ class ResourceRestrictionModelTest(TestCase):
 class GetCompensationsViewTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        self.user = UserFactory()
         self.resource = ResourceFactory(name="Test Resource")
         self.organization = OrganizationFactory()
         self.compensation_name = "For Free"
@@ -205,6 +206,7 @@ class GetCompensationsViewTest(TestCase):
         request = self.factory.post(
             reverse("resources:get-compensations", kwargs={"selected_compensation": 1})
         )
+        request.user = self.user
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK
         assert str(_("Please select a resource first.")) in response.content.decode()
@@ -219,6 +221,7 @@ class GetCompensationsViewTest(TestCase):
                 "startdate": "2025-04-29",
             },
         )
+        request.user = self.user
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK
         assert self.compensation_name in response.content.decode()
@@ -244,6 +247,7 @@ class GetCompensationsViewTest(TestCase):
                 "startdate": "2025-04-28",  # A Monday
             },
         )
+        request.user = self.user
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK
         assert restriction_message in response.content.decode()
@@ -274,6 +278,7 @@ class GetCompensationsViewTest(TestCase):
                 "startdate": "2025-04-28",  # A Monday
             },
         )
+        request.user = self.user
         response = get_compensations(request)
         assert response.status_code == HTTPStatus.OK
         # The resource should be bookable because the organization is exempt
