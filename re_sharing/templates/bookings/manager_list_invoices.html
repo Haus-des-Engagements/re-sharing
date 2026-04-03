@@ -24,6 +24,14 @@
              placeholder="{% trans 'Search organizations...' %}"
              {% if organization_search %}value="{{ organization_search }}"{% endif %} />
     </div>
+    <div id="div_invoice_number" class="col-auto">
+      <input type="text"
+             name="invoice_number"
+             class="form-control textinput"
+             placeholder="{% trans 'Invoice number' %}"
+             id="invoice_number"
+             {% if invoice_number %}value="{{ invoice_number }}"{% endif %} />
+    </div>
     <div id="div_id_resource" class="col-auto">
       <select name="resource" class="form-select" id="id_resource">
         <option selected value="all">{% trans "all resources" %}</option>
@@ -37,13 +45,23 @@
         <option value="without_invoice">{% trans "only without invoice number" %}</option>
       </select>
     </div>
-    <div id="div_invoice_number" class="col-auto">
-      <input type="text"
-             name="invoice_number"
-             class="form-control textinput"
-             placeholder="{% trans 'Invoice number' %}"
-             id="invoice_number"
-             {% if invoice_number %}value="{{ invoice_number }}"{% endif %} />
+    <div class="col-auto">
+      <select name="invoice_address_filter"
+              class="form-select"
+              id="id_invoice_address_filter">
+        <option value="all"
+                {% if invoice_address_filter == "all" %}selected{% endif %}>
+          {% trans "all invoice addresses" %}
+        </option>
+        <option value="with_address"
+                {% if invoice_address_filter == "with_address" %}selected{% endif %}>
+          {% trans "only with invoice address" %}
+        </option>
+        <option value="without_address"
+                {% if invoice_address_filter == "without_address" %}selected{% endif %}>
+          {% trans "only without invoice address" %}
+        </option>
+      </select>
     </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"

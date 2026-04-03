@@ -2073,6 +2073,60 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
         assert bookings.filter(resource=resource1).exists()
         assert not bookings.filter(resource=resource2).exists()
 
+    def test_filter_invoice_bookings_with_invoice_address(self):
+        """Test filtering bookings that have an invoice address"""
+        resource = ResourceFactory()
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_address="123 Main St",
+        )
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_address="",
+        )
+
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
+            invoice_filter="all",
+            invoice_number=None,
+            resource="all",
+            invoice_address_filter="with_address",
+        )
+
+        assert bookings.filter(invoice_address="123 Main St").exists()
+        assert not bookings.filter(invoice_address="").exists()
+
+    def test_filter_invoice_bookings_without_invoice_address(self):
+        """Test filtering bookings that don't have an invoice address"""
+        resource = ResourceFactory()
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=100,
+            invoice_address="123 Main St",
+        )
+        BookingFactory(
+            resource=resource,
+            status=BookingStatus.CONFIRMED,
+            total_amount=200,
+            invoice_address="",
+        )
+
+        bookings, _ = manager_filter_invoice_bookings_list(
+            organization_search=None,
+            invoice_filter="all",
+            invoice_number=None,
+            resource="all",
+            invoice_address_filter="without_address",
+        )
+
+        assert bookings.filter(invoice_address="").exists()
+        assert not bookings.filter(invoice_address="123 Main St").exists()
+
 
 class TestDeletedEntityHandling(TestCase):
     """Test that deleted entities are handled gracefully in activity stream."""

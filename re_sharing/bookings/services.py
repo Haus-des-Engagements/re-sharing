@@ -679,9 +679,15 @@ def manager_confirm_booking_series(user, booking_series_uuid):
 
 
 def manager_filter_invoice_bookings_list(
-    organization_search, invoice_filter, invoice_number, resource
+    organization_search,
+    invoice_filter,
+    invoice_number,
+    resource,
+    invoice_address_filter="all",
 ):
-    resources = Resource.objects.all()
+    resources = Resource.objects.exclude(
+        type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+    )
     related_fields = [
         "organization",
         "resource__compensations_of_resource",
@@ -692,6 +698,7 @@ def manager_filter_invoice_bookings_list(
     bookings = (
         Booking.objects.filter(total_amount__gt=0)
         .filter(status=BookingStatus.CONFIRMED)
+        .exclude(resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
         .prefetch_related(*related_fields)
     )
     if organization_search:
@@ -704,6 +711,10 @@ def manager_filter_invoice_bookings_list(
         bookings = bookings.exclude(invoice_number="")
     elif invoice_filter == "without_invoice":
         bookings = bookings.filter(invoice_number="")
+    if invoice_address_filter == "with_address":
+        bookings = bookings.exclude(invoice_address="")
+    elif invoice_address_filter == "without_address":
+        bookings = bookings.filter(invoice_address="")
 
     bookings = bookings.order_by("timespan")
 

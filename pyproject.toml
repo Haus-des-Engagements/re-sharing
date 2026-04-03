@@ -232,3 +232,6 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.uv]
+exclude-newer = "7 days"

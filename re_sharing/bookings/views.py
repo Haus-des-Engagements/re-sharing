@@ -505,8 +505,13 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     organization_search = request.GET.get("organization_search")
     invoice_number = request.GET.get("invoice_number") or None
     resource = request.GET.get("resource") or "all"
+    invoice_address_filter = request.GET.get("invoice_address_filter", "all")
     bookings, resources = manager_filter_invoice_bookings_list(
-        organization_search, invoice_filter, invoice_number, resource
+        organization_search,
+        invoice_filter,
+        invoice_number,
+        resource,
+        invoice_address_filter,
     )
 
     context = {
@@ -514,6 +519,7 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         "organization_search": organization_search,
         "resources": resources,
         "invoice_number": invoice_number,
+        "invoice_address_filter": invoice_address_filter,
     }
 
     if request.headers.get("HX-Request"):
