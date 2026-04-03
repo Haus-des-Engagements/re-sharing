@@ -92,7 +92,7 @@ THIRD_PARTY_APPS = [
     "hijack",
     "hijack.contrib.admin",
     "django_tasks",
-    "django_tasks.backends.database",
+    "django_tasks_db",
 ]
 
 LOCAL_APPS = [
@@ -343,7 +343,7 @@ AUDITLOG_DISABLE_REMOTE_ADDR = True
 # https://github.com/RealOrangeOne/django-tasks
 TASKS = {
     "default": {
-        "BACKEND": "django_tasks.backends.database.DatabaseBackend",
+        "BACKEND": "django_tasks_db.DatabaseBackend",
         "QUEUES": ["default", "email"],
     }
 }
