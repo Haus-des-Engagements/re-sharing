@@ -2,10 +2,12 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 from auditlog.context import set_actor
 from dateutil import parser
 from dateutil.parser import isoparse
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.shortcuts import get_list_or_404
@@ -724,8 +726,9 @@ def manager_filter_invoice_bookings_list(
 def build_invoice_payload(booking: "Booking") -> dict:
     """Build the JSON payload for creating a draft invoice in BuchhaltungsButler."""
     org = booking.organization
-    start = booking.timespan.lower
-    end = booking.timespan.upper
+    local_tz = ZoneInfo(settings.TIME_ZONE)
+    start = booking.timespan.lower.astimezone(local_tz)
+    end = booking.timespan.upper.astimezone(local_tz)
     duration_hours = (end - start).total_seconds() / 3600
 
     item_name = (
@@ -769,12 +772,12 @@ def build_invoice_payload(booking: "Booking") -> dict:
         payload["city"] = addr.get("city", "")
         if addr.get("email"):
             payload["email"] = addr["email"]
-        if addr.get("buyer_reference"):
-            payload["buyer_reference"] = addr["buyer_reference"]
+        payload["buyer_reference"] = addr.get("buyer_reference") or "0"
     else:
         payload["street"] = org.street_and_housenb
         payload["zip"] = org.zip_code
         payload["city"] = org.city
+        payload["buyer_reference"] = "0"
 
     return payload
 

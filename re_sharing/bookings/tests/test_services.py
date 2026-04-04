@@ -2699,6 +2699,7 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["city"] == "Freiburg"
         assert payload["email"] == "test@example.com"
         assert payload["contact_person_name"] == "Max Mustermann"
+        assert payload["buyer_reference"] == "0"
 
     def test_builds_payload_with_correct_item_data(self):
         payload = build_invoice_payload(self.booking)
@@ -2739,6 +2740,7 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["zip"] == "79098"
         assert payload["city"] == "Freiburg"
         assert payload["email"] == "billing@other.com"
+        assert payload["buyer_reference"] == "0"
 
     def test_uses_invoice_address_with_buyer_reference(self):
         self.booking.invoice_address = {
