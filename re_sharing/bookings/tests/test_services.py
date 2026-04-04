@@ -12,12 +12,14 @@ from django.http import Http404
 from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
+from psycopg.types.range import Range
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import bookings_webview
+from re_sharing.bookings.services import build_invoice_payload
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import create_booking_data
 from re_sharing.bookings.services import create_bookingmessage
@@ -2641,3 +2643,79 @@ class TestCreateItemBookingGroup(TestCase):
             items=[{"resource_id": private_resource.pk, "quantity": 1}],
         )
         assert booking_group.status == BookingStatus.CONFIRMED
+
+
+class TestBuildInvoicePayload(TestCase):
+    """Test build_invoice_payload function"""
+
+    def setUp(self):
+        self.organization = OrganizationFactory(
+            name="Test Organisation e.V.",
+            street_and_housenb="Teststraße 1",
+            zip_code="79100",
+            city="Freiburg",
+            email="test@example.com",
+        )
+        self.user = UserFactory(first_name="Max", last_name="Mustermann")
+        self.resource = ResourceFactory(name="Veranstaltungsraum")
+        self.compensation = CompensationFactory(hourly_rate=12)
+        self.compensation.resource.add(self.resource)
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 16, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 19, 0, tzinfo=tz)
+        self.booking = BookingFactory(
+            organization=self.organization,
+            user=self.user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=36,
+            timespan=Range(start, end),
+            start_date=start.date(),
+            end_date=end.date(),
+            start_time=start.time(),
+            end_time=end.time(),
+        )
+
+    def test_builds_payload_with_correct_company_data(self):
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["company_name"] == "Test Organisation e.V."
+        assert payload["street"] == "Teststraße 1"
+        assert payload["zip"] == "79100"
+        assert payload["city"] == "Freiburg"
+        assert payload["email"] == "test@example.com"
+        assert payload["contact_person_name"] == "Max Mustermann"
+
+    def test_builds_payload_with_correct_item_data(self):
+        payload = build_invoice_payload(self.booking)
+
+        assert len(payload["item_name"]) == 1
+        assert "Veranstaltungsraum" in payload["item_name"][0]
+        assert "15.01.2026" in payload["item_name"][0]
+        assert "16:00" in payload["item_name"][0]
+        assert "19:00" in payload["item_name"][0]
+        assert payload["item_amount"] == ["3"]
+        assert payload["item_unit"] == ["Std."]
+        assert payload["item_single_price"] == ["12"]
+        assert payload["item_vat"] == ["0"]
+
+    def test_builds_payload_with_correct_meta_fields(self):
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["type"] == "invoice"
+        assert payload["show_prices_type"] == "gross"
+        assert payload["due_days"] == "14"
+        assert payload["show_bankdata"] is True
+        assert payload["date_of_supply"] == "15.01.2026"
+
+    def test_uses_invoice_address_when_set(self):
+        self.booking.invoice_address = "Andere Straße 5, 79098 Freiburg"
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["street"] == "Andere Straße 5, 79098 Freiburg"
+        assert "zip" not in payload
+        assert "city" not in payload

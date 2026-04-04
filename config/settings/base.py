@@ -260,6 +260,16 @@ EMAIL_BACKEND = env(
 )
 NEWSLETTER_API_URL = env("NEWSLETTER_API_URL", default="none")
 NUKI_API_TOKEN = env("NUKI_API_TOKEN", default="")
+
+# BUCHHALTUNGSBUTLER
+# ------------------------------------------------------------------------------
+BUCHHALTUNGSBUTLER_API_KEY = env("API_KEY", default="")
+BUCHHALTUNGSBUTLER_API_CLIENT = env("API_CLIENT", default="")
+BUCHHALTUNGSBUTLER_API_SECRET = env("API_SECRET", default="")
+BUCHHALTUNGSBUTLER_BASE_URL = env(
+    "BUCHHALTUNGSBUTLER_BASE_URL",
+    default="https://app.buchhaltungsbutler.de/api/v1",
+)
 EXTERNAL_EVENTS_ICS_URL = env(
     "EXTERNAL_EVENTS_ICS_URL",
     default="https://haus-des-engagements.de/angebote/fortbildungen/events.ics",

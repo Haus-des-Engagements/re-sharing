@@ -520,6 +520,7 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         "resources": resources,
         "invoice_number": invoice_number,
         "invoice_address_filter": invoice_address_filter,
+        "now": timezone.now(),
     }
 
     if request.headers.get("HX-Request"):
@@ -530,3 +531,25 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         )
 
     return render(request, "bookings/manager_list_invoices.html", context)
+
+
+@require_http_methods(["POST"])
+@staff_member_required
+def create_draft_invoice_view(request: HttpRequest, booking_slug: str) -> HttpResponse:
+    """Trigger draft invoice creation in BuchhaltungsButler for a booking."""
+    from .models import Booking
+    from .tasks import create_draft_invoice
+
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if booking.invoice_number:
+        return HttpResponse(_("Booking already has an invoice number."), status=400)
+
+    if booking.timespan.upper > timezone.now():
+        return HttpResponse(_("Booking has not yet taken place."), status=400)
+
+    create_draft_invoice.enqueue(booking.id)
+
+    return HttpResponse(
+        '<span class="badge text-bg-success">Draft sent</span>',
+    )

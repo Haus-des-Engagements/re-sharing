@@ -83,6 +83,7 @@
             <th scope="col">{% trans "Total amount" %}</th>
             <th scope="col">{% trans "Invoice number" %}</th>
             <th scope="col">{% trans "Admin-Link" %}</th>
+            <th scope="col">{% trans "Actions" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -100,6 +101,15 @@
               <td>{{ booking.invoice_number }}</td>
               <td>
                 <a href="{% url 'admin:bookings_booking_change' booking.pk %}">Edit</a>
+              </td>
+              <td id="actions-{{ booking.slug }}">
+                {% if not booking.invoice_number and booking.timespan.upper < now %}
+                  <button class="btn btn-sm btn-outline-primary"
+                          hx-post="{% url 'bookings:create-draft-invoice' booking.slug %}"
+                          hx-confirm="{% trans 'Create draft invoice for' %} {{ booking.organization }}?"
+                          hx-target="#actions-{{ booking.slug }}"
+                          hx-swap="innerHTML">{% trans "Create Draft" %}</button>
+                {% endif %}
               </td>
             {% endpartialdef %}
           </tr>

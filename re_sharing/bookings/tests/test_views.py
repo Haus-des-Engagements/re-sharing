@@ -1091,3 +1091,98 @@ class TestPrivateLendableItemVisibility(TestCase):
         pks = self._item_pks(response)
         assert self.public_item.pk in pks
         assert self.private_item.pk in pks
+
+
+class TestCreateDraftInvoiceView(TestCase):
+    def setUp(self):
+        from psycopg.types.range import Range
+
+        from re_sharing.resources.tests.factories import CompensationFactory
+        from re_sharing.resources.tests.factories import ResourceFactory
+
+        self.staff_user = UserFactory(is_staff=True)
+        self.client.force_login(self.staff_user)
+
+        self.resource = ResourceFactory(name="Veranstaltungsraum")
+        self.compensation = CompensationFactory(hourly_rate=12)
+        self.compensation.resource.add(self.resource)
+
+        # Past booking without invoice number
+        import zoneinfo
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2025, 1, 15, 16, 0, tzinfo=tz)
+        end = datetime.datetime(2025, 1, 15, 19, 0, tzinfo=tz)
+        self.booking = BookingFactory(
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=36,
+            invoice_number="",
+            timespan=Range(start, end),
+            start_date=start.date(),
+            end_date=end.date(),
+            start_time=start.time(),
+            end_time=end.time(),
+        )
+
+    @patch("re_sharing.bookings.tasks.create_draft_invoice")
+    def test_creates_draft_invoice_for_past_booking(self, mock_task):
+        response = self.client.post(
+            reverse(
+                "bookings:create-draft-invoice",
+                kwargs={"booking_slug": self.booking.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        mock_task.enqueue.assert_called_once_with(self.booking.id)
+
+    @patch("re_sharing.bookings.tasks.create_draft_invoice")
+    def test_rejects_booking_with_existing_invoice_number(self, mock_task):
+        self.booking.invoice_number = "INV-001"
+        self.booking.save()
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-draft-invoice",
+                kwargs={"booking_slug": self.booking.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        mock_task.enqueue.assert_not_called()
+
+    @patch("re_sharing.bookings.tasks.create_draft_invoice")
+    def test_rejects_future_booking(self, mock_task):
+        import zoneinfo
+
+        from psycopg.types.range import Range
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        future_start = datetime.datetime(2027, 6, 15, 16, 0, tzinfo=tz)
+        future_end = datetime.datetime(2027, 6, 15, 19, 0, tzinfo=tz)
+        self.booking.timespan = Range(future_start, future_end)
+        self.booking.save()
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-draft-invoice",
+                kwargs={"booking_slug": self.booking.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        mock_task.enqueue.assert_not_called()
+
+    def test_non_staff_user_forbidden(self):
+        regular_user = UserFactory(is_staff=False)
+        self.client.force_login(regular_user)
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-draft-invoice",
+                kwargs={"booking_slug": self.booking.slug},
+            )
+        )
+        assert response.status_code == HTTPStatus.FOUND

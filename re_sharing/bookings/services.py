@@ -721,6 +721,56 @@ def manager_filter_invoice_bookings_list(
     return bookings, resources
 
 
+def build_invoice_payload(booking: "Booking") -> dict:
+    """Build the JSON payload for creating a draft invoice in BuchhaltungsButler."""
+    org = booking.organization
+    start = booking.timespan.lower
+    end = booking.timespan.upper
+    duration_hours = (end - start).total_seconds() / 3600
+
+    item_name = (
+        f"{booking.resource.name} am {start.strftime('%d.%m.%Y')}"
+        f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
+    )
+
+    payload = {
+        "type": "invoice",
+        "show_prices_type": "gross",
+        "company_name": org.name,
+        "date": timezone.now().strftime("%Y-%m-%d"),
+        "due_days": "14",
+        "item_name": [item_name],
+        "item_amount": [str(int(duration_hours))],
+        "item_unit": ["Std."],
+        "item_vat": ["0"],
+        "item_single_price": [str(booking.compensation.hourly_rate)],
+        "email": org.email,
+        "date_of_supply": start.strftime("%d.%m.%Y"),
+        "show_bankdata": True,
+        "contact_person_name": booking.user.get_full_name(),
+        "correspondence": (
+            "Wir stellen Ihnen hiermit die Raumnutzung im Haus des Engagements"
+            " wie vereinbart in Rechnung."
+        ),
+        "final_provisions": (
+            "Bitte überweisen Sie den Rechnungsbetrag mit Angabe der oben"
+            " genannten Rechnungsnummer auf unser Konto bei der"
+            " GLS Gemeinschaftsbank. \nZahlbar binnen 14 Tagen nach"
+            " Rechnungsstellung.\n\nHerzlichen Dank und mit freundlichen"
+            " Grüßen \ni.A. Philip Bedall"
+        ),
+    }
+
+    if booking.invoice_address:
+        payload["street"] = booking.invoice_address
+    else:
+        payload["street"] = org.street_and_housenb
+        payload["zip"] = org.zip_code
+        payload["city"] = org.city
+
+    return payload
+
+
 def get_external_events(ics_url: str, cache_key: str = "external_events") -> list[dict]:
     """
     Fetch and parse events from an external ICS calendar feed.
