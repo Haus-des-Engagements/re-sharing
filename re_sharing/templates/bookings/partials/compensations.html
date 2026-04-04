@@ -2,7 +2,7 @@
 
 <div class="mb-3 mt-3"
      id="compensations-container"
-     x-data="{ showBilling: false }">
+     x-data="{ showBilling: false, hasInvoiceAddress: false }">
   <label for="id_compensation" class="form-label requiredField">
     {% trans "Donation / Billing" %}<span class="asteriskField">*</span>
   </label>
@@ -41,16 +41,80 @@
       </p>
     {% endfor %}
     {# djlint:off H021 #}
-    <div id="div_id_invoice_address"
-         class="mb-3 col-8 mt-2"
-         x-show="showBilling"
-         style="display: none">
+    <div class="mt-3" x-show="showBilling" style="display: none">
       {# djlint:on #}
-      <label for="id_invoice_address" class="form-label">{% trans "Differing billing address" %}</label>
-      <input type="text"
-             name="invoice_address"
-             class="form-control textinput"
-             id="id_invoice_address" />
+      <div class="form-check">
+        <input type="checkbox"
+               name="has_invoice_address"
+               class="form-check-input"
+               id="id_has_invoice_address"
+               x-model="hasInvoiceAddress"
+               {% if form.has_invoice_address.value %}checked{% endif %} />
+        <label class="form-check-label" for="id_has_invoice_address">{% trans "Differing billing address" %}</label>
+      </div>
+      {# djlint:off H021 #}
+      <div x-show="hasInvoiceAddress" style="display: none" class="mt-2">
+        {# djlint:on #}
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label for="id_invoice_company_name" class="form-label">{% trans "Company name" %} *</label>
+            <input type="text"
+                   name="invoice_company_name"
+                   class="form-control {% if form.invoice_company_name.errors %}is-invalid{% endif %}"
+                   id="id_invoice_company_name"
+                   value="{{ form.invoice_company_name.value|default_if_none:'' }}" />
+            {% for error in form.invoice_company_name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label for="id_invoice_email" class="form-label">{% trans "Email" %} *</label>
+            <input type="email"
+                   name="invoice_email"
+                   class="form-control {% if form.invoice_email.errors %}is-invalid{% endif %}"
+                   id="id_invoice_email"
+                   value="{{ form.invoice_email.value|default_if_none:'' }}" />
+            {% for error in form.invoice_email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="row g-2 mt-1">
+          <div class="col-md-6">
+            <label for="id_invoice_street" class="form-label">{% trans "Street and house number" %} *</label>
+            <input type="text"
+                   name="invoice_street"
+                   class="form-control {% if form.invoice_street.errors %}is-invalid{% endif %}"
+                   id="id_invoice_street"
+                   value="{{ form.invoice_street.value|default_if_none:'' }}" />
+            {% for error in form.invoice_street.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-3">
+            <label for="id_invoice_zip_code" class="form-label">{% trans "Zip code" %} *</label>
+            <input type="text"
+                   name="invoice_zip_code"
+                   class="form-control {% if form.invoice_zip_code.errors %}is-invalid{% endif %}"
+                   id="id_invoice_zip_code"
+                   value="{{ form.invoice_zip_code.value|default_if_none:'' }}" />
+            {% for error in form.invoice_zip_code.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-3">
+            <label for="id_invoice_city" class="form-label">{% trans "City" %} *</label>
+            <input type="text"
+                   name="invoice_city"
+                   class="form-control {% if form.invoice_city.errors %}is-invalid{% endif %}"
+                   id="id_invoice_city"
+                   value="{{ form.invoice_city.value|default_if_none:'' }}" />
+            {% for error in form.invoice_city.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="row g-2 mt-1">
+          <div class="col-md-6">
+            <label for="id_invoice_buyer_reference" class="form-label">{% trans "Buyer reference (Leitweg-ID)" %}</label>
+            <input type="text"
+                   name="invoice_buyer_reference"
+                   class="form-control"
+                   id="id_invoice_buyer_reference"
+                   value="{{ form.invoice_buyer_reference.value|default_if_none:'' }}" />
+          </div>
+        </div>
+      </div>
     </div>
   {% endif %}
 </div>

@@ -136,11 +136,39 @@ class BookingForm(forms.ModelForm):
         required=True,
     )
 
-    invoice_address = forms.CharField(
+    has_invoice_address = forms.BooleanField(
         required=False,
-        widget=forms.TextInput(
-            attrs={"id": "id_billing_address", "class": "form-control textinput"}
-        ),
+        label=_("Differing billing address"),
+    )
+    invoice_company_name = forms.CharField(
+        required=False,
+        label=_("Company name"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    invoice_street = forms.CharField(
+        required=False,
+        label=_("Street and house number"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    invoice_zip_code = forms.CharField(
+        required=False,
+        label=_("Zip code"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    invoice_city = forms.CharField(
+        required=False,
+        label=_("City"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    invoice_email = forms.EmailField(
+        required=False,
+        label=_("Email"),
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+    )
+    invoice_buyer_reference = forms.CharField(
+        required=False,
+        label=_("Buyer reference (Leitweg-ID)"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
 
     FREQUENCIES = [
@@ -404,7 +432,7 @@ class BookingForm(forms.ModelForm):
         self.fields["endtime"].choices = self.fields["starttime"].choices
         self.fields["resource"].queryset = user.get_resources()
 
-    def clean(self):  # noqa: C901, PLR0912
+    def clean(self):  # noqa: C901, PLR0912, PLR0915
         cleaned_data = super().clean()
         resource = cleaned_data.get("resource")
         startdate = cleaned_data.get("startdate")
@@ -504,7 +532,37 @@ class BookingForm(forms.ModelForm):
                 msg = _("The resource is already booked during your selected timeslot.")
                 self.add_error("resource", msg)
 
+        self._clean_invoice_address(cleaned_data)
+
         return cleaned_data
+
+    def _clean_invoice_address(self, cleaned_data):
+        """Validate and build the invoice_address JSON from form fields."""
+        if cleaned_data.get("has_invoice_address"):
+            required_fields = {
+                "invoice_company_name": _("Company name is required."),
+                "invoice_street": _("Street is required."),
+                "invoice_zip_code": _("Zip code is required."),
+                "invoice_city": _("City is required."),
+                "invoice_email": _("Email is required."),
+            }
+            for field, msg in required_fields.items():
+                if not cleaned_data.get(field):
+                    self.add_error(field, msg)
+
+            cleaned_data["invoice_address"] = {
+                "company_name": cleaned_data.get("invoice_company_name", ""),
+                "street": cleaned_data.get("invoice_street", ""),
+                "zip_code": cleaned_data.get("invoice_zip_code", ""),
+                "city": cleaned_data.get("invoice_city", ""),
+                "email": cleaned_data.get("invoice_email", ""),
+            }
+            if cleaned_data.get("invoice_buyer_reference"):
+                cleaned_data["invoice_address"]["buyer_reference"] = cleaned_data[
+                    "invoice_buyer_reference"
+                ]
+        else:
+            cleaned_data["invoice_address"] = {}
 
     class Meta:
         model = Booking
@@ -516,7 +574,13 @@ class BookingForm(forms.ModelForm):
             "organization",
             "resource",
             "number_of_attendees",
-            "invoice_address",
+            "has_invoice_address",
+            "invoice_company_name",
+            "invoice_street",
+            "invoice_zip_code",
+            "invoice_city",
+            "invoice_email",
+            "invoice_buyer_reference",
             "activity_description",
             "compensation",
             "reminder_emails",

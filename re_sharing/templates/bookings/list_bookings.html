@@ -114,7 +114,12 @@
                     {% else %}
                       ({% trans "Total amount" %}: {{ booking.total_amount }}€)
                       {% if booking.invoice_address %}
-                        , {% trans "Differing billing address" %}: {{ booking.invoice_address }}
+                        , {% trans "Differing billing address" %}:
+                        {% if booking.invoice_address.company_name %}
+                          {{ booking.invoice_address.company_name }}, {{ booking.invoice_address.street }}, {{ booking.invoice_address.zip_code }} {{ booking.invoice_address.city }}
+                        {% elif booking.invoice_address.old_complete_invoice_address %}
+                          {{ booking.invoice_address.old_complete_invoice_address }}
+                        {% endif %}
                       {% endif %}
                     {% endif %}
                   {% endif %}

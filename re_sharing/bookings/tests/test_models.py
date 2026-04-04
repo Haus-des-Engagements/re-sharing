@@ -16,6 +16,70 @@ def test_booking_get_absolute_url(booking: Booking):
     assert booking.get_absolute_url() == f"/bookings/{booking.slug}/"
 
 
+@pytest.mark.django_db()
+class TestInvoiceAddressField:
+    def test_stores_structured_invoice_address(self):
+        booking = BookingFactory(
+            invoice_address={
+                "company_name": "Test GmbH",
+                "street": "Teststraße 1",
+                "zip_code": "79100",
+                "city": "Freiburg",
+                "email": "test@test.de",
+            }
+        )
+        booking.refresh_from_db()
+        assert booking.invoice_address["company_name"] == "Test GmbH"
+        assert booking.invoice_address["street"] == "Teststraße 1"
+        assert booking.invoice_address["zip_code"] == "79100"
+        assert booking.invoice_address["city"] == "Freiburg"
+        assert booking.invoice_address["email"] == "test@test.de"
+
+    def test_stores_empty_dict_by_default(self):
+        booking = BookingFactory(invoice_address={})
+        booking.refresh_from_db()
+        assert booking.invoice_address == {}
+
+    def test_stores_buyer_reference(self):
+        booking = BookingFactory(
+            invoice_address={
+                "company_name": "Stadtverwaltung",
+                "street": "Rathausplatz 1",
+                "zip_code": "79098",
+                "city": "Freiburg",
+                "email": "rechnung@stadt.de",
+                "buyer_reference": "991-12345-67",
+            }
+        )
+        booking.refresh_from_db()
+        assert booking.invoice_address["buyer_reference"] == "991-12345-67"
+
+    def test_stores_old_complete_invoice_address(self):
+        booking = BookingFactory(
+            invoice_address={
+                "old_complete_invoice_address": "Alte Adresse, 79100 Freiburg",
+            }
+        )
+        booking.refresh_from_db()
+        assert (
+            booking.invoice_address["old_complete_invoice_address"]
+            == "Alte Adresse, 79100 Freiburg"
+        )
+
+    def test_booking_series_stores_structured_invoice_address(self):
+        bs = BookingSeriesFactory(
+            invoice_address={
+                "company_name": "Verein e.V.",
+                "street": "Vereinsstraße 5",
+                "zip_code": "79098",
+                "city": "Freiburg",
+                "email": "verein@test.de",
+            }
+        )
+        bs.refresh_from_db()
+        assert bs.invoice_address["company_name"] == "Verein e.V."
+
+
 class BookingMessageTestCase(TestCase):
     def setUp(self):
         self.booking = BookingFactory()

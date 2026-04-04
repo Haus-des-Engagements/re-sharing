@@ -18,6 +18,7 @@ from django.db.models import DecimalField
 from django.db.models import ForeignKey
 from django.db.models import Index
 from django.db.models import IntegerField
+from django.db.models import JSONField
 from django.db.models import PositiveIntegerField
 from django.db.models import Q
 from django.db.models import TextField
@@ -90,7 +91,7 @@ class BookingSeries(TimeStampedModel):
         null=True,
         blank=True,
     )
-    invoice_address = CharField(_("Invoice address"), blank=True, max_length=256)
+    invoice_address = JSONField(_("Invoice address"), blank=True, default=dict)
     activity_description = CharField(
         _("Activity description"),
         help_text=_("Please describe shortly what you are planning to do."),
@@ -370,7 +371,7 @@ class Booking(TimeStampedModel):
         blank=True,
     )
     invoice_number = CharField(_("Invoice number"), max_length=160, blank=True)
-    invoice_address = CharField(_("Invoice address"), blank=True, max_length=256)
+    invoice_address = JSONField(_("Invoice address"), blank=True, default=dict)
     number_of_attendees = PositiveIntegerField(_("Number of attendees"), default=5)
     activity_description = CharField(
         _("Activity description"),

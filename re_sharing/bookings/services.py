@@ -712,9 +712,9 @@ def manager_filter_invoice_bookings_list(
     elif invoice_filter == "without_invoice":
         bookings = bookings.filter(invoice_number="")
     if invoice_address_filter == "with_address":
-        bookings = bookings.exclude(invoice_address="")
+        bookings = bookings.exclude(invoice_address={})
     elif invoice_address_filter == "without_address":
-        bookings = bookings.filter(invoice_address="")
+        bookings = bookings.filter(invoice_address={})
 
     bookings = bookings.order_by("timespan")
 
@@ -761,8 +761,16 @@ def build_invoice_payload(booking: "Booking") -> dict:
         ),
     }
 
-    if booking.invoice_address:
-        payload["street"] = booking.invoice_address
+    addr = booking.invoice_address or {}
+    if addr.get("company_name"):
+        payload["company_name"] = addr["company_name"]
+        payload["street"] = addr.get("street", "")
+        payload["zip"] = addr.get("zip_code", "")
+        payload["city"] = addr.get("city", "")
+        if addr.get("email"):
+            payload["email"] = addr["email"]
+        if addr.get("buyer_reference"):
+            payload["buyer_reference"] = addr["buyer_reference"]
     else:
         payload["street"] = org.street_and_housenb
         payload["zip"] = org.zip_code

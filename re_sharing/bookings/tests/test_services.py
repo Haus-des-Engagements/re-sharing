@@ -2082,13 +2082,19 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
-            invoice_address="123 Main St",
+            invoice_address={
+                "company_name": "Test GmbH",
+                "street": "Teststr. 1",
+                "zip_code": "79100",
+                "city": "Freiburg",
+                "email": "t@t.de",
+            },
         )
         BookingFactory(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
-            invoice_address="",
+            invoice_address={},
         )
 
         bookings, _ = manager_filter_invoice_bookings_list(
@@ -2099,8 +2105,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_address_filter="with_address",
         )
 
-        assert bookings.filter(invoice_address="123 Main St").exists()
-        assert not bookings.filter(invoice_address="").exists()
+        assert bookings.filter(invoice_address__has_key="company_name").exists()
+        assert not bookings.filter(invoice_address={}).exists()
 
     def test_filter_invoice_bookings_without_invoice_address(self):
         """Test filtering bookings that don't have an invoice address"""
@@ -2109,13 +2115,19 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
-            invoice_address="123 Main St",
+            invoice_address={
+                "company_name": "Test GmbH",
+                "street": "Teststr. 1",
+                "zip_code": "79100",
+                "city": "Freiburg",
+                "email": "t@t.de",
+            },
         )
         BookingFactory(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
-            invoice_address="",
+            invoice_address={},
         )
 
         bookings, _ = manager_filter_invoice_bookings_list(
@@ -2126,8 +2138,8 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
             invoice_address_filter="without_address",
         )
 
-        assert bookings.filter(invoice_address="").exists()
-        assert not bookings.filter(invoice_address="123 Main St").exists()
+        assert bookings.filter(invoice_address={}).exists()
+        assert not bookings.filter(invoice_address__has_key="company_name").exists()
 
 
 class TestDeletedEntityHandling(TestCase):
@@ -2711,11 +2723,47 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["date_of_supply"] == "15.01.2026"
 
     def test_uses_invoice_address_when_set(self):
-        self.booking.invoice_address = "Andere Straße 5, 79098 Freiburg"
+        self.booking.invoice_address = {
+            "company_name": "Other Company GmbH",
+            "street": "Andere Straße 5",
+            "zip_code": "79098",
+            "city": "Freiburg",
+            "email": "billing@other.com",
+        }
         self.booking.save()
 
         payload = build_invoice_payload(self.booking)
 
-        assert payload["street"] == "Andere Straße 5, 79098 Freiburg"
-        assert "zip" not in payload
-        assert "city" not in payload
+        assert payload["company_name"] == "Other Company GmbH"
+        assert payload["street"] == "Andere Straße 5"
+        assert payload["zip"] == "79098"
+        assert payload["city"] == "Freiburg"
+        assert payload["email"] == "billing@other.com"
+
+    def test_uses_invoice_address_with_buyer_reference(self):
+        self.booking.invoice_address = {
+            "company_name": "Stadtverwaltung Freiburg",
+            "street": "Rathausplatz 1",
+            "zip_code": "79098",
+            "city": "Freiburg",
+            "email": "rechnung@freiburg.de",
+            "buyer_reference": "991-12345-67",
+        }
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["company_name"] == "Stadtverwaltung Freiburg"
+        assert payload["buyer_reference"] == "991-12345-67"
+
+    def test_ignores_old_complete_invoice_address_key(self):
+        self.booking.invoice_address = {
+            "old_complete_invoice_address": "Some old freetext address",
+        }
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        # Should fall back to organization data when structured fields missing
+        assert payload["company_name"] == "Test Organisation e.V."
+        assert payload["street"] == "Teststraße 1"
