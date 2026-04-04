@@ -263,9 +263,9 @@ NUKI_API_TOKEN = env("NUKI_API_TOKEN", default="")
 
 # BUCHHALTUNGSBUTLER
 # ------------------------------------------------------------------------------
-BUCHHALTUNGSBUTLER_API_KEY = env("API_KEY", default="")
-BUCHHALTUNGSBUTLER_API_CLIENT = env("API_CLIENT", default="")
-BUCHHALTUNGSBUTLER_API_SECRET = env("API_SECRET", default="")
+BUCHHALTUNGSBUTLER_API_KEY = env("BUCHHALTUNGSBUTLER_API_KEY", default="")
+BUCHHALTUNGSBUTLER_API_CLIENT = env("BUCHHALTUNGSBUTLER_API_CLIENT", default="")
+BUCHHALTUNGSBUTLER_API_SECRET = env("BUCHHALTUNGSBUTLER_API_SECRET", default="")
 BUCHHALTUNGSBUTLER_BASE_URL = env(
     "BUCHHALTUNGSBUTLER_BASE_URL",
     default="https://app.buchhaltungsbutler.de/api/v1",
