@@ -553,3 +553,27 @@ def create_draft_invoice_view(request: HttpRequest, booking_slug: str) -> HttpRe
     return HttpResponse(
         '<span class="badge text-bg-success">Draft sent</span>',
     )
+
+
+@require_http_methods(["POST"])
+@staff_member_required
+def create_einvoice_view(request: HttpRequest, booking_slug: str) -> HttpResponse:
+    """Trigger e-invoice creation in BuchhaltungsButler for a booking."""
+    from .models import Booking
+    from .tasks import create_einvoice
+
+    booking = get_object_or_404(Booking, slug=booking_slug)
+
+    if booking.invoice_number:
+        return HttpResponse(_("Booking already has an invoice number."), status=400)
+
+    if booking.timespan.upper > timezone.now():
+        return HttpResponse(_("Booking has not yet taken place."), status=400)
+
+    create_einvoice.enqueue(booking.id)
+
+    return HttpResponse(
+        '<td colspan="9">'
+        '<span class="badge text-bg-success">E-Invoice sent</span>'
+        "</td>",
+    )

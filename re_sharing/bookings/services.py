@@ -782,6 +782,66 @@ def build_invoice_payload(booking: "Booking") -> dict:
     return payload
 
 
+def build_einvoice_payload(booking: "Booking") -> dict:
+    """Build the JSON payload for creating an e-invoice in BuchhaltungsButler."""
+    org = booking.organization
+    local_tz = ZoneInfo(settings.TIME_ZONE)
+    start = booking.timespan.lower.astimezone(local_tz)
+    end = booking.timespan.upper.astimezone(local_tz)
+    duration_hours = (end - start).total_seconds() / 3600
+
+    item_name = (
+        f"{booking.resource.name} am {start.strftime('%d.%m.%Y')}"
+        f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
+    )
+
+    payload = {
+        "type": "invoice",
+        "show_prices_type": "gross",
+        "company_name": org.name,
+        "date": timezone.now().strftime("%Y-%m-%d"),
+        "due_days": "14",
+        "item_name": [item_name],
+        "item_amount": [str(int(duration_hours))],
+        "item_unit": ["Std."],
+        "item_tax_type": ["E"],
+        "item_tax_amount": ["0"],
+        "item_single_price": [str(booking.compensation.hourly_rate)],
+        "email": org.email,
+        "street": org.street_and_housenb,
+        "zip": org.zip_code,
+        "city": org.city,
+        "country": "DE",
+        "date_of_supply": start.strftime("%d.%m.%Y"),
+        "show_bankdata": True,
+        "contact_person_name": booking.user.get_full_name(),
+        "e_invoice_id": "0",
+        "correspondence": (
+            "Wir stellen Ihnen hiermit die Raumnutzung im Haus des Engagements"
+            " wie vereinbart in Rechnung."
+        ),
+        "final_provisions": (
+            "Bitte überweisen Sie den Rechnungsbetrag mit Angabe der oben"
+            " genannten Rechnungsnummer auf unser Konto bei der"
+            " GLS Gemeinschaftsbank. \nZahlbar binnen 14 Tagen nach"
+            " Rechnungsstellung.\n\nHerzlichen Dank und mit freundlichen"
+            " Grüßen \ni.A. Philip Bedall"
+        ),
+    }
+
+    addr = booking.invoice_address or {}
+    if addr.get("company_name"):
+        payload["company_name"] = addr["company_name"]
+        payload["street"] = addr.get("street", "")
+        payload["zip"] = addr.get("zip_code", "")
+        payload["city"] = addr.get("city", "")
+        if addr.get("email"):
+            payload["email"] = addr["email"]
+        payload["e_invoice_id"] = addr.get("buyer_reference") or "0"
+
+    return payload
+
+
 def get_external_events(ics_url: str, cache_key: str = "external_events") -> list[dict]:
     """
     Fetch and parse events from an external ICS calendar feed.

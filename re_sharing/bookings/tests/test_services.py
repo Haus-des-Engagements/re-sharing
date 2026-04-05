@@ -19,6 +19,7 @@ from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import bookings_webview
+from re_sharing.bookings.services import build_einvoice_payload
 from re_sharing.bookings.services import build_invoice_payload
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import create_booking_data
@@ -2769,3 +2770,90 @@ class TestBuildInvoicePayload(TestCase):
         # Should fall back to organization data when structured fields missing
         assert payload["company_name"] == "Test Organisation e.V."
         assert payload["street"] == "Teststraße 1"
+
+
+class TestBuildEinvoicePayload(TestCase):
+    """Test build_einvoice_payload function"""
+
+    def setUp(self):
+        self.organization = OrganizationFactory(
+            name="Test Organisation e.V.",
+            street_and_housenb="Teststraße 1",
+            zip_code="79100",
+            city="Freiburg",
+            email="test@example.com",
+        )
+        self.user = UserFactory(first_name="Max", last_name="Mustermann")
+        self.resource = ResourceFactory(name="Veranstaltungsraum")
+        self.compensation = CompensationFactory(hourly_rate=12)
+        self.compensation.resource.add(self.resource)
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 16, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 19, 0, tzinfo=tz)
+        self.booking = BookingFactory(
+            organization=self.organization,
+            user=self.user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=36,
+            timespan=Range(start, end),
+            start_date=start.date(),
+            end_date=end.date(),
+            start_time=start.time(),
+            end_time=end.time(),
+        )
+
+    def test_builds_payload_with_einvoice_fields(self):
+        payload = build_einvoice_payload(self.booking)
+
+        assert payload["item_tax_type"] == ["E"]
+        assert payload["item_tax_amount"] == ["0"]
+        assert payload["e_invoice_id"] == "0"
+        assert payload["country"] == "DE"
+        assert payload["street"] == "Teststraße 1"
+        assert payload["zip"] == "79100"
+        assert payload["city"] == "Freiburg"
+
+    def test_builds_payload_with_correct_item_data(self):
+        payload = build_einvoice_payload(self.booking)
+
+        assert "Veranstaltungsraum" in payload["item_name"][0]
+        assert "15.01.2026" in payload["item_name"][0]
+        assert "16:00" in payload["item_name"][0]
+        assert "19:00" in payload["item_name"][0]
+        assert payload["item_amount"] == ["3"]
+        assert payload["item_single_price"] == ["12"]
+
+    def test_uses_invoice_address_with_buyer_reference(self):
+        self.booking.invoice_address = {
+            "company_name": "Stadtverwaltung Freiburg",
+            "street": "Rathausplatz 1",
+            "zip_code": "79098",
+            "city": "Freiburg",
+            "email": "rechnung@freiburg.de",
+            "buyer_reference": "991-12345-67",
+        }
+        self.booking.save()
+
+        payload = build_einvoice_payload(self.booking)
+
+        assert payload["company_name"] == "Stadtverwaltung Freiburg"
+        assert payload["e_invoice_id"] == "991-12345-67"
+        assert payload["street"] == "Rathausplatz 1"
+        assert payload["email"] == "rechnung@freiburg.de"
+
+    def test_e_invoice_id_defaults_to_zero(self):
+        self.booking.invoice_address = {
+            "company_name": "Some Company",
+            "street": "Street 1",
+            "zip_code": "12345",
+            "city": "Berlin",
+            "email": "a@b.com",
+        }
+        self.booking.save()
+
+        payload = build_einvoice_payload(self.booking)
+
+        assert payload["e_invoice_id"] == "0"
