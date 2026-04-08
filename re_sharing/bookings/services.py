@@ -743,13 +743,14 @@ def build_invoice_payload(booking: "Booking") -> dict:
         "date": timezone.now().strftime("%Y-%m-%d"),
         "due_days": "14",
         "item_name": [item_name],
-        "item_amount": [str(int(duration_hours))],
+        "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
         "item_unit": ["Std."],
         "item_vat": ["0"],
         "item_single_price": [str(booking.compensation.hourly_rate)],
         "email": org.email,
         "date_of_supply": start.strftime("%d.%m.%Y"),
         "show_bankdata": True,
+        "show_contactdata": True,
         "contact_person_name": booking.user.get_full_name(),
         "correspondence": (
             "Wir stellen Ihnen hiermit die Raumnutzung im Haus des Engagements"
@@ -802,7 +803,7 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         "date": timezone.now().strftime("%Y-%m-%d"),
         "due_days": "14",
         "item_name": [item_name],
-        "item_amount": [str(int(duration_hours))],
+        "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
         "item_unit": ["Std."],
         "item_tax_type": ["E"],
         "item_tax_amount": ["0"],
@@ -814,6 +815,7 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         "country": "DE",
         "date_of_supply": start.strftime("%d.%m.%Y"),
         "show_bankdata": True,
+        "show_contactdata": True,
         "contact_person_name": booking.user.get_full_name(),
         "e_invoice_id": "0",
         "correspondence": (

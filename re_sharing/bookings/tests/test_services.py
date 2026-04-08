@@ -2715,6 +2715,17 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["item_single_price"] == ["12"]
         assert payload["item_vat"] == ["0"]
 
+    def test_builds_payload_with_fractional_hours(self):
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 16, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 18, 30, tzinfo=tz)
+        self.booking.timespan = Range(start, end)
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["item_amount"] == ["2.5"]
+
     def test_builds_payload_with_correct_meta_fields(self):
         payload = build_invoice_payload(self.booking)
 
@@ -2722,6 +2733,7 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["show_prices_type"] == "gross"
         assert payload["due_days"] == "14"
         assert payload["show_bankdata"] is True
+        assert payload["show_contactdata"] is True
         assert payload["date_of_supply"] == "15.01.2026"
 
     def test_uses_invoice_address_when_set(self):
@@ -2812,6 +2824,8 @@ class TestBuildEinvoicePayload(TestCase):
         assert payload["item_tax_amount"] == ["0"]
         assert payload["e_invoice_id"] == "0"
         assert payload["country"] == "DE"
+        assert payload["show_bankdata"] is True
+        assert payload["show_contactdata"] is True
         assert payload["street"] == "Teststraße 1"
         assert payload["zip"] == "79100"
         assert payload["city"] == "Freiburg"
@@ -2825,6 +2839,17 @@ class TestBuildEinvoicePayload(TestCase):
         assert "19:00" in payload["item_name"][0]
         assert payload["item_amount"] == ["3"]
         assert payload["item_single_price"] == ["12"]
+
+    def test_builds_payload_with_fractional_hours(self):
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 16, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 18, 30, tzinfo=tz)
+        self.booking.timespan = Range(start, end)
+        self.booking.save()
+
+        payload = build_einvoice_payload(self.booking)
+
+        assert payload["item_amount"] == ["2.5"]
 
     def test_uses_invoice_address_with_buyer_reference(self):
         self.booking.invoice_address = {
