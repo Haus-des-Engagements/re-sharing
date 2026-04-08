@@ -111,12 +111,12 @@
                             hx-post="{% url 'bookings:create-draft-invoice' booking.slug %}"
                             hx-confirm="{% trans 'Create draft invoice for' %} {{ booking.organization }}?"
                             hx-target="#actions-{{ booking.slug }}"
-                            hx-swap="innerHTML">{% trans "Draft" %}</button>
+                            hx-swap="innerHTML">{% trans "Invoice Draft" %}</button>
                     <button class="btn btn-outline-secondary"
                             hx-post="{% url 'bookings:create-einvoice' booking.slug %}"
                             hx-confirm="{% trans 'Create e-invoice for' %} {{ booking.organization }}?"
                             hx-target="#tr-{{ booking.slug }}"
-                            hx-swap="innerHTML">{% trans "E-Invoice" %}</button>
+                            hx-swap="innerHTML">{% trans "Invoice" %}</button>
                   </div>
                 {% endif %}
               </td>
