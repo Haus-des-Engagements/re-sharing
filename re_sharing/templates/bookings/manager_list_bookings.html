@@ -106,7 +106,7 @@
   <div id="booking-list">
     {% partialdef manager-list-bookings inline %}
     <div class="table-responsive mt-5">
-      <table class="table table-hover">
+      <table class="table table-hover sortable">
         <thead>
           <tr>
             <th scope="col">{% trans "Created" %}</th>
@@ -124,8 +124,8 @@
           {% for booking in bookings %}
             <tr id="tr-{{ booking.slug }}">
               {% partialdef manager-booking-item inline %}
-              <td>{{ booking.created|date:"d.m.Y H:i" }}</td>
-              <td>{{ booking.timespan.lower|date:"D, d.m.Y" }}</td>
+              <td sorttable_customkey="{{ booking.created|date:'YmdHi' }}">{{ booking.created|date:"d.m.Y H:i" }}</td>
+              <td sorttable_customkey="{{ booking.timespan.lower|date:'YmdHi' }}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</td>
               <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
               <td>{{ booking.resource }}</td>
               <td>
