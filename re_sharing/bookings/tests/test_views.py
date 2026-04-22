@@ -1271,3 +1271,118 @@ class TestCreateEinvoiceView(TestCase):
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
         mock_task.enqueue.assert_not_called()
+
+
+class TestCreateOrgDraftInvoiceView(TestCase):
+    def setUp(self):
+        import zoneinfo
+
+        from psycopg.types.range import Range
+
+        from re_sharing.resources.tests.factories import CompensationFactory
+        from re_sharing.resources.tests.factories import ResourceFactory
+
+        self.staff_user = UserFactory(is_staff=True)
+        self.client.force_login(self.staff_user)
+
+        self.organization = OrganizationFactory(
+            name="Test Organisation e.V.",
+            street_and_housenb="Teststraße 1",
+            zip_code="79100",
+            city="Freiburg",
+            email="test@example.com",
+        )
+        self.resource = ResourceFactory(name="Veranstaltungsraum")
+        self.compensation = CompensationFactory(hourly_rate=12)
+        self.compensation.resource.add(self.resource)
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start1 = datetime.datetime(2025, 1, 15, 16, 0, tzinfo=tz)
+        end1 = datetime.datetime(2025, 1, 15, 19, 0, tzinfo=tz)
+        self.booking1 = BookingFactory(
+            organization=self.organization,
+            user=self.staff_user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=36,
+            invoice_number="",
+            timespan=Range(start1, end1),
+            start_date=start1.date(),
+            end_date=end1.date(),
+            start_time=start1.time(),
+            end_time=end1.time(),
+        )
+
+        start2 = datetime.datetime(2025, 1, 20, 10, 0, tzinfo=tz)
+        end2 = datetime.datetime(2025, 1, 20, 12, 30, tzinfo=tz)
+        self.booking2 = BookingFactory(
+            organization=self.organization,
+            user=self.staff_user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=30,
+            invoice_number="",
+            timespan=Range(start2, end2),
+            start_date=start2.date(),
+            end_date=end2.date(),
+            start_time=start2.time(),
+            end_time=end2.time(),
+        )
+
+    @patch("re_sharing.bookings.tasks.create_org_draft_invoice")
+    def test_creates_org_draft_invoice(self, mock_task):
+        response = self.client.post(
+            reverse(
+                "bookings:create-org-draft-invoice",
+                kwargs={"organization_slug": self.organization.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        mock_task.enqueue.assert_called_once_with(self.organization.id)
+
+    @patch("re_sharing.bookings.tasks.create_org_draft_invoice")
+    def test_skips_bookings_with_single_invoice_flag(self, mock_task):
+        self.booking1.invoice_address = {"single_invoice": True}
+        self.booking1.save()
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-org-draft-invoice",
+                kwargs={"organization_slug": self.organization.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        mock_task.enqueue.assert_called_once_with(self.organization.id)
+
+    @patch("re_sharing.bookings.tasks.create_org_draft_invoice")
+    def test_rejects_when_no_uninvoiced_bookings(self, mock_task):
+        self.booking1.invoice_number = "INV-001"
+        self.booking1.save()
+        self.booking2.invoice_number = "INV-002"
+        self.booking2.save()
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-org-draft-invoice",
+                kwargs={"organization_slug": self.organization.slug},
+            )
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        mock_task.enqueue.assert_not_called()
+
+    def test_non_staff_user_forbidden(self):
+        regular_user = UserFactory(is_staff=False)
+        self.client.force_login(regular_user)
+
+        response = self.client.post(
+            reverse(
+                "bookings:create-org-draft-invoice",
+                kwargs={"organization_slug": self.organization.slug},
+            )
+        )
+        assert response.status_code == HTTPStatus.FOUND

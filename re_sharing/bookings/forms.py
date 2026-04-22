@@ -170,6 +170,10 @@ class BookingForm(forms.ModelForm):
         label=_("Buyer reference (Leitweg-ID)"),
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    single_invoice = forms.BooleanField(
+        required=False,
+        label=_("Individual invoice for this booking"),
+    )
 
     FREQUENCIES = [
         ("NO_REPETITIONS", _("No repetitions")),
@@ -538,6 +542,8 @@ class BookingForm(forms.ModelForm):
 
     def _clean_invoice_address(self, cleaned_data):
         """Validate and build the invoice_address JSON from form fields."""
+        invoice_address = {}
+
         if cleaned_data.get("has_invoice_address"):
             required_fields = {
                 "invoice_company_name": _("Company name is required."),
@@ -550,7 +556,7 @@ class BookingForm(forms.ModelForm):
                 if not cleaned_data.get(field):
                     self.add_error(field, msg)
 
-            cleaned_data["invoice_address"] = {
+            invoice_address = {
                 "company_name": cleaned_data.get("invoice_company_name", ""),
                 "street": cleaned_data.get("invoice_street", ""),
                 "zip_code": cleaned_data.get("invoice_zip_code", ""),
@@ -558,11 +564,14 @@ class BookingForm(forms.ModelForm):
                 "email": cleaned_data.get("invoice_email", ""),
             }
             if cleaned_data.get("invoice_buyer_reference"):
-                cleaned_data["invoice_address"]["buyer_reference"] = cleaned_data[
+                invoice_address["buyer_reference"] = cleaned_data[
                     "invoice_buyer_reference"
                 ]
-        else:
-            cleaned_data["invoice_address"] = {}
+
+        if cleaned_data.get("single_invoice"):
+            invoice_address["single_invoice"] = True
+
+        cleaned_data["invoice_address"] = invoice_address
 
     class Meta:
         model = Booking
@@ -581,6 +590,7 @@ class BookingForm(forms.ModelForm):
             "invoice_city",
             "invoice_email",
             "invoice_buyer_reference",
+            "single_invoice",
             "activity_description",
             "compensation",
             "reminder_emails",

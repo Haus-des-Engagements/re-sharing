@@ -7,6 +7,7 @@ from .views import create_booking_data_form_view
 from .views import create_bookingmessage_view
 from .views import create_draft_invoice_view
 from .views import create_einvoice_view
+from .views import create_org_draft_invoice_view
 from .views import list_booking_series_view
 from .views import list_bookings_view
 from .views import list_bookings_webview
@@ -58,6 +59,11 @@ urlpatterns = [
         "manage-invoices/<slug:booking_slug>/create-einvoice/",
         create_einvoice_view,
         name="create-einvoice",
+    ),
+    path(
+        "manage-invoices/org/<slug:organization_slug>/create-draft-invoice/",
+        create_org_draft_invoice_view,
+        name="create-org-draft-invoice",
     ),
     path(
         "manage-booking-series/",

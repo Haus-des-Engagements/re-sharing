@@ -4,6 +4,7 @@ import logging
 import requests
 from django.conf import settings
 from django.tasks import task
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -104,3 +105,69 @@ def create_einvoice(booking_id: int) -> dict:
         data.get("message", "unknown error"),
     )
     return {"booking_id": booking_id, "status": "error", "message": data.get("message")}
+
+
+@task(queue_name="default")
+def create_org_draft_invoice(organization_id: int) -> dict:
+    """Create a bundled draft invoice for all uninvoiced bookings of an org."""
+    from re_sharing.bookings.models import Booking
+    from re_sharing.bookings.services import build_org_invoice_payload
+    from re_sharing.organizations.models import Organization
+    from re_sharing.utils.models import BookingStatus
+
+    organization = Organization.objects.get(id=organization_id)
+
+    bookings = list(
+        Booking.objects.filter(
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            total_amount__gt=0,
+            invoice_number="",
+            timespan__endswith__lt=timezone.now(),
+        )
+        .exclude(invoice_address__contains={"single_invoice": True})
+        .exclude(resource__type="lendable_item")
+        .select_related("resource", "compensation")
+        .order_by("timespan")
+    )
+
+    if not bookings:
+        return {"organization_id": organization_id, "status": "no_bookings"}
+
+    payload = build_org_invoice_payload(organization, bookings)
+    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
+
+    credentials = base64.b64encode(
+        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
+    ).decode()
+
+    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/draft"
+
+    try:
+        response = requests.post(
+            url,
+            json=payload,
+            headers={
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        logger.exception(
+            "Failed to create org draft invoice for org %s", organization_id
+        )
+        return {"organization_id": organization_id, "status": "error"}
+    else:
+        logger.info(
+            "Org draft invoice created for org %s (%d bookings)",
+            organization_id,
+            len(bookings),
+        )
+        return {
+            "organization_id": organization_id,
+            "status": "success",
+            "booking_count": len(bookings),
+        }

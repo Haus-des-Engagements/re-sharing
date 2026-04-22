@@ -15,6 +15,7 @@ from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.providers.decorators import manager_required
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 from .forms import BookingForm
@@ -26,6 +27,7 @@ from .services import create_booking_data
 from .services import create_bookingmessage
 from .services import filter_bookings_list
 from .services import generate_booking
+from .services import get_organizations_with_bundleable_bookings
 from .services import manager_cancel_booking
 from .services import manager_confirm_booking
 from .services import manager_confirm_booking_series
@@ -514,6 +516,10 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         invoice_address_filter,
     )
 
+    orgs_with_bundleable = get_organizations_with_bundleable_bookings(
+        organization_search
+    )
+
     context = {
         "bookings": bookings,
         "organization_search": organization_search,
@@ -521,6 +527,7 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         "invoice_number": invoice_number,
         "invoice_address_filter": invoice_address_filter,
         "now": timezone.now(),
+        "orgs_with_bundleable": orgs_with_bundleable,
     }
 
     if request.headers.get("HX-Request"):
@@ -576,4 +583,39 @@ def create_einvoice_view(request: HttpRequest, booking_slug: str) -> HttpRespons
         '<td colspan="9">'
         '<span class="badge text-bg-success">E-Invoice sent</span>'
         "</td>",
+    )
+
+
+@require_http_methods(["POST"])
+@staff_member_required
+def create_org_draft_invoice_view(
+    request: HttpRequest, organization_slug: str
+) -> HttpResponse:
+    """Create a bundled draft invoice for all uninvoiced bookings of an org."""
+    from .tasks import create_org_draft_invoice
+
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    # Check that there are bundleable uninvoiced bookings
+    bundleable_bookings = (
+        Booking.objects.filter(
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            total_amount__gt=0,
+            invoice_number="",
+            timespan__endswith__lt=timezone.now(),
+        )
+        .exclude(resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
+        .exclude(invoice_address__contains={"single_invoice": True})
+    )
+
+    if not bundleable_bookings.exists():
+        return HttpResponse(
+            _("No uninvoiced bookings for this organization."), status=400
+        )
+
+    create_org_draft_invoice.enqueue(organization.id)
+
+    return HttpResponse(
+        '<span class="badge text-bg-success">Draft sent</span>',
     )

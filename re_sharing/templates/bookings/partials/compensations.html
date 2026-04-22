@@ -45,6 +45,14 @@
       {# djlint:on #}
       <div class="form-check">
         <input type="checkbox"
+               name="single_invoice"
+               class="form-check-input"
+               id="id_single_invoice"
+               {% if form.single_invoice.value %}checked{% endif %} />
+        <label class="form-check-label" for="id_single_invoice">{% trans "Individual invoice for this booking" %}</label>
+      </div>
+      <div class="form-check mt-1">
+        <input type="checkbox"
                name="has_invoice_address"
                class="form-check-input"
                id="id_has_invoice_address"

@@ -71,6 +71,40 @@
   </form>
   <div id="booking-list">
     {% partialdef manager-list-invoices inline %}
+    {% if orgs_with_bundleable %}
+      <div class="mt-4">
+        <h5>{% trans "Bundled draft invoices" %}</h5>
+        <p class="text-muted">
+          {% trans "Create a single draft invoice per organization containing all uninvoiced bookings." %}
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th scope="col">{% trans "Organization" %}</th>
+                <th scope="col">{% trans "Uninvoiced bookings" %}</th>
+                <th scope="col">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for org in orgs_with_bundleable %}
+                <tr>
+                  <td>{{ org.organization__name }}</td>
+                  <td>{{ org.booking_count }}</td>
+                  <td id="org-actions-{{ org.organization__slug }}">
+                    <button class="btn btn-outline-primary btn-sm"
+                            hx-post="{% url 'bookings:create-org-draft-invoice' org.organization__slug %}"
+                            hx-confirm="{% trans 'Create bundled draft invoice for' %} {{ org.organization__name }} ({{ org.booking_count }} {% trans 'bookings' %})?"
+                            hx-target="#org-actions-{{ org.organization__slug }}"
+                            hx-swap="innerHTML">{% trans "Invoice Draft" %}</button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
     <div class="table-responsive mt-5">
       <table class="table table-hover">
         <thead>

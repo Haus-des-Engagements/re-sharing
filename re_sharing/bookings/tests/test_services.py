@@ -21,6 +21,7 @@ from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import bookings_webview
 from re_sharing.bookings.services import build_einvoice_payload
 from re_sharing.bookings.services import build_invoice_payload
+from re_sharing.bookings.services import build_org_invoice_payload
 from re_sharing.bookings.services import cancel_booking
 from re_sharing.bookings.services import create_booking_data
 from re_sharing.bookings.services import create_bookingmessage
@@ -72,6 +73,7 @@ TEST_ATTENDEES_20 = 20
 TEST_TOTAL_AMOUNT_100 = 100  # 2 hours * 50/hour
 TEST_TOTAL_AMOUNT_225 = 225  # 3 hours * 75/hour
 TEST_EXPECTED_FUTURE_EVENTS = 2  # Number of future events in test ICS data
+TEST_ORG_BOOKING_COUNT = 2  # Number of bookings in org invoice tests
 
 
 class TestCancelBooking(TestCase):
@@ -2882,3 +2884,113 @@ class TestBuildEinvoicePayload(TestCase):
         payload = build_einvoice_payload(self.booking)
 
         assert payload["e_invoice_id"] == "0"
+
+
+class TestBuildOrgInvoicePayload(TestCase):
+    """Test build_org_invoice_payload function"""
+
+    def setUp(self):
+        self.organization = OrganizationFactory(
+            name="Test Organisation e.V.",
+            street_and_housenb="Teststraße 1",
+            zip_code="79100",
+            city="Freiburg",
+            email="test@example.com",
+        )
+        self.user = UserFactory(first_name="Max", last_name="Mustermann")
+        self.resource = ResourceFactory(name="Veranstaltungsraum")
+        self.compensation = CompensationFactory(hourly_rate=12)
+        self.compensation.resource.add(self.resource)
+
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start1 = datetime.datetime(2026, 1, 15, 16, 0, tzinfo=tz)
+        end1 = datetime.datetime(2026, 1, 15, 19, 0, tzinfo=tz)
+        self.booking1 = BookingFactory(
+            organization=self.organization,
+            user=self.user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=36,
+            invoice_number="",
+            timespan=Range(start1, end1),
+            start_date=start1.date(),
+            end_date=end1.date(),
+            start_time=start1.time(),
+            end_time=end1.time(),
+        )
+
+        start2 = datetime.datetime(2026, 1, 20, 10, 0, tzinfo=tz)
+        end2 = datetime.datetime(2026, 1, 20, 12, 30, tzinfo=tz)
+        self.booking2 = BookingFactory(
+            organization=self.organization,
+            user=self.user,
+            resource=self.resource,
+            compensation=self.compensation,
+            status=BookingStatus.CONFIRMED,
+            total_amount=30,
+            invoice_number="",
+            timespan=Range(start2, end2),
+            start_date=start2.date(),
+            end_date=end2.date(),
+            start_time=start2.time(),
+            end_time=end2.time(),
+        )
+
+    def test_builds_payload_with_multiple_items(self):
+        bookings = [self.booking1, self.booking2]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        assert len(payload["item_name"]) == TEST_ORG_BOOKING_COUNT
+        assert len(payload["item_amount"]) == TEST_ORG_BOOKING_COUNT
+        assert len(payload["item_unit"]) == TEST_ORG_BOOKING_COUNT
+        assert len(payload["item_vat"]) == TEST_ORG_BOOKING_COUNT
+        assert len(payload["item_single_price"]) == TEST_ORG_BOOKING_COUNT
+
+    def test_each_item_has_correct_data(self):
+        bookings = [self.booking1, self.booking2]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        assert "15.01.2026" in payload["item_name"][0]
+        assert "16:00" in payload["item_name"][0]
+        assert "19:00" in payload["item_name"][0]
+        assert payload["item_amount"][0] == "3"
+
+        assert "20.01.2026" in payload["item_name"][1]
+        assert "10:00" in payload["item_name"][1]
+        assert "12:30" in payload["item_name"][1]
+        assert payload["item_amount"][1] == "2.5"
+
+    def test_uses_organization_address(self):
+        bookings = [self.booking1]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        assert payload["company_name"] == "Test Organisation e.V."
+        assert payload["street"] == "Teststraße 1"
+        assert payload["zip"] == "79100"
+        assert payload["city"] == "Freiburg"
+        assert payload["email"] == "test@example.com"
+
+    def test_uses_earliest_date_of_supply(self):
+        bookings = [self.booking1, self.booking2]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        assert payload["date_of_supply"] == "15.01.2026"
+
+    def test_meta_fields(self):
+        bookings = [self.booking1]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        assert payload["type"] == "invoice"
+        assert payload["show_prices_type"] == "gross"
+        assert payload["due_days"] == "14"
+        assert payload["show_bankdata"] is True
+        assert payload["show_contactdata"] is True
+
+    def test_items_ordered_by_date(self):
+        bookings = [self.booking2, self.booking1]
+        payload = build_org_invoice_payload(self.organization, bookings)
+
+        # Should be ordered by date regardless of input order
+        assert "15.01.2026" in payload["item_name"][0]
+        assert "20.01.2026" in payload["item_name"][1]
