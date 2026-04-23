@@ -680,12 +680,13 @@ def manager_confirm_booking_series(user, booking_series_uuid):
     return booking_series
 
 
-def manager_filter_invoice_bookings_list(
+def manager_filter_invoice_bookings_list(  # noqa: PLR0913
     organization_search,
     invoice_filter,
     invoice_number,
     resource,
     invoice_address_filter="all",
+    timespan_filter="past",
 ):
     resources = Resource.objects.exclude(
         type=Resource.ResourceTypeChoices.LENDABLE_ITEM
@@ -717,6 +718,8 @@ def manager_filter_invoice_bookings_list(
         bookings = bookings.exclude(invoice_address={})
     elif invoice_address_filter == "without_address":
         bookings = bookings.filter(invoice_address={})
+    if timespan_filter == "past":
+        bookings = bookings.filter(timespan__endswith__lt=timezone.now())
 
     bookings = bookings.order_by("timespan")
 

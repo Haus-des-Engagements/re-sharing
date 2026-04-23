@@ -835,7 +835,9 @@ class TestManagerFilterInvoiceBookingsListView(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        mock_filter.assert_called_once_with("test org", "paid", "INV-001", "456", "all")
+        mock_filter.assert_called_once_with(
+            "test org", "paid", "INV-001", "456", "all", "past"
+        )
 
     def test_non_staff_user_forbidden(self):
         regular_user = UserFactory(is_staff=False)

@@ -503,17 +503,19 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
     Shows the bookings with an invoice for a resource manager so that they can be
     confirmed or cancelled
     """
-    invoice_filter = request.GET.get("invoice_filter", "all")
+    invoice_filter = request.GET.get("invoice_filter", "without_invoice")
     organization_search = request.GET.get("organization_search")
     invoice_number = request.GET.get("invoice_number") or None
     resource = request.GET.get("resource") or "all"
     invoice_address_filter = request.GET.get("invoice_address_filter", "all")
+    timespan_filter = request.GET.get("timespan_filter", "past")
     bookings, resources = manager_filter_invoice_bookings_list(
         organization_search,
         invoice_filter,
         invoice_number,
         resource,
         invoice_address_filter,
+        timespan_filter,
     )
 
     orgs_with_bundleable = get_organizations_with_bundleable_bookings(
@@ -525,7 +527,9 @@ def manager_filter_invoice_bookings_list_view(request: HttpRequest) -> HttpRespo
         "organization_search": organization_search,
         "resources": resources,
         "invoice_number": invoice_number,
+        "invoice_filter": invoice_filter,
         "invoice_address_filter": invoice_address_filter,
+        "timespan_filter": timespan_filter,
         "now": timezone.now(),
         "orgs_with_bundleable": orgs_with_bundleable,
     }

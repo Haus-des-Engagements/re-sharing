@@ -40,9 +40,17 @@
     </div>
     <div class="col-auto">
       <select name="invoice_filter" class="form-select" id="id_invoice_filter">
-        <option value="all">{% trans "with & without invoice number" %}</option>
-        <option value="with_invoice">{% trans "only with invoice number" %}</option>
-        <option value="without_invoice">{% trans "only without invoice number" %}</option>
+        <option value="all" {% if invoice_filter == "all" %}selected{% endif %}>
+          {% trans "with & without invoice number" %}
+        </option>
+        <option value="with_invoice"
+                {% if invoice_filter == "with_invoice" %}selected{% endif %}>
+          {% trans "only with invoice number" %}
+        </option>
+        <option value="without_invoice"
+                {% if invoice_filter == "without_invoice" %}selected{% endif %}>
+          {% trans "only without invoice number" %}
+        </option>
       </select>
     </div>
     <div class="col-auto">
@@ -60,6 +68,14 @@
         <option value="without_address"
                 {% if invoice_address_filter == "without_address" %}selected{% endif %}>
           {% trans "only without invoice address" %}
+        </option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="timespan_filter" class="form-select" id="id_timespan_filter">
+        <option value="past" {% if timespan_filter == "past" %}selected{% endif %}>{% trans "only past bookings" %}</option>
+        <option value="all" {% if timespan_filter == "all" %}selected{% endif %}>
+          {% trans "including future bookings" %}
         </option>
       </select>
     </div>
