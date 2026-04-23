@@ -92,11 +92,18 @@
                   <td>{{ org.organization__name }}</td>
                   <td>{{ org.booking_count }}</td>
                   <td id="org-actions-{{ org.organization__slug }}">
-                    <button class="btn btn-outline-primary btn-sm"
-                            hx-post="{% url 'bookings:create-org-draft-invoice' org.organization__slug %}"
-                            hx-confirm="{% trans 'Create bundled draft invoice for' %} {{ org.organization__name }} ({{ org.booking_count }} {% trans 'bookings' %})?"
-                            hx-target="#org-actions-{{ org.organization__slug }}"
-                            hx-swap="innerHTML">{% trans "Invoice Draft" %}</button>
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-outline-primary"
+                              hx-post="{% url 'bookings:create-org-draft-invoice' org.organization__slug %}"
+                              hx-confirm="{% trans 'Create bundled draft invoice for' %} {{ org.organization__name }} ({{ org.booking_count }} {% trans 'bookings' %})?"
+                              hx-target="#org-actions-{{ org.organization__slug }}"
+                              hx-swap="innerHTML">{% trans "Invoice Draft" %}</button>
+                      <button class="btn btn-outline-secondary"
+                              hx-post="{% url 'bookings:create-org-einvoice' org.organization__slug %}"
+                              hx-confirm="{% trans 'Create e-invoice for' %} {{ org.organization__name }} ({{ org.booking_count }} {% trans 'bookings' %})?"
+                              hx-target="#org-actions-{{ org.organization__slug }}"
+                              hx-swap="innerHTML">{% trans "Invoice" %}</button>
+                    </div>
                   </td>
                 </tr>
               {% endfor %}

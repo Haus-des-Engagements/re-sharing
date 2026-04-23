@@ -952,6 +952,77 @@ def build_org_invoice_payload(
     }
 
 
+def build_org_einvoice_payload(
+    organization: "Organization", bookings: list["Booking"]
+) -> dict:
+    """Build a bundled e-invoice payload with one line item per booking."""
+    local_tz = ZoneInfo(settings.TIME_ZONE)
+
+    sorted_bookings = sorted(bookings, key=lambda b: b.timespan.lower)
+
+    item_names = []
+    item_amounts = []
+    item_units = []
+    item_tax_types = []
+    item_tax_amounts = []
+    item_single_prices = []
+
+    for booking in sorted_bookings:
+        start = booking.timespan.lower.astimezone(local_tz)
+        end = booking.timespan.upper.astimezone(local_tz)
+        duration_hours = (end - start).total_seconds() / 3600
+
+        item_name = (
+            f"{booking.resource.name} am {start.strftime('%d.%m.%Y')}"
+            f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
+        )
+        item_names.append(item_name)
+        item_amounts.append(str(duration_hours).rstrip("0").rstrip("."))
+        item_units.append("Std.")
+        item_tax_types.append("E")
+        item_tax_amounts.append("0")
+        hourly_rate = booking.compensation.hourly_rate
+        if not hourly_rate and duration_hours:
+            hourly_rate = booking.total_amount / duration_hours
+        item_single_prices.append(str(hourly_rate or 0))
+
+    earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
+
+    return {
+        "type": "invoice",
+        "show_prices_type": "gross",
+        "company_name": organization.name,
+        "street": organization.street_and_housenb,
+        "zip": organization.zip_code,
+        "city": organization.city,
+        "country": "DE",
+        "email": organization.email,
+        "date": timezone.now().strftime("%Y-%m-%d"),
+        "due_days": "14",
+        "item_name": item_names,
+        "item_amount": item_amounts,
+        "item_unit": item_units,
+        "item_tax_type": item_tax_types,
+        "item_tax_amount": item_tax_amounts,
+        "item_single_price": item_single_prices,
+        "date_of_supply": earliest_start.strftime("%d.%m.%Y"),
+        "show_bankdata": True,
+        "show_contactdata": True,
+        "e_invoice_id": "0",
+        "correspondence": (
+            "Wir stellen Ihnen hiermit die Raumnutzung im Haus des Engagements"
+            " wie vereinbart in Rechnung."
+        ),
+        "final_provisions": (
+            "Bitte überweisen Sie den Rechnungsbetrag mit Angabe der oben"
+            " genannten Rechnungsnummer auf unser Konto bei der"
+            " GLS Gemeinschaftsbank. \nZahlbar binnen 14 Tagen nach"
+            " Rechnungsstellung.\n\nHerzlichen Dank und mit freundlichen"
+            " Grüßen \ni.A. Philip Bedall"
+        ),
+    }
+
+
 def get_external_events(ics_url: str, cache_key: str = "external_events") -> list[dict]:
     """
     Fetch and parse events from an external ICS calendar feed.

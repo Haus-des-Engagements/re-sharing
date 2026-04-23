@@ -192,3 +192,93 @@ def create_org_draft_invoice(organization_id: int) -> dict:
             "status": "success",
             "booking_count": len(bookings),
         }
+
+
+@task(queue_name="default")
+def create_org_einvoice(organization_id: int) -> dict:
+    """Create a bundled e-invoice for all uninvoiced bookings of an org."""
+    from re_sharing.bookings.models import Booking
+    from re_sharing.bookings.services import build_org_einvoice_payload
+    from re_sharing.organizations.models import Organization
+    from re_sharing.utils.models import BookingStatus
+
+    organization = Organization.objects.get(id=organization_id)
+
+    bookings = list(
+        Booking.objects.filter(
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            total_amount__gt=0,
+            invoice_number="",
+            timespan__endswith__lt=timezone.now(),
+        )
+        .exclude(invoice_address__contains={"single_invoice": True})
+        .exclude(resource__type="lendable_item")
+        .select_related("resource", "compensation")
+        .order_by("timespan")
+    )
+
+    if not bookings:
+        return {"organization_id": organization_id, "status": "no_bookings"}
+
+    payload = build_org_einvoice_payload(organization, bookings)
+    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
+
+    credentials = base64.b64encode(
+        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
+    ).decode()
+
+    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/einvoice"
+
+    try:
+        response = requests.post(
+            url,
+            json=payload,
+            headers={
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            timeout=30,
+        )
+        if not response.ok:
+            logger.error(
+                "BuchhaltungsButler returned %s for org %s: %s",
+                response.status_code,
+                organization_id,
+                response.text,
+            )
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException:
+        logger.exception("Failed to create org e-invoice for org %s", organization_id)
+        return {"organization_id": organization_id, "status": "error"}
+
+    if data.get("success"):
+        invoice_number = data.get("invoicenumber", "")
+        Booking.objects.filter(id__in=[b.id for b in bookings]).update(
+            invoice_number=invoice_number
+        )
+        logger.info(
+            "Org e-invoice created for org %s (%d bookings), invoice number: %s",
+            organization_id,
+            len(bookings),
+            invoice_number,
+        )
+        return {
+            "organization_id": organization_id,
+            "status": "success",
+            "booking_count": len(bookings),
+            "invoice_number": invoice_number,
+        }
+
+    logger.error(
+        "Org e-invoice creation failed for org %s: %s",
+        organization_id,
+        data.get("message", "unknown error"),
+    )
+    return {
+        "organization_id": organization_id,
+        "status": "error",
+        "message": data.get("message"),
+    }

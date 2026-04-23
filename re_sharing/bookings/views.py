@@ -619,3 +619,37 @@ def create_org_draft_invoice_view(
     return HttpResponse(
         '<span class="badge text-bg-success">Draft sent</span>',
     )
+
+
+@require_http_methods(["POST"])
+@staff_member_required
+def create_org_einvoice_view(
+    request: HttpRequest, organization_slug: str
+) -> HttpResponse:
+    """Create a bundled e-invoice for all uninvoiced bookings of an org."""
+    from .tasks import create_org_einvoice
+
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    bundleable_bookings = (
+        Booking.objects.filter(
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            total_amount__gt=0,
+            invoice_number="",
+            timespan__endswith__lt=timezone.now(),
+        )
+        .exclude(resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
+        .exclude(invoice_address__contains={"single_invoice": True})
+    )
+
+    if not bundleable_bookings.exists():
+        return HttpResponse(
+            _("No uninvoiced bookings for this organization."), status=400
+        )
+
+    create_org_einvoice.enqueue(organization.id)
+
+    return HttpResponse(
+        '<span class="badge text-bg-success">E-Invoice sent</span>',
+    )
