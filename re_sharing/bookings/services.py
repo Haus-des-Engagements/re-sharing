@@ -736,6 +736,10 @@ def build_invoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
+    hourly_rate = booking.compensation.hourly_rate
+    if not hourly_rate and duration_hours:
+        hourly_rate = booking.total_amount / duration_hours
+
     payload = {
         "type": "invoice",
         "show_prices_type": "gross",
@@ -746,7 +750,7 @@ def build_invoice_payload(booking: "Booking") -> dict:
         "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
         "item_unit": ["Std."],
         "item_vat": ["0"],
-        "item_single_price": [str(booking.compensation.hourly_rate)],
+        "item_single_price": [str(hourly_rate or 0)],
         "email": org.email,
         "date_of_supply": start.strftime("%d.%m.%Y"),
         "show_bankdata": True,
@@ -796,6 +800,10 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
+    hourly_rate = booking.compensation.hourly_rate
+    if not hourly_rate and duration_hours:
+        hourly_rate = booking.total_amount / duration_hours
+
     payload = {
         "type": "invoice",
         "show_prices_type": "gross",
@@ -807,7 +815,7 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         "item_unit": ["Std."],
         "item_tax_type": ["E"],
         "item_tax_amount": ["0"],
-        "item_single_price": [str(booking.compensation.hourly_rate)],
+        "item_single_price": [str(hourly_rate or 0)],
         "email": org.email,
         "street": org.street_and_housenb,
         "zip": org.zip_code,
@@ -905,7 +913,10 @@ def build_org_invoice_payload(
         item_amounts.append(str(duration_hours).rstrip("0").rstrip("."))
         item_units.append("Std.")
         item_vats.append("0")
-        item_single_prices.append(str(booking.compensation.hourly_rate))
+        hourly_rate = booking.compensation.hourly_rate
+        if not hourly_rate and duration_hours:
+            hourly_rate = booking.total_amount / duration_hours
+        item_single_prices.append(str(hourly_rate or 0))
 
     earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
 

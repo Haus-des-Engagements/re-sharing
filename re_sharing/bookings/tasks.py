@@ -39,6 +39,13 @@ def create_draft_invoice(booking_id: int) -> dict:
             },
             timeout=30,
         )
+        if not response.ok:
+            logger.error(
+                "BuchhaltungsButler returned %s for booking %s: %s",
+                response.status_code,
+                booking_id,
+                response.text,
+            )
         response.raise_for_status()
     except requests.RequestException:
         logger.exception("Failed to create draft invoice for booking %s", booking_id)
@@ -78,6 +85,13 @@ def create_einvoice(booking_id: int) -> dict:
             },
             timeout=30,
         )
+        if not response.ok:
+            logger.error(
+                "BuchhaltungsButler returned %s for booking %s: %s",
+                response.status_code,
+                booking_id,
+                response.text,
+            )
         response.raise_for_status()
         data = response.json()
     except requests.RequestException:
@@ -154,6 +168,13 @@ def create_org_draft_invoice(organization_id: int) -> dict:
             },
             timeout=30,
         )
+        if not response.ok:
+            logger.error(
+                "BuchhaltungsButler returned %s for org %s: %s",
+                response.status_code,
+                organization_id,
+                response.text,
+            )
         response.raise_for_status()
     except requests.RequestException:
         logger.exception(
