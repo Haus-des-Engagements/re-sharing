@@ -11,6 +11,7 @@ from psycopg.types.range import Range
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.utils.models import BookingStatus
 
@@ -217,3 +218,28 @@ class TestSendMonthlyBookingsOverviewCommand(TestCase):
         mock_task.enqueue.assert_called_once()
         call_args = mock_task.enqueue.call_args
         assert call_args[0][0] == org1.id
+
+    @patch(
+        "re_sharing.organizations.management.commands.send_monthly_bookings_overview.send_monthly_overview_email"
+    )
+    def test_command_excludes_lendable_item_bookings(self, mock_task):
+        """Test that bookings for lendable items are excluded from overview"""
+        lendable_resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+        )
+        organization = OrganizationFactory(monthly_bulk_access_codes=True)
+        next_month = (timezone.now() + relativedelta(months=1)).replace(
+            day=10, hour=10, minute=0, second=0, microsecond=0
+        )
+        BookingFactory(
+            resource=lendable_resource,
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            timespan=Range(next_month, next_month + timedelta(hours=2)),
+        )
+        out = StringIO()
+
+        call_command("send_monthly_bookings_overview", stdout=out)
+
+        mock_task.enqueue.assert_not_called()
+        assert "Enqueued 0 monthly overview email tasks" in out.getvalue()

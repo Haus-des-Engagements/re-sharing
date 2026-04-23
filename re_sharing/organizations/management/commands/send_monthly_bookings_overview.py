@@ -7,6 +7,7 @@ from django.utils import timezone
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.mails import send_monthly_overview_email
 from re_sharing.organizations.models import Organization
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 
@@ -58,7 +59,9 @@ class Command(BaseCommand):
         if organizations is not None:
             bookings = bookings.filter(organization__in=organizations)
 
-        bookings = bookings.filter(
+        bookings = bookings.exclude(
+            resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+        ).filter(
             timespan__startswith__gte=next_month_start,
             timespan__startswith__lt=next_month_start + relativedelta(months=1),
         )
