@@ -209,6 +209,9 @@
                         onclick="return validateAndConfirm()">
                   {% trans "Send Email to" %} <span id="selectedCount">{{ organizations|length }}</span> {% trans "Organizations" %}
                 </button>
+                <button type="button"
+                        class="btn btn-outline-secondary ms-2"
+                        onclick="downloadCSV()">{% trans "Download CSV" %}</button>
               </form>
               <script>
                 // Handle select all checkbox
@@ -241,6 +244,28 @@
                     return false;
                   }
                   return confirm('{% trans "Are you sure you want to send this email to" %} ' + selectedCount + ' {% trans "organizations?" %}');
+                }
+
+                function downloadCSV() {
+                  const rows = document.querySelectorAll('table tbody tr');
+                  const header = ['Name', 'Email', 'Bookings', 'Total Amount'];
+                  const csvRows = [header.join(';')];
+                  rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    // cells: checkbox, name, email, bookings, total_amount
+                    const name = cells[1].textContent.trim();
+                    const email = cells[2].textContent.trim();
+                    const bookings = cells[3].textContent.trim();
+                    const amount = cells[4].textContent.trim().replace(',', '.');
+                    csvRows.push(['"' + name.replace(/"/g, '""') + '"', email, bookings, amount].join(';'));
+                  });
+                  const blob = new Blob([csvRows.join('\n')], {
+                    type: 'text/csv;charset=utf-8;'
+                  });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = 'organizations.csv';
+                  link.click();
                 }
               </script>
             </div>

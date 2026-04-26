@@ -578,31 +578,22 @@ class SendCustomOrganizationEmailTest(TestCase):
             status=Organization.Status.CONFIRMED,
         )
 
-    def test_sends_email_to_all_organizations(self):
-        organizations = [self.org1, self.org2]
-        subject = "Test Subject"
-        body = "Test Body"
-
-        result = send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
+    def test_sends_email_to_organization(self):
+        result = send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test Subject",
+            body_template="Test Body",
         )
 
-        assert len(mail.outbox) == 2  # noqa: PLR2004
-        assert result["sent_count"] == 2  # noqa: PLR2004
-        assert "Org 1" in result["sent_organizations"]
-        assert "Org 2" in result["sent_organizations"]
+        assert len(mail.outbox) == 1
+        assert result["sent"] is True
+        assert result["email"] == "org1@example.com"
 
     def test_renders_organization_template_tags(self):
-        organizations = [self.org1]
-        subject = "Hello {{ organization.name }}"
-        body = "Your email is {{ organization.email }}"
-
-        send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Hello {{ organization.name }}",
+            body_template="Your email is {{ organization.email }}",
         )
 
         assert len(mail.outbox) == 1
@@ -610,15 +601,12 @@ class SendCustomOrganizationEmailTest(TestCase):
         assert "Your email is org1@example.com" in mail.outbox[0].body
 
     def test_includes_filter_context_in_templates(self):
-        organizations = [self.org1]
-        subject = "Test"
-        body = "Min bookings: {{ min_bookings }}, Months: {{ months }}"
         filter_context = {"min_bookings": 5, "months": 3}
 
-        send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Min bookings: {{ min_bookings }}, Months: {{ months }}",
             filter_context=filter_context,
         )
 
@@ -626,7 +614,6 @@ class SendCustomOrganizationEmailTest(TestCase):
         assert "Min bookings: 5, Months: 3" in mail.outbox[0].body
 
     def test_includes_booking_count_when_months_in_context(self):
-        # Create bookings for org1
         now = timezone.now()
         for _ in range(3):
             BookingFactory(
@@ -635,96 +622,52 @@ class SendCustomOrganizationEmailTest(TestCase):
                 timespan=Range(now, now + timedelta(hours=1)),
             )
 
-        organizations = [self.org1]
-        subject = "Test"
-        body = "Bookings: {{ number_of_bookings }}"
-        filter_context = {"months": 1}
-
-        send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
-            filter_context=filter_context,
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Bookings: {{ number_of_bookings }}",
+            filter_context={"months": 1},
         )
 
         assert len(mail.outbox) == 1
         assert "Bookings: 3" in mail.outbox[0].body
 
     def test_handles_email_send_failure_gracefully(self):
-        organizations = [self.org1, self.org2]
-        subject = "Test"
-        body = "Test"
-
         with patch("re_sharing.organizations.mails.EmailMessage.send") as mock_send:
-            # First email fails, second succeeds
-            mock_send.side_effect = [Exception("Failed"), None]
+            mock_send.side_effect = Exception("Failed")
 
-            result = send_custom_organization_email(
-                organizations=organizations,
-                subject_template=subject,
-                body_template=body,
+            result = send_custom_organization_email.call(
+                self.org1.id,
+                subject_template="Test",
+                body_template="Test",
             )
 
-            # Should still count only successful sends
-            assert result["sent_count"] == 1
-            assert len(result["sent_organizations"]) == 1
+            assert result["sent"] is False
+            assert result["reason"] == "smtp_error"
 
     def test_sends_to_organization_email_address(self):
-        organizations = [self.org1]
-        subject = "Test"
-        body = "Test"
-
-        send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Test",
         )
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["org1@example.com"]
 
-    def test_includes_total_amount_when_months_in_context(self):
-        # Create bookings with amounts for org1
-        now = timezone.now()
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=Range(now, now + timedelta(hours=1)),
-            total_amount=100,
-        )
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=Range(now, now + timedelta(hours=1)),
-            total_amount=150,
+    def test_skips_organization_without_email(self):
+        self.org1.email = ""
+        self.org1.save()
+
+        result = send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Test",
         )
 
-        # Get filtered organizations with annotation (only org1 has bookings)
-        from re_sharing.organizations.selectors import get_filtered_organizations
-
-        organizations = get_filtered_organizations(months=1, min_bookings=1)
-
-        # Verify we have the right organizations
-        assert organizations.count() == 1
-        org = organizations.first()
-        assert org == self.org1
-        assert org.booking_count == 2  # noqa: PLR2004
-        assert org.total_amount == 250  # noqa: PLR2004
-
-        subject = "Test"
-        body = "Total: {{ total_amount }}"
-        filter_context = {"months": 1}
-
-        result = send_custom_organization_email(
-            organizations=organizations,
-            subject_template=subject,
-            body_template=body,
-            filter_context=filter_context,
-        )
-
-        assert result["sent_count"] == 1
-        assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == ["org1@example.com"]
+        assert result["sent"] is False
+        assert result["reason"] == "no_email"
+        assert len(mail.outbox) == 0
 
 
 class SendPermanentCodeCreatedEmailTest(TestCase):

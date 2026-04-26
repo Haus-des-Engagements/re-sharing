@@ -622,17 +622,20 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
         messages.warning(request, "No organizations match the selected filters.")
         return redirect("organizations:custom-organization-email")
 
-    # Send emails
-    result = send_custom_organization_email(
-        organizations=organizations,
-        subject_template=subject_template,
-        body_template=body_template,
-        filter_context=filter_context if filter_context else None,
-    )
+    # Enqueue one email task per organization
+    enqueued_count = 0
+    for organization in organizations:
+        send_custom_organization_email.enqueue(
+            organization.id,
+            subject_template,
+            body_template,
+            filter_context if filter_context else None,
+        )
+        enqueued_count += 1
 
     messages.success(
         request,
-        f"Successfully sent {result['sent_count']} email(s) to organizations.",
+        f"Enqueued {enqueued_count} email(s) to organizations.",
     )
 
     return redirect("organizations:custom-organization-email")
