@@ -2786,6 +2786,16 @@ class TestBuildInvoicePayload(TestCase):
         assert payload["company_name"] == "Test Organisation e.V."
         assert payload["street"] == "Teststraße 1"
 
+    def test_item_single_price_derived_from_total_amount(self):
+        """item_single_price always uses total_amount/duration, ignoring hourly_rate."""
+        self.booking.total_amount = 45
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        # 45 / 3h = 15, regardless of compensation.hourly_rate=12
+        assert payload["item_single_price"] == ["15"]
+
 
 class TestBuildEinvoicePayload(TestCase):
     """Test build_einvoice_payload function"""
@@ -2885,6 +2895,16 @@ class TestBuildEinvoicePayload(TestCase):
         payload = build_einvoice_payload(self.booking)
 
         assert payload["e_invoice_id"] == "0"
+
+    def test_item_single_price_derived_from_total_amount(self):
+        """item_single_price always uses total_amount/duration, ignoring hourly_rate."""
+        self.booking.total_amount = 45
+        self.booking.save()
+
+        payload = build_einvoice_payload(self.booking)
+
+        # 45 / 3h = 15, regardless of compensation.hourly_rate=12
+        assert payload["item_single_price"] == ["15"]
 
 
 class TestBuildOrgInvoicePayload(TestCase):
@@ -2996,6 +3016,19 @@ class TestBuildOrgInvoicePayload(TestCase):
         assert "15.01.2026" in payload["item_name"][0]
         assert "20.01.2026" in payload["item_name"][1]
 
+    def test_item_single_price_derived_from_total_amount(self):
+        """item_single_price always uses total_amount/duration, ignoring hourly_rate."""
+        self.booking1.total_amount = 45  # 3h -> 15/h
+        self.booking1.save()
+        self.booking2.total_amount = 50  # 2.5h -> 20/h
+        self.booking2.save()
+
+        payload = build_org_invoice_payload(
+            self.organization, [self.booking1, self.booking2]
+        )
+
+        assert payload["item_single_price"] == ["15", "20"]
+
 
 class TestBuildOrgEinvoicePayload(TestCase):
     """Test build_org_einvoice_payload function"""
@@ -3083,3 +3116,16 @@ class TestBuildOrgEinvoicePayload(TestCase):
 
         assert "15.01.2026" in payload["item_name"][0]
         assert "20.01.2026" in payload["item_name"][1]
+
+    def test_item_single_price_derived_from_total_amount(self):
+        """item_single_price always uses total_amount/duration, ignoring hourly_rate."""
+        self.booking1.total_amount = 45  # 3h -> 15/h
+        self.booking1.save()
+        self.booking2.total_amount = 50  # 2.5h -> 20/h
+        self.booking2.save()
+
+        payload = build_org_einvoice_payload(
+            self.organization, [self.booking1, self.booking2]
+        )
+
+        assert payload["item_single_price"] == ["15", "20"]

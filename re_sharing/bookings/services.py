@@ -726,6 +726,14 @@ def manager_filter_invoice_bookings_list(  # noqa: PLR0913
     return bookings, resources
 
 
+def _format_single_price(total_amount, duration_hours: float) -> str:
+    """Return total_amount/duration_hours as a clean string like "15" or "12.5"."""
+    if not duration_hours or not total_amount:
+        return "0"
+    price = float(total_amount) / duration_hours
+    return str(price).rstrip("0").rstrip(".")
+
+
 def build_invoice_payload(booking: "Booking") -> dict:
     """Build the JSON payload for creating a draft invoice in BuchhaltungsButler."""
     org = booking.organization
@@ -739,9 +747,7 @@ def build_invoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
-    hourly_rate = booking.compensation.hourly_rate
-    if not hourly_rate and duration_hours:
-        hourly_rate = booking.total_amount / duration_hours
+    single_price = _format_single_price(booking.total_amount, duration_hours)
 
     payload = {
         "type": "invoice",
@@ -753,7 +759,7 @@ def build_invoice_payload(booking: "Booking") -> dict:
         "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
         "item_unit": ["Std."],
         "item_vat": ["0"],
-        "item_single_price": [str(hourly_rate or 0)],
+        "item_single_price": [single_price],
         "email": org.email,
         "date_of_supply": start.strftime("%d.%m.%Y"),
         "show_bankdata": True,
@@ -803,9 +809,7 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
-    hourly_rate = booking.compensation.hourly_rate
-    if not hourly_rate and duration_hours:
-        hourly_rate = booking.total_amount / duration_hours
+    single_price = _format_single_price(booking.total_amount, duration_hours)
 
     payload = {
         "type": "invoice",
@@ -818,7 +822,7 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         "item_unit": ["Std."],
         "item_tax_type": ["E"],
         "item_tax_amount": ["0"],
-        "item_single_price": [str(hourly_rate or 0)],
+        "item_single_price": [single_price],
         "email": org.email,
         "street": org.street_and_housenb,
         "zip": org.zip_code,
@@ -916,10 +920,9 @@ def build_org_invoice_payload(
         item_amounts.append(str(duration_hours).rstrip("0").rstrip("."))
         item_units.append("Std.")
         item_vats.append("0")
-        hourly_rate = booking.compensation.hourly_rate
-        if not hourly_rate and duration_hours:
-            hourly_rate = booking.total_amount / duration_hours
-        item_single_prices.append(str(hourly_rate or 0))
+        item_single_prices.append(
+            _format_single_price(booking.total_amount, duration_hours)
+        )
 
     earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
 
@@ -984,10 +987,9 @@ def build_org_einvoice_payload(
         item_units.append("Std.")
         item_tax_types.append("E")
         item_tax_amounts.append("0")
-        hourly_rate = booking.compensation.hourly_rate
-        if not hourly_rate and duration_hours:
-            hourly_rate = booking.total_amount / duration_hours
-        item_single_prices.append(str(hourly_rate or 0))
+        item_single_prices.append(
+            _format_single_price(booking.total_amount, duration_hours)
+        )
 
     earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
 
