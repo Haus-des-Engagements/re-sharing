@@ -2661,6 +2661,42 @@ class TestCreateItemBookingGroup(TestCase):
         assert booking_group.status == BookingStatus.CONFIRMED
 
 
+class TestOrganizationCanBookItems(TestCase):
+    """Tests for organization_can_book_items eligibility check."""
+
+    def setUp(self):
+        from re_sharing.bookings.services_item_bookings import (
+            ITEM_BOOKING_ELIGIBLE_GROUP_IDS,
+        )
+
+        self.eligible_ids = ITEM_BOOKING_ELIGIBLE_GROUP_IDS
+
+    def test_organization_in_any_eligible_group_can_book(self):
+        from re_sharing.bookings.services_item_bookings import (
+            organization_can_book_items,
+        )
+
+        for eligible_id in self.eligible_ids:
+            with self.subTest(eligible_id=eligible_id):
+                organization = OrganizationFactory()
+                group = OrganizationGroupFactory(pk=eligible_id)
+                organization.organization_groups.add(group)
+
+                assert organization_can_book_items(organization) is True
+
+    def test_organization_without_eligible_group_cannot_book(self):
+        from re_sharing.bookings.services_item_bookings import (
+            organization_can_book_items,
+        )
+
+        organization = OrganizationFactory()
+        other_pk = max(self.eligible_ids) + 100
+        group = OrganizationGroupFactory(pk=other_pk)
+        organization.organization_groups.add(group)
+
+        assert organization_can_book_items(organization) is False
+
+
 class TestBuildInvoicePayload(TestCase):
     """Test build_invoice_payload function"""
 
