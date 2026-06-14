@@ -1,0 +1,19 @@
+schema: spec-driven
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+
+context: |
+  Tech stack: Django, Postgres, htmx
+  We use conventional commits
+  Domain: Booking software
+
+
+rules:
+  proposal:
+    - follow the hacksoft django stylguide: https://github.com/HackSoftware/Django-Styleguide
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - always work with test-drive (red green)

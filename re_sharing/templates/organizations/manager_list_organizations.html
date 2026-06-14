@@ -152,23 +152,22 @@
       {% endif %}
     </button>
     <ul class="dropdown-menu">
-      {% if not organization.active_codes %}
-        {# Create action - only show when no code exists #}
+      {# Create action - always available; an organization may have multiple codes #}
+      <li>
+        <a href="#"
+           class="dropdown-item"
+           data-bs-toggle="modal"
+           data-bs-target="#createCodeModal-{{ organization.slug }}">
+          <svg width="1em" height="1em" class="me-1">
+            <use href="#bi-plus-lg" />
+          </svg>
+          {% trans "Create Code" %}
+        </a>
+      </li>
+      {% if organization.active_codes %}
         <li>
-          <a href="#"
-             class="dropdown-item"
-             hx-post="{% url 'organizations:manager-permanent-code-action' organization_slug=organization.slug %}"
-             hx-vals='{"action": "create"}'
-             hx-target="#tr-{{ organization.slug }}"
-             hx-swap="innerHTML"
-             hx-confirm="{% trans 'Create a new permanent code for this organization?' %}">
-            <svg width="1em" height="1em" class="me-1">
-              <use href="#bi-plus-lg" />
-            </svg>
-            {% trans "Create Code" %}
-          </a>
+          <hr class="dropdown-divider" />
         </li>
-      {% else %}
         {# Invalidate and Renew actions - show for each active code #}
         {% for code in organization.active_codes %}
           <li>
@@ -209,6 +208,52 @@
         {% endfor %}
       {% endif %}
     </ul>
+  </div>
+  {# Modal for Create action - one per organization #}
+  <div class="modal fade"
+       id="createCodeModal-{{ organization.slug }}"
+       tabindex="-1"
+       aria-labelledby="createCodeModalLabel-{{ organization.slug }}"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createCodeModalLabel-{{ organization.slug }}">{% trans "Create Permanent Code" %}</h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% if organization.active_codes %}
+            <div class="alert alert-warning" role="alert">
+              {% trans "This organization already has an active permanent code. A new one will be created in addition." %}
+            </div>
+          {% endif %}
+          <form id="createCodeForm-{{ organization.slug }}">
+            <div class="mb-3">
+              <label for="code_name-{{ organization.slug }}" class="form-label">{% trans "Name" %}</label>
+              <input type="text"
+                     class="form-control"
+                     id="code_name-{{ organization.slug }}"
+                     name="name"
+                     maxlength="256" />
+              <div class="form-text">{% trans "Leave empty to use a default name." %}</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  hx-post="{% url 'organizations:manager-permanent-code-action' organization_slug=organization.slug %}"
+                  hx-vals='js:{"action": "create", "name": document.getElementById("code_name-{{ organization.slug }}").value}'
+                  hx-target="#tr-{{ organization.slug }}"
+                  hx-swap="innerHTML"
+                  data-bs-dismiss="modal">{% trans "Create Code" %}</button>
+        </div>
+      </div>
+    </div>
   </div>
   {# Modals for Invalidate action - one per code #}
   {% for code in organization.active_codes %}
