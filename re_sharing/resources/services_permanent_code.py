@@ -4,11 +4,8 @@ import random
 from datetime import datetime
 from datetime import timedelta
 
-from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.mails import send_permanent_code_created_email
 from re_sharing.organizations.mails import send_permanent_code_renewed_email
@@ -27,35 +24,20 @@ def _generate_permanent_code() -> str:
 
 
 def create_permanent_code_for_organization(
-    organization_slug: str, created_by
+    organization_slug: str, created_by, name: str = ""
 ) -> PermanentCode:
     """Create a new permanent code for an organization.
 
     Args:
         organization_slug: The organization slug
         created_by: The user creating the code (for audit)
+        name: Optional custom name for the code. Falls back to a default
+            derived from the organization name when blank.
 
     Returns:
         The created PermanentCode instance
-
-    Raises:
-        ValidationError: If organization already has an active permanent code
     """
     organization = get_object_or_404(Organization, slug=organization_slug)
-
-    # Check if organization already has an active permanent code
-    existing_code = (
-        PermanentCode.objects.filter(organization=organization)
-        .filter(validity_start__lte=timezone.now())
-        .filter(Q(validity_end__isnull=True) | Q(validity_end__gte=timezone.now()))
-        .first()
-    )
-
-    if existing_code:
-        raise ValidationError(
-            _("Organization already has an active permanent code: %(code)s")
-            % {"code": existing_code.code}
-        )
 
     # Generate new code
     code = _generate_permanent_code()
@@ -63,13 +45,16 @@ def create_permanent_code_for_organization(
     # Get accesses 1, 2, 8
     accesses = Access.objects.filter(id__in=[1, 2, 8])
 
+    # Use the provided name, falling back to a default derived from the org
+    code_name = name.strip() or f"Permanent code for {organization.name}"
+
     # Create permanent code
     permanent_code = PermanentCode.objects.create(
         code=code,
         organization=organization,
         validity_start=timezone.now(),
         validity_end=None,  # No expiration by default
-        name=f"Permanent code for {organization.name}",
+        name=code_name,
     )
     permanent_code.accesses.set(accesses)
     permanent_code.save()

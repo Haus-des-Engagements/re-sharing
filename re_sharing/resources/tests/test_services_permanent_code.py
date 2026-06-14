@@ -3,8 +3,6 @@
 from datetime import timedelta
 from unittest.mock import patch
 
-import pytest
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -58,23 +56,69 @@ class TestCreatePermanentCode(TestCase):
         mock_email.enqueue.assert_called_once_with(permanent_code.id)
 
     @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
-    def test_create_permanent_code_fails_when_active_code_exists(
-        self, mock_generate_code
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_additional_permanent_code_when_active_code_exists(
+        self, mock_email, mock_generate_code
     ):
-        """Test that creating a code fails when an active code exists."""
+        """Test that an additional code is created when an active code exists."""
+        mock_generate_code.return_value = "654321"
+
         # Create an existing active permanent code
-        PermanentCodeFactory(
+        existing_code = PermanentCodeFactory(
             organization=self.organization,
+            code="111111",
             validity_start=timezone.now() - timedelta(days=1),
             validity_end=None,
             accesses=[self.access1],
         )
 
-        # Attempt to create another code should fail
-        with pytest.raises(ValidationError) as context:
-            create_permanent_code_for_organization(self.organization.slug, self.user)
+        # Creating another code succeeds and leaves the existing one untouched
+        new_code = create_permanent_code_for_organization(
+            self.organization.slug, self.user
+        )
 
-        assert "already has an active permanent code" in str(context.value)
+        assert new_code.code == "654321"
+        assert (
+            PermanentCode.objects.filter(organization=self.organization).count() == 2  # noqa: PLR2004
+        )
+
+        existing_code.refresh_from_db()
+        assert existing_code.validity_end is None
+        assert existing_code.code == "111111"
+
+    @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_permanent_code_with_custom_name(
+        self, mock_email, mock_generate_code
+    ):
+        """Test that a provided name is used for the new code."""
+        mock_generate_code.return_value = "345678"
+
+        permanent_code = create_permanent_code_for_organization(
+            self.organization.slug, self.user, name="Reception key"
+        )
+
+        assert permanent_code.name == "Reception key"
+
+    @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_permanent_code_blank_name_uses_default(
+        self, mock_email, mock_generate_code
+    ):
+        """Test that a blank name falls back to the default derived name."""
+        mock_generate_code.return_value = "456789"
+
+        permanent_code = create_permanent_code_for_organization(
+            self.organization.slug, self.user, name="   "
+        )
+
+        assert permanent_code.name == f"Permanent code for {self.organization.name}"
 
     @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
     def test_create_permanent_code_succeeds_when_previous_code_expired(

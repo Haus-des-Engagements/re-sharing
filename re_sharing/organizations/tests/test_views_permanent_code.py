@@ -65,13 +65,19 @@ class TestManagerPermanentCodeActionView(TestCase):
         mock_email.enqueue.assert_called_once()
 
     @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
-    def test_create_permanent_code_fails_when_active_code_exists(
-        self, mock_generate_code
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_additional_permanent_code_when_active_code_exists(
+        self, mock_email, mock_generate_code
     ):
-        """Test that creating a code fails when an active code exists."""
-        # Create existing code
-        PermanentCodeFactory(
+        """Test that an additional code can be created when an active code exists."""
+        mock_generate_code.return_value = "654321"
+
+        # Create existing active code
+        existing_code = PermanentCodeFactory(
             organization=self.organization,
+            code="111111",
             validity_start=timezone.now() - timedelta(days=1),
             validity_end=None,
             accesses=[self.access1],
@@ -82,8 +88,65 @@ class TestManagerPermanentCodeActionView(TestCase):
             self.url, data={"action": "create"}, headers={"hx-request": "true"}
         )
 
-        # Should return error
-        assert response.status_code == HTTPStatus.BAD_REQUEST
+        # Should succeed and create a second, independent code
+        assert response.status_code == HTTPStatus.OK
+        assert (
+            PermanentCode.objects.filter(organization=self.organization).count() == 2  # noqa: PLR2004
+        )
+
+        # Existing code remains valid and unchanged
+        existing_code.refresh_from_db()
+        assert existing_code.validity_end is None
+        assert existing_code.code == "111111"
+
+    @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_permanent_code_with_custom_name(
+        self, mock_email, mock_generate_code
+    ):
+        """Test that a posted name is applied to the new code."""
+        mock_generate_code.return_value = "246810"
+
+        self.client.force_login(self.manager_user)
+        response = self.client.post(
+            self.url,
+            data={"action": "create", "name": "Reception key"},
+            headers={"hx-request": "true"},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+
+        permanent_code = PermanentCode.objects.get(organization=self.organization)
+        assert permanent_code.name == "Reception key"
+
+    def test_create_code_action_available_when_active_code_exists(self):
+        """Test that the Create Code action is shown even when a code is active."""
+        permanent_code = PermanentCodeFactory(
+            organization=self.organization,
+            code="123456",
+            validity_start=timezone.now() - timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access1],
+        )
+
+        self.client.force_login(self.manager_user)
+        # Invalidate with a future date so the code remains in the active list
+        future_date = timezone.now() + timedelta(days=7)
+        response = self.client.post(
+            self.url,
+            data={
+                "action": "invalidate",
+                "permanent_code_id": permanent_code.id,
+                "validity_end": future_date.strftime("%Y-%m-%dT%H:%M"),
+            },
+            headers={"hx-request": "true"},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        # Create Code action remains available alongside the active code
+        assert b"Create Code" in response.content
 
     def test_invalidate_permanent_code_success(self):
         """Test successful permanent code invalidation."""

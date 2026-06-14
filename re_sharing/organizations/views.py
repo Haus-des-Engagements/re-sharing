@@ -226,7 +226,10 @@ def manager_permanent_code_action_view(request, organization_slug):
 
     try:
         if action == "create":
-            create_permanent_code_for_organization(organization_slug, request.user)
+            name = request.POST.get("name", "")
+            create_permanent_code_for_organization(
+                organization_slug, request.user, name=name
+            )
 
         elif action == "invalidate":
             permanent_code_id = request.POST.get("permanent_code_id")
