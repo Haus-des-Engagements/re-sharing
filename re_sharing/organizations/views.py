@@ -36,8 +36,10 @@ from .services import create_organization
 from .services import create_organizationmessage
 from .services import demote_user_to_booker
 from .services import filter_organizations
+from .services import manager_activate_organization
 from .services import manager_cancel_organization
 from .services import manager_confirm_organization
+from .services import manager_deactivate_organization
 from .services import manager_filter_organizations_list
 from .services import promote_user_to_admin
 from .services import request_booking_permission
@@ -204,6 +206,28 @@ def manager_cancel_organization_view(request, organization_slug):
 @manager_required
 def manager_confirm_organization_view(request, organization_slug):
     organization = manager_confirm_organization(request.user, organization_slug)
+    return render(
+        request,
+        "organizations/manager_list_organizations.html#organization-item",
+        {"organization": organization},
+    )
+
+
+@require_http_methods(["PATCH"])
+@manager_required
+def manager_deactivate_organization_view(request, organization_slug):
+    organization = manager_deactivate_organization(request.user, organization_slug)
+    return render(
+        request,
+        "organizations/manager_list_organizations.html#organization-item",
+        {"organization": organization},
+    )
+
+
+@require_http_methods(["PATCH"])
+@manager_required
+def manager_activate_organization_view(request, organization_slug):
+    organization = manager_activate_organization(request.user, organization_slug)
     return render(
         request,
         "organizations/manager_list_organizations.html#organization-item",

@@ -13,8 +13,10 @@ from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.services import InvalidOrganizationOperationError
 from re_sharing.organizations.services import create_organization
+from re_sharing.organizations.services import manager_activate_organization
 from re_sharing.organizations.services import manager_cancel_organization
 from re_sharing.organizations.services import manager_confirm_organization
+from re_sharing.organizations.services import manager_deactivate_organization
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
@@ -26,7 +28,6 @@ from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.users.tests.factories import UserFactory
-from re_sharing.utils.models import BookingStatus
 
 
 class ShowOrganizationTest(TestCase):
@@ -173,7 +174,7 @@ def test_manager_confirm_organization(mock_is_confirmable, mock_send_email):
     organization = OrganizationFactory()
     organization = manager_confirm_organization(user, organization.slug)
 
-    assert organization.status == BookingStatus.CONFIRMED
+    assert organization.status == Organization.Status.CONFIRMED
 
     mock_send_email.enqueue.assert_called_once_with(organization.id)
 
@@ -195,7 +196,7 @@ def test_manager_cancel_organization(mock_is_cancelable):
     organization = OrganizationFactory()
     organization = manager_cancel_organization(user, organization.slug)
 
-    assert organization.status == BookingStatus.CANCELLED
+    assert organization.status == Organization.Status.REJECTED
 
 
 @pytest.mark.django_db()
@@ -206,6 +207,46 @@ def test_manager_cancel_organization_not_cancelable(mock_is_cancelable):
 
     with pytest.raises(InvalidOrganizationOperationError):
         manager_cancel_organization(user, organization.slug)
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_deactivatable", return_value=True)
+def test_manager_deactivate_organization(mock_is_deactivatable):
+    user = UserFactory()
+    organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+    organization = manager_deactivate_organization(user, organization.slug)
+
+    assert organization.status == Organization.Status.DEACTIVATED
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_deactivatable", return_value=False)
+def test_manager_deactivate_organization_not_deactivatable(mock_is_deactivatable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+
+    with pytest.raises(InvalidOrganizationOperationError):
+        manager_deactivate_organization(user, organization.slug)
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_activatable", return_value=True)
+def test_manager_activate_organization(mock_is_activatable):
+    user = UserFactory()
+    organization = OrganizationFactory(status=Organization.Status.DEACTIVATED)
+    organization = manager_activate_organization(user, organization.slug)
+
+    assert organization.status == Organization.Status.CONFIRMED
+
+
+@pytest.mark.django_db()
+@patch.object(Organization, "is_activatable", return_value=False)
+def test_manager_activate_organization_not_activatable(mock_is_activatable):
+    user = UserFactory()
+    organization = OrganizationFactory()
+
+    with pytest.raises(InvalidOrganizationOperationError):
+        manager_activate_organization(user, organization.slug)
 
 
 class TestUserPermissionsFunctions(TestCase):

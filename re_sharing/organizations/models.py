@@ -29,7 +29,6 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from re_sharing.resources.models import Resource
-from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import TimeStampedModel
 
 
@@ -100,6 +99,7 @@ class Organization(TimeStampedModel):
         PENDING = 1, _("Pending")
         CONFIRMED = 2, _("Confirmed")
         REJECTED = 3, _("Rejected")
+        DEACTIVATED = 4, _("Deactivated")
 
     class ActivityArea(IntegerChoices):
         SPORT_EXERCISE = 1, _("Sport and exercise")
@@ -232,10 +232,16 @@ class Organization(TimeStampedModel):
         return self.name
 
     def is_cancelable(self):
-        return self.status != BookingStatus.CANCELLED
+        return self.status != self.Status.REJECTED
 
     def is_confirmable(self):
-        return self.status == BookingStatus.PENDING
+        return self.status == self.Status.PENDING
+
+    def is_deactivatable(self):
+        return self.status == self.Status.CONFIRMED
+
+    def is_activatable(self):
+        return self.status == self.Status.DEACTIVATED
 
     def get_absolute_url(self):
         return reverse("organizations:show-organization", args=[str(self.slug)])

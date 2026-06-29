@@ -34,7 +34,7 @@
     background-color: #dc3545;
 }
 
-/* Unavailable */
+/* Unavailable (bookings) / Deactivated (organizations) */
 .text-bg-status-4 {
     color: #000;
     background-color: RGBA(var(--bs-info-rgb),var(--bs-bg-opacity,1)) !important;

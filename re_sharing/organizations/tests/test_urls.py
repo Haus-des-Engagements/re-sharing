@@ -103,6 +103,28 @@ def test_manager_confirm_organization(organization: Organization):
     )
 
 
+def test_manager_deactivate_organization(organization: Organization):
+    assert (
+        reverse(
+            "organizations:manager-deactivate-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+        == f"/organizations/manage-organizations/{organization.slug}/deactivate"
+        f"-organization/"
+    )
+
+
+def test_manager_activate_organization(organization: Organization):
+    assert (
+        reverse(
+            "organizations:manager-activate-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+        == f"/organizations/manage-organizations/{organization.slug}/activate"
+        f"-organization/"
+    )
+
+
 def test_show_organization_messages(organization: Organization):
     assert (
         reverse(

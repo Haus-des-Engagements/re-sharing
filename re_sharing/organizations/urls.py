@@ -8,8 +8,10 @@ from .views import create_organizationmessage_view
 from .views import custom_organization_email_view
 from .views import delete_organization_view
 from .views import list_organizations_view
+from .views import manager_activate_organization_view
 from .views import manager_cancel_organization_view
 from .views import manager_confirm_organization_view
+from .views import manager_deactivate_organization_view
 from .views import manager_list_organizations_view
 from .views import manager_permanent_code_action_view
 from .views import organization_permission_management_view
@@ -36,6 +38,16 @@ urlpatterns = [
         "manage-organizations/<slug:organization_slug>/confirm-organization/",
         manager_confirm_organization_view,
         name="manager-confirm-organization",
+    ),
+    path(
+        "manage-organizations/<slug:organization_slug>/deactivate-organization/",
+        manager_deactivate_organization_view,
+        name="manager-deactivate-organization",
+    ),
+    path(
+        "manage-organizations/<slug:organization_slug>/activate-organization/",
+        manager_activate_organization_view,
+        name="manager-activate-organization",
     ),
     path(
         "manage-organizations/<slug:organization_slug>/permanent-code/",

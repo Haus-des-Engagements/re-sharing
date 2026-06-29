@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.models import Manager
@@ -88,3 +89,62 @@ class ManagerOrganizationViewsTest(TestCase):
         # Manager should see all groups in the filter dropdown
         groups = response.context["groups"]
         assert len(groups) == 2  # Should see both groups # noqa: PLR2004
+
+
+class ManagerDeactivateActivateViewTest(TestCase):
+    def setUp(self):
+        self.regular_user = UserFactory()
+        self.manager_user = UserFactory()
+        self.manager = Manager.objects.create(user=self.manager_user)
+
+    def _deactivate_url(self, organization):
+        return reverse(
+            "organizations:manager-deactivate-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+
+    def _activate_url(self, organization):
+        return reverse(
+            "organizations:manager-activate-organization",
+            kwargs={"organization_slug": organization.slug},
+        )
+
+    def test_manager_can_deactivate_confirmed_organization(self):
+        organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.client.force_login(self.manager_user)
+
+        response = self.client.patch(self._deactivate_url(organization))
+
+        assert response.status_code == HTTPStatus.OK
+        organization.refresh_from_db()
+        assert organization.status == Organization.Status.DEACTIVATED
+
+    def test_manager_can_activate_deactivated_organization(self):
+        organization = OrganizationFactory(status=Organization.Status.DEACTIVATED)
+        self.client.force_login(self.manager_user)
+
+        response = self.client.patch(self._activate_url(organization))
+
+        assert response.status_code == HTTPStatus.OK
+        organization.refresh_from_db()
+        assert organization.status == Organization.Status.CONFIRMED
+
+    def test_regular_user_cannot_deactivate_organization(self):
+        organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.client.force_login(self.regular_user)
+
+        response = self.client.patch(self._deactivate_url(organization))
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        organization.refresh_from_db()
+        assert organization.status == Organization.Status.CONFIRMED
+
+    def test_regular_user_cannot_activate_organization(self):
+        organization = OrganizationFactory(status=Organization.Status.DEACTIVATED)
+        self.client.force_login(self.regular_user)
+
+        response = self.client.patch(self._activate_url(organization))
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        organization.refresh_from_db()
+        assert organization.status == Organization.Status.DEACTIVATED

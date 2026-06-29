@@ -11,7 +11,6 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from re_sharing.users.models import User
-from re_sharing.utils.models import BookingStatus
 
 from .models import BookingPermission
 from .models import Organization
@@ -72,7 +71,7 @@ def show_organization(user, organization_slug):
 def create_organization(user, form):
     new_org = form.save(commit=False)
     if user.is_manager():
-        new_org.status = BookingStatus.CONFIRMED
+        new_org.status = Organization.Status.CONFIRMED
     new_org.save()
 
     new_org.organization_groups.set(form.cleaned_data["organization_groups"])
@@ -218,7 +217,7 @@ def manager_cancel_organization(user, organization_slug):
 
     if organization.is_cancelable():
         with set_actor(user):
-            organization.status = BookingStatus.CANCELLED
+            organization.status = Organization.Status.REJECTED
             organization.save()
         from re_sharing.organizations.mails import organization_cancellation_email
 
@@ -233,11 +232,35 @@ def manager_confirm_organization(user, organization_slug):
 
     if organization.is_confirmable():
         with set_actor(user):
-            organization.status = BookingStatus.CONFIRMED
+            organization.status = Organization.Status.CONFIRMED
             organization.save()
         from re_sharing.organizations.mails import organization_confirmation_email
 
         organization_confirmation_email.enqueue(organization.id)
+        return organization
+
+    raise InvalidOrganizationOperationError
+
+
+def manager_deactivate_organization(user, organization_slug):
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    if organization.is_deactivatable():
+        with set_actor(user):
+            organization.status = Organization.Status.DEACTIVATED
+            organization.save()
+        return organization
+
+    raise InvalidOrganizationOperationError
+
+
+def manager_activate_organization(user, organization_slug):
+    organization = get_object_or_404(Organization, slug=organization_slug)
+
+    if organization.is_activatable():
+        with set_actor(user):
+            organization.status = Organization.Status.CONFIRMED
+            organization.save()
         return organization
 
     raise InvalidOrganizationOperationError

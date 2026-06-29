@@ -119,6 +119,31 @@
              hx-swap="innerHTML">{% trans "Confirm" %}</a>
         </li>
       {% endif %}
+      {% if organization.is_deactivatable %}
+        <li>
+          <a href="#"
+             id="deactivate-button"
+             class="dropdown-item"
+             type="submit"
+             value="Submit"
+             hx-confirm="{% trans 'Are you sure you want to deactivate this organization?' %}"
+             hx-patch="{% url 'organizations:manager-deactivate-organization' organization_slug=organization.slug %}"
+             hx-target="#tr-{{ organization.slug }}"
+             hx-swap="innerHTML">{% trans "Deactivate" %}</a>
+        </li>
+      {% endif %}
+      {% if organization.is_activatable %}
+        <li>
+          <a href="#"
+             id="activate-button"
+             type="submit"
+             class="dropdown-item"
+             value="Submit"
+             hx-patch="{% url 'organizations:manager-activate-organization' organization_slug=organization.slug %}"
+             hx-target="#tr-{{ organization.slug }}"
+             hx-swap="innerHTML">{% trans "Activate" %}</a>
+        </li>
+      {% endif %}
     </ul>
   </div>
 </td>

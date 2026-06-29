@@ -1115,6 +1115,13 @@ class TestIsBookableByOrganization(TestCase):
             self.user, self.organization, self.resource, self.compensation
         )
 
+    def test_deactivated_organization_cannot_book(self):
+        self.organization.status = Organization.Status.DEACTIVATED
+        self.organization.save()
+        assert not is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.compensation
+        )
+
     def test_user_without_booking_permission_cannot_book(self):
         BookingPermission.objects.filter(
             user=self.user, organization=self.organization
