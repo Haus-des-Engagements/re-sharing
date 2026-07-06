@@ -302,6 +302,11 @@ def cancel_booking(user, booking_slug):
             booking.status = BookingStatus.CANCELLED
             booking.save()
 
+        # Notify the booking owner only when a manager cancels someone else's
+        # booking. Users cancelling their own bookings receive no email.
+        if (user.is_staff or user.is_manager()) and booking.user_id != user.id:
+            send_booking_cancellation_email.enqueue(booking.id)
+
         if was_confirmed:
             _enqueue_smartlock_sync_if_today(booking)
 

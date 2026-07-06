@@ -148,6 +148,61 @@ class TestCancelBooking(TestCase):
 
         mock_sync.assert_not_called()
 
+    def _make_cancelable(self, booking):
+        booking.status = BookingStatus.CONFIRMED
+        start = timezone.now() + timedelta(days=1)
+        booking.timespan = (start, start + timedelta(hours=2))
+        booking.save()
+
+    @patch("re_sharing.bookings.services.send_booking_cancellation_email")
+    def test_manager_cancelling_other_users_booking_enqueues_email(self, mock_email):
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)  # no org groups -> can manage all orgs
+        self._make_cancelable(self.booking)
+
+        cancel_booking(manager_user, self.booking.slug)
+
+        mock_email.enqueue.assert_called_once_with(self.booking.id)
+
+    @patch("re_sharing.bookings.services.send_booking_cancellation_email")
+    def test_user_cancelling_own_booking_does_not_enqueue_email(self, mock_email):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.booking.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self._make_cancelable(self.booking)
+
+        cancel_booking(self.booking.user, self.booking.slug)
+
+        mock_email.enqueue.assert_not_called()
+
+    @patch("re_sharing.bookings.services.send_booking_cancellation_email")
+    def test_manager_cancelling_own_booking_does_not_enqueue_email(self, mock_email):
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        booking = BookingFactory(organization=self.organization, user=manager_user)
+        self._make_cancelable(booking)
+
+        cancel_booking(manager_user, booking.slug)
+
+        mock_email.enqueue.assert_not_called()
+
+    @patch("re_sharing.bookings.services.send_booking_cancellation_email")
+    def test_regular_user_cancelling_other_booking_does_not_enqueue_email(
+        self, mock_email
+    ):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self._make_cancelable(self.booking)
+
+        cancel_booking(self.user, self.booking.slug)
+
+        mock_email.enqueue.assert_not_called()
+
 
 @pytest.mark.django_db()
 def test_cancel_bookings_of_booking_series():
