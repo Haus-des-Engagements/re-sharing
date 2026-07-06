@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
+from decimal import Decimal
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 
@@ -731,12 +732,31 @@ def manager_filter_invoice_bookings_list(  # noqa: PLR0913
     return bookings, resources
 
 
-def _format_single_price(total_amount, duration_hours: float) -> str:
-    """Return total_amount/duration_hours as a clean string like "15" or "12.5"."""
+def _format_number(value) -> str:
+    """Format a number as a plain string without trailing zeros ("15", "12.5")."""
+    text = str(float(value))
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def _build_invoice_line(total_amount, duration_hours: float) -> tuple[str, str, str]:
+    """Return (item_amount, item_unit, item_single_price) for one invoice line.
+
+    Prefer an "X Std. x hourly rate" breakdown. BuchhaltungsButler only accepts
+    a unit price with at most two decimals, so when total_amount does not divide
+    into a 2-decimal price that reconstructs the total exactly (e.g. 450 / 7 h),
+    fall back to a single lump-sum line to keep the invoice total exact.
+    """
     if not duration_hours or not total_amount:
-        return "0"
-    price = float(total_amount) / duration_hours
-    return str(price).rstrip("0").rstrip(".")
+        return "1", "Pauschale", "0"
+
+    total = Decimal(str(total_amount))
+    hours = Decimal(str(duration_hours))
+    unit_price = (total / hours).quantize(Decimal("0.01"))
+
+    if unit_price * hours == total:
+        return _format_number(duration_hours), "Std.", _format_number(unit_price)
+
+    return "1", "Pauschale", _format_number(total)
 
 
 def build_invoice_payload(booking: "Booking") -> dict:
@@ -752,7 +772,9 @@ def build_invoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
-    single_price = _format_single_price(booking.total_amount, duration_hours)
+    item_amount, item_unit, single_price = _build_invoice_line(
+        booking.total_amount, duration_hours
+    )
 
     payload = {
         "type": "invoice",
@@ -761,8 +783,8 @@ def build_invoice_payload(booking: "Booking") -> dict:
         "date": timezone.now().strftime("%Y-%m-%d"),
         "due_days": "14",
         "item_name": [item_name],
-        "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
-        "item_unit": ["Std."],
+        "item_amount": [item_amount],
+        "item_unit": [item_unit],
         "item_vat": ["0"],
         "item_single_price": [single_price],
         "email": org.email,
@@ -814,7 +836,9 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
     )
 
-    single_price = _format_single_price(booking.total_amount, duration_hours)
+    item_amount, item_unit, single_price = _build_invoice_line(
+        booking.total_amount, duration_hours
+    )
 
     payload = {
         "type": "invoice",
@@ -823,8 +847,8 @@ def build_einvoice_payload(booking: "Booking") -> dict:
         "date": timezone.now().strftime("%Y-%m-%d"),
         "due_days": "14",
         "item_name": [item_name],
-        "item_amount": [str(duration_hours).rstrip("0").rstrip(".")],
-        "item_unit": ["Std."],
+        "item_amount": [item_amount],
+        "item_unit": [item_unit],
         "item_tax_type": ["E"],
         "item_tax_amount": ["0"],
         "item_single_price": [single_price],
@@ -921,13 +945,14 @@ def build_org_invoice_payload(
             f"{booking.resource.name} am {start.strftime('%d.%m.%Y')}"
             f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
         )
-        item_names.append(item_name)
-        item_amounts.append(str(duration_hours).rstrip("0").rstrip("."))
-        item_units.append("Std.")
-        item_vats.append("0")
-        item_single_prices.append(
-            _format_single_price(booking.total_amount, duration_hours)
+        item_amount, item_unit, single_price = _build_invoice_line(
+            booking.total_amount, duration_hours
         )
+        item_names.append(item_name)
+        item_amounts.append(item_amount)
+        item_units.append(item_unit)
+        item_vats.append("0")
+        item_single_prices.append(single_price)
 
     earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
 
@@ -987,14 +1012,15 @@ def build_org_einvoice_payload(
             f"{booking.resource.name} am {start.strftime('%d.%m.%Y')}"
             f" von {start.strftime('%H:%M')}-{end.strftime('%H:%M')}"
         )
+        item_amount, item_unit, single_price = _build_invoice_line(
+            booking.total_amount, duration_hours
+        )
         item_names.append(item_name)
-        item_amounts.append(str(duration_hours).rstrip("0").rstrip("."))
-        item_units.append("Std.")
+        item_amounts.append(item_amount)
+        item_units.append(item_unit)
         item_tax_types.append("E")
         item_tax_amounts.append("0")
-        item_single_prices.append(
-            _format_single_price(booking.total_amount, duration_hours)
-        )
+        item_single_prices.append(single_price)
 
     earliest_start = sorted_bookings[0].timespan.lower.astimezone(local_tz)
 

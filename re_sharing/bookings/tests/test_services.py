@@ -2894,6 +2894,22 @@ class TestBuildInvoicePayload(TestCase):
         # 45 / 3h = 15, regardless of compensation.hourly_rate=12
         assert payload["item_single_price"] == ["15"]
 
+    def test_uneven_division_falls_back_to_lump_sum(self):
+        """When total_amount/duration is not a clean 2-decimal price, use one
+        lump-sum line so BuchhaltungsButler accepts it and the total stays exact."""
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 12, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 19, 0, tzinfo=tz)  # 7 hours
+        self.booking.timespan = Range(start, end)
+        self.booking.total_amount = 450  # 450 / 7 = 64.2857... -> not clean
+        self.booking.save()
+
+        payload = build_invoice_payload(self.booking)
+
+        assert payload["item_amount"] == ["1"]
+        assert payload["item_unit"] == ["Pauschale"]
+        assert payload["item_single_price"] == ["450"]
+
 
 class TestBuildEinvoicePayload(TestCase):
     """Test build_einvoice_payload function"""
@@ -3003,6 +3019,21 @@ class TestBuildEinvoicePayload(TestCase):
 
         # 45 / 3h = 15, regardless of compensation.hourly_rate=12
         assert payload["item_single_price"] == ["15"]
+
+    def test_uneven_division_falls_back_to_lump_sum(self):
+        """Uneven prices collapse to one lump-sum line for BuchhaltungsButler."""
+        tz = zoneinfo.ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 1, 15, 12, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 1, 15, 19, 0, tzinfo=tz)  # 7 hours
+        self.booking.timespan = Range(start, end)
+        self.booking.total_amount = 450  # 450 / 7 = 64.2857... -> not clean
+        self.booking.save()
+
+        payload = build_einvoice_payload(self.booking)
+
+        assert payload["item_amount"] == ["1"]
+        assert payload["item_unit"] == ["Pauschale"]
+        assert payload["item_single_price"] == ["450"]
 
 
 class TestBuildOrgInvoicePayload(TestCase):
