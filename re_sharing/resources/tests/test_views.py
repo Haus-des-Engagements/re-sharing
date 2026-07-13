@@ -877,3 +877,61 @@ class TestManagerDeleteResourceImageView(TestCase):
             )
             in response["Location"]
         )
+
+
+class TestManagerCreateResourceView(TestCase):
+    URL = "resources:manager-create-resource"
+
+    def setUp(self):
+        self.client = Client()
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.location = LocationFactory()
+
+    def _valid_data(self):
+        return {
+            "name": "Brand New Resource",
+            "type": Resource.ResourceTypeChoices.LENDABLE_ITEM,
+            "location": self.location.pk,
+            "is_private": False,
+            "quantity_available": 1,
+        }
+
+    def test_requires_manager(self):
+        user = UserFactory()
+        self.client.force_login(user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code in (HTTPStatus.FORBIDDEN, HTTPStatus.FOUND)
+        assert not Resource.objects.filter(name="Brand New Resource").exists()
+
+    def test_get_renders_blank_form(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code == HTTPStatus.OK
+        assert "form" in response.context
+        assert response.context["form"].instance.pk is None
+
+    def test_post_creates_resource_and_redirects(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(reverse(self.URL), data=self._valid_data())
+        assert response.status_code == HTTPStatus.FOUND
+        resource = Resource.objects.get(name="Brand New Resource")
+        assert resource.slug  # slug auto-generated from name
+        assert (
+            reverse(
+                "resources:manager-show-resource",
+                kwargs={"resource_slug": resource.slug},
+            )
+            == response["Location"]
+        )
+
+    def test_invalid_post_creates_nothing_and_shows_errors(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(reverse(self.URL), data={"name": ""})
+        assert response.status_code == HTTPStatus.OK
+        assert "form" in response.context
+        assert response.context["form"].errors
+        assert Resource.objects.count() == 0
+
+    def test_url_reverses_before_slug_route(self):
+        assert reverse(self.URL) == "/resources/manager/new/"

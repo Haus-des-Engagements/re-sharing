@@ -3,7 +3,17 @@
 {% load i18n %}
 
 {% block content %}
-  <h1 class="mt-4">{% trans "Manage Resources" %}</h1>
+  <h1 class="mt-4">
+    {% trans "Manage Resources" %}
+    <a class="btn btn-outline-primary"
+       href="{% url 'resources:manager-create-resource' %}"
+       role="button">
+      <svg width="1em" height="1em">
+        <use href="#bi-plus-lg" />
+      </svg>
+      {% trans "New Resource" %}
+    </a>
+  </h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
         method="get"
         hx-get="{% url 'resources:manager-list-resources' %}"

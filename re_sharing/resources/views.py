@@ -28,6 +28,7 @@ from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceImage
 from re_sharing.resources.models import ResourceRestriction
+from re_sharing.resources.services import create_resource
 from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_user_accessible_locations
 from re_sharing.resources.services import planner
@@ -371,6 +372,28 @@ def manager_show_resource_view(
             "images": images,
             "image_form": image_form,
         },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+@manager_required
+def manager_create_resource_view(request: HttpRequest) -> HttpResponse:
+    """Manager view to create a new Resource."""
+    if request.method == "POST":
+        form = ResourceEditForm(request.POST)
+        if form.is_valid():
+            resource = create_resource(form)
+            messages.success(request, _("Resource created."))
+            return redirect(
+                "resources:manager-show-resource", resource_slug=resource.slug
+            )
+    else:
+        form = ResourceEditForm()
+
+    return render(
+        request,
+        "resources/manager_create_resource.html",
+        {"form": form},
     )
 
 

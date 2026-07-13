@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block css %}
+  {{ block.super }}
+  {{ form.media.css }}
+{% endblock css %}
+{% block content %}
+  <nav class="breadcrumb-nav my-3" aria-label="breadcrumb">
+    <ol class="breadcrumb rounded-3">
+      <li class="breadcrumb-item">
+        <a href="{% url 'resources:manager-list-resources' %}">{% trans "Manage Resources" %}</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">{% trans "New Resource" %}</li>
+    </ol>
+  </nav>
+  <h1 class="mt-2">{% trans "New Resource" %}</h1>
+  <div class="row mt-4">
+    <div class="col-md-8">{% crispy form %}</div>
+  </div>
+{% endblock content %}
+{% block javascript %}
+  {{ block.super }}
+  {{ form.media.js }}
+{% endblock javascript %}

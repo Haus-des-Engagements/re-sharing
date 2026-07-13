@@ -5,6 +5,7 @@ from .views import get_compensations
 from .views import list_resources_view
 from .views import manager_add_resource_image_view
 from .views import manager_create_compensation_view
+from .views import manager_create_resource_view
 from .views import manager_delete_resource_image_view
 from .views import manager_edit_compensation_view
 from .views import manager_edit_resource_view
@@ -26,6 +27,7 @@ urlpatterns = [
     path("planner/", planner_view, name="planner"),
     # Manager resource views
     path("manager/", manager_list_resources_view, name="manager-list-resources"),
+    path("manager/new/", manager_create_resource_view, name="manager-create-resource"),
     path(
         "manager/<slug:resource_slug>/",
         manager_show_resource_view,

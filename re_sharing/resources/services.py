@@ -16,6 +16,11 @@ from re_sharing.resources.models import ResourceRestriction
 from re_sharing.utils.models import BookingStatus
 
 
+def create_resource(form):
+    """Create a new Resource from a validated ResourceEditForm and return it."""
+    return form.save()
+
+
 def show_resource(resource_slug, date_string):
     resource = get_object_or_404(Resource, slug=resource_slug)
     # Calculate the start and end dates for the week
