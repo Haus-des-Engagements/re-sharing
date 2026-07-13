@@ -43,6 +43,14 @@
              id="id_date_filter"
              value="{{ date_filter }}" />
     </div>
+    <div class="col-auto form-check">
+      <input type="checkbox"
+             name="show_past_bookings"
+             class="form-check-input"
+             id="id_show_past_bookings"
+             {% if show_past_bookings %}checked{% endif %} />
+      <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
+    </div>
     <div id="spinner"
          class="spinner-border col-auto htmx-indicator"
          role="status">
@@ -52,30 +60,30 @@
   <div id="booking-groups-list">
     {% partialdef manager-item-bookings-list inline %}
     <div class="table-responsive mt-4">
-      <table class="table table-hover">
+      <table class="table table-hover sortable" id="item-bookings-table">
         <thead>
           <tr>
             <th scope="col">{% trans "#" %}</th>
             <th scope="col">{% trans "Created" %}</th>
             <th scope="col">{% trans "Organization" %}</th>
             <th scope="col">{% trans "User" %}</th>
-            <th scope="col">{% trans "Items" %}</th>
+            <th scope="col" class="sorttable_nosort">{% trans "Items" %}</th>
             <th scope="col">{% trans "Period" %}</th>
             <th scope="col">{% trans "Amount" %}</th>
             <th scope="col">{% trans "Status" %}</th>
-            <th scope="col"></th>
-            <th scope="col"></th>
-            <th scope="col"></th>
+            <th scope="col" class="sorttable_nosort"></th>
+            <th scope="col" class="sorttable_nosort"></th>
+            <th scope="col" class="sorttable_nosort"></th>
           </tr>
         </thead>
         <tbody>
           {% for booking_group in booking_groups %}
             <tr id="tr-{{ booking_group.slug }}">
               {% partialdef manager-booking-group-item inline %}
-              <td>
+              <td sorttable_customkey="{{ booking_group.id }}">
                 <a href="{% url 'bookings:manager-show-booking-group' slug=booking_group.slug %}">#{{ booking_group.id }}</a>
               </td>
-              <td>{{ booking_group.created|date:"d.m.Y H:i" }}</td>
+              <td sorttable_customkey="{{ booking_group.created|date:'YmdHi' }}">{{ booking_group.created|date:"d.m.Y H:i" }}</td>
               <td>
                 <a href="{% url 'organizations:show-organization' booking_group.organization.slug %}">{{ booking_group.organization.name }}</a>
               </td>
@@ -86,14 +94,14 @@
                   {% if not forloop.last %},{% endif %}
                 {% endfor %}
               </td>
-              <td>
+              <td sorttable_customkey="{{ booking_group.get_pickup_date|date:'Ymd' }}">
                 {% with first_booking=booking_group.bookings_of_bookinggroup.first %}
                   {% if first_booking %}
                     {{ first_booking.timespan.lower|date:"d.m." }} - {{ first_booking.timespan.upper|date:"d.m.Y" }}
                   {% endif %}
                 {% endwith %}
               </td>
-              <td>{{ booking_group.total_amount|floatformat:2 }} €</td>
+              <td sorttable_customkey="{{ booking_group.total_amount }}">{{ booking_group.total_amount|floatformat:2 }} €</td>
               <td>
                 <span class="fs-6 badge text-bg-status-{{ booking_group.status }}">{{ booking_group.get_status_display }}</span>
               </td>
@@ -134,6 +142,12 @@
         {% endfor %}
       </tbody>
     </table>
+    <script>
+      var itemBookingsTable = document.getElementById("item-bookings-table");
+      if (itemBookingsTable) {
+        sorttable.makeSortable(itemBookingsTable);
+      }
+    </script>
   </div>
 {% endpartialdef %}
 </div>

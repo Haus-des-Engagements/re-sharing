@@ -1503,3 +1503,70 @@ class TestCreateOrgEinvoiceView(TestCase):
             )
         )
         assert response.status_code == HTTPStatus.FOUND
+
+
+class TestManagerItemBookingsPastFilter(TestCase):
+    """Tests for the show-past-bookings filter on the manager item bookings view."""
+
+    URL = "bookings:manager-item-bookings"
+
+    def setUp(self):
+        from psycopg.types.range import Range
+
+        from re_sharing.bookings.models import BookingGroup
+
+        self.Range = Range
+        self.BookingGroup = BookingGroup
+        self.client = Client()
+        self.manager_user = ManagerFactory().user
+        self.organization = OrganizationFactory()
+
+        now = timezone.now()
+        # A group whose booking is fully over (returned yesterday).
+        self.past_group = self._make_group(now - datetime.timedelta(days=1))
+        # A group whose booking is not yet fully over (returns tomorrow).
+        self.active_group = self._make_group(now + datetime.timedelta(days=1))
+
+    def _make_group(self, end_datetime, status=BookingStatus.CONFIRMED):
+        group = self.BookingGroup.objects.create(
+            organization=self.organization,
+            user=self.manager_user,
+            status=status,
+        )
+        start_datetime = end_datetime - datetime.timedelta(hours=2)
+        BookingFactory(
+            booking_group=group,
+            organization=self.organization,
+            user=self.manager_user,
+            status=status,
+            start_date=start_datetime.date(),
+            end_date=end_datetime.date(),
+            timespan=self.Range(start_datetime, end_datetime),
+        )
+        return group
+
+    def test_requires_manager(self):
+        self.client.force_login(UserFactory(is_staff=False))
+        response = self.client.get(reverse(self.URL))
+        assert response.status_code in (HTTPStatus.FORBIDDEN, HTTPStatus.FOUND)
+
+    def test_hides_past_groups_by_default(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL))
+        groups = list(response.context["booking_groups"])
+        assert self.active_group in groups
+        assert self.past_group not in groups
+
+    def test_shows_past_groups_when_requested(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL), {"show_past_bookings": "on"})
+        groups = list(response.context["booking_groups"])
+        assert self.active_group in groups
+        assert self.past_group in groups
+
+    def test_show_past_bookings_in_context(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(reverse(self.URL))
+        assert response.context["show_past_bookings"] is False
+        response = self.client.get(reverse(self.URL), {"show_past_bookings": "on"})
+        assert response.context["show_past_bookings"]

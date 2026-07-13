@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
@@ -445,7 +446,14 @@ def manager_item_bookings_view(request: HttpRequest) -> HttpResponse:
     organization_search = request.GET.get("organization_search")
     period_type = request.GET.get("period_type", "all")  # "all", "pickups", "returns"
     date_filter = request.GET.get("date_filter", "")
+    show_past_bookings = bool(request.GET.get("show_past_bookings"))
 
+    if not show_past_bookings:
+        # Hide groups whose bookings are all fully over (return date has passed);
+        # keep groups with at least one booking that has not yet ended.
+        booking_groups = booking_groups.filter(
+            booking_of_bookinggroup__timespan__endswith__gte=timezone.now()
+        ).distinct()
     if status != "all":
         booking_groups = booking_groups.filter(status=int(status))
     if organization_search:
@@ -478,6 +486,7 @@ def manager_item_bookings_view(request: HttpRequest) -> HttpResponse:
         "organization_search": organization_search,
         "period_type": period_type,
         "date_filter": date_filter,
+        "show_past_bookings": show_past_bookings,
     }
 
     if request.headers.get("HX-Request"):
