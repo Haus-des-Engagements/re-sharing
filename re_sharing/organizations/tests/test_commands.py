@@ -110,6 +110,30 @@ class TestSendBookingReminderEmailsCommand(TestCase):
         mock_task.enqueue.assert_called_once_with(booking.id)
         assert "Enqueued 1 reminder email tasks" in out.getvalue()
 
+    @patch(
+        "re_sharing.organizations.management.commands.send_booking_reminder_emails.send_booking_reminder_email"
+    )
+    def test_command_excludes_lendable_item_bookings(self, mock_task):
+        """Bookings for lendable items must not receive reminder emails."""
+        lendable_resource = ResourceFactory(
+            type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+        )
+        organization = OrganizationFactory(monthly_bulk_access_codes=False)
+        dt_in_5_days = timezone.now() + timedelta(days=5)
+        dt_in_5_days = dt_in_5_days.replace(hour=10, minute=0, second=0, microsecond=0)
+        BookingFactory(
+            resource=lendable_resource,
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            timespan=Range(dt_in_5_days, dt_in_5_days + timedelta(hours=2)),
+        )
+        out = StringIO()
+
+        call_command("send_booking_reminder_emails", stdout=out)
+
+        mock_task.enqueue.assert_not_called()
+        assert "Enqueued 0 reminder email tasks" in out.getvalue()
+
 
 class TestSendMonthlyBookingsOverviewCommand(TestCase):
     @patch(

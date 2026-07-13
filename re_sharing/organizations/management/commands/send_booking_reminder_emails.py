@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.mails import send_booking_reminder_email
+from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
 
@@ -23,8 +24,12 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         days = kwargs["days"]
 
-        # Get bookings that need reminders
-        bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED)
+        # Get bookings that need reminders. Lendable item bookings are excluded:
+        # they use pickup/return slots rather than access codes, so the
+        # room-oriented reminder email does not apply to them.
+        bookings = Booking.objects.filter(status=BookingStatus.CONFIRMED).exclude(
+            resource__type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+        )
         # Exclude bookings from organizations that use the monthly bulk overview,
         # but only if the booking was created before the 20th of the previous month
         # (i.e. it was already included in the monthly overview email).
