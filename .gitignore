@@ -333,3 +333,6 @@ re_sharing/media/
 
 # Draw.io modelling temp files
 *.drawio.bkp
+
+# Database dumps (may contain production data)
+*.dmp
