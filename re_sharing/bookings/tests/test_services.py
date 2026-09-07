@@ -3279,3 +3279,239 @@ class TestBuildOrgEinvoicePayload(TestCase):
         )
 
         assert payload["item_single_price"] == ["15", "20"]
+
+
+class TestManagerFilterBookingsListByAccessCode(TestCase):
+    """
+    Searching the manager booking list by access code returns exactly the
+    bookings that display that code.
+
+    `Booking.access_code` is populated by a default generator for every booking,
+    so a stored match is not evidence the code is ever shown to anyone. Only
+    bookings whose derived code (`get_access_code`) equals the search term may
+    be returned.
+    """
+
+    def setUp(self):
+        self.user = UserFactory()
+        self.manager = ManagerFactory(user=self.user)
+        self.organization_group = OrganizationGroupFactory()
+        self.manager.organization_groups.add(self.organization_group)
+
+        self.organization = OrganizationFactory(name="Managed Org")
+        self.organization.organization_groups.add(self.organization_group)
+
+        self.access_with_smartlock = AccessFactory(
+            name="smartlock access", smartlock_id="smartlock-1"
+        )
+        self.access_without_smartlock = AccessFactory(
+            name="plain access", smartlock_id=""
+        )
+
+        self.resource_smartlock = ResourceFactory(
+            name="Smartlock Room", access=self.access_with_smartlock
+        )
+        self.resource_plain = ResourceFactory(
+            name="Plain Room", access=self.access_without_smartlock
+        )
+        self.resource_without_access = ResourceFactory(
+            name="No Access Room", access=None
+        )
+        self.manager.resources.add(
+            self.resource_smartlock,
+            self.resource_plain,
+            self.resource_without_access,
+        )
+
+    def _make_booking(self, resource, organization=None, days=1, **kwargs):
+        # Confirmed bookings on one resource may not overlap
+        # (exclude_overlapping_reservations), so callers that need a second
+        # booking on the same resource move it to another day.
+        start = timezone.now() + timezone.timedelta(days=days)
+        booking = BookingFactory(
+            user=self.user,
+            organization=organization or self.organization,
+            resource=resource,
+            booking_series=None,
+            status=BookingStatus.CONFIRMED,
+            timespan=(start, start + timezone.timedelta(hours=2)),
+            **kwargs,
+        )
+        booking.refresh_from_db()
+        return booking
+
+    def _search(self, access_code, **overrides):
+        params = {
+            "organization_search": None,
+            "show_past_bookings": True,
+            "status": "all",
+            "show_recurring_bookings": True,
+            "resource": "all",
+            "location": "all",
+            "from_date_string": None,
+            "until_date_string": None,
+            "user": self.user,
+            "access_code_search": access_code,
+        }
+        params.update(overrides)
+        bookings, _resources, _locations = manager_filter_bookings_list(**params)
+        return list(bookings)
+
+    # --- matches -----------------------------------------------------------
+
+    def test_finds_booking_by_its_own_access_code(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="345678")
+
+        assert self._search("345678") == [booking]
+
+    def test_finds_bookings_by_organization_permanent_code(self):
+        PermanentCodeFactory(
+            code="ORGCODE",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_with_smartlock],
+        )
+        booking = self._make_booking(self.resource_smartlock)
+
+        assert self._search("ORGCODE") == [booking]
+
+    def test_finds_bookings_by_general_permanent_code(self):
+        PermanentCodeFactory(
+            code="GENERAL",
+            organization=None,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_without_smartlock],
+        )
+        booking = self._make_booking(self.resource_plain)
+
+        assert self._search("GENERAL") == [booking]
+
+    def test_general_code_does_not_return_bookings_shadowed_by_org_code(self):
+        """An organization with its own code never displays the general one."""
+        PermanentCodeFactory(
+            code="GENERAL",
+            organization=None,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_without_smartlock],
+        )
+        PermanentCodeFactory(
+            code="ORGCODE",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_without_smartlock],
+        )
+        self._make_booking(self.resource_plain)
+
+        assert self._search("GENERAL") == []
+
+    def test_matches_the_trimmed_search_term(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="345678")
+
+        assert self._search("  345678  ") == [booking]
+
+    # --- phantoms ----------------------------------------------------------
+
+    def test_stored_code_shadowed_by_org_permanent_code_is_not_returned(self):
+        PermanentCodeFactory(
+            code="ORGCODE",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+            accesses=[self.access_with_smartlock],
+        )
+        self._make_booking(self.resource_smartlock, access_code="345678")
+
+        assert self._search("345678") == []
+
+    def test_stored_code_on_resource_without_smartlock_is_not_returned(self):
+        self._make_booking(self.resource_plain, access_code="345678")
+
+        assert self._search("345678") == []
+
+    def test_stored_code_on_resource_without_access_is_not_returned(self):
+        self._make_booking(self.resource_without_access, access_code="345678")
+
+        assert self._search("345678") == []
+
+    def test_expired_permanent_code_does_not_match_its_bookings(self):
+        PermanentCodeFactory(
+            code="EXPIRED",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=10),
+            validity_end=timezone.now() - timezone.timedelta(days=5),
+            accesses=[self.access_with_smartlock],
+        )
+        self._make_booking(self.resource_smartlock, access_code="345678")
+
+        assert self._search("EXPIRED") == []
+
+    # --- blank and short input --------------------------------------------
+
+    def test_empty_search_does_not_filter(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="")
+        other = self._make_booking(
+            self.resource_smartlock, days=2, access_code="345678"
+        )
+
+        assert set(self._search("")) == {booking, other}
+
+    def test_none_search_does_not_filter(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="")
+
+        assert self._search(None) == [booking]
+
+    def test_whitespace_only_search_does_not_filter(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="")
+
+        assert self._search("   ") == [booking]
+
+    def test_too_short_search_does_not_filter(self):
+        booking = self._make_booking(self.resource_smartlock, access_code="")
+        other = self._make_booking(
+            self.resource_smartlock, days=2, access_code="345678"
+        )
+
+        assert set(self._search("34")) == {booking, other}
+
+    # --- ordering ----------------------------------------------------------
+
+    def test_results_are_ordered_by_proximity_to_now(self):
+        """A permanent code can be shared by bookings spread over months."""
+        PermanentCodeFactory(
+            code="ORGCODE",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=60),
+            validity_end=None,
+            accesses=[self.access_with_smartlock],
+        )
+        far_future = self._make_booking(self.resource_smartlock, days=30)
+        past = self._make_booking(self.resource_smartlock, days=-20)
+        nearest = self._make_booking(self.resource_smartlock, days=1)
+
+        assert self._search("ORGCODE") == [nearest, past, far_future]
+
+    # --- manager scope -----------------------------------------------------
+
+    def test_booking_of_unmanaged_organization_is_not_returned(self):
+        other_group = OrganizationGroupFactory(name="other group")
+        other_organization = OrganizationFactory(name="Other Org")
+        other_organization.organization_groups.add(other_group)
+        self._make_booking(
+            self.resource_smartlock,
+            organization=other_organization,
+            access_code="345678",
+        )
+
+        assert self._search("345678") == []
+
+    def test_booking_of_unmanaged_resource_is_not_returned(self):
+        unmanaged_resource = ResourceFactory(
+            name="Unmanaged Room", access=self.access_with_smartlock
+        )
+        self._make_booking(unmanaged_resource, access_code="345678")
+
+        assert self._search("345678") == []

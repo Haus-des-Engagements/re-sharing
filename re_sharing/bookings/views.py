@@ -21,10 +21,12 @@ from re_sharing.utils.models import BookingStatus
 from .forms import BookingForm
 from .forms import MessageForm
 from .models import Booking
+from .services import MIN_ACCESS_CODE_SEARCH_LENGTH
 from .services import bookings_webview
 from .services import cancel_booking
 from .services import create_booking_data
 from .services import create_bookingmessage
+from .services import default_access_code_window
 from .services import filter_bookings_list
 from .services import generate_booking
 from .services import get_organizations_with_bundleable_bookings
@@ -378,6 +380,25 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     from_date_string = request.GET.get("from_date") or None
     until_date_string = request.GET.get("until_date") or None
     show_recurring_bookings = request.GET.get("show_recurring_bookings") or False
+    access_code_search = (request.GET.get("access_code") or "").strip()
+    show_all_dates = bool(request.GET.get("all_dates"))
+
+    code_search_active = len(access_code_search) >= MIN_ACCESS_CODE_SEARCH_LENGTH
+    access_code_window = None
+    if code_search_active:
+        # The status select always submits a value and unchecked boxes are
+        # omitted entirely, so an explicit choice cannot be distinguished from
+        # the form default. During a code search these three filters are
+        # therefore always relaxed; the template disables the controls so the
+        # page does not claim a filter it is not applying. Date inputs submit
+        # an empty value when unset, so an explicit range stays honoured.
+        status = "all"
+        show_past_bookings = True
+        show_recurring_bookings = True
+        if not from_date_string and not until_date_string and not show_all_dates:
+            access_code_window = default_access_code_window()
+            from_date_string = access_code_window[0].isoformat()
+            until_date_string = access_code_window[1].isoformat()
 
     bookings, resources, locations = manager_filter_bookings_list(
         organization_search,
@@ -389,6 +410,7 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         from_date_string,
         until_date_string,
         request.user,
+        access_code_search,
     )
 
     context = {
@@ -405,6 +427,11 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
         "selected_until_date": until_date_string,
         "show_past_bookings": show_past_bookings,
         "show_recurring_bookings": show_recurring_bookings,
+        "access_code_search": access_code_search,
+        "code_search_active": code_search_active,
+        "access_code_window": access_code_window,
+        "show_all_dates": show_all_dates,
+        "is_htmx": bool(request.headers.get("HX-Request")),
     }
 
     if request.headers.get("HX-Request"):
@@ -417,6 +444,23 @@ def manager_list_bookings_view(request: HttpRequest) -> HttpResponse:
     return render(request, "bookings/manager_list_bookings.html", context)
 
 
+def _booking_row_context(request, booking):
+    """Context for a single re-rendered booking row.
+
+    The row partial renders an extra access code cell during a code search, so
+    a row swapped in on its own has to know about the search or the table would
+    lose a cell. The buttons carry the current code in their PATCH url.
+    """
+    access_code_search = (request.GET.get("access_code") or "").strip()
+    return {
+        "booking": booking,
+        "access_code_search": access_code_search,
+        "code_search_active": (
+            len(access_code_search) >= MIN_ACCESS_CODE_SEARCH_LENGTH
+        ),
+    }
+
+
 @require_http_methods(["PATCH"])
 @manager_required
 def manager_cancel_booking_view(request, booking_slug):
@@ -425,7 +469,7 @@ def manager_cancel_booking_view(request, booking_slug):
     return render(
         request,
         "bookings/manager_list_bookings.html#manager-booking-item",
-        {"booking": booking},
+        _booking_row_context(request, booking),
     )
 
 
@@ -436,7 +480,7 @@ def manager_confirm_booking_view(request, booking_slug):
     return render(
         request,
         "bookings/manager_list_bookings.html#manager-booking-item",
-        {"booking": booking},
+        _booking_row_context(request, booking),
     )
 
 

@@ -11,6 +11,7 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -33,11 +34,34 @@ from re_sharing.organizations.services import (
 from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
+from re_sharing.resources.models import PermanentCode
 from re_sharing.resources.models import Resource
 from re_sharing.resources.services import get_access_code
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 from re_sharing.utils.models import get_booking_status
+
+# An access code search shorter than this is treated as no search at all.
+MIN_ACCESS_CODE_SEARCH_LENGTH = 3
+
+# Default date range for an access code search that was given none. Wider
+# forward than backward: callers ask about a booking that is about to start
+# far more often than about one that already ended.
+ACCESS_CODE_WINDOW_DAYS_BEFORE = 7
+ACCESS_CODE_WINDOW_DAYS_AFTER = 90
+
+
+def default_access_code_window(reference=None):
+    """Return the (from_date, until_date) an access code search falls back to.
+
+    A single permanent code can be shared by thousands of bookings, so an
+    unbounded code search is unusable while someone waits on the phone.
+    """
+    today = (reference or timezone.now()).date()
+    return (
+        today - timedelta(days=ACCESS_CODE_WINDOW_DAYS_BEFORE),
+        today + timedelta(days=ACCESS_CODE_WINDOW_DAYS_AFTER),
+    )
 
 
 def _enqueue_smartlock_sync_if_today(booking) -> None:
@@ -545,6 +569,44 @@ def bookings_webview(location="all"):
     return bookings, location
 
 
+def _bookings_matching_access_code(bookings, code):
+    """Return the bookings from ``bookings`` that actually display ``code``.
+
+    Every booking carries an ``access_code`` from a default generator, whether
+    or not that code is ever shown to anyone, so a stored match proves nothing
+    on its own. Candidates are prefiltered in SQL and then confirmed against
+    ``get_access_code``, which is the single source of truth for the code a
+    booking displays.
+
+    Results are ordered by proximity to now: the caller on the phone is asking
+    about the booking happening around now, and a permanent code can be shared
+    by bookings spread over months.
+    """
+    accesses_with_code = PermanentCode.objects.filter(code__iexact=code).values(
+        "accesses"
+    )
+    candidates = bookings.filter(
+        Q(access_code__iexact=code) | Q(resource__access__in=accesses_with_code)
+    ).select_related("resource__access__parent_access", "organization")
+
+    wanted = code.casefold()
+    matching = [
+        booking
+        for booking in candidates
+        if (get_access_code(booking) or "").casefold() == wanted
+    ]
+
+    reference = timezone.now()
+
+    def distance_from_now(booking):
+        if not booking.timespan.lower:
+            return timedelta.max
+        return abs(booking.timespan.lower - reference)
+
+    matching.sort(key=distance_from_now)
+    return matching
+
+
 def manager_filter_bookings_list(  # noqa: PLR0913
     organization_search,
     show_past_bookings,
@@ -555,6 +617,7 @@ def manager_filter_bookings_list(  # noqa: PLR0913
     from_date_string,
     until_date_string,
     user,
+    access_code_search=None,
 ):
     manager = user.get_manager()
     organizations = manager.get_organizations()
@@ -606,6 +669,14 @@ def manager_filter_bookings_list(  # noqa: PLR0913
             datetime.combine(until_date, time(hour=23, minute=59)),
         )
         bookings = bookings.filter(timespan__startswith__lte=end_of_until_date)
+
+    access_code_query = (access_code_search or "").strip()
+    if len(access_code_query) >= MIN_ACCESS_CODE_SEARCH_LENGTH:
+        return (
+            _bookings_matching_access_code(bookings, access_code_query),
+            resources,
+            locations,
+        )
 
     bookings = bookings.order_by("created")
 
