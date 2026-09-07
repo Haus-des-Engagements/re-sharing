@@ -66,7 +66,7 @@ The system SHALL treat an empty or whitespace-only access-code input, and input 
 
 ### Requirement: An access code search relaxes the booking list defaults
 
-The booking list defaults to pending bookings and hides past and recurring bookings. Since a caller's booking is typically confirmed and may already have started, the system SHALL NOT apply those defaults while an access-code search is active, unless the manager has set them explicitly.
+The booking list defaults to pending bookings and hides past and recurring bookings. Since a caller's booking is typically confirmed and may already have started, the system SHALL NOT apply the status, past-bookings or recurring-bookings filters while an access-code search is active, and SHALL make that visible by disabling those controls for the duration of the search. Date ranges are exempt: the filter form always submits a value for the status select and omits unchecked boxes, so an explicit choice cannot be distinguished from the form default, whereas an unset date input submits an empty value and remains distinguishable.
 
 #### Scenario: Confirmed booking is found without changing the status filter
 
@@ -78,10 +78,16 @@ The booking list defaults to pending bookings and hides past and recurring booki
 - **WHEN** a manager searches for the code of a booking that started earlier and has already ended, while the past-bookings option is at its default
 - **THEN** the booking is returned
 
-#### Scenario: Explicit filters still apply
+#### Scenario: Explicit date range still applies
 
-- **WHEN** a manager searches for a code and has explicitly selected a status
-- **THEN** only matching bookings with that status are returned
+- **WHEN** a manager searches for a code and has set a from-date or until-date
+- **THEN** only matching bookings within that range are returned
+
+#### Scenario: Relaxed filters are shown as disabled
+
+- **WHEN** an access-code search is active
+- **THEN** the status, past-bookings and recurring-bookings controls are disabled
+- **AND** the results state that those filters are not being applied
 
 ### Requirement: Access code results are bounded by a default date window
 

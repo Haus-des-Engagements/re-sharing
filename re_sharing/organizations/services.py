@@ -191,7 +191,13 @@ def manager_filter_organizations_list(status, group, manager=None, search=None):
     if group != "all":
         organizations = organizations.filter(organization_groups__slug=group)
     if search:
-        organizations = organizations.filter(name__icontains=search)
+        # Codes are matched exactly and regardless of validity: support staff
+        # are often called precisely because a code stopped working, so an
+        # expired code still has to identify its organization.
+        organizations = organizations.filter(
+            Q(name__icontains=search)
+            | Q(organization_of_permanentcode__code__iexact=search.strip())
+        ).distinct()
 
     # Prefetch active permanent codes (currently valid)
     active_codes = PermanentCode.objects.filter(

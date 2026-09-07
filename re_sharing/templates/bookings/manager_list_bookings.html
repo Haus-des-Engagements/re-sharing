@@ -32,6 +32,13 @@
              placeholder="{% trans 'Search organizations...' %}"
              {% if organization_search %}value="{{ organization_search }}"{% endif %} />
     </div>
+    <div id="div_id_access_code" class="col-2">
+      <input type="text"
+             name="access_code"
+             class="form-control"
+             placeholder="{% trans 'Access code...' %}"
+             value="{{ access_code_search|default_if_none:'' }}" />
+    </div>
     {% if locations.count > 1 %}
       <div id="div_id_location" class="col-auto">
         <select name="location" class="form-select" id="id_location">
@@ -52,17 +59,6 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-auto" id="div_id_status">
-      <select name="status" class="select form-select" id="id_status">
-        <option value="all" {% if selected_status == "all" %}selected{% endif %}>{% trans "all statuses" %}</option>
-        {% for status in statuses %}
-          <option value="{{ status.0 }}"
-                  {% if selected_status|stringformat:"s" == status.0|stringformat:"s" %}selected{% endif %}>
-            {{ status.1 }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
     <div class="col-auto">
       <input type="date"
              name="from_date"
@@ -79,93 +75,152 @@
              placeholder="{% trans 'Until date' %}"
              {% if selected_until_date %}value="{{ selected_until_date }}"{% endif %} />
     </div>
-    <div class="col-auto form-check">
-      <input type="checkbox"
-             name="show_past_bookings"
-             class="form-check-input"
-             id="id_show_past_bookings"
-             {% if show_past_bookings %}checked{% endif %} />
-      <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
-    </div>
-    <div class="col-auto form-check">
-      <input type="checkbox"
-             name="show_recurring_bookings"
-             class="form-check-input"
-             id="id_hide_recurring_bookings"
-             {% if show_recurring_bookings %}checked{% endif %} />
-      <label for="id_show_recurring_bookings" class="form-check-label">
-        {% trans "show" %} <a href="{% url 'bookings:manager-list-booking_series' %}">{% trans "booking series" %}</a>
-      </label>
-    </div>
-    <div id="spinner"
-         class="spinner-border col-auto htmx-indicator"
-         role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-  </form>
-  <div id="booking-list">
-    {% partialdef manager-list-bookings inline %}
-    <div class="table-responsive mt-5">
-      <table class="table table-hover sortable">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Created" %}</th>
-            <th scope="col">{% trans "Booking" %}</th>
-            <th scope="col">{% trans "Timespan" %}</th>
-            <th scope="col">{% trans "Resource" %}</th>
-            <th scope="col">{% trans "Organization" %}</th>
-            <th scope="col">{% trans "Title" %}</th>
-            <th scope="col">{% trans "Status" %}</th>
-            <th scope="col"></th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
-            <tr id="tr-{{ booking.slug }}">
-              {% partialdef manager-booking-item inline %}
-              <td sorttable_customkey="{{ booking.created|date:'YmdHi' }}">{{ booking.created|date:"d.m.Y H:i" }}</td>
-              <td sorttable_customkey="{{ booking.timespan.lower|date:'YmdHi' }}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</td>
-              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>{{ booking.resource }}</td>
-              <td>
-                <a href="{% url "organizations:show-organization" booking.organization.slug %}">{{ booking.organization }}</a>
-              </td>
-              <td>
-                <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
-              </td>
-              <td>
-                <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
-              </td>
-              <td>
-                {% if booking.is_confirmable %}
-                  <button id="confirm-button"
-                          type="submit"
-                          class="btn btn-sm btn-outline-success"
-                          value="Submit"
-                          hx-patch="{% url 'bookings:manager-confirm-booking' booking_slug=booking.slug %}"
-                          hx-target="#tr-{{ booking.slug }}"
-                          hx-swap="innerHTML">{% trans "Confirm" %}</button>
-                {% endif %}
-              </td>
-              <td>
-                {% if booking.is_cancelable %}
-                  <button id="cancel-button"
-                          type="submit"
-                          class="btn btn-sm btn-outline-danger"
-                          value="Submit"
-                          hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
-                          hx-patch="{% url 'bookings:manager-cancel-booking' booking_slug=booking.slug %}"
-                          hx-target="#tr-{{ booking.slug }}"
-                          hx-swap="innerHTML">{% trans "Cancel" %}</button>
-                {% endif %}
-              </td>
-            {% endpartialdef %}
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div id="relaxable-filters" class="col-auto">
+      {% partialdef relaxable-filters-controls inline %}
+      <div class="row gx-3 gy-2 align-items-center">
+        <div class="col-auto" id="div_id_status">
+          <select name="status"
+                  class="select form-select"
+                  id="id_status"
+                  {% if code_search_active %}disabled{% endif %}>
+            <option value="all" {% if selected_status == "all" %}selected{% endif %}>{% trans "all statuses" %}</option>
+            {% for status in statuses %}
+              <option value="{{ status.0 }}"
+                      {% if selected_status|stringformat:"s" == status.0|stringformat:"s" %}selected{% endif %}>
+                {{ status.1 }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto form-check">
+          <input type="checkbox"
+                 name="show_past_bookings"
+                 class="form-check-input"
+                 id="id_show_past_bookings"
+                 {% if code_search_active %}disabled{% endif %}
+                 {% if show_past_bookings %}checked{% endif %} />
+          <label for="id_show_past_bookings" class="form-check-label">{% trans "show past bookings" %}</label>
+        </div>
+        <div class="col-auto form-check">
+          <input type="checkbox"
+                 name="show_recurring_bookings"
+                 class="form-check-input"
+                 id="id_hide_recurring_bookings"
+                 {% if code_search_active %}disabled{% endif %}
+                 {% if show_recurring_bookings %}checked{% endif %} />
+          <label for="id_show_recurring_bookings" class="form-check-label">
+            {% trans "show" %} <a href="{% url 'bookings:manager-list-booking_series' %}">{% trans "booking series" %}</a>
+          </label>
+        </div>
+      </div>
+    {% endpartialdef %}
   </div>
+  <div id="spinner"
+       class="spinner-border col-auto htmx-indicator"
+       role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</form>
+<div id="booking-list">
+  {% partialdef manager-list-bookings inline %}
+  {% if is_htmx %}
+    {% comment %}
+      Keep the relaxed controls in step with the server: the filter form
+      itself is not re-rendered on an htmx swap.
+    {% endcomment %}
+    <div id="relaxable-filters" class="col-auto" hx-swap-oob="true">{% partial relaxable-filters-controls %}</div>
+  {% endif %}
+  {% if code_search_active %}
+    <div class="alert alert-info mt-3" role="alert">
+      {% trans "Code search: the status, past bookings and booking series filters are not applied." %}
+      {% if access_code_window %}
+        {% blocktrans with from_date=access_code_window.0|date:"d.m.Y" until_date=access_code_window.1|date:"d.m.Y" %}Showing bookings between {{ from_date }} and {{ until_date }}.{% endblocktrans %}
+        <a href="{% url 'bookings:manager-list-bookings' %}?access_code={{ access_code_search|urlencode }}&amp;all_dates=on"
+           hx-get="{% url 'bookings:manager-list-bookings' %}?access_code={{ access_code_search|urlencode }}&amp;all_dates=on"
+           hx-target="#booking-list"
+           hx-push-url="true">{% trans "show all dates" %}</a>
+      {% endif %}
+    </div>
+  {% endif %}
+  <div class="table-responsive mt-5">
+    <table class="table table-hover sortable">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Created" %}</th>
+          <th scope="col">{% trans "Booking" %}</th>
+          <th scope="col">{% trans "Timespan" %}</th>
+          <th scope="col">{% trans "Resource" %}</th>
+          <th scope="col">{% trans "Organization" %}</th>
+          <th scope="col">{% trans "Title" %}</th>
+          <th scope="col">{% trans "Status" %}</th>
+          {% if code_search_active %}
+            <th scope="col">{% trans "Access Code" %}</th>
+          {% endif %}
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+          <tr id="tr-{{ booking.slug }}">
+            {% partialdef manager-booking-item inline %}
+            <td sorttable_customkey="{{ booking.created|date:'YmdHi' }}">{{ booking.created|date:"d.m.Y H:i" }}</td>
+            <td sorttable_customkey="{{ booking.timespan.lower|date:'YmdHi' }}">{{ booking.timespan.lower|date:"D, d.m.Y" }}</td>
+            <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
+            <td>{{ booking.resource }}</td>
+            <td>
+              <a href="{% url "organizations:show-organization" booking.organization.slug %}">{{ booking.organization }}</a>
+            </td>
+            <td>
+              <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
+            </td>
+            <td>
+              <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+            </td>
+            {% if code_search_active %}
+              <td>
+                <code>{{ booking.get_access_code }}</code>
+              </td>
+            {% endif %}
+            <td>
+              {% if booking.is_confirmable %}
+                <button id="confirm-button"
+                        type="submit"
+                        class="btn btn-sm btn-outline-success"
+                        value="Submit"
+                        hx-patch="{% url 'bookings:manager-confirm-booking' booking_slug=booking.slug %}{% if code_search_active %}?access_code={{ access_code_search|urlencode }}{% endif %}"
+                        hx-target="#tr-{{ booking.slug }}"
+                        hx-swap="innerHTML">{% trans "Confirm" %}</button>
+              {% endif %}
+            </td>
+            <td>
+              {% if booking.is_cancelable %}
+                <button id="cancel-button"
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        value="Submit"
+                        hx-confirm="{% trans 'Are you sure you want to cancel this booking?' %}"
+                        hx-patch="{% url 'bookings:manager-cancel-booking' booking_slug=booking.slug %}{% if code_search_active %}?access_code={{ access_code_search|urlencode }}{% endif %}"
+                        hx-target="#tr-{{ booking.slug }}"
+                        hx-swap="innerHTML">{% trans "Cancel" %}</button>
+              {% endif %}
+            </td>
+          {% endpartialdef %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="10">
+            {% if code_search_active %}
+              {% blocktrans with code=access_code_search %}No booking displays the code {{ code }} in this period.{% endblocktrans %}
+            {% else %}
+              {% trans "No bookings found." %}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endpartialdef %}
 </div>
 {% endblock content %}

@@ -17,6 +17,7 @@ from re_sharing.organizations.services import manager_activate_organization
 from re_sharing.organizations.services import manager_cancel_organization
 from re_sharing.organizations.services import manager_confirm_organization
 from re_sharing.organizations.services import manager_deactivate_organization
+from re_sharing.organizations.services import manager_filter_organizations_list
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
@@ -27,6 +28,8 @@ from re_sharing.organizations.services import user_has_normal_bookingpermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.providers.tests.factories import ManagerFactory
+from re_sharing.resources.tests.factories import PermanentCodeFactory
 from re_sharing.users.tests.factories import UserFactory
 
 
@@ -336,3 +339,77 @@ class TestUserPermissionsFunctions(TestCase):
 
 # Permission service tests moved to new test_services_business_logic.py
 # Keep only integration and higher-level service tests here
+
+
+class ManagerFilterOrganizationsListSearchTest(TestCase):
+    """
+    The organization list search matches permanent codes as well as names.
+
+    A caller reading out a code that has stopped working still has to be
+    identifiable, so expired codes are matched too.
+    """
+
+    def setUp(self):
+        self.user = UserFactory()
+        self.manager = ManagerFactory(user=self.user)
+        self.organization_group = OrganizationGroupFactory()
+        self.manager.organization_groups.add(self.organization_group)
+
+        self.organization = OrganizationFactory(name="Kita Sonnenschein")
+        self.organization.organization_groups.add(self.organization_group)
+        self.other_organization = OrganizationFactory(name="Sportverein")
+        self.other_organization.organization_groups.add(self.organization_group)
+
+    def _search(self, term):
+        return list(
+            manager_filter_organizations_list(
+                "all", "all", manager=self.manager, search=term
+            )
+        )
+
+    def test_finds_organization_by_active_permanent_code(self):
+        PermanentCodeFactory(
+            code="ACTIVE1",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+        )
+
+        assert self._search("ACTIVE1") == [self.organization]
+
+    def test_finds_organization_by_expired_permanent_code(self):
+        PermanentCodeFactory(
+            code="EXPIRED1",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=30),
+            validity_end=timezone.now() - timezone.timedelta(days=10),
+        )
+
+        assert self._search("EXPIRED1") == [self.organization]
+
+    def test_organization_with_several_codes_appears_once(self):
+        for code in ("CODE1", "CODE2"):
+            PermanentCodeFactory(
+                code=code,
+                organization=self.organization,
+                validity_start=timezone.now() - timezone.timedelta(days=1),
+                validity_end=None,
+            )
+
+        assert self._search("Kita") == [self.organization]
+
+    def test_code_search_ignores_surrounding_whitespace(self):
+        PermanentCodeFactory(
+            code="ACTIVE1",
+            organization=self.organization,
+            validity_start=timezone.now() - timezone.timedelta(days=1),
+            validity_end=None,
+        )
+
+        assert self._search("  ACTIVE1  ") == [self.organization]
+
+    def test_name_search_still_works(self):
+        assert self._search("Sportverein") == [self.other_organization]
+
+    def test_unknown_code_matches_nothing(self):
+        assert self._search("NOSUCHCODE") == []

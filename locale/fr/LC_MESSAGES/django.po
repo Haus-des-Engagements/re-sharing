@@ -1163,6 +1163,9 @@ msgstr "Gérer les organisations"
 msgid "Search organizations..."
 msgstr "Rechercher des organisations..."
 
+msgid "Search organizations or codes..."
+msgstr "Rechercher des organisations ou des codes..."
+
 msgid "all groups"
 msgstr "tous les groupes"
 
@@ -1895,3 +1898,21 @@ msgstr "(supprimé)"
 
 msgid "(deleted user)"
 msgstr "(utilisateur supprimé)"
+
+msgid "Access code..."
+msgstr "Code d'accès..."
+
+msgid "Code search: the status, past bookings and booking series filters are not applied."
+msgstr "Recherche par code : les filtres de statut, de réservations passées et de séries ne sont pas appliqués."
+
+msgid "Showing bookings between %(from_date)s and %(until_date)s."
+msgstr "Réservations affichées entre le %(from_date)s et le %(until_date)s."
+
+msgid "show all dates"
+msgstr "afficher toutes les dates"
+
+msgid "No booking displays the code %(code)s in this period."
+msgstr "Aucune réservation n'affiche le code %(code)s sur cette période."
+
+msgid "No bookings found."
+msgstr "Aucune réservation trouvée."

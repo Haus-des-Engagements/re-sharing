@@ -21,7 +21,9 @@ from re_sharing.bookings.views import manager_list_bookings_view
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.tests.factories import ManagerFactory
+from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -1570,3 +1572,200 @@ class TestManagerItemBookingsPastFilter(TestCase):
         assert response.context["show_past_bookings"] is False
         response = self.client.get(reverse(self.URL), {"show_past_bookings": "on"})
         assert response.context["show_past_bookings"]
+
+
+class TestManagerListBookingsAccessCodeSearch(TestCase):
+    """
+    The access code search at /bookings/manage-bookings/ has to find the
+    booking a caller is asking about, which is normally confirmed, may already
+    have ended, and is not necessarily in the current filter selection.
+    """
+
+    def setUp(self):
+        self.manager = ManagerFactory()
+        self.user = self.manager.user
+        self.organization_group = OrganizationGroupFactory()
+        self.manager.organization_groups.add(self.organization_group)
+
+        self.organization = OrganizationFactory(name="Managed Org")
+        self.organization.organization_groups.add(self.organization_group)
+
+        self.access = AccessFactory(name="code search access", smartlock_id="lock-1")
+        self.resource = ResourceFactory(name="Code Search Room", access=self.access)
+        self.manager.resources.add(self.resource)
+
+        self.url = reverse("bookings:manager-list-bookings")
+        self.client.force_login(self.user)
+
+    def _make_booking(self, days, access_code="345678", status=BookingStatus.CONFIRMED):
+        start = timezone.now() + timezone.timedelta(days=days)
+        booking = BookingFactory(
+            user=self.user,
+            organization=self.organization,
+            resource=self.resource,
+            booking_series=None,
+            status=status,
+            timespan=(start, start + timezone.timedelta(hours=2)),
+            access_code=access_code,
+        )
+        booking.refresh_from_db()
+        return booking
+
+    # --- relaxed defaults --------------------------------------------------
+
+    def test_finds_confirmed_booking_under_default_status_filter(self):
+        """The list defaults to pending; a caller's booking is confirmed."""
+        booking = self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert list(response.context["bookings"]) == [booking]
+
+    def test_finds_already_ended_booking_under_default_past_filter(self):
+        booking = self._make_booking(days=-2)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert list(response.context["bookings"]) == [booking]
+
+    def test_relaxed_filters_are_reported_as_relaxed(self):
+        self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert response.context["code_search_active"] is True
+        assert response.context["selected_status"] == "all"
+        assert response.context["show_past_bookings"] is True
+        assert response.context["show_recurring_bookings"] is True
+
+    def test_submitted_status_does_not_narrow_a_code_search(self):
+        """The form always submits a status, so it cannot narrow the search."""
+        booking = self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"access_code": "345678", "status": "1"})
+
+        assert list(response.context["bookings"]) == [booking]
+
+    def test_status_filter_still_applies_without_a_code_search(self):
+        self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"status": "1"})
+
+        assert list(response.context["bookings"]) == []
+
+    # --- date window -------------------------------------------------------
+
+    def test_default_window_is_applied_and_reported(self):
+        self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        window = response.context["access_code_window"]
+        assert window is not None
+        today = timezone.now().date()
+        assert window[0] == today - timezone.timedelta(days=7)
+        assert window[1] == today + timezone.timedelta(days=90)
+
+    def test_default_window_excludes_a_far_future_booking(self):
+        self._make_booking(days=200)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert list(response.context["bookings"]) == []
+
+    def test_show_all_dates_removes_the_window(self):
+        booking = self._make_booking(days=200)
+
+        response = self.client.get(
+            self.url, {"access_code": "345678", "all_dates": "on"}
+        )
+
+        assert response.context["access_code_window"] is None
+        assert list(response.context["bookings"]) == [booking]
+
+    def test_explicit_date_range_wins_over_the_default_window(self):
+        self._make_booking(days=30)
+
+        response = self.client.get(
+            self.url,
+            {
+                "access_code": "345678",
+                "until_date": (timezone.now() + timezone.timedelta(days=5))
+                .date()
+                .isoformat(),
+            },
+        )
+
+        assert response.context["access_code_window"] is None
+        assert list(response.context["bookings"]) == []
+
+    def test_no_window_without_a_code_search(self):
+        response = self.client.get(self.url)
+
+        assert response.context["access_code_window"] is None
+        assert response.context["code_search_active"] is False
+
+    # --- rendering ---------------------------------------------------------
+
+    def test_code_column_is_rendered_during_a_code_search(self):
+        self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        self.assertContains(response, "345678")
+
+    def test_code_column_is_absent_without_a_code_search(self):
+        self._make_booking(days=1)
+
+        response = self.client.get(self.url, {"status": "all"})
+
+        self.assertNotContains(response, "<code>")
+
+    def test_htmx_request_renders_the_partial(self):
+        booking = self._make_booking(days=1)
+
+        response = self.client.get(
+            self.url, {"access_code": "345678"}, headers={"hx-request": "true"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert list(response.context["bookings"]) == [booking]
+        self.assertTemplateUsed(response, "manager-list-bookings")
+
+    def test_htmx_partial_does_not_leak_template_syntax(self):
+        """Django's {# #} only comments a single line; a wrapped one renders."""
+        self._make_booking(days=1)
+
+        response = self.client.get(
+            self.url, {"access_code": "345678"}, headers={"hx-request": "true"}
+        )
+
+        body = response.content.decode()
+        assert "{#" not in body
+        assert "#}" not in body
+        assert "{% comment" not in body
+
+    def test_too_short_code_is_not_a_search(self):
+        self._make_booking(days=1, status=BookingStatus.PENDING)
+
+        response = self.client.get(self.url, {"access_code": "34"})
+
+        assert response.context["code_search_active"] is False
+        assert response.context["access_code_window"] is None
+
+    # --- permissions -------------------------------------------------------
+
+    def test_non_manager_is_denied(self):
+        self.client.force_login(UserFactory(is_staff=False))
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        self.client.logout()
+
+        response = self.client.get(self.url, {"access_code": "345678"})
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert "login" in response.url

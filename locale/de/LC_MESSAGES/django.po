@@ -1429,6 +1429,9 @@ msgstr "Materialverleih verwalten"
 msgid "Search organizations..."
 msgstr "Organisationen suchen"
 
+msgid "Search organizations or codes..."
+msgstr "Organisationen oder Codes suchen"
+
 msgid "Cancelled"
 msgstr "Storniert"
 
@@ -2801,3 +2804,21 @@ msgstr "Aktualisiert"
 
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
+
+msgid "Access code..."
+msgstr "Zugangscode..."
+
+msgid "Code search: the status, past bookings and booking series filters are not applied."
+msgstr "Codesuche: Die Filter für Status, vergangene Buchungen und Buchungsserien werden nicht angewendet."
+
+msgid "Showing bookings between %(from_date)s and %(until_date)s."
+msgstr "Es werden Buchungen zwischen %(from_date)s und %(until_date)s angezeigt."
+
+msgid "show all dates"
+msgstr "alle Zeiträume anzeigen"
+
+msgid "No booking displays the code %(code)s in this period."
+msgstr "Keine Buchung zeigt in diesem Zeitraum den Code %(code)s an."
+
+msgid "No bookings found."
+msgstr "Keine Buchungen gefunden."
