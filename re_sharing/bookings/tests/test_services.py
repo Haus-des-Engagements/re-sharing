@@ -1991,14 +1991,28 @@ class TestManagerConfirmBookingOverlap(TestCase):
 class TestManagerFilterInvoiceBookingsList(TestCase):
     """Test manager_filter_invoice_bookings_list function"""
 
+    def setUp(self):
+        # manager_filter_invoice_bookings_list defaults to timespan_filter
+        # "past", but BookingFactory picks a random start_date that reaches
+        # 300 days into the future. Every booking here is therefore pinned to
+        # its own past slot: distinct days also keep confirmed bookings on a
+        # shared resource from tripping exclude_overlapping_reservations.
+        self._past_slot = 0
+
+    def _past_booking(self, **kwargs):
+        self._past_slot += 1
+        ends_at = timezone.now() - timedelta(days=self._past_slot)
+        kwargs.setdefault("timespan", (ends_at - timedelta(hours=2), ends_at))
+        return BookingFactory(**kwargs)
+
     def test_filter_invoice_bookings_all(self):
         """Test getting all invoice bookings"""
-        BookingFactory(
+        self._past_booking(
             status=BookingStatus.CONFIRMED,
             total_amount=100,
             invoice_number="INV-001",
         )
-        BookingFactory(
+        self._past_booking(
             status=BookingStatus.CONFIRMED,
             total_amount=200,
             invoice_number="",
@@ -2018,13 +2032,13 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
     def test_filter_invoice_bookings_with_invoice(self):
         """Test filtering bookings that have invoice numbers"""
         resource = ResourceFactory()
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
             invoice_number="INV-001",
         )
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2044,13 +2058,13 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
     def test_filter_invoice_bookings_without_invoice(self):
         """Test filtering bookings that don't have invoice numbers"""
         resource = ResourceFactory()
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
             invoice_number="INV-001",
         )
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2072,12 +2086,12 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
         org1 = OrganizationFactory()
         org2 = OrganizationFactory()
 
-        BookingFactory(
+        self._past_booking(
             organization=org1,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
         )
-        BookingFactory(
+        self._past_booking(
             organization=org2,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2095,12 +2109,12 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
 
     def test_filter_invoice_bookings_by_invoice_number(self):
         """Test filtering invoice bookings by invoice number search"""
-        BookingFactory(
+        self._past_booking(
             status=BookingStatus.CONFIRMED,
             total_amount=100,
             invoice_number="INV-2024-001",
         )
-        BookingFactory(
+        self._past_booking(
             status=BookingStatus.CONFIRMED,
             total_amount=200,
             invoice_number="INV-2025-002",
@@ -2120,12 +2134,12 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
         resource1 = ResourceFactory()
         resource2 = ResourceFactory()
 
-        BookingFactory(
+        self._past_booking(
             resource=resource1,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
         )
-        BookingFactory(
+        self._past_booking(
             resource=resource2,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2144,7 +2158,7 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
     def test_filter_invoice_bookings_with_invoice_address(self):
         """Test filtering bookings that have an invoice address"""
         resource = ResourceFactory()
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
@@ -2156,7 +2170,7 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
                 "email": "t@t.de",
             },
         )
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2177,7 +2191,7 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
     def test_filter_invoice_bookings_without_invoice_address(self):
         """Test filtering bookings that don't have an invoice address"""
         resource = ResourceFactory()
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=100,
@@ -2189,7 +2203,7 @@ class TestManagerFilterInvoiceBookingsList(TestCase):
                 "email": "t@t.de",
             },
         )
-        BookingFactory(
+        self._past_booking(
             resource=resource,
             status=BookingStatus.CONFIRMED,
             total_amount=200,
@@ -2324,33 +2338,39 @@ class TestGetExternalEvents(TestCase):
     """Test get_external_events function for ICS feed parsing"""
 
     def setUp(self):
-        # Sample ICS content with events
-        self.sample_ics = b"""BEGIN:VCALENDAR
+        # get_external_events drops events that start before today, so these
+        # dates are relative: hard-coded ones silently turn the whole class
+        # red once they pass.
+        today = timezone.now().date()
+        self.first_future = today + timedelta(days=30)
+        self.second_future = today + timedelta(days=60)
+        past = today - timedelta(days=365)
+        self.sample_ics = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test Calendar//EN
 BEGIN:VEVENT
-DTSTART:20270301T100000Z
-DTEND:20270301T120000Z
+DTSTART:{self.first_future:%Y%m%d}T100000Z
+DTEND:{self.first_future:%Y%m%d}T120000Z
 SUMMARY:Future Event 1
 LOCATION:Conference Room A
 DESCRIPTION:A test event in the future
 URL:https://example.com/event1
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20270401T140000Z
-DTEND:20270401T160000Z
+DTSTART:{self.second_future:%Y%m%d}T140000Z
+DTEND:{self.second_future:%Y%m%d}T160000Z
 SUMMARY:Future Event 2
 LOCATION:Conference Room B
 DESCRIPTION:Another future event
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20200101T100000Z
-DTEND:20200101T120000Z
+DTSTART:{past:%Y%m%d}T100000Z
+DTEND:{past:%Y%m%d}T120000Z
 SUMMARY:Past Event
 LOCATION:Old Room
 DESCRIPTION:This event is in the past
 END:VEVENT
-END:VCALENDAR"""
+END:VCALENDAR""".encode()
 
     @patch("django.core.cache.cache")
     @patch("requests.get")
@@ -2532,15 +2552,16 @@ END:VCALENDAR"""
     @patch("requests.get")
     def test_handles_all_day_events(self, mock_get, mock_cache):
         """Test that all-day events (date only) are handled correctly"""
-        ics_all_day = b"""BEGIN:VCALENDAR
+        all_day = timezone.now().date() + timedelta(days=30)
+        ics_all_day = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test Calendar//EN
 BEGIN:VEVENT
-DTSTART;VALUE=DATE:20260501
-DTEND;VALUE=DATE:20260502
+DTSTART;VALUE=DATE:{all_day:%Y%m%d}
+DTEND;VALUE=DATE:{all_day + timedelta(days=1):%Y%m%d}
 SUMMARY:All Day Event
 END:VEVENT
-END:VCALENDAR"""
+END:VCALENDAR""".encode()
         mock_cache.get.return_value = None
         mock_response = Mock()
         mock_response.content = ics_all_day
