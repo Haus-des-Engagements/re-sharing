@@ -138,13 +138,32 @@ The `uv.lock` file tracks exact versions and should be committed to version cont
 ## Database
 
 ### Postgres
-Django connects to a Postgres Database. The database can be recreated with these commands:
+Django connects to a Postgres Database. For local development a Postgres 16
+container is defined in `docker-compose.yml` (listening on port **5433** to
+avoid clashing with other local instances, data kept in a named volume):
 
-* Delete the database: `dropdb re-sharing`
-* Create database: `createdb re-sharing`
-* pg_restore -d re_sharing     -U finn     -h localhost     --clean     --if-exists     --no-owner     --no-privileges     ~/Downloads/pg-dump-postgres-1762080929.dmp
+```bash
+docker compose up -d        # start (data persists across restarts)
+docker compose down         # stop, keep data
+docker compose down -v      # stop and delete all data
+```
 
-After creating the new (empty) database, migrations need to be applied again.
+Point Django at it with a `.env` file (read when `DJANGO_READ_DOT_ENV_FILE=true`):
+
+```
+DATABASE_URL=postgres://postgres:password@localhost:5433/re_sharing
+```
+
+To (re)create the database from a dump:
+
+```bash
+docker compose exec -T postgres pg_restore -U postgres -d re_sharing \
+    --clean --if-exists --no-owner --no-privileges < ~/Downloads/<dump>.dmp
+uv run python manage.py migrate   # apply migrations newer than the dump
+```
+
+Alternatively, without Docker, use a native Postgres and `createdb re_sharing`,
+then run `pg_restore` / `migrate` against it in the same way.
 
 ## Linting & Coding Style with Ruff
 Before committing we locally verify the correct coding style with different tools.

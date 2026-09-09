@@ -1,0 +1,33 @@
+# Local development database.
+#
+#   docker compose up -d          # start (data persists in the named volume)
+#   docker compose down           # stop, keep data
+#   docker compose down -v        # stop and delete data
+#
+# Restore a dump (custom format, e.g. from `pg_dump -Fc`):
+#   docker compose exec -T postgres pg_restore -U postgres -d re_sharing \
+#       --clean --if-exists --no-owner --no-privileges < path/to/dump.dmp
+#
+# Port 5433 is used on purpose so this does not clash with other local
+# Postgres instances on the default port.
+services:
+  postgres:
+    image: postgres:16
+    container_name: re_sharing_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: re_sharing
+    ports:
+      - "5433:5432"
+    volumes:
+      - re_sharing_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d re_sharing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  re_sharing_postgres_data:
