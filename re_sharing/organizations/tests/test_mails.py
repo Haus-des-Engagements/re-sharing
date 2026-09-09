@@ -1,8 +1,12 @@
+from datetime import date
+from datetime import datetime
+from datetime import time
 from datetime import timedelta
 from unittest.mock import patch
 
 from django.core import mail
 from django.test import TestCase
+from django.test import override_settings
 from django.utils import timezone
 from psycopg.types.range import Range
 
@@ -29,6 +33,7 @@ from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import EmailTemplateFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
@@ -325,7 +330,7 @@ class SendBookingNotAvailableEmailTest(TestCase):
         EmailTemplateFactory(
             email_type=EmailTemplate.EmailTypeChoices.BOOKING_NOT_AVAILABLE,
             subject=(
-                "Not available: {{ booking.title }} " "for {{ booking.resource.name }}"
+                "Not available: {{ booking.title }} for {{ booking.resource.name }}"
             ),
             body=(
                 "Resource: {{ booking.resource.name }}, "
@@ -601,36 +606,109 @@ class SendCustomOrganizationEmailTest(TestCase):
         assert "Your email is org1@example.com" in mail.outbox[0].body
 
     def test_includes_filter_context_in_templates(self):
-        filter_context = {"min_bookings": 5, "months": 3}
+        filter_context = {
+            "min_bookings": 5,
+            "max_amount": 200.0,
+            "from_date": None,
+            "to_date": None,
+            "resource_ids": [],
+        }
 
         send_custom_organization_email.call(
             self.org1.id,
             subject_template="Test",
-            body_template="Min bookings: {{ min_bookings }}, Months: {{ months }}",
+            body_template="Min: {{ min_bookings }}, Max: {{ max_amount }}",
             filter_context=filter_context,
         )
 
         assert len(mail.outbox) == 1
-        assert "Min bookings: 5, Months: 3" in mail.outbox[0].body
+        assert "Min: 5, Max: 200.0" in mail.outbox[0].body
 
-    def test_includes_booking_count_when_months_in_context(self):
-        now = timezone.now()
-        for _ in range(3):
-            BookingFactory(
-                organization=self.org1,
-                status=BookingStatus.CONFIRMED,
-                timespan=Range(now, now + timedelta(hours=1)),
+    def _booking(self, day, hour=10, **kwargs):
+        start = timezone.make_aware(datetime.combine(day, time(hour)))
+        kwargs.setdefault("status", BookingStatus.CONFIRMED)
+        return BookingFactory(
+            organization=self.org1,
+            timespan=Range(start, start + timedelta(minutes=30)),
+            **kwargs,
+        )
+
+    def test_includes_booking_count_and_total_amount_in_range(self):
+        self._booking(date(2026, 3, 5), total_amount=10)
+        self._booking(date(2026, 3, 20), total_amount=20)
+        self._booking(date(2026, 4, 1), total_amount=99)
+        self._booking(date(2026, 3, 8), total_amount=99, status=BookingStatus.PENDING)
+
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Bookings: {{ number_of_bookings }}, Sum: {{ total_amount }}",
+            filter_context={"from_date": "2026-03-01", "to_date": "2026-03-31"},
+        )
+
+        assert len(mail.outbox) == 1
+        assert "Bookings: 2, Sum: 30.00" in mail.outbox[0].body
+
+    def test_stats_respect_resource_ids(self):
+        room_a = ResourceFactory(name="Room A", type=Resource.ResourceTypeChoices.ROOM)
+        room_b = ResourceFactory(name="Room B", type=Resource.ResourceTypeChoices.ROOM)
+        self._booking(date(2026, 3, 5), resource=room_a, total_amount=10)
+        self._booking(date(2026, 3, 6), resource=room_a, total_amount=15)
+        self._booking(date(2026, 3, 7), resource=room_b, total_amount=99)
+
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Bookings: {{ number_of_bookings }}, Sum: {{ total_amount }}",
+            filter_context={"resource_ids": [room_a.id]},
+        )
+
+        assert "Bookings: 2, Sum: 25.00" in mail.outbox[0].body
+
+    def test_dates_are_formatted_in_project_locale(self):
+        with override_settings(LANGUAGE_CODE="de"):
+            send_custom_organization_email.call(
+                self.org1.id,
+                subject_template="Test",
+                body_template="{{ from_date }} - {{ to_date }}",
+                filter_context={"from_date": "2026-03-01", "to_date": "2026-03-31"},
             )
+
+        assert "01.03.2026 - 31.03.2026" in mail.outbox[0].body
+
+    def test_open_bound_renders_empty(self):
+        with override_settings(LANGUAGE_CODE="de"):
+            send_custom_organization_email.call(
+                self.org1.id,
+                subject_template="Test",
+                body_template="[{{ from_date }}][{{ to_date }}]",
+                filter_context={"from_date": "2026-03-01", "to_date": None},
+            )
+
+        assert "[01.03.2026][]" in mail.outbox[0].body
+
+    def test_all_time_stats_when_no_dates(self):
+        self._booking(date(2020, 1, 1))
+        self._booking(date(2030, 1, 1))
 
         send_custom_organization_email.call(
             self.org1.id,
             subject_template="Test",
             body_template="Bookings: {{ number_of_bookings }}",
-            filter_context={"months": 1},
+            filter_context={"min_bookings": 1},
         )
 
-        assert len(mail.outbox) == 1
-        assert "Bookings: 3" in mail.outbox[0].body
+        assert "Bookings: 2" in mail.outbox[0].body
+
+    def test_months_is_not_available(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="[{{ months }}]",
+            filter_context={"from_date": "2026-03-01"},
+        )
+
+        assert "[]" in mail.outbox[0].body
 
     def test_handles_email_send_failure_gracefully(self):
         with patch("re_sharing.organizations.mails.EmailMessage.send") as mock_send:

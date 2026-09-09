@@ -1,3 +1,4 @@
+from datetime import date
 from http import HTTPStatus
 
 import django_filters
@@ -10,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -528,61 +530,88 @@ class EmailTemplateView(LoginRequiredMixin, CRUDView):
         return reverse("organizations:emailtemplate-list")
 
 
+class CustomEmailFilterError(ValueError):
+    """Raised when the custom email filter parameters are invalid."""
+
+
+def _parse_optional_date(value: str | None, label: str) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        msg = f"{label} is not a valid date."
+        raise CustomEmailFilterError(msg) from exc
+
+
+def _parse_custom_email_filters(params: QueryDict) -> dict:
+    """
+    Parse and validate the custom email filter parameters from GET or POST data.
+
+    Raises:
+        CustomEmailFilterError: if a date cannot be parsed or from_date > to_date
+    """
+    min_bookings = params.get("min_bookings")
+    max_amount = params.get("max_amount")
+    from_date = _parse_optional_date(params.get("from_date"), "From date")
+    to_date = _parse_optional_date(params.get("to_date"), "To date")
+
+    if from_date and to_date and from_date > to_date:
+        msg = "From date must not be after to date."
+        raise CustomEmailFilterError(msg)
+
+    return {
+        "include_groups": [int(g) for g in params.getlist("include_groups") if g],
+        "exclude_groups": [int(g) for g in params.getlist("exclude_groups") if g],
+        "resource_ids": [int(r) for r in params.getlist("resources") if r],
+        "min_bookings": int(min_bookings) if min_bookings else None,
+        "max_amount": float(max_amount) if max_amount else None,
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+
+def _custom_email_filter_context(filters: dict) -> dict:
+    """JSON-serialisable filter context handed to the email task."""
+    return {
+        "min_bookings": filters["min_bookings"],
+        "max_amount": filters["max_amount"],
+        "from_date": filters["from_date"].isoformat() if filters["from_date"] else None,
+        "to_date": filters["to_date"].isoformat() if filters["to_date"] else None,
+        "resource_ids": filters["resource_ids"],
+    }
+
+
 @manager_required
 def custom_organization_email_view(request: HttpRequest) -> HttpResponse:
     """
     View for composing and previewing custom emails to filtered organizations.
     Managers can filter organizations and see which ones will receive the email.
     """
+    from re_sharing.organizations.selectors import get_custom_email_filterable_resources
     from re_sharing.organizations.selectors import get_filtered_organizations
 
-    organizations = []
-    filter_params = {}
+    organizations = Organization.objects.none()
 
-    if request.method == "GET":
-        # Get filter parameters
-        include_groups = request.GET.getlist("include_groups")
-        exclude_groups = request.GET.getlist("exclude_groups")
-        min_bookings = request.GET.get("min_bookings")
-        months = request.GET.get("months")
-        max_amount = request.GET.get("max_amount")
-
-        # Convert to appropriate types
-        include_groups = [int(g) for g in include_groups if g]
-        exclude_groups = [int(g) for g in exclude_groups if g]
-        min_bookings = int(min_bookings) if min_bookings else None
-        months = int(months) if months else None
-        max_amount = float(max_amount) if max_amount else None
-
-        # Store filter params for later use
-        if min_bookings is not None and months is not None:
-            filter_params = {
-                "min_bookings": min_bookings,
-                "months": months,
-            }
-
-        # Get filtered organizations if any filters applied
-        if include_groups or exclude_groups or (min_bookings and months) or max_amount:
-            organizations = get_filtered_organizations(
-                include_groups=include_groups if include_groups else None,
-                exclude_groups=exclude_groups if exclude_groups else None,
-                min_bookings=min_bookings,
-                months=months,
-                max_amount=max_amount,
-            )
-
-    # Get all organization groups for the filter form
-    organization_groups = OrganizationGroup.objects.all()
+    try:
+        filters = _parse_custom_email_filters(request.GET)
+    except CustomEmailFilterError as exc:
+        messages.error(request, str(exc))
+    else:
+        if any(value not in (None, []) for value in filters.values()):
+            organizations = get_filtered_organizations(**filters)
 
     context = {
         "organizations": organizations,
-        "organization_groups": organization_groups,
-        "filter_params": filter_params,
+        "organization_groups": OrganizationGroup.objects.all(),
+        "filterable_resources": get_custom_email_filterable_resources(),
         "selected_include_groups": request.GET.getlist("include_groups"),
         "selected_exclude_groups": request.GET.getlist("exclude_groups"),
+        "selected_resources": request.GET.getlist("resources"),
         "min_bookings": request.GET.get("min_bookings", ""),
-        "months": request.GET.get("months", ""),
         "max_amount": request.GET.get("max_amount", ""),
+        "from_date": request.GET.get("from_date", ""),
+        "to_date": request.GET.get("to_date", ""),
     }
 
     return render(request, "organizations/custom_organization_email.html", context)
@@ -597,17 +626,9 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
     from re_sharing.organizations.mails import send_custom_organization_email
     from re_sharing.organizations.selectors import get_filtered_organizations
 
-    # Get filter parameters
-    include_groups = request.POST.getlist("include_groups")
-    exclude_groups = request.POST.getlist("exclude_groups")
-    min_bookings = request.POST.get("min_bookings")
-    months = request.POST.get("months")
-    max_amount = request.POST.get("max_amount")
-    selected_org_ids = request.POST.getlist("selected_orgs")
-
-    # Get email content
     subject_template = request.POST.get("subject", "")
     body_template = request.POST.get("body", "")
+    selected_org_ids = [int(org_id) for org_id in request.POST.getlist("selected_orgs")]
 
     if not subject_template or not body_template:
         messages.error(request, "Subject and body are required.")
@@ -617,46 +638,28 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
         messages.error(request, "Please select at least one organization.")
         return redirect("organizations:custom-organization-email")
 
-    # Convert to appropriate types
-    include_groups = [int(g) for g in include_groups if g]
-    exclude_groups = [int(g) for g in exclude_groups if g]
-    min_bookings = int(min_bookings) if min_bookings else None
-    months = int(months) if months else None
-    max_amount = float(max_amount) if max_amount else None
-    selected_org_ids = [int(org_id) for org_id in selected_org_ids]
+    try:
+        filters = _parse_custom_email_filters(request.POST)
+    except CustomEmailFilterError as exc:
+        messages.error(request, str(exc))
+        return redirect("organizations:custom-organization-email")
 
-    # Build filter context
-    filter_context = {}
-    if min_bookings is not None and months is not None:
-        filter_context = {
-            "min_bookings": min_bookings,
-            "months": months,
-        }
-
-    # Get filtered organizations
-    organizations = get_filtered_organizations(
-        include_groups=include_groups if include_groups else None,
-        exclude_groups=exclude_groups if exclude_groups else None,
-        min_bookings=min_bookings,
-        months=months,
-        max_amount=max_amount,
+    organizations = get_filtered_organizations(**filters).filter(
+        id__in=selected_org_ids
     )
-
-    # Filter to only selected organizations
-    organizations = organizations.filter(id__in=selected_org_ids)
 
     if not organizations.exists():
         messages.warning(request, "No organizations match the selected filters.")
         return redirect("organizations:custom-organization-email")
 
-    # Enqueue one email task per organization
+    filter_context = _custom_email_filter_context(filters)
     enqueued_count = 0
     for organization in organizations:
         send_custom_organization_email.enqueue(
             organization.id,
             subject_template,
             body_template,
-            filter_context if filter_context else None,
+            filter_context,
         )
         enqueued_count += 1
 

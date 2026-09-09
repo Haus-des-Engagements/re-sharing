@@ -13,6 +13,12 @@ This file contains specific development guidelines and rules for working with th
   - Standard pre-commit hooks for file quality checks
 - Run `pre-commit install` to set up hooks locally
 - All code changes must pass pre-commit checks before committing
+- **Commit only when asked.** Never auto-commit — report what changed and wait
+  for an explicit "commit" / "commit and push".
+- **Ship on `main`** , no feature branch / PR. The direct-to-main approval prompt is expected — surface it and
+  proceed once confirmed.
+- **Commit messages:** no `Co-Authored-By` trailer; no real-world names
+  (networks, cities, companies) in messages or comments — keep it generic.
 
 ### Test Coverage Requirements
 - **Aim for high test coverage (>95%)**

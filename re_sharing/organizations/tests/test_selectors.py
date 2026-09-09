@@ -3,7 +3,11 @@ Tests for organization selectors following HackSoft Django styleguide.
 Selectors are pure data access functions - test only database reads.
 """
 
+from datetime import date
+from datetime import datetime
+from datetime import time
 from datetime import timedelta
+from decimal import Decimal
 
 from django.test import TestCase
 from django.utils import timezone
@@ -12,14 +16,16 @@ from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.selectors import get_booking_permission
+from re_sharing.organizations.selectors import get_custom_email_filterable_resources
 from re_sharing.organizations.selectors import get_filtered_organizations
-from re_sharing.organizations.selectors import get_organization_booking_count
+from re_sharing.organizations.selectors import get_organization_booking_stats
 from re_sharing.organizations.selectors import get_user_by_email
 from re_sharing.organizations.selectors import get_user_permissions_for_organization
 from re_sharing.organizations.selectors import user_has_admin_permission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
@@ -141,6 +147,25 @@ class TestGetUserByEmail(TestCase):
         assert result is None  # Django email field is case-sensitive by default
 
 
+def local_dt(day: date, hour: int = 10, minute: int = 0) -> datetime:
+    """Aware datetime on the given day in the project time zone."""
+    return timezone.make_aware(datetime.combine(day, time(hour, minute)))
+
+
+def confirmed_booking(organization, day: date, hour=10, minute=0, **kwargs):
+    start = local_dt(day, hour, minute)
+    kwargs.setdefault("status", BookingStatus.CONFIRMED)
+    return BookingFactory(
+        organization=organization,
+        timespan=(start, start + timedelta(minutes=30)),
+        **kwargs,
+    )
+
+
+def room(name: str) -> Resource:
+    return ResourceFactory(name=name, type=Resource.ResourceTypeChoices.ROOM)
+
+
 class TestGetFilteredOrganizations(TestCase):
     def setUp(self):
         # Create organization groups
@@ -161,6 +186,10 @@ class TestGetFilteredOrganizations(TestCase):
         # Create pending organization (should be excluded)
         self.org_pending = OrganizationFactory(status=Organization.Status.PENDING)
         self.org_pending.organization_groups.add(self.group1)
+
+        self.from_date = date(2026, 3, 1)
+        self.to_date = date(2026, 3, 31)
+        self.in_range = date(2026, 3, 15)
 
     def test_returns_only_confirmed_organizations(self):
         result = get_filtered_organizations()
@@ -191,269 +220,343 @@ class TestGetFilteredOrganizations(TestCase):
         assert self.org3 not in result
 
     def test_filter_by_booking_count(self):
-        # Create bookings for org1
-        now = timezone.now()
         for _ in range(3):
-            BookingFactory(
-                organization=self.org1,
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-                total_amount=100,
-            )
+            confirmed_booking(self.org1, self.in_range, total_amount=100)
+        confirmed_booking(self.org2, self.in_range, total_amount=50)
 
-        # Create only 1 booking for org2
-        BookingFactory(
-            organization=self.org2,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=50,
+        result = get_filtered_organizations(
+            min_bookings=2, from_date=self.from_date, to_date=self.to_date
         )
-
-        result = get_filtered_organizations(min_bookings=2, months=1)
         assert self.org1 in result
         assert self.org2 not in result
         assert self.org3 not in result
 
-        # Check that total_amount is annotated
         org1_result = result.get(id=self.org1.id)
         assert org1_result.booking_count == 3  # noqa: PLR2004
         assert org1_result.total_amount == 300  # noqa: PLR2004
 
-    def test_filter_excludes_old_bookings(self):
-        now = timezone.now()
-        old_date = now - timedelta(days=120)
+    def test_filter_excludes_bookings_outside_range(self):
+        confirmed_booking(self.org1, date(2025, 11, 1))
+        confirmed_booking(self.org2, self.in_range)
 
-        # Create old booking for org1
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=(old_date, old_date + timedelta(hours=1)),
+        result = get_filtered_organizations(
+            min_bookings=1, from_date=self.from_date, to_date=self.to_date
         )
-
-        # Create recent booking for org2
-        BookingFactory(
-            organization=self.org2,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-        )
-
-        result = get_filtered_organizations(min_bookings=1, months=3)
         assert self.org1 not in result
         assert self.org2 in result
 
     def test_filter_excludes_cancelled_bookings(self):
-        now = timezone.now()
+        confirmed_booking(self.org1, self.in_range, status=BookingStatus.CANCELLED)
 
-        # Create cancelled booking for org1
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CANCELLED,
-            timespan=(now, now + timedelta(hours=1)),
+        result = get_filtered_organizations(
+            min_bookings=1, from_date=self.from_date, to_date=self.to_date
         )
+        assert self.org1 not in result
 
-        result = get_filtered_organizations(min_bookings=1, months=1)
+    def test_filter_excludes_pending_bookings(self):
+        confirmed_booking(self.org1, self.in_range, status=BookingStatus.PENDING)
+
+        result = get_filtered_organizations(min_bookings=1)
         assert self.org1 not in result
 
     def test_complex_filter_combination(self):
-        now = timezone.now()
-
-        # org1: in group1, has 2 bookings
         for _ in range(2):
-            BookingFactory(
-                organization=self.org1,
-                resource=ResourceFactory(),
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-            )
-
-        # org2: in group2, has 3 bookings
+            confirmed_booking(self.org1, self.in_range, resource=ResourceFactory())
         for _ in range(3):
-            BookingFactory(
-                organization=self.org2,
-                resource=ResourceFactory(),
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-            )
+            confirmed_booking(self.org2, self.in_range, resource=ResourceFactory())
 
         result = get_filtered_organizations(
             include_groups=[self.group1.id, self.group2.id],
             exclude_groups=[self.group3.id],
             min_bookings=2,
-            months=1,
+            from_date=self.from_date,
+            to_date=self.to_date,
         )
 
         assert self.org1 in result
         assert self.org2 in result
         assert self.org3 not in result
 
+    # --- date range boundaries -------------------------------------------
 
-class TestGetOrganizationBookingCount(TestCase):
+    def _count(self, **kwargs) -> int:
+        return get_filtered_organizations(**kwargs).get(id=self.org1.id).booking_count
+
+    def test_booking_starting_at_start_of_from_date_counts(self):
+        confirmed_booking(self.org1, self.from_date, hour=0, minute=0)
+        assert self._count(from_date=self.from_date, to_date=self.to_date) == 1
+
+    def test_booking_starting_late_on_to_date_counts(self):
+        confirmed_booking(self.org1, self.to_date, hour=23, minute=30)
+        assert self._count(from_date=self.from_date, to_date=self.to_date) == 1
+
+    def test_booking_starting_day_after_to_date_does_not_count(self):
+        confirmed_booking(self.org1, date(2026, 4, 1), hour=0, minute=0)
+        assert self._count(from_date=self.from_date, to_date=self.to_date) == 0
+
+    def test_booking_starting_day_before_from_date_does_not_count(self):
+        confirmed_booking(self.org1, date(2026, 2, 28), hour=23, minute=59)
+        assert self._count(from_date=self.from_date, to_date=self.to_date) == 0
+
+    def test_booking_overlapping_into_range_but_starting_before_does_not_count(
+        self,
+    ):
+        start = local_dt(date(2026, 2, 28), 22)
+        BookingFactory(
+            organization=self.org1,
+            status=BookingStatus.CONFIRMED,
+            timespan=(start, start + timedelta(hours=4)),
+        )
+        assert self._count(from_date=self.from_date, to_date=self.to_date) == 0
+
+    def test_only_from_date_is_open_ended(self):
+        confirmed_booking(self.org1, date(2026, 2, 28))
+        confirmed_booking(self.org1, self.from_date)
+        confirmed_booking(self.org1, date(2030, 1, 1))
+        assert self._count(from_date=self.from_date) == 2  # noqa: PLR2004
+
+    def test_only_to_date_is_open_ended(self):
+        confirmed_booking(self.org1, date(2020, 1, 1))
+        confirmed_booking(self.org1, self.to_date)
+        confirmed_booking(self.org1, date(2026, 4, 1))
+        assert self._count(to_date=self.to_date) == 2  # noqa: PLR2004
+
+    def test_no_dates_counts_all_time(self):
+        confirmed_booking(self.org1, date(2020, 1, 1))
+        confirmed_booking(self.org1, date(2026, 3, 1))
+        confirmed_booking(self.org1, date(2030, 1, 1))
+        assert self._count() == 3  # noqa: PLR2004
+
+    def test_future_range_counts_future_confirmed_bookings(self):
+        today = timezone.localdate()
+        start = today + timedelta(days=30)
+        end = today + timedelta(days=60)
+        confirmed_booking(self.org1, start + timedelta(days=5))
+        confirmed_booking(self.org1, end + timedelta(days=1))
+        assert self._count(from_date=start, to_date=end) == 1
+
+    # --- thresholds without a date range ----------------------------------
+
+    def test_min_bookings_without_date_range(self):
+        confirmed_booking(self.org1, date(2020, 1, 1))
+        for _ in range(3):
+            confirmed_booking(self.org2, date(2020, 1, 1))
+
+        result = get_filtered_organizations(min_bookings=2)
+        assert self.org1 not in result
+        assert self.org2 in result
+
+    def test_max_amount_without_date_range(self):
+        confirmed_booking(self.org1, date(2020, 1, 1), total_amount=150)
+        confirmed_booking(self.org2, date(2020, 1, 1), total_amount=50)
+
+        result = get_filtered_organizations(max_amount=100)
+        assert self.org1 not in result
+        assert self.org2 in result
+
+    def test_min_bookings_zero_is_honoured(self):
+        result = get_filtered_organizations(min_bookings=0)
+        assert self.org1 in result
+        assert result.get(id=self.org1.id).booking_count == 0
+
+    # --- resource filter --------------------------------------------------
+
+    def test_selected_resource_narrows_count_and_amount(self):
+        room_a = room("Room A")
+        room_b = room("Room B")
+        confirmed_booking(self.org1, self.in_range, resource=room_a, total_amount=10)
+        confirmed_booking(
+            self.org1, self.in_range, hour=12, resource=room_a, total_amount=20
+        )
+        confirmed_booking(self.org1, self.in_range, resource=room_b, total_amount=40)
+
+        org = get_filtered_organizations(resource_ids=[room_a.id]).get(id=self.org1.id)
+        assert org.booking_count == 2  # noqa: PLR2004
+        assert org.total_amount == 30  # noqa: PLR2004
+
+    def test_multiple_selected_resources_are_combined(self):
+        room_a = room("Room A")
+        room_b = room("Room B")
+        parking = ResourceFactory(
+            name="Parking P", type=Resource.ResourceTypeChoices.PARKING_LOT
+        )
+        confirmed_booking(self.org1, self.in_range, resource=room_a)
+        confirmed_booking(self.org1, self.in_range, resource=parking)
+        confirmed_booking(self.org1, self.in_range, resource=room_b)
+
+        assert self._count(resource_ids=[room_a.id, parking.id]) == 2  # noqa: PLR2004
+
+    def test_no_selection_counts_all_resources(self):
+        confirmed_booking(self.org1, self.in_range, resource=room("Room A"))
+        confirmed_booking(self.org1, self.in_range, resource=room("Room B"))
+
+        assert self._count(resource_ids=[]) == 2  # noqa: PLR2004
+        assert self._count(resource_ids=None) == 2  # noqa: PLR2004
+
+    def test_lendable_item_id_is_ignored(self):
+        item = ResourceFactory(
+            name="Beamer", type=Resource.ResourceTypeChoices.LENDABLE_ITEM
+        )
+        confirmed_booking(self.org1, self.in_range, resource=item)
+        confirmed_booking(self.org1, self.in_range, resource=room("Room A"))
+
+        assert self._count(resource_ids=[item.id]) == 0
+
+    def test_resource_filter_combines_with_date_range(self):
+        room_a = room("Room A")
+        confirmed_booking(self.org1, self.in_range, resource=room_a)
+        confirmed_booking(self.org1, date(2025, 1, 1), resource=room_a)
+        confirmed_booking(self.org1, self.in_range, resource=room("Room B"))
+
+        assert (
+            self._count(
+                from_date=self.from_date,
+                to_date=self.to_date,
+                resource_ids=[room_a.id],
+            )
+            == 1
+        )
+
+    def test_thresholds_use_narrowed_statistics(self):
+        room_a = room("Room A")
+        confirmed_booking(self.org1, self.in_range, resource=room_a)
+        confirmed_booking(self.org1, self.in_range, resource=room("Room B"))
+        confirmed_booking(self.org1, self.in_range, resource=room("Room C"))
+
+        result = get_filtered_organizations(min_bookings=2, resource_ids=[room_a.id])
+        assert self.org1 not in result
+
+
+class TestGetCustomEmailFilterableResources(TestCase):
+    def test_returns_rooms_and_parking_lots_ordered_by_type_then_name(self):
+        room_b = room("Room B")
+        room_a = room("Room A")
+        parking = ResourceFactory(
+            name="Parking P", type=Resource.ResourceTypeChoices.PARKING_LOT
+        )
+        ResourceFactory(name="Beamer", type=Resource.ResourceTypeChoices.LENDABLE_ITEM)
+
+        result = list(get_custom_email_filterable_resources())
+
+        assert result == [parking, room_a, room_b]
+
+
+class TestGetOrganizationBookingStats(TestCase):
     def setUp(self):
         self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.from_date = date(2026, 3, 1)
+        self.to_date = date(2026, 3, 31)
 
-    def test_counts_confirmed_bookings_only(self):
-        now = timezone.now()
-
-        # Create confirmed bookings
-        for _ in range(3):
-            BookingFactory(
-                organization=self.organization,
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-            )
-
-        # Create cancelled booking (should not be counted)
-        BookingFactory(
-            organization=self.organization,
-            status=BookingStatus.CANCELLED,
-            timespan=(now, now + timedelta(hours=1)),
+    def test_matches_preview_for_same_filter(self):
+        room_a = room("Room A")
+        confirmed_booking(
+            self.organization, date(2026, 3, 10), resource=room_a, total_amount=10
+        )
+        confirmed_booking(
+            self.organization, date(2026, 3, 20), resource=room_a, total_amount=20
+        )
+        confirmed_booking(
+            self.organization, date(2026, 3, 20), resource=room("B"), total_amount=99
+        )
+        confirmed_booking(
+            self.organization, date(2026, 5, 1), resource=room_a, total_amount=99
         )
 
-        # Create pending booking (should not be counted)
-        BookingFactory(
-            organization=self.organization,
-            status=BookingStatus.PENDING,
-            timespan=(now, now + timedelta(hours=1)),
+        stats = get_organization_booking_stats(
+            self.organization,
+            from_date=self.from_date,
+            to_date=self.to_date,
+            resource_ids=[room_a.id],
+        )
+        preview = get_filtered_organizations(
+            from_date=self.from_date,
+            to_date=self.to_date,
+            resource_ids=[room_a.id],
+        ).get(id=self.organization.id)
+
+        assert stats == {"booking_count": 2, "total_amount": Decimal(30)}
+        assert stats["booking_count"] == preview.booking_count
+        assert stats["total_amount"] == preview.total_amount
+
+    def test_all_time_when_no_dates(self):
+        confirmed_booking(self.organization, date(2020, 1, 1), total_amount=1)
+        confirmed_booking(self.organization, date(2030, 1, 1), total_amount=2)
+
+        stats = get_organization_booking_stats(self.organization)
+
+        assert stats == {"booking_count": 2, "total_amount": Decimal(3)}
+
+    def test_total_amount_is_zero_when_nothing_matches(self):
+        stats = get_organization_booking_stats(
+            self.organization, from_date=self.from_date, to_date=self.to_date
         )
 
-        count = get_organization_booking_count(self.organization, months=1)
-        assert count == 3  # noqa: PLR2004
+        assert stats == {"booking_count": 0, "total_amount": 0}
 
-    def test_counts_only_bookings_in_timeframe(self):
-        now = timezone.now()
-        old_date = now - timedelta(days=120)
-
-        # Create recent bookings
-        for _ in range(2):
-            BookingFactory(
-                organization=self.organization,
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-            )
-
-        # Create old booking (outside timeframe)
-        BookingFactory(
-            organization=self.organization,
-            status=BookingStatus.CONFIRMED,
-            timespan=(old_date, old_date + timedelta(hours=1)),
+    def test_excludes_non_confirmed_bookings(self):
+        confirmed_booking(self.organization, date(2026, 3, 5))
+        confirmed_booking(
+            self.organization, date(2026, 3, 5), status=BookingStatus.CANCELLED
+        )
+        confirmed_booking(
+            self.organization, date(2026, 3, 5), status=BookingStatus.PENDING
         )
 
-        count = get_organization_booking_count(self.organization, months=3)
-        assert count == 2  # noqa: PLR2004
+        stats = get_organization_booking_stats(self.organization)
 
-    def test_returns_zero_for_no_bookings(self):
-        count = get_organization_booking_count(self.organization, months=1)
-        assert count == 0
+        assert stats["booking_count"] == 1
 
 
 class TestGetFilteredOrganizationsWithTotalAmount(TestCase):
     def setUp(self):
         self.org1 = OrganizationFactory(status=Organization.Status.CONFIRMED)
         self.org2 = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.day = date(2026, 3, 15)
 
-    def test_annotates_with_total_amount_when_months_provided(self):
-        now = timezone.now()
+    def test_annotates_with_total_amount(self):
+        confirmed_booking(self.org1, self.day, total_amount=100)
+        confirmed_booking(self.org1, self.day, total_amount=150)
 
-        # Create bookings with different amounts
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=100,
-        )
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=150,
-        )
-
-        result = get_filtered_organizations(months=1)
+        result = get_filtered_organizations()
         org1_result = result.get(id=self.org1.id)
 
         assert org1_result.booking_count == 2  # noqa: PLR2004
         assert org1_result.total_amount == 250  # noqa: PLR2004
 
     def test_total_amount_defaults_to_zero_for_no_bookings(self):
-        result = get_filtered_organizations(months=1)
+        result = get_filtered_organizations()
         org_result = result.get(id=self.org1.id)
 
         assert org_result.booking_count == 0
         assert org_result.total_amount == 0
 
     def test_total_amount_excludes_cancelled_bookings(self):
-        now = timezone.now()
-
-        # Create confirmed booking
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=100,
+        confirmed_booking(self.org1, self.day, total_amount=100)
+        confirmed_booking(
+            self.org1, self.day, total_amount=200, status=BookingStatus.CANCELLED
         )
 
-        # Create cancelled booking (should not be counted)
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CANCELLED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=200,
-        )
-
-        result = get_filtered_organizations(months=1)
+        result = get_filtered_organizations()
         org_result = result.get(id=self.org1.id)
 
         assert org_result.booking_count == 1
         assert org_result.total_amount == 100  # noqa: PLR2004
 
     def test_max_amount_filter_excludes_organizations_above_threshold(self):
-        now = timezone.now()
-
-        # org1 has total of 300
         for _ in range(3):
-            BookingFactory(
-                organization=self.org1,
-                status=BookingStatus.CONFIRMED,
-                timespan=(now, now + timedelta(hours=1)),
-                total_amount=100,
-            )
+            confirmed_booking(self.org1, self.day, total_amount=100)
+        confirmed_booking(self.org2, self.day, total_amount=150)
 
-        # org2 has total of 150
-        BookingFactory(
-            organization=self.org2,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=150,
-        )
+        result = get_filtered_organizations(max_amount=200)
 
-        result = get_filtered_organizations(months=1, max_amount=200)
-
-        # org1 should be excluded (300 > 200), org2 should be included (150 <= 200)
         assert self.org1 not in result
         assert self.org2 in result
 
     def test_max_amount_filter_includes_organizations_at_threshold(self):
-        now = timezone.now()
+        confirmed_booking(self.org1, self.day, total_amount=200)
 
-        # org1 has exactly 200
-        BookingFactory(
-            organization=self.org1,
-            status=BookingStatus.CONFIRMED,
-            timespan=(now, now + timedelta(hours=1)),
-            total_amount=200,
-        )
-
-        result = get_filtered_organizations(months=1, max_amount=200)
+        result = get_filtered_organizations(max_amount=200)
         org_result = result.get(id=self.org1.id)
 
         assert org_result is not None
         assert org_result.total_amount == 200  # noqa: PLR2004
-
-    def test_max_amount_without_months_requires_months(self):
-        # max_amount filter requires months parameter
-        result = get_filtered_organizations(max_amount=100)
-
-        # Without months, total_amount is not annotated, so filter has no effect
-        # Organizations will be returned but without the annotation
-        assert self.org1 in result
-        assert self.org2 in result

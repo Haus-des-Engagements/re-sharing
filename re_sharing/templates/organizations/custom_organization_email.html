@@ -56,8 +56,49 @@
                 </select>
                 <small class="form-text text-muted">{% trans "Organizations in these groups will be excluded" %}</small>
               </div>
+              <div class="mb-3">
+                <label for="resources" class="form-label">{% trans "Resources" %}</label>
+                <select name="resources" id="resources" class="form-select" multiple>
+                  {% regroup filterable_resources by get_type_display as resource_types %}
+                  {% for resource_type in resource_types %}
+                    <optgroup label="{{ resource_type.grouper }}">
+                      {% for resource in resource_type.list %}
+                        <option value="{{ resource.id }}"
+                                {% if resource.id|stringformat:"s" in selected_resources %}selected{% endif %}>
+                          {{ resource.name }}
+                        </option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">{% trans "Only count bookings on these rooms and parking lots. Leave empty to count all resources." %}</small>
+              </div>
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="from_date" class="form-label">{% trans "From date" %}</label>
+                    <input type="date"
+                           name="from_date"
+                           id="from_date"
+                           class="form-control"
+                           value="{{ from_date }}" />
+                    <small class="form-text text-muted">{% trans "First day of the counted period (leave empty for no start)" %}</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="to_date" class="form-label">{% trans "To date" %}</label>
+                    <input type="date"
+                           name="to_date"
+                           id="to_date"
+                           class="form-control"
+                           value="{{ to_date }}" />
+                    <small class="form-text text-muted">{% trans "Last day of the counted period (leave empty for no end)" %}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
                   <div class="mb-3">
                     <label for="min_bookings" class="form-label">{% trans "Minimum Bookings" %}</label>
                     <input type="number"
@@ -66,22 +107,10 @@
                            class="form-control"
                            value="{{ min_bookings }}"
                            min="0" />
-                    <small class="form-text text-muted">{% trans "Minimum number of bookings required" %}</small>
+                    <small class="form-text text-muted">{% trans "Minimum number of counted bookings required" %}</small>
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <div class="mb-3">
-                    <label for="months" class="form-label">{% trans "In Last X Months" %}</label>
-                    <input type="number"
-                           name="months"
-                           id="months"
-                           class="form-control"
-                           value="{{ months }}"
-                           min="1" />
-                    <small class="form-text text-muted">{% trans "Number of months to look back" %}</small>
-                  </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="mb-3">
                     <label for="max_amount" class="form-label">{% trans "Maximum Total Amount (€)" %}</label>
                     <input type="number"
@@ -108,7 +137,11 @@
                   <thead>
                     <tr>
                       <th class="sorttable_nosort">
-                        <input type="checkbox" id="selectAll" checked class="form-check-input" title="{% trans "Select/Deselect All" %}" />
+                        <input type="checkbox"
+                               id="selectAll"
+                               checked
+                               class="form-check-input"
+                               title="{% trans "Select/Deselect All" %}" />
                       </th>
                       <th>{% trans "Name" %}</th>
                       <th>{% trans "Email" %}</th>
@@ -152,9 +185,13 @@
                 {% for group in selected_exclude_groups %}
                   <input type="hidden" name="exclude_groups" value="{{ group }}" />
                 {% endfor %}
+                {% for resource_id in selected_resources %}
+                  <input type="hidden" name="resources" value="{{ resource_id }}" />
+                {% endfor %}
                 <input type="hidden" name="min_bookings" value="{{ min_bookings }}" />
-                <input type="hidden" name="months" value="{{ months }}" />
                 <input type="hidden" name="max_amount" value="{{ max_amount }}" />
+                <input type="hidden" name="from_date" value="{{ from_date }}" />
+                <input type="hidden" name="to_date" value="{{ to_date }}" />
                 <div class="mb-3">
                   <label for="subject" class="form-label">{% trans "Subject" %}</label>
                   <input type="text" name="subject" id="subject" class="form-control" required />
@@ -180,26 +217,30 @@
                           {{ organization.email }}
                         {% endverbatim %}
                       </li>
-                      {% if months %}
-                        <li>
-                          {% verbatim %}
-                            {{ number_of_bookings }}
-                          {% endverbatim %}
-                          - {% trans "Bookings in selected period" %}
-                        </li>
-                        <li>
-                          {% verbatim %}
-                            {{ total_amount }}
-                          {% endverbatim %}
-                          - {% trans "Total amount in selected period" %}
-                        </li>
-                        <li>
-                          {% verbatim %}
-                            {{ months }}
-                          {% endverbatim %}
-                          - {% trans "Number of months" %}
-                        </li>
-                      {% endif %}
+                      <li>
+                        {% verbatim %}
+                          {{ number_of_bookings }}
+                        {% endverbatim %}
+                        - {% trans "Counted bookings (selected period and resources)" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ total_amount }}
+                        {% endverbatim %}
+                        - {% trans "Total amount of counted bookings" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ from_date }}
+                        {% endverbatim %}
+                        - {% trans "First day of the period (empty if not set)" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ to_date }}
+                        {% endverbatim %}
+                        - {% trans "Last day of the period (empty if not set)" %}
+                      </li>
                     </ul>
                   </small>
                 </div>
@@ -286,7 +327,13 @@
                 <strong>{% trans "Exclude Groups" %}:</strong> {% trans "Organizations belonging to these groups will be excluded" %}
               </li>
               <li>
-                <strong>{% trans "Minimum Bookings" %}:</strong> {% trans "Only organizations with at least this many bookings in the specified period" %}
+                <strong>{% trans "Resources" %}:</strong> {% trans "Only confirmed bookings on the selected rooms and parking lots are counted. Leave empty to count all resources." %}
+              </li>
+              <li>
+                <strong>{% trans "From / To date" %}:</strong> {% trans "Only confirmed bookings starting within this period are counted. Dates may lie in the future. Leave both empty to count all bookings ever." %}
+              </li>
+              <li>
+                <strong>{% trans "Minimum Bookings" %}:</strong> {% trans "Only organizations with at least this many counted bookings" %}
               </li>
               <li>
                 <strong>{% trans "Maximum Total Amount" %}:</strong> {% trans "Organizations with a total amount above this threshold will be excluded" %}

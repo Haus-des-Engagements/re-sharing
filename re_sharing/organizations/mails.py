@@ -14,6 +14,7 @@ Usage:
 """
 
 import logging
+from datetime import date
 from datetime import timedelta
 
 from django.conf import settings
@@ -24,6 +25,8 @@ from django.template import Context
 from django.template import Template
 from django.urls import reverse
 from django.utils import timezone
+from django.utils import translation
+from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
 from icalendar import Event
@@ -526,6 +529,18 @@ def send_monthly_overview_email(
     }
 
 
+def _parse_iso_date(value: str | None) -> date | None:
+    return date.fromisoformat(value) if value else None
+
+
+def _format_short_date(value: date | None) -> str:
+    """Format a date in the project locale's short format (empty if None)."""
+    if not value:
+        return ""
+    with translation.override(settings.LANGUAGE_CODE):
+        return date_format(value, "SHORT_DATE_FORMAT")
+
+
 # =============================================================================
 # Custom email function (not a task - admin action with complex arguments)
 # =============================================================================
@@ -545,9 +560,16 @@ def send_custom_organization_email(
         organization_id: ID of the organization to send to
         subject_template: String template for email subject
         body_template: String template for email body
-        filter_context: Optional dict with filter parameters (min_bookings, months)
+        filter_context: Optional JSON-serialisable dict with the filter used on
+            the custom email page: ``min_bookings``, ``max_amount``,
+            ``from_date`` / ``to_date`` (ISO date strings or None) and
+            ``resource_ids`` (list of ints). When given, the template context
+            receives ``number_of_bookings`` and ``total_amount`` computed with
+            the same rules as the page preview, plus ``from_date`` / ``to_date``
+            as localized short dates (empty string for an open bound).
     """
     from re_sharing.organizations.models import Organization
+    from re_sharing.organizations.selectors import get_organization_booking_stats
 
     organization = Organization.objects.get(id=organization_id)
 
@@ -562,19 +584,24 @@ def send_custom_organization_email(
     }
 
     if filter_context:
-        context.update(filter_context)
-        if "months" in filter_context:
-            if hasattr(organization, "booking_count"):
-                context["number_of_bookings"] = organization.booking_count
-                context["total_amount"] = organization.total_amount
-            else:
-                from re_sharing.organizations.selectors import (
-                    get_organization_booking_count,
-                )
-
-                context["number_of_bookings"] = get_organization_booking_count(
-                    organization, filter_context["months"]
-                )
+        from_date = _parse_iso_date(filter_context.get("from_date"))
+        to_date = _parse_iso_date(filter_context.get("to_date"))
+        stats = get_organization_booking_stats(
+            organization,
+            from_date=from_date,
+            to_date=to_date,
+            resource_ids=filter_context.get("resource_ids"),
+        )
+        context.update(
+            {
+                "min_bookings": filter_context.get("min_bookings"),
+                "max_amount": filter_context.get("max_amount"),
+                "from_date": _format_short_date(from_date),
+                "to_date": _format_short_date(to_date),
+                "number_of_bookings": stats["booking_count"],
+                "total_amount": stats["total_amount"],
+            }
+        )
 
     subject = Template(subject_template).render(Context(context, autoescape=False))
     body = Template(body_template).render(Context(context, autoescape=False))

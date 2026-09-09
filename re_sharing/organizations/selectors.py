@@ -7,7 +7,9 @@ Following HackSoft Django styleguide:
 - Pure data access layer
 """
 
-from datetime import timedelta
+from datetime import date
+from datetime import datetime
+from datetime import time
 
 from django.db.models import Count
 from django.db.models import DecimalField
@@ -17,6 +19,7 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from re_sharing.resources.models import Resource
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
 
@@ -66,83 +69,129 @@ def get_user_by_email(email: str) -> User | None:
         return None
 
 
-def get_filtered_organizations(
+CUSTOM_EMAIL_RESOURCE_TYPES = (
+    Resource.ResourceTypeChoices.ROOM,
+    Resource.ResourceTypeChoices.PARKING_LOT,
+)
+
+
+def get_custom_email_filterable_resources() -> QuerySet[Resource]:
+    """Rooms and parking lots that can be used as a filter for custom emails."""
+    return Resource.objects.filter(type__in=CUSTOM_EMAIL_RESOURCE_TYPES).order_by(
+        "type", "name"
+    )
+
+
+def _confirmed_booking_filter(
+    from_date: date | None = None,
+    to_date: date | None = None,
+    resource_ids: list[int] | None = None,
+    prefix: str = "",
+) -> Q:
+    """
+    Build the Q object selecting the bookings that count for custom email
+    statistics: confirmed bookings whose start lies within the inclusive day
+    range [from_date, to_date] (project time zone) on the given resources.
+
+    An omitted bound is open. Empty resource_ids means all resources. Resource
+    IDs that are not rooms or parking lots are ignored.
+
+    Args:
+        prefix: Lookup prefix when filtering through a relation
+            (e.g. "booking_of_organization__").
+    """
+    booking_filter = Q(**{f"{prefix}status": BookingStatus.CONFIRMED})
+
+    if from_date is not None:
+        start = timezone.make_aware(datetime.combine(from_date, time.min))
+        booking_filter &= Q(**{f"{prefix}timespan__startswith__gte": start})
+
+    if to_date is not None:
+        end = timezone.make_aware(datetime.combine(to_date, time.max))
+        booking_filter &= Q(**{f"{prefix}timespan__startswith__lte": end})
+
+    if resource_ids:
+        resources = Resource.objects.filter(
+            id__in=resource_ids, type__in=CUSTOM_EMAIL_RESOURCE_TYPES
+        )
+        booking_filter &= Q(**{f"{prefix}resource__in": resources})
+
+    return booking_filter
+
+
+def get_filtered_organizations(  # noqa: PLR0913
     include_groups: list[int] | None = None,
     exclude_groups: list[int] | None = None,
     min_bookings: int | None = None,
-    months: int | None = None,
     max_amount: float | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
+    resource_ids: list[int] | None = None,
 ) -> QuerySet[Organization]:
     """
     Filter confirmed organizations based on criteria.
 
+    Every organization is annotated with ``booking_count`` and ``total_amount``
+    over its confirmed bookings starting within [from_date, to_date] on the
+    selected resources (see ``_confirmed_booking_filter``).
+
     Args:
         include_groups: List of OrganizationGroup IDs to include
         exclude_groups: List of OrganizationGroup IDs to exclude
-        min_bookings: Minimum number of bookings required
-        months: Number of months to look back for bookings
-        max_amount: Maximum total amount (organizations above this are excluded)
+        min_bookings: Minimum number of counted bookings required
+        max_amount: Maximum counted total amount (organizations above are excluded)
+        from_date: First day of the counted period (inclusive), open if None
+        to_date: Last day of the counted period (inclusive), open if None
+        resource_ids: Only count bookings on these rooms/parking lots
 
     Returns:
         QuerySet of filtered Organization objects
     """
     queryset = Organization.objects.filter(status=Organization.Status.CONFIRMED)
 
-    # Apply group filters
     if include_groups:
         queryset = queryset.filter(organization_groups__id__in=include_groups)
 
     if exclude_groups:
         queryset = queryset.exclude(organization_groups__id__in=exclude_groups)
 
-    # Annotate with booking statistics if months is provided
-    if months is not None:
-        start_date = timezone.now() - timedelta(days=months * 30)
-        queryset = queryset.annotate(
-            booking_count=Count(
-                "booking_of_organization",
-                filter=Q(
-                    booking_of_organization__status=BookingStatus.CONFIRMED,
-                    booking_of_organization__timespan__startswith__gte=start_date,
-                ),
-            ),
-            total_amount=Coalesce(
-                Sum(
-                    "booking_of_organization__total_amount",
-                    filter=Q(
-                        booking_of_organization__status=BookingStatus.CONFIRMED,
-                        booking_of_organization__timespan__startswith__gte=start_date,
-                    ),
-                ),
-                0,
-                output_field=DecimalField(),
-            ),
-        )
+    booking_filter = _confirmed_booking_filter(
+        from_date, to_date, resource_ids, prefix="booking_of_organization__"
+    )
+    queryset = queryset.annotate(
+        booking_count=Count("booking_of_organization", filter=booking_filter),
+        total_amount=Coalesce(
+            Sum("booking_of_organization__total_amount", filter=booking_filter),
+            0,
+            output_field=DecimalField(),
+        ),
+    )
 
-        # Apply booking count filter if specified
-        if min_bookings is not None:
-            queryset = queryset.filter(booking_count__gte=min_bookings)
+    if min_bookings is not None:
+        queryset = queryset.filter(booking_count__gte=min_bookings)
 
-        # Apply max amount filter if specified
-        if max_amount is not None:
-            queryset = queryset.filter(total_amount__lte=max_amount)
+    if max_amount is not None:
+        queryset = queryset.filter(total_amount__lte=max_amount)
 
     return queryset.distinct()
 
 
-def get_organization_booking_count(organization: Organization, months: int) -> int:
+def get_organization_booking_stats(
+    organization: Organization,
+    from_date: date | None = None,
+    to_date: date | None = None,
+    resource_ids: list[int] | None = None,
+) -> dict:
     """
-    Get the number of confirmed bookings for an organization in the last X months.
-
-    Args:
-        organization: The Organization instance
-        months: Number of months to look back
+    Booking statistics for one organization using the same rules as
+    ``get_filtered_organizations``.
 
     Returns:
-        Number of confirmed bookings
+        dict with ``booking_count`` (int) and ``total_amount`` (Decimal, 0 if none)
     """
-    start_date = timezone.now() - timedelta(days=months * 30)
     return organization.bookings_of_organization.filter(
-        status=BookingStatus.CONFIRMED,
-        timespan__startswith__gte=start_date,
-    ).count()
+        _confirmed_booking_filter(from_date, to_date, resource_ids)
+    ).aggregate(
+        booking_count=Count("id"),
+        total_amount=Coalesce(Sum("total_amount"), 0, output_field=DecimalField()),
+    )
