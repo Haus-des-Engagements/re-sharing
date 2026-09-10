@@ -15,9 +15,9 @@
       /* Display-board view: everything is sized in rem, and the root font
          size is tied to the viewport width so text keeps the same
          proportion of the screen regardless of resolution or screen size.
-         1.667vw = 32px on a 1920px-wide screen. */
+         0.9vw is roughly twice the old fixed 16px root on the display boards. */
       html {
-        font-size: clamp(16px, 1.667vw, 96px);
+        font-size: clamp(12px, 0.9vw, 64px);
       }
       :root {
         --font-size-base: 1.5rem;
