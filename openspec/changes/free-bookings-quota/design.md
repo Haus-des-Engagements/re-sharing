@@ -76,7 +76,7 @@ Selectors in `organizations/selectors.py` provide `get_free_bookings_allowance(o
 
 A fallback is only passed for series occurrences (D6). Single bookings never get an automatic fallback: with no partial case, a single booking whose allowance is exhausted simply cannot use the consuming compensation, and the user picks a paid one in the form, which is today's pricing path.
 
-Call sites: `generate_booking` (new and edit, edit excludes the booking itself from the counter), `create_booking_series_and_bookings` and `generate_bookings` (per occurrence, with the number of not-yet-saved free occurrences per year added to the counter), `extend_booking_series` (per occurrence, as bookings are created one night at a time).
+Call sites: `generate_booking` (new and edit, see D12 for when an edit is re-evaluated), `create_booking_series_and_bookings` and `generate_bookings` (per occurrence, with the number of not-yet-saved free occurrences per year added to the counter), `extend_booking_series` (per occurrence, as bookings are created one night at a time).
 
 Why: one function means one set of tests for the pricing rules and no drift between single and series bookings.
 
@@ -84,13 +84,13 @@ Why: one function means one set of tests for the pricing rules and no drift betw
 
 The existing bookability check additionally rejects a consuming compensation when the organization's remaining free bookings for the booking's year are zero. The htmx compensation endpoint hides a consuming compensation when nothing is left and shows the remaining free bookings next to it otherwise. Hiding is convenience; the service check is the rule.
 
-For series, the check applies to the first occurrence only; later occurrences are handled by the fallback (D6).
+For series, the check applies to the first occurrence only; later occurrences are handled by the fallback (D6). For edits, the check applies only when the edit is re-evaluated (D12), so an unchanged booking can always be edited.
 
 ### D6: Series keep the chosen compensation, occurrences are priced individually
 
 Each occurrence counts as one booking. A weekly series with the consuming compensation and an allowance of five uses the allowance of a year within its first five occurrences of that year.
 
-`BookingSeries.compensation` stays as the user's choice. A new nullable `BookingSeries.fallback_compensation` stores the paid compensation to use once the allowance of a year is exhausted. The series form requires a fallback selection when the chosen compensation is consuming, the organization's allowance is limited for the first occurrence, and a paid hourly compensation bookable by the organization exists for the room. Fallback choices are limited to those compensations. Each occurrence is priced with D4 for its own year; `total_amount_per_booking` becomes informational (the amount of a fully paid occurrence).
+`BookingSeries.compensation` stays as the user's choice. A new nullable `BookingSeries.fallback_compensation` stores the paid compensation to use once the allowance of a year is exhausted. The series form requires a fallback selection when the chosen compensation is consuming, the organization's allowance is limited on any occurrence date within the booking horizon (730 days, see D11), and a paid hourly compensation bookable by the organization exists for the room. Fallback choices are limited to those compensations. Each occurrence is priced with D4 for its own year; `total_amount_per_booking` becomes informational (the amount of a fully paid occurrence).
 
 Occurrences that are `UNAVAILABLE` (room already taken) are not priced against the allowance and do not use a free booking.
 
@@ -108,7 +108,7 @@ Why: any other rule would re-price existing bookings and collide with issued inv
 
 ### D8: Concurrency guard
 
-Saving a priced booking locks the organization row (`select_for_update`) inside the request transaction (`ATOMIC_REQUESTS` is on) and recomputes the price before saving. Two simultaneous bookings from the same organization then serialize on the lock.
+Saving a priced booking locks the organization row (`select_for_update`) inside the request transaction (`ATOMIC_REQUESTS` is on) and recomputes the price before saving, applying the same re-evaluation rule for edits (D12). Two simultaneous bookings from the same organization then serialize on the lock.
 
 ### D9: Invoices
 
@@ -116,29 +116,59 @@ No change. A booking is either free (no invoice line, as today) or priced with a
 
 ### D10: ADR
 
-Add `docs/ADR/0023-Free-Bookings-Quota.md` describing D1 to D4, D6 and D7, so the "no member flag, groups carry allowances, a booking counts as one" decision is findable.
+Add `docs/ADR/0023-Free-Bookings-Quota.md` describing D1 to D4, D6, D7, D11 and D12, so the "no member flag, groups carry allowances, a booking counts as one" decision is findable.
+
+### D11: Series that cross into the first limited year need a fallback
+
+The rollout sets `free_bookings_valid_from` to 2027-01-01 while series are created in 2026. A weekly series starting in November 2026 has an unlimited first occurrence but limited occurrences from January 2027 on. If the fallback were only required when the first occurrence is limited, such a series would get no fallback and every 2027 occurrence after the fifth would be dropped.
+
+The series form therefore asks whether the allowance is limited on any occurrence date between the first occurrence and the end of the booking horizon (today plus 730 days, or the series' last date if earlier). Because a group's allowance can only change from unlimited to limited as the date moves forward (D1), checking the last occurrence date inside that window is sufficient; the selector `is_free_bookings_allowance_limited_until(organization, last_date)` wraps this.
+
+Occurrences before the valid-from date are unlimited and do not use a free booking; only the occurrences on or after it are counted.
+
+### D12: Editing a booking only re-evaluates the allowance when it matters
+
+Edits go through the full booking form and preview (`update_booking_view` → `generate_booking`), so an organization changing only the title of a booking would otherwise re-price it. For the 2027 bookings that already exist when the quota is configured (`uses_free_booking` false), this would suddenly use one of the five free bookings, or reject the edit if none is left.
+
+An edit is re-evaluated against the allowance only when one of these changes: the organization, the compensation, or the calendar year of the start date. Otherwise the booking keeps its `uses_free_booking` value and its compensation, the bookability guard (D5) does not apply the quota rule, and `total_amount` is computed as today from the compensation's hourly rate and the new duration. When an edit is re-evaluated, the booking itself is excluded from the used count.
+
+A change of room, time or duration within the same year therefore never changes whether a booking is free.
+
+Alternative considered: always re-price and exclude the booking itself. Rejected because it penalises edits of bookings that were created before the quota existed.
+
+### D13: Series created before the quota keep today's pricing in the nightly extension
+
+Existing series have no `fallback_compensation`. The extension command creates exactly one day per night (today plus 731 days) and never retries a date it skipped. Once the quota is configured, an existing weekly series with the free compensation would get five free occurrences in 2028 and then silently lose every further date for good.
+
+A new `BookingSeries.is_quota_priced` (boolean, default false) marks series whose occurrences are priced with D4. Series created through the new creation path set it to true. The nightly extension prices occurrences with D4 only for series with the marker; series without it keep today's behaviour (the series compensation and `total_amount_per_booking`, `uses_free_booking` false). The transition follow-up sets a fallback and the marker on existing series of affected organizations.
+
+Why a marker instead of "no fallback means legacy": a new series on a room without any paid compensation also has no fallback, and for that series dropping occurrences beyond the allowance is the intended rule (D6).
+
+Why keep today's pricing rather than drop: dropped dates cannot be recovered by the extension, while legacy-priced occurrences can still be re-priced by the transition tooling.
 
 ## Risks / Trade-offs
 
 - [Series eat next year's allowance long before the year starts] → Stated in the announcement email and in the series preview. The transition tooling follow-up handles today's existing series.
-- [A booking counts as one regardless of length, so organizations may book longer slots to make the most of a free booking] → Accepted; rooms are already limited by opening hours and availability. A maximum duration for free bookings is a possible follow-up.
+- [A booking counts as one regardless of length, so organizations may book longer slots to make the most of a free booking] → Accepted, decided: no maximum duration for free bookings. Rooms are already limited by opening hours and availability.
 - [A short booking "wastes" a free booking] → Intended simplicity of the rule; the selector shows the remaining count before booking.
-- [Rooms without a paid compensation become unbookable for limited organizations once the allowance is used] → This is intended. The rollout checklist includes creating paid compensations for the second location before the valid-from date, if the board decides so.
-- [Nightly extension silently drops occurrences] → The series overview shows the gap. A per-series note or email is a possible follow-up.
-- [Editing a booking to a different date changes its quota year] → Handled by excluding the booking itself and re-checking against the target year; the preview shows the result. An edit within the same year never changes whether it is free, even if the duration changes.
+- [Rooms without a paid compensation become unbookable for limited organizations once the allowance is used] → This is intended and, with the second location staying quota-only, the expected case there: once a limited organization has used its free bookings, it cannot book those rooms for the rest of the year, and series occurrences beyond the allowance are dropped because no fallback exists. The series preview states the dropped occurrences.
+- [Nightly extension silently drops occurrences] → Only for quota-priced series without a fallback (D13). The series overview shows the gap. A per-series note or email is a possible follow-up.
+- [Series created before the quota stay free in the nightly extension until the transition runs] → Intended (D13); those occurrences are far in the future and are re-priced by the transition tooling. If the transition is delayed, they remain free, which is today's behaviour.
+- [An organization that later loses its unlimited group has quota-priced series without a fallback] → Its series drop dates beyond the allowance in the extension. Rare; a manager can set a fallback in the admin.
+- [Editing a booking to a different year changes its quota year] → Handled by excluding the booking itself and re-checking against the target year; the preview shows the result. Edits within the same year are not re-evaluated (D12).
 - [Admins forget to flag the free compensation or set the allowance] → Rollout checklist in tasks; with nothing configured the system behaves exactly as before, which is the safe default.
 
 ## Migration Plan
 
 1. Deploy the schema migrations. Defaults keep current behaviour: no allowances, no consuming compensation, no booking marked as using a free booking.
 2. In the admin: flag the free room compensation as consuming; set the allowance on the default group and any other group that should be limited, with valid-from 2027-01-01; leave member and self-help groups empty.
-3. Create paid compensations for rooms that should stay bookable beyond the allowance.
-4. From that moment, bookings starting in 2027 are quota-priced while 2026 bookings stay free.
+3. Create paid compensations for the rooms that should stay bookable beyond the allowance. The second location stays quota-only and gets none.
+4. From that moment, bookings starting in 2027 are quota-priced while 2026 bookings stay free. The switch is the admin configuration, not the deploy: configure it when the announcement goes out.
 5. Rollback: clear the allowance values or the compensation flag; existing bookings keep their stored prices either way.
 
-## Open Questions
+## Resolved Questions
 
-- The allowance value itself (for example five bookings) is a board decision and only a number in the admin.
-- Whether the "mit Mietvertrag" group is limited or unlimited.
-- Whether the second location gets paid compensations or stays quota-only.
-- Whether free bookings need a maximum duration (out of scope here, see Risks).
+- The allowance value (for example five bookings) stays a board decision and is only a number in the admin; no code depends on it.
+- The "mit Mietvertrag" group is unlimited and keeps `free_bookings_per_year` empty, like the member and self-help groups.
+- The second location stays quota-only and gets no paid compensations, with the consequences described in Risks.
+- Free bookings need no maximum duration; a booking counts as one whatever its length.

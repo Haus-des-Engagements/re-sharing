@@ -36,6 +36,16 @@ There SHALL be no partial coverage: a booking is either fully free or fully paid
 - **WHEN** an organization has exhausted 2026 but not 2027 and books a slot starting 2027-01-03 with the consuming compensation
 - **THEN** the booking is priced against the 2027 remaining free bookings
 
+#### Scenario: Booking before the valid-from date is not limited
+
+- **WHEN** the organization's only group has `free_bookings_per_year` 5 and `free_bookings_valid_from` 2027-01-01, and a booking starting 2026-12-31 is created with the consuming compensation, at any creation date
+- **THEN** the booking is free, `uses_free_booking` is false, and no fallback or remaining count applies
+
+#### Scenario: Booking on the valid-from date is limited
+
+- **WHEN** the same organization creates a booking starting 2027-01-01 with the consuming compensation, even while the current date is in 2026
+- **THEN** the booking uses one of the 2027 free bookings
+
 ### Requirement: Compensation choices reflect the allowance
 
 The compensation selector SHALL not offer a consuming compensation when the organization has no remaining free bookings in the year of the selected start date and its allowance is limited. When it is offered to an organization with a limited allowance, the selector SHALL show the remaining free bookings for that year. The server-side bookability check SHALL enforce the same rule regardless of what the form submitted.
@@ -69,14 +79,19 @@ The single booking preview SHALL state, for a booking of a limited organization 
 - **WHEN** a user of a limited organization with 3 remaining free bookings previews a booking with the consuming compensation
 - **THEN** the preview states that the booking uses one free booking and that 2 remain for that year
 
-### Requirement: Editing a booking re-checks it
+### Requirement: Editing a booking re-checks it only when relevant
 
-When an existing booking is edited, the system SHALL re-price it with the same rules, excluding the booking itself from the used free bookings, against the year of the new start date.
+When an existing booking is edited and the organization, the compensation or the calendar year of the start date changes, the system SHALL re-price it with the pricing rules, excluding the booking itself from the used free bookings, against the year of the new start date. When none of these change, the system SHALL keep the booking's `uses_free_booking` value, SHALL NOT apply the quota rule in the bookability check, and SHALL compute `total_amount` as today from the compensation's hourly rate and the booking's duration.
 
 #### Scenario: Edit within the same year stays free
 
-- **WHEN** a free booking of an organization with 0 other remaining free bookings is edited from 2 to 4 hours within the same year
+- **WHEN** a free booking of an organization with 0 other remaining free bookings is edited from 2 to 4 hours and moved to another room within the same year
 - **THEN** the booking stays free with `uses_free_booking` true
+
+#### Scenario: Editing a booking created before the quota
+
+- **WHEN** a 2027 booking with the consuming compensation and `uses_free_booking` false, created before the allowance was configured, gets a new title and the organization has 0 remaining free bookings in 2027
+- **THEN** the edit is accepted, the booking stays free and `uses_free_booking` stays false
 
 #### Scenario: Edit into an exhausted year
 
@@ -107,24 +122,54 @@ Each occurrence of a booking series SHALL count as one booking and SHALL be pric
 - **WHEN** the same series continues into 2028 and the organization has its full allowance for 2028
 - **THEN** the 2028 occurrences start free again until the 2028 allowance is used
 
+#### Scenario: Series crossing the valid-from date
+
+- **WHEN** an organization whose only group has `free_bookings_per_year` 5 valid from 2027-01-01 creates a weekly series from 2026-11-02 into 2027 with the consuming compensation and a fallback
+- **THEN** all 2026 occurrences are free with `uses_free_booking` false
+- **AND** the first five 2027 occurrences are free with `uses_free_booking` true and later 2027 occurrences are priced with the fallback
+
 #### Scenario: Nightly extension respects the allowance
 
-- **WHEN** the extension command creates an occurrence for a series with the consuming compensation and the organization has no remaining free bookings in that occurrence's year
+- **WHEN** the extension command creates an occurrence for a quota-priced series with the consuming compensation and the organization has no remaining free bookings in that occurrence's year
 - **THEN** the occurrence is priced with the series fallback compensation
 
 #### Scenario: Occurrence that cannot be priced is not created
 
-- **WHEN** an occurrence can neither be covered by a remaining free booking nor priced with a fallback
+- **WHEN** an occurrence of a quota-priced series can neither be covered by a remaining free booking nor priced with a fallback
 - **THEN** it is not created, at series creation and in the nightly extension alike
+
+### Requirement: Series created before the quota keep today's pricing
+
+A booking series SHALL have a boolean `is_quota_priced`, default false. Series created through the booking series creation flow after this change SHALL set it to true. The nightly extension SHALL price occurrences with the pricing rules only for series with `is_quota_priced` true; for other series it SHALL keep today's behaviour, using the series compensation and `total_amount_per_booking`, with `uses_free_booking` false.
+
+#### Scenario: Existing series is not cut off by the quota
+
+- **WHEN** a series created before this change uses the consuming compensation, has no fallback, and the organization has 0 remaining free bookings in the year of the next occurrence
+- **THEN** the extension creates the occurrence with the series compensation and `uses_free_booking` false
+
+#### Scenario: New series is marked as quota-priced
+
+- **WHEN** a series is created through the series creation flow
+- **THEN** its `is_quota_priced` is true
 
 ### Requirement: Series form requires a fallback when needed
 
-When the selected compensation counts against free bookings, the organization's allowance for the first occurrence is limited, and at least one active compensation with an hourly rate is bookable by the organization for the resource, the series form SHALL require the user to select one of those as `fallback_compensation`.
+When the selected compensation counts against free bookings, the organization's allowance is limited on any occurrence date between the first occurrence and the end of the booking horizon (today plus 730 days, or the series' last date if earlier), and at least one active compensation with an hourly rate is bookable by the organization for the resource, the series form SHALL require the user to select one of those as `fallback_compensation`.
 
 #### Scenario: Fallback required
 
 - **WHEN** a limited organization submits a series with the consuming compensation on a room with a paid compensation and no fallback selected
 - **THEN** the form is invalid with an error on the fallback field
+
+#### Scenario: Fallback required for a series starting before the valid-from date
+
+- **WHEN** an organization whose allowance is limited from 2027-01-01 submits, in 2026, a weekly series starting 2026-11-02 without an end date with the consuming compensation on a room with a paid compensation and no fallback selected
+- **THEN** the form is invalid with an error on the fallback field
+
+#### Scenario: Fallback not required for a series ending before the valid-from date
+
+- **WHEN** the same organization submits a series that ends on 2026-12-20
+- **THEN** no fallback is required
 
 #### Scenario: Fallback not required for unlimited organizations
 
@@ -147,9 +192,14 @@ The series preview SHALL show how many occurrences are free, how many are paid a
 
 ### Requirement: Existing bookings are not re-priced
 
-Deploying or configuring the allowance SHALL NOT change `compensation`, `total_amount` or `uses_free_booking` of any existing booking.
+Deploying or configuring the allowance SHALL NOT change `compensation`, `total_amount` or `uses_free_booking` of any existing booking. Deploying the change without configuring any allowance or compensation flag SHALL leave pricing of new bookings unchanged.
 
 #### Scenario: Setting an allowance leaves existing bookings untouched
 
 - **WHEN** an allowance is configured on a group after bookings already exist
 - **THEN** those bookings keep their stored compensation and amount and do not count as free bookings
+
+#### Scenario: Deploy without configuration
+
+- **WHEN** the change is deployed and no group has `free_bookings_per_year` and no compensation has `counts_against_free_bookings`
+- **THEN** new bookings and series are priced exactly as before
