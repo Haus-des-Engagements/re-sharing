@@ -14,7 +14,10 @@ from django.utils import timezone
 
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.dashboards.views import users_bookings_and_permissions_dashboard_view
+from re_sharing.organizations.models import BookingPermission
+from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
+from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
@@ -42,6 +45,50 @@ class TestListBookingsView(TestCase):
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"{login_url}?next=/dashboard/"
+
+    def test_limited_organization_shows_used_free_bookings(self):
+        year = timezone.now().year
+        organization = OrganizationFactory(name="Limited Org")
+        organization.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=5,
+                free_bookings_valid_from=datetime(2020, 1, 1).date(),  # noqa: DTZ001
+            )
+        )
+        BookingPermissionFactory(
+            user=self.user,
+            organization=organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        for i in range(3):
+            BookingFactory(
+                title=f"used-{i}",
+                organization=organization,
+                start_date=datetime(year, 3, 1 + i).date(),  # noqa: DTZ001
+                uses_free_booking=True,
+            )
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(reverse("dashboards:users_bookings_and_permissions"))
+
+        self.assertContains(response, f"{year}: 3 of 5 used")
+        self.assertContains(response, f"{year + 1}: 0 of 5 used")
+
+    def test_unlimited_organization_shows_no_free_bookings(self):
+        organization = OrganizationFactory(name="Unlimited Org")
+        BookingPermissionFactory(
+            user=self.user,
+            organization=organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(reverse("dashboards:users_bookings_and_permissions"))
+
+        self.assertContains(response, "Unlimited Org")
+        self.assertNotContains(response, "of 5 used")
 
 
 class TestHomeView(TestCase):

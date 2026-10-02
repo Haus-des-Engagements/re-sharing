@@ -93,6 +93,7 @@
               <th scope="col">{% trans "Weekday" %}</th>
               <th scope="col">{% trans "Date" %}</th>
               <th scope="col">{% trans "Resource" %}</th>
+              <th scope="col">{% trans "Compensation" %}</th>
               <th scope="col">{% trans "Status" %}</th>
               <th scope="col"></th>
             </tr>
@@ -106,6 +107,15 @@
                   <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.timespan.lower|date:"d.m.Y" }}</a>
                 </td>
                 <td>{{ booking.resource }}</td>
+                <td>
+                  {% if booking.compensation %}
+                    {{ booking.compensation.name }}
+                    {% if booking.uses_free_booking %}
+                      <span class="badge text-bg-success">{% trans "Free booking" %}</span>
+                    {% endif %}
+                    {% if booking.total_amount %}({{ booking.total_amount|floatformat:2 }} €){% endif %}
+                  {% endif %}
+                </td>
                 <td>
                   <span class="fs-6 badge fw-medium text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
                 </td>

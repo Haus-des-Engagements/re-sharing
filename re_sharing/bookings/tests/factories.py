@@ -46,6 +46,7 @@ class BookingFactory(DjangoModelFactory):
     )
     end_date = start_date
     compensation = SubFactory(CompensationFactory)
+    uses_free_booking = False
 
     @LazyAttribute
     def start_time(self):
@@ -100,6 +101,8 @@ class BookingSeriesFactory(DjangoModelFactory):
     status = BookingStatus.CONFIRMED
     import_id = ""
     compensation = SubFactory(CompensationFactory)
+    fallback_compensation = None
+    is_quota_priced = False
 
     @LazyAttribute
     def start_time(self):

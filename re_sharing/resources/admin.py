@@ -63,8 +63,14 @@ class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(Compensation)
 class CompensationAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name", "conditions", "hourly_rate"]
-    list_filter = ["is_active"]
+    list_display = [
+        "id",
+        "name",
+        "conditions",
+        "hourly_rate",
+        "counts_against_free_bookings",
+    ]
+    list_filter = ["is_active", "counts_against_free_bookings"]
     search_fields = ["id", "name"]
     ordering = ["id"]
 

@@ -91,6 +91,28 @@ class BookingSeries(TimeStampedModel):
         null=True,
         blank=True,
     )
+    fallback_compensation = ForeignKey(
+        Compensation,
+        verbose_name=_("Fallback compensation"),
+        help_text=_(
+            "Paid compensation used for occurrences once the organization's free "
+            "bookings of a year are used up."
+        ),
+        on_delete=PROTECT,
+        related_name="bookingseries_set_of_fallback_compensation",
+        related_query_name="bookingseries_of_fallback_compensation",
+        null=True,
+        blank=True,
+    )
+    is_quota_priced = BooleanField(
+        _("Occurrences priced against free bookings"),
+        default=False,
+        help_text=_(
+            "Occurrences of this series are priced individually against the "
+            "organization's free bookings. Series created before the free "
+            "bookings limit keep the series compensation."
+        ),
+    )
     invoice_address = JSONField(_("Invoice address"), blank=True, default=dict)
     activity_description = CharField(
         _("Activity description"),
@@ -369,6 +391,13 @@ class Booking(TimeStampedModel):
         decimal_places=2,
         null=True,
         blank=True,
+    )
+    uses_free_booking = BooleanField(
+        _("Uses a free booking"),
+        default=False,
+        help_text=_(
+            "This booking used one of the organization's free bookings of the year."
+        ),
     )
     invoice_number = CharField(_("Invoice number"), max_length=160, blank=True)
     invoice_address = JSONField(_("Invoice address"), blank=True, default=dict)

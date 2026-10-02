@@ -47,6 +47,8 @@ class OrganizationGroupFactory(DjangoModelFactory):
     name = Faker("company", locale="de_DE")
     description = Faker("text", max_nb_chars=512)
     slug = LazyAttribute(lambda o: slugify(o.name))
+    free_bookings_per_year = None
+    free_bookings_valid_from = None
 
     @post_generation
     def auto_confirmed_resources(self, create, extracted, **kwargs):

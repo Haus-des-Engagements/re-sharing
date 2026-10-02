@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from crispy_forms.bootstrap import InlineCheckboxes
 from crispy_forms.helper import FormHelper
@@ -9,6 +10,7 @@ from crispy_forms.layout import Field
 from crispy_forms.layout import Layout
 from crispy_forms.layout import Row
 from crispy_forms.layout import Submit
+from dateutil.rrule import rrulestr
 from django import forms
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -19,6 +21,7 @@ from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Resource
+from re_sharing.resources.selectors import get_paid_fallback_compensations
 from re_sharing.utils.dicts import MONTHDATES
 from re_sharing.utils.dicts import MONTHDAYS
 from re_sharing.utils.dicts import RRULE_DAILY_INTERVAL
@@ -29,6 +32,9 @@ from re_sharing.utils.models import BookingStatus
 
 from .models import Booking
 from .models import BookingMessage
+from .services_booking_series import create_rrule
+from .services_booking_series import max_future_booking_date
+from .services_pricing import series_needs_fallback
 
 
 class MessageForm(forms.ModelForm):
@@ -53,7 +59,7 @@ class BookingForm(forms.ModelForm):
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
                 "hx-params": "resource, compensation, organization, starttime, "
-                "startdate",
+                "startdate, rrule_repetitions, booking, fallback_compensation",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -68,7 +74,7 @@ class BookingForm(forms.ModelForm):
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
                 "hx-params": "resource, compensation, organization, starttime, "
-                "startdate",
+                "startdate, rrule_repetitions, booking, fallback_compensation",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -86,7 +92,7 @@ class BookingForm(forms.ModelForm):
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
                 "hx-params": "resource, compensation, organization, starttime, "
-                "startdate",
+                "startdate, rrule_repetitions, booking, fallback_compensation",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -112,7 +118,7 @@ class BookingForm(forms.ModelForm):
                     "resources:get-compensations", kwargs={"selected_compensation": 0}
                 ),
                 "hx-params": "resource, compensation, organization, starttime, "
-                "startdate",
+                "startdate, rrule_repetitions, booking, fallback_compensation",
                 "hx-target": "#compensations-container",
                 "hx-swap": "outerHTML",
             }
@@ -134,6 +140,12 @@ class BookingForm(forms.ModelForm):
         label=_("Compensation"),
         widget=forms.RadioSelect,
         required=True,
+    )
+    fallback_compensation = CompensationModelChoiceField(
+        queryset=Compensation.objects.filter(hourly_rate__isnull=False),
+        label=_("Compensation once your free bookings of a year are used up"),
+        widget=forms.RadioSelect,
+        required=False,
     )
 
     has_invoice_address = forms.BooleanField(
@@ -182,7 +194,22 @@ class BookingForm(forms.ModelForm):
         ("MONTHLY_BY_DAY", _("Monthly by weekday")),
         # Disable this option ("MONTHLY_BY_DATE", _("Monthly by date")),
     ]
-    rrule_repetitions = forms.ChoiceField(choices=FREQUENCIES, label=_("Repeat"))
+    rrule_repetitions = forms.ChoiceField(
+        choices=FREQUENCIES,
+        label=_("Repeat"),
+        widget=forms.Select(
+            attrs={
+                "hx-trigger": "change",
+                "hx-post": reverse_lazy(
+                    "resources:get-compensations", kwargs={"selected_compensation": 0}
+                ),
+                "hx-params": "resource, compensation, organization, starttime, "
+                "startdate, rrule_repetitions, booking, fallback_compensation",
+                "hx-target": "#compensations-container",
+                "hx-swap": "outerHTML",
+            }
+        ),
+    )
     RRULE_ENDS_CHOICES = [
         ("AFTER_TIMES", _("after")),
         ("AT_DATE", _("at")),
@@ -266,6 +293,10 @@ class BookingForm(forms.ModelForm):
                     )
                 }
             )
+            # the compensation endpoint keeps the edited booking's compensation
+            booking_vals = json.dumps({"booking": self.instance.pk})
+            for field_name in ("startdate", "starttime", "organization", "resource"):
+                self.fields[field_name].widget.attrs["hx-vals"] = booking_vals
         else:
             rrule_repetitions_style = "display: block"
 
@@ -536,9 +567,62 @@ class BookingForm(forms.ModelForm):
                 msg = _("The resource is already booked during your selected timeslot.")
                 self.add_error("resource", msg)
 
+        self._clean_fallback_compensation(cleaned_data)
         self._clean_invoice_address(cleaned_data)
 
         return cleaned_data
+
+    def _series_last_date(self, cleaned_data):
+        """Last occurrence date within the booking horizon, for the fallback rule."""
+        horizon = timezone.now().date() + datetime.timedelta(
+            days=max_future_booking_date
+        )
+        rrule_ends = cleaned_data.get("rrule_ends")
+        enddate = cleaned_data.get("rrule_ends_enddate")
+        if rrule_ends == "AT_DATE" and enddate:
+            if isinstance(enddate, datetime.datetime):
+                enddate = enddate.date()
+            return min(enddate, horizon)
+        if rrule_ends == "AFTER_TIMES" and not self.errors:
+            try:
+                last = list(rrulestr(create_rrule(cleaned_data)))[-1]
+            except (KeyError, ValueError, IndexError):
+                return horizon
+            return min(last.date(), horizon)
+        return horizon
+
+    def _clean_fallback_compensation(self, cleaned_data):
+        compensation = cleaned_data.get("compensation")
+        organization = cleaned_data.get("organization")
+        resource = cleaned_data.get("resource")
+        fallback = cleaned_data.get("fallback_compensation")
+        is_series = cleaned_data.get("rrule_repetitions") not in (
+            None,
+            "NO_REPETITIONS",
+        )
+        if not is_series or not (compensation and organization and resource):
+            cleaned_data["fallback_compensation"] = None
+            return
+        paid_compensations = get_paid_fallback_compensations(organization, resource)
+        if (
+            fallback is not None
+            and not paid_compensations.filter(pk=fallback.pk).exists()
+        ):
+            self.add_error(
+                "fallback_compensation",
+                _("Please choose a paid compensation available for this resource."),
+            )
+            return
+        if fallback is None and series_needs_fallback(
+            organization, resource, compensation, self._series_last_date(cleaned_data)
+        ):
+            self.add_error(
+                "fallback_compensation",
+                _(
+                    "Please choose the compensation for the bookings once your free "
+                    "bookings of a year are used up."
+                ),
+            )
 
     def _clean_invoice_address(self, cleaned_data):
         """Validate and build the invoice_address JSON from form fields."""

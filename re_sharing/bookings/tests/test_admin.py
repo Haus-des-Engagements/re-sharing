@@ -11,6 +11,7 @@ from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
+from re_sharing.bookings.tests.helpers import patch_thread_pool
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
@@ -270,3 +271,140 @@ def test_generate_bookings(mock_generate_bookings, booking_series_admin_setup):
     # The second and third arguments should be datetime objects
     assert isinstance(mock_generate_bookings.call_args[0][1], timezone.datetime)
     assert isinstance(mock_generate_bookings.call_args[0][2], timezone.datetime)
+
+
+@pytest.fixture()
+def limited_series_setup(booking_series_admin_setup):
+    """A limited organization (2 free bookings from 2027) with a 2027 series."""
+    with patch_thread_pool():
+        yield _limited_series_setup(booking_series_admin_setup)
+
+
+def _limited_series_setup(booking_series_admin_setup):
+    from datetime import date
+
+    from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+
+    organization = booking_series_admin_setup["organization"]
+    organization.organization_groups.add(
+        OrganizationGroupFactory(
+            free_bookings_per_year=2, free_bookings_valid_from=date(2027, 1, 1)
+        )
+    )
+    resource = booking_series_admin_setup["resource"]
+    free_compensation = CompensationFactory(
+        hourly_rate=None, counts_against_free_bookings=True, resource=[resource]
+    )
+    paid_compensation = CompensationFactory(hourly_rate=15, resource=[resource])
+
+    def make_series(**kwargs):
+        defaults = {
+            "organization": organization,
+            "resource": resource,
+            "compensation": free_compensation,
+            "total_amount_per_booking": None,
+            "rrule": "DTSTART:20270104T100000Z\nRRULE:FREQ=WEEKLY;COUNT=3",
+            "start_time": timezone.datetime.min.time().replace(hour=10),
+            "end_time": timezone.datetime.min.time().replace(hour=12),
+            "status": BookingStatus.CONFIRMED,
+        }
+        defaults.update(kwargs)
+        return BookingSeriesFactory(**defaults)
+
+    return {
+        **booking_series_admin_setup,
+        "free_compensation": free_compensation,
+        "paid_compensation": paid_compensation,
+        "make_series": make_series,
+    }
+
+
+@pytest.mark.django_db()
+def test_generate_bookings_action_keeps_legacy_series_pricing(limited_series_setup):
+    series = limited_series_setup["make_series"](is_quota_priced=False)
+
+    limited_series_setup["admin"].generate_bookings(
+        limited_series_setup["request"], BookingSeries.objects.filter(id=series.id)
+    )
+
+    bookings = Booking.objects.filter(booking_series=series)
+    assert bookings.count() == 3  # noqa: PLR2004
+    for booking in bookings:
+        assert booking.compensation == limited_series_setup["free_compensation"]
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+
+
+@pytest.mark.django_db()
+def test_generate_bookings_action_prices_quota_series(limited_series_setup):
+    series = limited_series_setup["make_series"](
+        is_quota_priced=True,
+        fallback_compensation=limited_series_setup["paid_compensation"],
+    )
+
+    limited_series_setup["admin"].generate_bookings(
+        limited_series_setup["request"], BookingSeries.objects.filter(id=series.id)
+    )
+
+    bookings = list(
+        Booking.objects.filter(booking_series=series).order_by("start_date")
+    )
+    assert [booking.uses_free_booking for booking in bookings] == [True, True, False]
+    assert bookings[2].compensation == limited_series_setup["paid_compensation"]
+    assert bookings[2].total_amount == 30  # noqa: PLR2004
+
+
+@pytest.mark.django_db()
+def test_save_model_keeps_pricing_of_quota_priced_series(limited_series_setup):
+    series = limited_series_setup["make_series"](
+        is_quota_priced=True,
+        fallback_compensation=limited_series_setup["paid_compensation"],
+    )
+    free_booking = BookingFactory(
+        title="free-one",
+        booking_series=series,
+        organization=series.organization,
+        compensation=limited_series_setup["free_compensation"],
+        uses_free_booking=True,
+        total_amount=None,
+    )
+    paid_booking = BookingFactory(
+        title="paid-one",
+        booking_series=series,
+        organization=series.organization,
+        compensation=limited_series_setup["paid_compensation"],
+        total_amount=30,
+    )
+    series.title = "New Title"
+
+    limited_series_setup["admin"].save_model(
+        request=limited_series_setup["request"], obj=series, form=None, change=True
+    )
+
+    free_booking.refresh_from_db()
+    paid_booking.refresh_from_db()
+    assert free_booking.title == "New Title"
+    assert free_booking.uses_free_booking is True
+    assert free_booking.compensation == limited_series_setup["free_compensation"]
+    assert paid_booking.compensation == limited_series_setup["paid_compensation"]
+    assert paid_booking.total_amount == 30  # noqa: PLR2004
+
+
+@pytest.mark.django_db()
+def test_save_model_syncs_pricing_of_legacy_series(limited_series_setup):
+    series = limited_series_setup["make_series"](is_quota_priced=False)
+    booking = BookingFactory(
+        title="legacy-one",
+        booking_series=series,
+        organization=series.organization,
+        compensation=limited_series_setup["paid_compensation"],
+        total_amount=30,
+    )
+
+    limited_series_setup["admin"].save_model(
+        request=limited_series_setup["request"], obj=series, form=None, change=True
+    )
+
+    booking.refresh_from_db()
+    assert booking.compensation == limited_series_setup["free_compensation"]
+    assert booking.total_amount is None

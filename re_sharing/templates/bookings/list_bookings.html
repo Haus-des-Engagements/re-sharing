@@ -108,6 +108,9 @@
                     <use href="#bi-currency-euro" />
                   </svg>
                   {{ booking.compensation.name }}
+                  {% if booking.uses_free_booking %}
+                    <span class="badge text-bg-success">{% trans "Free booking" %}</span>
+                  {% endif %}
                   {% if booking.total_amount %}
                     {% if booking.status == 3 %}
                       <s>({% trans "Total amount" %}: {{ booking.total_amount }}€)</s>

@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
 from django.http import HttpResponseRedirect
 from django.test import Client
 from django.test import RequestFactory
@@ -13,6 +14,8 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 
 from re_sharing.bookings.forms import BookingForm
+from re_sharing.bookings.models import Booking
+from re_sharing.bookings.services import FreeBookingsExhaustedError
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingMessageFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
@@ -109,6 +112,23 @@ class TestShowBookingView(TestCase):
         client.force_login(self.user)
         response = client.get(self.show_booking_url)
         assert response.status_code == HTTPStatus.OK
+
+    def test_free_booking_marker(self):
+        BookingPermissionFactory(
+            organization=self.organization,
+            user=self.user,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get(self.show_booking_url)
+        self.assertNotContains(response, "Free booking")
+
+        self.booking.uses_free_booking = True
+        self.booking.save()
+        response = client.get(self.show_booking_url)
+        self.assertContains(response, "Free booking")
 
     def test_activity_stream(self):
         BookingPermissionFactory(
@@ -465,6 +485,121 @@ class TestPreviewAndSaveBookingView(TestCase):
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse("bookings:show-booking", args=[booking.slug])
 
+    @patch("re_sharing.bookings.views.generate_booking")
+    def test_get_with_exhausted_free_bookings_redirects_to_form(
+        self, mock_generate_booking
+    ):
+        mock_generate_booking.side_effect = FreeBookingsExhaustedError(2027)
+        session = self.client.session
+        session["booking_data"] = {
+            "start_date": "2027-03-01",
+            "start_time": "10:00:00",
+            "end_time": "12:00:00",
+            "resource": self.resource.slug,
+            "organization": self.organization.slug,
+            "title": "Meeting",
+        }
+        session.save()
+
+        response = self.client.get(reverse("bookings:preview-booking"))
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url.startswith(reverse("bookings:create-booking") + "?")
+        assert "startdate=2027-03-01" in response.url
+        assert "starttime=10%3A00" in response.url
+        assert f"resource={self.resource.slug}" in response.url
+        assert "booking_data" in self.client.session
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        assert any("2027" in message for message in messages)
+
+    @patch("re_sharing.bookings.views.save_booking")
+    @patch("re_sharing.bookings.views.generate_booking")
+    def test_post_with_exhausted_free_bookings_creates_no_booking(
+        self, mock_generate_booking, mock_save_booking
+    ):
+        mock_generate_booking.return_value = BookingFactory.build(
+            organization=self.organization, resource=self.resource
+        )
+        mock_save_booking.side_effect = FreeBookingsExhaustedError(2027)
+        session = self.client.session
+        session["booking_data"] = {"start_date": "2027-03-01"}
+        session.save()
+        bookings_before = Booking.objects.count()
+
+        response = self.client.post(reverse("bookings:preview-booking"))
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url.startswith(reverse("bookings:create-booking"))
+        assert Booking.objects.count() == bookings_before
+        assert "booking_data" in self.client.session
+
+    @patch("re_sharing.bookings.views.generate_booking")
+    def test_exhausted_free_bookings_on_edit_redirects_to_update_form(
+        self, mock_generate_booking
+    ):
+        booking = BookingFactory(organization=self.organization, resource=self.resource)
+        mock_generate_booking.side_effect = FreeBookingsExhaustedError(2028)
+        session = self.client.session
+        session["booking_data"] = {"start_date": "2028-03-01", "booking_id": booking.id}
+        session.save()
+
+        response = self.client.get(reverse("bookings:preview-booking"))
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == reverse(
+            "bookings:update-booking", kwargs={"booking_slug": booking.slug}
+        )
+
+    @patch("re_sharing.bookings.views.generate_booking")
+    def test_preview_states_the_free_booking_and_the_remaining_count(
+        self, mock_generate_booking
+    ):
+        self.organization.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=5,
+                free_bookings_valid_from=datetime.date(2027, 1, 1),
+            )
+        )
+        for i in range(2):
+            BookingFactory(
+                title=f"used-{i}",
+                organization=self.organization,
+                start_date=datetime.date(2027, 2, 1 + i),
+                uses_free_booking=True,
+            )
+        mock_generate_booking.return_value = BookingFactory.build(
+            organization=self.organization,
+            resource=self.resource,
+            start_date=datetime.date(2027, 3, 1),
+            uses_free_booking=True,
+        )
+        session = self.client.session
+        session["booking_data"] = {"start_date": "2027-03-01"}
+        session.save()
+
+        response = self.client.get(reverse("bookings:preview-booking"))
+
+        self.assertContains(response, "Free booking")
+        self.assertContains(response, "Afterwards 2 free bookings remain for 2027.")
+
+    @patch("re_sharing.bookings.views.generate_booking")
+    def test_preview_of_a_paid_booking_has_no_free_booking_note(
+        self, mock_generate_booking
+    ):
+        mock_generate_booking.return_value = BookingFactory.build(
+            organization=self.organization,
+            resource=self.resource,
+            start_date=datetime.date(2027, 3, 1),
+            uses_free_booking=False,
+        )
+        session = self.client.session
+        session["booking_data"] = {"start_date": "2027-03-01"}
+        session.save()
+
+        response = self.client.get(reverse("bookings:preview-booking"))
+
+        self.assertNotContains(response, "Free booking")
+
 
 class TestUpdateBookingView(TestCase):
     def setUp(self):
@@ -621,7 +756,7 @@ class TestPreviewAndSaveBookingSeriesView(TestCase):
             organization=self.organization, resource=self.resource
         )
         bookings = [BookingFactory.build()]
-        mock_create_series.return_value = (bookings, booking_series, True)
+        mock_create_series.return_value = (bookings, booking_series, True, {})
 
         session = self.client.session
         session["booking_data"] = {"rrule": "RRULE:FREQ=WEEKLY;COUNT=5"}
@@ -640,7 +775,7 @@ class TestPreviewAndSaveBookingSeriesView(TestCase):
             organization=self.organization, resource=self.resource
         )
         bookings = []
-        mock_create_series.return_value = (bookings, booking_series, True)
+        mock_create_series.return_value = (bookings, booking_series, True, {})
         mock_save_series.return_value = (bookings, booking_series)
 
         session = self.client.session
@@ -654,6 +789,105 @@ class TestPreviewAndSaveBookingSeriesView(TestCase):
             "bookings:show-booking-series", args=[booking_series.slug]
         )
         assert "booking_data" not in self.client.session
+
+
+class TestPreviewBookingSeriesPricingView(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.resource = ResourceFactory()
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["booking_data"] = {"rrule": "RRULE:FREQ=WEEKLY;COUNT=5"}
+        session.save()
+
+    @patch("re_sharing.bookings.views.create_booking_series_and_bookings")
+    def test_preview_shows_the_pricing_breakdown(self, mock_create_series):
+        booking_series = BookingSeriesFactory.build(
+            organization=self.organization, resource=self.resource
+        )
+        mock_create_series.return_value = (
+            [],
+            booking_series,
+            True,
+            {
+                "free": 5,
+                "paid": 47,
+                "unavailable": 0,
+                "dropped": 0,
+                "rate": 15,
+                "total": 1410,
+            },
+        )
+
+        response = self.client.get(reverse("bookings:preview-booking-series"))
+
+        self.assertContains(response, "5 free bookings")
+        self.assertContains(response, "47 bookings charged at 15 €/hour")
+        self.assertContains(response, "1410.00 €")
+        self.assertNotContains(response, "cannot be created")
+
+    @patch("re_sharing.bookings.views.create_booking_series_and_bookings")
+    def test_preview_mentions_dropped_occurrences(self, mock_create_series):
+        booking_series = BookingSeriesFactory.build(
+            organization=self.organization, resource=self.resource
+        )
+        mock_create_series.return_value = (
+            [],
+            booking_series,
+            True,
+            {
+                "free": 2,
+                "paid": 0,
+                "unavailable": 0,
+                "dropped": 3,
+                "rate": None,
+                "total": 0,
+            },
+        )
+
+        response = self.client.get(reverse("bookings:preview-booking-series"))
+
+        self.assertContains(response, "3 bookings cannot be created")
+
+
+class TestShowBookingSeriesPricingView(TestCase):
+    def test_occurrences_show_amount_and_free_booking_marker(self):
+        user = UserFactory()
+        organization = OrganizationFactory()
+        BookingPermissionFactory(
+            user=user,
+            organization=organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        booking_series = BookingSeriesFactory(organization=organization)
+        BookingFactory(
+            title="free-occurrence",
+            booking_series=booking_series,
+            organization=organization,
+            uses_free_booking=True,
+            start_date=datetime.date(2027, 3, 1),
+        )
+        BookingFactory(
+            title="paid-occurrence",
+            booking_series=booking_series,
+            organization=organization,
+            total_amount=30,
+            start_date=datetime.date(2027, 3, 8),
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("bookings:show-booking-series", args=[booking_series.slug])
+        )
+
+        self.assertContains(response, "Free booking")
+        self.assertContains(response, "(30.00 €)")
 
 
 class TestListBookingsWebview(TestCase):
@@ -722,6 +956,31 @@ class TestManagerListBookingsViewHTMX(TestCase):
 
         assert response.status_code == HTTPStatus.OK
         self.assertTemplateUsed(response, "manager-list-bookings")
+
+    def test_row_shows_free_booking_marker(self):
+        group = OrganizationGroupFactory()
+        self.manager.organization_groups.add(group)
+        organization = OrganizationFactory()
+        organization.organization_groups.add(group)
+        resource = ResourceFactory()
+        self.manager.resources.add(resource)
+        start = timezone.now() + datetime.timedelta(days=3)
+        BookingFactory(
+            title="free-one",
+            organization=organization,
+            resource=resource,
+            booking_series=None,
+            status=BookingStatus.PENDING,
+            timespan=(start, start + datetime.timedelta(hours=2)),
+            uses_free_booking=True,
+        )
+
+        response = self.client.get(
+            reverse("bookings:manager-list-bookings"), headers={"hx-request": "true"}
+        )
+
+        self.assertContains(response, "free-one")
+        self.assertContains(response, "Free booking")
 
 
 class TestManagerListBookingSeriesView(TestCase):

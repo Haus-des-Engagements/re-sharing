@@ -2,12 +2,14 @@ import uuid
 from datetime import timedelta
 
 from auditlog.registry import auditlog
+from django.core.exceptions import ValidationError
 from django.core.files.storage import storages
 from django.core.validators import FileExtensionValidator
 from django.db.models import CASCADE
 from django.db.models import SET_NULL
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import CheckConstraint
 from django.db.models import DateField
 from django.db.models import DateTimeField
 from django.db.models import DecimalField
@@ -368,11 +370,29 @@ class Compensation(TimeStampedModel):
             "for all organizations."
         ),
     )
+    counts_against_free_bookings = BooleanField(
+        _("Counts against free bookings"),
+        default=False,
+        help_text=_(
+            "Bookings with this compensation use one of the organization's free "
+            "bookings per year. Only possible for compensations without a rate."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Compensation")
         verbose_name_plural = _("Compensations")
         ordering = [Lower("name")]
+        constraints = [
+            CheckConstraint(
+                condition=Q(counts_against_free_bookings=False)
+                | (Q(hourly_rate__isnull=True) & Q(daily_rate__isnull=True)),
+                name="compensation_free_bookings_flag_only_without_rate",
+                violation_error_message=_(
+                    "A compensation with a rate cannot count against free bookings."
+                ),
+            ),
+        ]
 
     def __str__(self):
         if self.hourly_rate is not None:
@@ -380,6 +400,19 @@ class Compensation(TimeStampedModel):
         if self.daily_rate is not None:
             return self.name + " (" + str(self.daily_rate) + " €/day)"
         return self.name
+
+    def clean(self):
+        super().clean()
+        if self.counts_against_free_bookings and (
+            self.hourly_rate is not None or self.daily_rate is not None
+        ):
+            raise ValidationError(
+                {
+                    "counts_against_free_bookings": _(
+                        "A compensation with a rate cannot count against free bookings."
+                    )
+                }
+            )
 
     def is_bookable_by_organization(self, organization):
         # if no OrganizationGroup is specified for the Compensation, anyone can book it

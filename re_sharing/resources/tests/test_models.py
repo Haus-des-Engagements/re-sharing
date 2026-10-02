@@ -1,12 +1,18 @@
 from datetime import date
 from datetime import datetime
 from datetime import time
+from decimal import Decimal
 
+import pytest
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.resources.tests.factories import ResourceRestrictionFactory
 
@@ -153,3 +159,54 @@ class ResourceRestrictionTest(TestCase):
             year=2030, month=1, day=7, hour=10, minute=0, second=0, microsecond=0
         )  # Monday
         assert restriction.applies_to_datetime(future_weekday)
+
+
+class CompensationFreeBookingsFlagTest(TestCase):
+    def test_default_is_not_counting(self):
+        compensation = CompensationFactory()
+
+        assert compensation.counts_against_free_bookings is False
+
+    def test_flag_without_rate_is_valid(self):
+        compensation = CompensationFactory.build(
+            hourly_rate=None, counts_against_free_bookings=True
+        )
+
+        compensation.full_clean()
+        compensation.save()
+
+        assert compensation.counts_against_free_bookings is True
+
+    def test_flag_with_hourly_rate_fails_validation(self):
+        compensation = CompensationFactory.build(
+            hourly_rate=15, counts_against_free_bookings=True
+        )
+
+        with pytest.raises(ValidationError) as excinfo:
+            compensation.full_clean()
+
+        assert "counts_against_free_bookings" in excinfo.value.error_dict
+
+    def test_flag_with_daily_rate_fails_validation(self):
+        compensation = CompensationFactory.build(
+            hourly_rate=None,
+            daily_rate=Decimal("10.00"),
+            counts_against_free_bookings=True,
+        )
+
+        with pytest.raises(ValidationError) as excinfo:
+            compensation.full_clean()
+
+        assert "counts_against_free_bookings" in excinfo.value.error_dict
+
+    def test_flag_with_hourly_rate_is_rejected_by_the_database(self):
+        with pytest.raises(IntegrityError), transaction.atomic():
+            CompensationFactory(hourly_rate=15, counts_against_free_bookings=True)
+
+    def test_flag_with_daily_rate_is_rejected_by_the_database(self):
+        with pytest.raises(IntegrityError), transaction.atomic():
+            CompensationFactory(
+                hourly_rate=None,
+                daily_rate=Decimal("10.00"),
+                counts_against_free_bookings=True,
+            )

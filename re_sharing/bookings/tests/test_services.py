@@ -17,6 +17,7 @@ from psycopg.types.range import Range
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
+from re_sharing.bookings.services import FreeBookingsExhaustedError
 from re_sharing.bookings.services import InvalidBookingOperationError
 from re_sharing.bookings.services import bookings_webview
 from re_sharing.bookings.services import build_einvoice_payload
@@ -36,6 +37,8 @@ from re_sharing.bookings.services import manager_confirm_booking
 from re_sharing.bookings.services import manager_confirm_booking_series
 from re_sharing.bookings.services import manager_filter_bookings_list
 from re_sharing.bookings.services import manager_filter_invoice_bookings_list
+from re_sharing.bookings.services import needs_quota_reevaluation
+from re_sharing.bookings.services import price_booking
 from re_sharing.bookings.services import process_field_changes
 from re_sharing.bookings.services import save_booking
 from re_sharing.bookings.services import save_bookingmessage
@@ -48,10 +51,14 @@ from re_sharing.bookings.services_booking_series import (
     create_booking_series_and_bookings,
 )
 from re_sharing.bookings.services_booking_series import create_rrule
+from re_sharing.bookings.services_booking_series import extend_booking_series
+from re_sharing.bookings.services_booking_series import generate_bookings
 from re_sharing.bookings.services_booking_series import manager_cancel_booking_series
 from re_sharing.bookings.services_booking_series import save_booking_series
+from re_sharing.bookings.services_pricing import get_free_bookings_remaining_after
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
+from re_sharing.bookings.tests.helpers import patch_thread_pool
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
@@ -899,7 +906,7 @@ class TestGenerateRecurrence(TestCase):
         }
 
     def test_generate_recurrence_valid_data(self):
-        bookings, rrule, bookable = create_booking_series_and_bookings(
+        bookings, rrule, bookable, _pricing = create_booking_series_and_bookings(
             self.booking_data
         )
 
@@ -944,7 +951,7 @@ class TestGenerateRecurrence(TestCase):
 class TestSaveBookingSeries(TestCase):
     def setUp(self):
         self.user = UserFactory()
-        self.organization = OrganizationFactory()
+        self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
         self.resource = ResourceFactory()
         self.compensation = CompensationFactory(hourly_rate=50)
         self.start = timezone.now() + timedelta(days=1) - timedelta(hours=2)
@@ -975,6 +982,7 @@ class TestSaveBookingSeries(TestCase):
             self.bookings,
             self.booking_series,
             self.bookable,
+            self.pricing,
         ) = create_booking_series_and_bookings(self.booking_data)
 
     def test_save_booking_series_valid(self):
@@ -3515,3 +3523,1068 @@ class TestManagerFilterBookingsListByAccessCode(TestCase):
         self._make_booking(unmanaged_resource, access_code="345678")
 
         assert self._search("345678") == []
+
+
+class FreeBookingsQuotaTestMixin:
+    """A limited organization with a consuming and a paid compensation."""
+
+    allowance = 2
+
+    def set_up_quota(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.group = OrganizationGroupFactory(
+            free_bookings_per_year=self.allowance,
+            free_bookings_valid_from=datetime.date(2027, 1, 1),
+        )
+        self.organization.organization_groups.add(self.group)
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.resource = ResourceFactory()
+        self.free_compensation = CompensationFactory(
+            hourly_rate=None,
+            counts_against_free_bookings=True,
+            resource=[self.resource],
+        )
+        self.paid_compensation = CompensationFactory(
+            hourly_rate=15, resource=[self.resource]
+        )
+
+    def unsaved_booking(self, start_date, hours=2, **kwargs):
+        start = timezone.make_aware(
+            datetime.datetime.combine(start_date, datetime.time(10))
+        )
+        end = start + datetime.timedelta(hours=hours)
+        defaults = {
+            "title": "Meeting",
+            "organization": self.organization,
+            "user": self.user,
+            "resource": self.resource,
+            "status": BookingStatus.CONFIRMED,
+            "timespan": (start, end),
+            "start_date": start_date,
+            "end_date": start_date,
+            "start_time": start.time(),
+            "end_time": end.time(),
+            "activity_description": "Meeting",
+            "invoice_address": {},
+        }
+        defaults.update(kwargs)
+        return Booking(**defaults)
+
+    def use_free_bookings(self, count, year=2027):
+        # every used booking gets its own day, so none overlap on the resource
+        used = []
+        for _ in range(count):
+            self._used_days = getattr(self, "_used_days", 0) + 1
+            used.append(
+                BookingFactory(
+                    title=f"used-{year}-{self._used_days}",
+                    organization=self.organization,
+                    resource=self.resource,
+                    compensation=self.free_compensation,
+                    start_date=datetime.date(year, 2, 1)
+                    + datetime.timedelta(days=self._used_days),
+                    status=BookingStatus.CONFIRMED,
+                    uses_free_booking=True,
+                )
+            )
+        return used
+
+
+class TestPriceBooking(FreeBookingsQuotaTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+
+    def test_free_booking_left(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1), hours=3)
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+        assert booking.total_amount is None
+        assert booking.compensation == self.free_compensation
+
+    def test_last_free_booking(self):
+        self.use_free_bookings(1)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+
+    def test_exhausted_with_fallback_is_fully_paid(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1), hours=2)
+
+        price_booking(
+            booking,
+            self.free_compensation,
+            fallback_compensation=self.paid_compensation,
+        )
+
+        assert booking.uses_free_booking is False
+        assert booking.compensation == self.paid_compensation
+        assert booking.total_amount == 30  # noqa: PLR2004
+
+    def test_exhausted_without_fallback_raises(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        with pytest.raises(FreeBookingsExhaustedError) as excinfo:
+            price_booking(booking, self.free_compensation)
+
+        assert excinfo.value.year == 2027  # noqa: PLR2004
+
+    def test_unlimited_organization_is_free_and_unflagged(self):
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+        assert booking.compensation == self.free_compensation
+
+    def test_non_consuming_compensation_is_priced_as_today(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1), hours=2)
+
+        price_booking(booking, self.paid_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount == 30  # noqa: PLR2004
+
+    def test_long_booking_uses_one_free_booking(self):
+        self.use_free_bookings(1)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1), hours=8)
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+        assert booking.total_amount is None
+
+    def test_quota_year_follows_the_start_date(self):
+        self.use_free_bookings(2, year=2027)
+        booking = self.unsaved_booking(datetime.date(2028, 1, 3))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+
+    def test_booking_before_the_valid_from_date_is_not_limited(self):
+        booking = self.unsaved_booking(datetime.date(2026, 12, 31))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+
+    def test_booking_on_the_valid_from_date_is_limited(self):
+        booking = self.unsaved_booking(datetime.date(2027, 1, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+
+    def test_nothing_configured_keeps_pricing_unchanged(self):
+        self.group.free_bookings_per_year = None
+        self.group.free_bookings_valid_from = None
+        self.group.save()
+        self.free_compensation.counts_against_free_bookings = False
+        self.free_compensation.save()
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+
+    def test_reserved_free_bookings_count_as_used(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            price_booking(booking, self.free_compensation, reserved=2)
+
+    def test_excluded_booking_is_not_counted(self):
+        used = self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation, exclude_booking=used[0])
+
+        assert booking.uses_free_booking is True
+
+    def test_string_start_date_is_accepted(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        booking.start_date = "2027-03-01"
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is True
+
+
+class TestNeedsQuotaReevaluation(FreeBookingsQuotaTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+        self.booking = BookingFactory(
+            title="existing",
+            organization=self.organization,
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+
+    def test_new_booking_is_reevaluated(self):
+        assert needs_quota_reevaluation(
+            None, self.organization, self.free_compensation, datetime.date(2027, 3, 1)
+        )
+        assert needs_quota_reevaluation(
+            self.unsaved_booking(datetime.date(2027, 3, 1)),
+            self.organization,
+            self.free_compensation,
+            datetime.date(2027, 3, 1),
+        )
+
+    def test_organization_change_is_reevaluated(self):
+        assert needs_quota_reevaluation(
+            self.booking,
+            OrganizationFactory(),
+            self.free_compensation,
+            datetime.date(2027, 3, 1),
+        )
+
+    def test_compensation_change_is_reevaluated(self):
+        assert needs_quota_reevaluation(
+            self.booking,
+            self.organization,
+            self.paid_compensation,
+            datetime.date(2027, 3, 1),
+        )
+
+    def test_year_change_is_reevaluated(self):
+        assert needs_quota_reevaluation(
+            self.booking,
+            self.organization,
+            self.free_compensation,
+            datetime.date(2028, 3, 1),
+        )
+        assert needs_quota_reevaluation(
+            self.booking, self.organization, self.free_compensation, "2028-03-01"
+        )
+
+    def test_other_changes_are_not_reevaluated(self):
+        assert not needs_quota_reevaluation(
+            self.booking,
+            self.organization,
+            self.free_compensation,
+            datetime.date(2027, 11, 30),
+        )
+
+
+class TestGenerateBookingWithQuota(FreeBookingsQuotaTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+        self.other_resource = ResourceFactory()
+        self.free_compensation.resource.add(self.other_resource)
+
+    def booking_data(self, start_date, hours=2, compensation=None, **kwargs):
+        start = timezone.make_aware(
+            datetime.datetime.combine(start_date, datetime.time(10))
+        )
+        end = start + datetime.timedelta(hours=hours)
+        data = {
+            "user": self.user.slug,
+            "title": "Meeting",
+            "resource": self.resource.slug,
+            "organization": self.organization.slug,
+            "timespan": [start.isoformat(), end.isoformat()],
+            "start_date": start_date.isoformat(),
+            "end_date": start_date.isoformat(),
+            "start_time": start.time().isoformat(),
+            "end_time": end.time().isoformat(),
+            "compensation": (compensation or self.free_compensation).id,
+            "invoice_address": {},
+            "activity_description": "Meeting",
+            "number_of_attendees": 5,
+        }
+        data.update(kwargs)
+        return data
+
+    def existing_booking(self, **kwargs):
+        defaults = {
+            "title": "existing",
+            "organization": self.organization,
+            "user": self.user,
+            "resource": self.resource,
+            "compensation": self.free_compensation,
+            "start_date": datetime.date(2027, 3, 1),
+            "start_time": datetime.time(10),
+            "end_time": datetime.time(12),
+            "status": BookingStatus.CONFIRMED,
+        }
+        defaults.update(kwargs)
+        return BookingFactory(**defaults)
+
+    def test_new_booking_uses_a_free_booking(self):
+        booking = generate_booking(self.booking_data(datetime.date(2027, 3, 1)))
+
+        assert booking.uses_free_booking is True
+        assert booking.total_amount is None
+
+    def test_new_booking_in_exhausted_year_raises(self):
+        self.use_free_bookings(2)
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            generate_booking(self.booking_data(datetime.date(2027, 3, 1)))
+
+    def test_same_year_edit_with_longer_duration_and_other_room_stays_free(self):
+        booking = self.existing_booking(uses_free_booking=True)
+        self.use_free_bookings(1)
+        data = self.booking_data(
+            datetime.date(2027, 3, 1),
+            hours=4,
+            booking_id=booking.id,
+            resource=self.other_resource.slug,
+        )
+
+        edited = generate_booking(data)
+
+        assert edited.uses_free_booking is True
+        assert edited.compensation == self.free_compensation
+        assert edited.resource == self.other_resource
+        assert edited.total_amount is None
+
+    def test_title_edit_of_pre_quota_booking_is_accepted(self):
+        booking = self.existing_booking(uses_free_booking=False)
+        self.use_free_bookings(2)
+        data = self.booking_data(
+            datetime.date(2027, 3, 1), booking_id=booking.id, title="New title"
+        )
+
+        edited = generate_booking(data)
+
+        assert edited.title == "New title"
+        assert edited.uses_free_booking is False
+        assert edited.compensation == self.free_compensation
+
+    def test_edit_into_exhausted_year_is_rejected(self):
+        booking = self.existing_booking(uses_free_booking=True)
+        self.use_free_bookings(2, year=2028)
+        data = self.booking_data(datetime.date(2028, 3, 1), booking_id=booking.id)
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            generate_booking(data)
+
+    def test_edit_into_other_year_uses_that_years_allowance(self):
+        booking = self.existing_booking(uses_free_booking=True)
+        data = self.booking_data(datetime.date(2028, 3, 1), booking_id=booking.id)
+
+        edited = generate_booking(data)
+
+        assert edited.uses_free_booking is True
+
+    def test_paid_booking_switched_to_consuming_compensation(self):
+        booking = self.existing_booking(
+            compensation=self.paid_compensation, total_amount=30
+        )
+        self.use_free_bookings(1)
+        data = self.booking_data(datetime.date(2027, 3, 1), booking_id=booking.id)
+
+        edited = generate_booking(data)
+
+        assert edited.uses_free_booking is True
+        assert edited.total_amount is None
+        assert edited.compensation == self.free_compensation
+
+    def test_free_booking_switched_to_paid_compensation(self):
+        booking = self.existing_booking(uses_free_booking=True)
+        data = self.booking_data(
+            datetime.date(2027, 3, 1),
+            booking_id=booking.id,
+            compensation=self.paid_compensation,
+        )
+
+        edited = generate_booking(data)
+
+        assert edited.uses_free_booking is False
+        assert edited.total_amount == 30  # noqa: PLR2004
+
+
+class TestSaveBookingWithQuota(TestGenerateBookingWithQuota):
+    def test_stored_values_match_the_priced_booking(self):
+        booking = generate_booking(self.booking_data(datetime.date(2027, 3, 1)))
+
+        saved = save_booking(self.user, booking)
+        saved.refresh_from_db()
+
+        assert saved.uses_free_booking is True
+        assert saved.total_amount is None
+        assert saved.compensation == self.free_compensation
+
+    def test_booking_is_repriced_at_save(self):
+        self.use_free_bookings(1)
+        booking = generate_booking(self.booking_data(datetime.date(2027, 3, 1)))
+        assert booking.uses_free_booking is True
+        # another booking of the organization takes the last free booking
+        self.use_free_bookings(1, year=2027)
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            save_booking(self.user, booking)
+
+        assert not Booking.objects.filter(title="Meeting").exists()
+
+    def test_submitted_hidden_compensation_is_rejected(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        booking.compensation = self.free_compensation
+        booking.uses_free_booking = True
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            save_booking(self.user, booking)
+
+    def test_pre_quota_edit_is_saved_unchanged(self):
+        booking = self.existing_booking(uses_free_booking=False)
+        self.use_free_bookings(2)
+        data = self.booking_data(
+            datetime.date(2027, 3, 1), booking_id=booking.id, title="New title"
+        )
+
+        saved = save_booking(self.user, generate_booking(data))
+        saved.refresh_from_db()
+
+        assert saved.title == "New title"
+        assert saved.uses_free_booking is False
+
+
+class TestIsBookableByOrganizationWithQuota(FreeBookingsQuotaTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+
+    def test_consuming_compensation_rejected_when_exhausted(self):
+        self.use_free_bookings(2)
+
+        assert not is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+
+    def test_consuming_compensation_accepted_while_free_bookings_remain(self):
+        self.use_free_bookings(1)
+
+        assert is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+
+    def test_paid_compensation_is_not_affected(self):
+        self.use_free_bookings(2)
+
+        assert is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.paid_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+
+    def test_without_start_date_the_quota_is_not_checked(self):
+        self.use_free_bookings(2)
+
+        assert is_bookable_by_organization(
+            self.user, self.organization, self.resource, self.free_compensation
+        )
+
+    def test_manager_follows_the_same_rule(self):
+        manager_user = UserFactory()
+        ManagerFactory(user=manager_user)
+        self.use_free_bookings(2)
+
+        assert not is_bookable_by_organization(
+            manager_user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+        assert is_bookable_by_organization(
+            manager_user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2028, 3, 1),
+        )
+
+    def test_pre_quota_edit_is_accepted(self):
+        booking = BookingFactory(
+            title="existing",
+            organization=self.organization,
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+            uses_free_booking=False,
+        )
+        self.use_free_bookings(2)
+
+        assert is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 11, 1),
+            booking=booking,
+        )
+
+    def test_edit_into_exhausted_year_is_rejected(self):
+        booking = BookingFactory(
+            title="existing",
+            organization=self.organization,
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+            uses_free_booking=True,
+        )
+        self.use_free_bookings(2, year=2028)
+
+        assert not is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2028, 3, 1),
+            booking=booking,
+        )
+
+    def test_series_in_exhausted_year_accepted_with_paid_fallback_available(self):
+        self.use_free_bookings(2)
+
+        assert is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+            is_series=True,
+        )
+
+    def test_series_in_exhausted_year_rejected_without_paid_fallback(self):
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+        self.use_free_bookings(2)
+
+        assert not is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+            is_series=True,
+        )
+
+
+class FreeBookingsSeriesTestMixin(FreeBookingsQuotaTestMixin):
+    """Series of the limited organization, priced against its free bookings."""
+
+    series_counter = 0
+
+    def set_up_quota(self):
+        super().set_up_quota()
+        patcher = patch_thread_pool()
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def quota_series(self, rrule, *, with_fallback=True, **kwargs):
+        FreeBookingsSeriesTestMixin.series_counter += 1
+        defaults = {
+            "title": f"series-{FreeBookingsSeriesTestMixin.series_counter}",
+            "organization": self.organization,
+            "resource": self.resource,
+            "user": self.user,
+            "compensation": self.free_compensation,
+            "fallback_compensation": self.paid_compensation if with_fallback else None,
+            "is_quota_priced": True,
+            "total_amount_per_booking": None,
+            "rrule": rrule,
+            "start_time": datetime.time(10),
+            "end_time": datetime.time(12),
+            "status": BookingStatus.CONFIRMED,
+        }
+        defaults.update(kwargs)
+        return BookingSeriesFactory(**defaults)
+
+    def generate(self, booking_series):
+        start = next(iter(rrulestr(booking_series.rrule)))
+        end = datetime.datetime(2029, 1, 1, tzinfo=datetime.UTC)
+        return generate_bookings(booking_series, start, end)
+
+    def occurrence(self, booking_series, start_date, **kwargs):
+        defaults = {
+            "title": f"occurrence-{start_date.isoformat()}",
+            "booking_series": booking_series,
+            "organization": self.organization,
+            "resource": self.resource,
+            "user": self.user,
+            "compensation": self.free_compensation,
+            "status": BookingStatus.UNAVAILABLE,
+            "start_date": start_date,
+            "start_time": datetime.time(10),
+            "end_time": datetime.time(12),
+            "uses_free_booking": False,
+            "total_amount": None,
+        }
+        defaults.update(kwargs)
+        return BookingFactory(**defaults)
+
+
+WEEKLY_2027 = "DTSTART:20270104T100000Z\nRRULE:FREQ=WEEKLY;COUNT=4"
+
+
+class TestGenerateBookingsWithQuota(FreeBookingsSeriesTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+
+    def test_first_occurrences_free_then_fallback(self):
+        bookings = self.generate(self.quota_series(WEEKLY_2027))
+
+        assert len(bookings) == 4  # noqa: PLR2004
+        for booking in bookings[:2]:
+            assert booking.uses_free_booking is True
+            assert booking.compensation == self.free_compensation
+            assert booking.total_amount is None
+        for booking in bookings[2:]:
+            assert booking.uses_free_booking is False
+            assert booking.compensation == self.paid_compensation
+            assert booking.total_amount == 30  # noqa: PLR2004
+
+    def test_existing_free_bookings_count(self):
+        self.use_free_bookings(1)
+
+        bookings = self.generate(self.quota_series(WEEKLY_2027))
+
+        assert [booking.uses_free_booking for booking in bookings] == [
+            True,
+            False,
+            False,
+            False,
+        ]
+
+    def test_allowance_resets_in_the_next_year(self):
+        rrule = "DTSTART:20271220T100000Z\nRRULE:FREQ=WEEKLY;COUNT=4"
+
+        bookings = self.generate(self.quota_series(rrule))
+
+        assert [booking.start_date.year for booking in bookings] == [
+            2027,
+            2027,
+            2028,
+            2028,
+        ]
+        assert all(booking.uses_free_booking for booking in bookings)
+
+    def test_unavailable_occurrence_does_not_use_a_free_booking(self):
+        BookingFactory(
+            title="blocker",
+            resource=self.resource,
+            status=BookingStatus.CONFIRMED,
+            start_date=datetime.date(2027, 1, 11),
+            start_time=datetime.time(10),
+            end_time=datetime.time(12),
+        )
+
+        bookings = self.generate(self.quota_series(WEEKLY_2027))
+
+        assert bookings[1].status == BookingStatus.UNAVAILABLE
+        assert bookings[1].uses_free_booking is False
+        assert [booking.uses_free_booking for booking in bookings] == [
+            True,
+            False,
+            True,
+            False,
+        ]
+        assert bookings[3].compensation == self.paid_compensation
+
+    def test_unpriceable_occurrences_are_dropped(self):
+        bookings = self.generate(self.quota_series(WEEKLY_2027, with_fallback=False))
+
+        assert len(bookings) == 2  # noqa: PLR2004
+        assert all(booking.uses_free_booking for booking in bookings)
+
+    def test_series_crossing_the_valid_from_date(self):
+        rrule = "DTSTART:20261102T100000Z\nRRULE:FREQ=WEEKLY;COUNT=12"
+
+        bookings = self.generate(self.quota_series(rrule))
+
+        in_2026 = [booking for booking in bookings if booking.start_date.year == 2026]  # noqa: PLR2004
+        in_2027 = [booking for booking in bookings if booking.start_date.year == 2027]  # noqa: PLR2004
+        assert len(in_2026) == 9  # noqa: PLR2004
+        for booking in in_2026:
+            assert booking.uses_free_booking is False
+            assert booking.compensation == self.free_compensation
+            assert booking.total_amount is None
+        assert [booking.uses_free_booking for booking in in_2027] == [True, True, False]
+        assert in_2027[2].compensation == self.paid_compensation
+
+    def test_legacy_series_keeps_the_series_pricing(self):
+        self.use_free_bookings(2)
+        series = self.quota_series(WEEKLY_2027, is_quota_priced=False)
+
+        bookings = self.generate(series)
+
+        assert len(bookings) == 4  # noqa: PLR2004
+        for booking in bookings:
+            assert booking.compensation == self.free_compensation
+            assert booking.uses_free_booking is False
+            assert booking.total_amount is None
+
+
+class TestExtendBookingSeriesWithQuota(FreeBookingsSeriesTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+        today = timezone.now().date()
+        self.target_date = today + timedelta(days=731)
+        self.daily_rrule = f"DTSTART:{today:%Y%m%d}T100000Z\nRRULE:FREQ=DAILY"
+
+    def test_occurrence_uses_a_free_booking_when_one_is_left(self):
+        self.quota_series(self.daily_rrule)
+
+        new_bookings = extend_booking_series()
+
+        assert len(new_bookings) == 1
+        assert new_bookings[0].start_date == self.target_date
+        assert new_bookings[0].uses_free_booking is True
+
+    def test_exhausted_year_uses_the_fallback_at_its_current_rate(self):
+        self.use_free_bookings(2, year=self.target_date.year)
+        self.quota_series(self.daily_rrule)
+        self.paid_compensation.hourly_rate = 20
+        self.paid_compensation.save()
+
+        new_bookings = extend_booking_series()
+
+        assert len(new_bookings) == 1
+        assert new_bookings[0].compensation == self.paid_compensation
+        assert new_bookings[0].total_amount == 40  # noqa: PLR2004
+        assert new_bookings[0].uses_free_booking is False
+
+    def test_dropped_without_fallback(self):
+        self.use_free_bookings(2, year=self.target_date.year)
+        series = self.quota_series(self.daily_rrule, with_fallback=False)
+
+        new_bookings = extend_booking_series()
+
+        assert new_bookings == []
+        assert not Booking.objects.filter(booking_series=series).exists()
+
+    def test_dropped_when_the_fallback_is_no_longer_usable(self):
+        self.use_free_bookings(2, year=self.target_date.year)
+        self.quota_series(self.daily_rrule)
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+
+        assert extend_booking_series() == []
+
+    def test_legacy_series_keeps_the_series_pricing(self):
+        self.use_free_bookings(2, year=self.target_date.year)
+        self.quota_series(self.daily_rrule, is_quota_priced=False)
+
+        new_bookings = extend_booking_series()
+
+        assert len(new_bookings) == 1
+        assert new_bookings[0].compensation == self.free_compensation
+        assert new_bookings[0].total_amount is None
+        assert new_bookings[0].uses_free_booking is False
+
+    def test_failure_in_one_series_keeps_the_others(self):
+        failing = self.quota_series(self.daily_rrule)
+        working = self.quota_series(self.daily_rrule, resource=ResourceFactory())
+        self.free_compensation.resource.add(working.resource)
+        self.paid_compensation.resource.add(working.resource)
+
+        def explode_once(booking_series, start, end):
+            if booking_series == failing:
+                msg = "boom"
+                raise RuntimeError(msg)
+            return generate_bookings(booking_series, start, end)
+
+        with patch(
+            "re_sharing.bookings.services_booking_series.generate_bookings",
+            side_effect=explode_once,
+        ):
+            new_bookings = extend_booking_series()
+
+        assert [booking.booking_series for booking in new_bookings] == [working]
+
+
+class TestSaveBookingSeriesWithQuota(FreeBookingsSeriesTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+
+    def series_data(self, *, with_fallback=True, compensation=None):
+        start = datetime.datetime(2027, 1, 4, 10, tzinfo=datetime.UTC)
+        end = start + timedelta(hours=2)
+        return {
+            "user": self.user.slug,
+            "title": "Weekly meeting",
+            "resource": self.resource.slug,
+            "organization": self.organization.slug,
+            "timespan": [start.isoformat(), end.isoformat()],
+            "start_time": "10:00:00",
+            "end_time": "12:00:00",
+            "compensation": (compensation or self.free_compensation).id,
+            "fallback_compensation": self.paid_compensation.id
+            if with_fallback
+            else None,
+            "rrule_string": WEEKLY_2027,
+            "start": start,
+            "invoice_address": "",
+            "activity_description": "Meeting",
+        }
+
+    def test_saved_series_is_quota_priced_with_fallback(self):
+        bookings, series, _bookable, pricing = create_booking_series_and_bookings(
+            self.series_data()
+        )
+
+        bookings, series = save_booking_series(self.user, bookings, series)
+
+        series.refresh_from_db()
+        assert series.is_quota_priced is True
+        assert series.fallback_compensation == self.paid_compensation
+        assert pricing == {
+            "free": 2,
+            "paid": 2,
+            "unavailable": 0,
+            "dropped": 0,
+            "rate": 15,
+            "total": 60,
+        }
+        assert (
+            Booking.objects.filter(
+                booking_series=series, uses_free_booking=True
+            ).count()
+            == 2  # noqa: PLR2004
+        )
+
+    def test_rejected_when_the_compensation_is_not_bookable(self):
+        restricted = CompensationFactory(
+            hourly_rate=None,
+            counts_against_free_bookings=True,
+            resource=[self.resource],
+        )
+        restricted.organization_groups.add(OrganizationGroupFactory())
+        bookings, series, _b, _p = create_booking_series_and_bookings(
+            self.series_data(compensation=restricted)
+        )
+
+        with pytest.raises(PermissionDenied):
+            save_booking_series(self.user, bookings, series)
+
+        assert not BookingSeries.objects.exists()
+        assert not Booking.objects.filter(title="Weekly meeting").exists()
+
+    def test_rejected_with_an_unusable_fallback(self):
+        bookings, series, _b, _p = create_booking_series_and_bookings(
+            self.series_data()
+        )
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+
+        with pytest.raises(PermissionDenied):
+            save_booking_series(self.user, bookings, series)
+
+        assert not BookingSeries.objects.exists()
+
+    def test_rejected_when_a_required_fallback_is_missing(self):
+        bookings, series, _b, _p = create_booking_series_and_bookings(
+            self.series_data(with_fallback=False)
+        )
+
+        with pytest.raises(PermissionDenied):
+            save_booking_series(self.user, bookings, series)
+
+        assert not BookingSeries.objects.exists()
+
+    def test_occurrences_are_repriced_at_save(self):
+        bookings, series, _b, pricing = create_booking_series_and_bookings(
+            self.series_data()
+        )
+        assert pricing["free"] == 2  # noqa: PLR2004
+        self.use_free_bookings(1)
+
+        save_booking_series(self.user, bookings, series)
+
+        saved = Booking.objects.filter(booking_series=series).order_by("start_date")
+        assert [booking.uses_free_booking for booking in saved] == [
+            True,
+            False,
+            False,
+            False,
+        ]
+        assert saved[1].compensation == self.paid_compensation
+
+
+class TestManagerConfirmBookingSeriesWithQuota(FreeBookingsSeriesTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+        self.manager_user = UserFactory(is_staff=True)
+        self.series = self.quota_series(WEEKLY_2027, status=BookingStatus.PENDING)
+
+    def test_unavailable_occurrence_uses_a_free_booking_when_one_is_left(self):
+        self.use_free_bookings(1)
+        booking = self.occurrence(self.series, datetime.date(2027, 3, 1))
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.CONFIRMED
+        assert booking.uses_free_booking is True
+        assert booking.compensation == self.free_compensation
+
+    def test_unavailable_occurrence_priced_with_fallback_when_none_is_left(self):
+        self.use_free_bookings(2)
+        booking = self.occurrence(self.series, datetime.date(2027, 3, 1))
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.CONFIRMED
+        assert booking.uses_free_booking is False
+        assert booking.compensation == self.paid_compensation
+        assert booking.total_amount == 30  # noqa: PLR2004
+
+    def test_unavailable_occurrence_deleted_when_it_cannot_be_priced(self):
+        self.series.fallback_compensation = None
+        self.series.save()
+        self.use_free_bookings(2)
+        booking = self.occurrence(self.series, datetime.date(2027, 3, 1))
+        pending = self.occurrence(
+            self.series, datetime.date(2027, 3, 8), status=BookingStatus.PENDING
+        )
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        assert not Booking.objects.filter(pk=booking.pk).exists()
+        pending.refresh_from_db()
+        assert pending.status == BookingStatus.CONFIRMED
+
+    def test_occurrences_are_handled_in_date_order(self):
+        self.use_free_bookings(1)
+        later = self.occurrence(self.series, datetime.date(2027, 3, 8))
+        earlier = self.occurrence(self.series, datetime.date(2027, 3, 1))
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        earlier.refresh_from_db()
+        later.refresh_from_db()
+        assert earlier.uses_free_booking is True
+        assert later.uses_free_booking is False
+        assert later.compensation == self.paid_compensation
+
+    def test_still_overlapping_occurrence_stays_unavailable(self):
+        BookingFactory(
+            title="blocker",
+            resource=self.resource,
+            status=BookingStatus.CONFIRMED,
+            start_date=datetime.date(2027, 3, 1),
+            start_time=datetime.time(10),
+            end_time=datetime.time(12),
+        )
+        booking = self.occurrence(self.series, datetime.date(2027, 3, 1))
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.UNAVAILABLE
+        assert booking.uses_free_booking is False
+
+    def test_legacy_series_keeps_todays_behaviour(self):
+        self.series.is_quota_priced = False
+        self.series.save()
+        self.use_free_bookings(2)
+        booking = self.occurrence(self.series, datetime.date(2027, 3, 1))
+
+        manager_confirm_booking_series(self.manager_user, self.series.uuid)
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.CONFIRMED
+        assert booking.uses_free_booking is False
+        assert booking.compensation == self.free_compensation
+
+
+class TestFreeBookingsRemainingAfter(FreeBookingsQuotaTestMixin, TestCase):
+    def setUp(self):
+        self.set_up_quota()
+
+    def test_new_free_booking_reports_the_remaining_count(self):
+        self.use_free_bookings(1)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        price_booking(booking, self.free_compensation)
+
+        assert get_free_bookings_remaining_after(booking) == 0
+
+    def test_saved_free_booking_is_not_counted_twice(self):
+        booking = self.use_free_bookings(1)[0]
+
+        assert get_free_bookings_remaining_after(booking) == 1
+
+    def test_paid_booking_has_no_remaining_count(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        price_booking(booking, self.paid_compensation)
+
+        assert get_free_bookings_remaining_after(booking) is None
+
+    def test_unlimited_allowance_has_no_remaining_count(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        booking.uses_free_booking = True
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+
+        assert get_free_bookings_remaining_after(booking) is None
+
+    def test_save_rejects_a_booking_the_guard_refuses(self):
+        # the compensation is priced fine but belongs to another group
+        restricted = CompensationFactory(
+            hourly_rate=None,
+            counts_against_free_bookings=True,
+            resource=[self.resource],
+        )
+        restricted.organization_groups.add(OrganizationGroupFactory())
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        price_booking(booking, restricted)
+
+        with pytest.raises(PermissionDenied):
+            save_booking(self.user, booking)
+
+    def test_create_booking_data_carries_the_fallback(self):
+        form = Mock()
+        form.cleaned_data = {
+            "title": "Weekly",
+            "resource": self.resource,
+            "timespan": (
+                timezone.now() + timedelta(days=1),
+                timezone.now() + timedelta(days=1, hours=2),
+            ),
+            "organization": self.organization,
+            "startdate": datetime.date(2027, 1, 4),
+            "enddate": datetime.date(2027, 1, 4),
+            "starttime": datetime.time(10),
+            "endtime": datetime.time(12),
+            "compensation": self.free_compensation,
+            "invoice_address": {},
+            "activity_description": "Meeting",
+            "number_of_attendees": 5,
+            "fallback_compensation": self.paid_compensation,
+            "rrule_repetitions": "NO_REPETITIONS",
+        }
+
+        booking_data, rrule = create_booking_data(self.user, form)
+
+        assert booking_data["fallback_compensation"] == self.paid_compensation.id
+        assert rrule is None

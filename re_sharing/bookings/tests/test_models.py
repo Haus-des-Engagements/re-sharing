@@ -241,3 +241,16 @@ def test_is_cancelable(
     )
 
     assert rrule.is_cancelable() is expected
+
+
+class FreeBookingsFieldDefaultsTest(TestCase):
+    def test_booking_does_not_use_a_free_booking_by_default(self):
+        booking = BookingFactory()
+
+        assert booking.uses_free_booking is False
+
+    def test_booking_series_is_not_quota_priced_by_default(self):
+        booking_series = BookingSeriesFactory()
+
+        assert booking_series.is_quota_priced is False
+        assert booking_series.fallback_compensation is None

@@ -41,6 +41,25 @@
             <br />
             {% trans "Bookings" %}: {{ bookings|length }}
             <br />
+            {% if pricing.free or pricing.paid %}
+              <svg width="1em" height="1em">
+                <use href="#bi-currency-euro" />
+              </svg>
+              {% blocktranslate count counter=pricing.free trimmed %}
+                {{ counter }} free booking
+              {% plural %}
+                {{ counter }} free bookings
+              {% endblocktranslate %}
+              {% if pricing.paid %}
+                ,
+                {% blocktranslate count counter=pricing.paid with rate=pricing.rate total=pricing.total|floatformat:2 trimmed %}
+                  {{ counter }} booking charged at {{ rate }} €/hour (total {{ total }} €)
+                {% plural %}
+                  {{ counter }} bookings charged at {{ rate }} €/hour (total {{ total }} €)
+                {% endblocktranslate %}
+              {% endif %}
+              <br />
+            {% endif %}
             {% if booking_series.invoice_address %}
               {% trans "Differing billing address" %}:
               {% if booking_series.invoice_address.company_name %}
@@ -66,6 +85,15 @@
       <br />
     </div>
   </div>
+  {% if pricing.dropped %}
+    <div class="alert alert-warning">
+      {% blocktranslate count counter=pricing.dropped trimmed %}
+        {{ counter }} booking cannot be created: no free booking is left for its year and this resource has no paid compensation.
+      {% plural %}
+        {{ counter }} bookings cannot be created: no free booking is left for their year and this resource has no paid compensation.
+      {% endblocktranslate %}
+    </div>
+  {% endif %}
   <div class="mt-4">
     <h5>{% trans "These bookings are part of the recurrence" %}:</h5>
     <ul class="list-group">
@@ -79,6 +107,9 @@
             {% if booking.compensation %}
               -
               {{ booking.compensation.name }}
+              {% if booking.uses_free_booking %}
+                <span class="badge text-bg-success">{% trans "Free booking" %}</span>
+              {% endif %}
               {% if booking.total_amount %}
                 ({% trans "Amount" %}: {{ booking.total_amount|floatformat:2 }}€)
               {% endif %}

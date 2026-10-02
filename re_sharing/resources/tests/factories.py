@@ -57,6 +57,7 @@ class CompensationFactory(DjangoModelFactory):
     name = Faker("word")
     conditions = Faker("sentence", nb_words=6)
     hourly_rate = Faker("random_int", min=1, max=1000)
+    counts_against_free_bookings = False
 
     @post_generation
     def resource(self, create, extracted, **kwargs):

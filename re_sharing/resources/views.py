@@ -6,7 +6,6 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
-from django.db.models import Q
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -19,6 +18,8 @@ from django_ical.views import ICalFeed
 
 from re_sharing.bookings.models import Booking
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.selectors import is_free_bookings_allowance_limited_until
+from re_sharing.organizations.services import user_has_bookingpermission
 from re_sharing.providers.decorators import manager_required
 from re_sharing.resources.forms import CompensationEditForm
 from re_sharing.resources.forms import ResourceEditForm
@@ -28,6 +29,8 @@ from re_sharing.resources.models import Location
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceImage
 from re_sharing.resources.models import ResourceRestriction
+from re_sharing.resources.selectors import get_bookable_compensations
+from re_sharing.resources.selectors import get_paid_fallback_compensations
 from re_sharing.resources.services import create_resource
 from re_sharing.resources.services import filter_resources
 from re_sharing.resources.services import get_user_accessible_locations
@@ -216,7 +219,18 @@ def get_compensations(request, selected_compensation=None):
         )
     resource = get_object_or_404(Resource, id=resource_id)
     organization = get_object_or_404(Organization, id=organization_id)
-    org_groups = organization.organization_groups.all()
+
+    # the booking being edited keeps its compensation in the choices
+    booking = None
+    booking_id = request.POST.get("booking")
+    if booking_id:
+        booking = get_object_or_404(Booking, id=booking_id)
+        if not user_has_bookingpermission(request.user, booking):
+            booking = None
+    is_series = request.POST.get("rrule_repetitions", "NO_REPETITIONS") not in (
+        "",
+        "NO_REPETITIONS",
+    )
 
     start_time = time.fromisoformat(starttime)
     start_date = date.fromisoformat(startdate)
@@ -240,11 +254,22 @@ def get_compensations(request, selected_compensation=None):
             restriction_message = restriction.message
             break
 
-    compensations = (
-        Compensation.objects.filter(is_active=True)
-        .filter(Q(resource=resource) | Q(resource=None))
-        .filter(Q(organization_groups__in=org_groups) | Q(organization_groups=None))
+    compensations, remaining_free_bookings = get_bookable_compensations(
+        organization, resource, start_date, booking, is_series=is_series
     )
+    # a series with a consuming compensation names the paid fallback up front
+    fallback_compensations = Compensation.objects.none()
+    if (
+        is_series
+        and compensations.filter(counts_against_free_bookings=True).exists()
+        and is_free_bookings_allowance_limited_until(
+            organization, timezone.now().date() + timedelta(days=730)
+        )
+    ):
+        fallback_compensations = get_paid_fallback_compensations(organization, resource)
+    selected_fallback = request.POST.get("fallback_compensation") or None
+    if selected_fallback is not None:
+        selected_fallback = int(selected_fallback)
     if selected_compensation in compensations.values_list("id", flat=True):
         selected_compensation = get_object_or_404(
             Compensation, id=selected_compensation
@@ -260,6 +285,10 @@ def get_compensations(request, selected_compensation=None):
             "selected_compensation": selected_compensation,
             "bookable": bookable,
             "restriction_message": restriction_message,
+            "remaining_free_bookings": remaining_free_bookings,
+            "quota_year": start_date.year,
+            "fallback_compensations": fallback_compensations,
+            "selected_fallback": selected_fallback,
         },
     )
 

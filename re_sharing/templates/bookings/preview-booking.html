@@ -33,6 +33,17 @@
                 <use href="#bi-currency-euro" />
               </svg>
               {{ booking.compensation.name }}
+              {% if booking.uses_free_booking %}
+                <span class="badge text-bg-success">{% trans "Free booking" %}</span>
+                {% if free_bookings_remaining_after is not None %}
+                  <br />
+                  {% blocktranslate count counter=free_bookings_remaining_after with year=booking.start_date|date:"Y" trimmed %}
+                    This booking uses one of your free bookings. Afterwards {{ counter }} free booking remains for {{ year }}.
+                  {% plural %}
+                    This booking uses one of your free bookings. Afterwards {{ counter }} free bookings remain for {{ year }}.
+                  {% endblocktranslate %}
+                {% endif %}
+              {% endif %}
               {% if booking.total_amount %}
                 ({% trans "Total amount" %}: {{ booking.total_amount|floatformat:2 }}€)
                 {% if booking.invoice_address %}

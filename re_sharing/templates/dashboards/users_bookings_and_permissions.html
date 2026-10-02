@@ -34,6 +34,7 @@
           <tr>
             <th scope="col">{% trans "Name" %}</th>
             <th scope="col">{% trans "Status" %}</th>
+            <th scope="col">{% trans "Free bookings" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -44,6 +45,14 @@
               </td>
               <td>
                 <span class="fs-6 badge text-bg-status-{{ bp.organization.status }}">{{ bp.organization.get_status_display }}</span>
+              </td>
+              <td>
+                {% for entry in bp.free_bookings %}
+                  {% blocktranslate with year=entry.year used=entry.used allowance=entry.allowance trimmed %}
+                    {{ year }}: {{ used }} of {{ allowance }} used
+                  {% endblocktranslate %}
+                  {% if not forloop.last %}<br />{% endif %}
+                {% endfor %}
               </td>
             </tr>
           {% empty %}

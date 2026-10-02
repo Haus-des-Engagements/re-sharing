@@ -1,3 +1,4 @@
+from datetime import date
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
@@ -15,6 +16,8 @@ from django.utils.translation import gettext_lazy as _
 from PIL import Image
 
 from re_sharing.bookings.tests.factories import BookingFactory
+from re_sharing.organizations.models import BookingPermission
+from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.providers.tests.factories import ManagerFactory
@@ -935,3 +938,227 @@ class TestManagerCreateResourceView(TestCase):
 
     def test_url_reverses_before_slug_route(self):
         assert reverse(self.URL) == "/resources/manager/new/"
+
+
+class GetCompensationsFreeBookingsViewTest(TestCase):
+    """The compensation choices follow the organization's free bookings."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = UserFactory()
+        self.organization = OrganizationFactory()
+        self.organization.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=2, free_bookings_valid_from=date(2027, 1, 1)
+            )
+        )
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.resource = ResourceFactory()
+        self.free_compensation = CompensationFactory(
+            name="Free of charge",
+            hourly_rate=None,
+            counts_against_free_bookings=True,
+            resource=[self.resource],
+        )
+        self.paid_compensation = CompensationFactory(
+            name="Hourly rate", hourly_rate=15, resource=[self.resource]
+        )
+        self.used_days = 0
+
+    def use_free_bookings(self, count, year=2027, **kwargs):
+        bookings = []
+        for _unused in range(count):
+            self.used_days += 1
+            bookings.append(
+                BookingFactory(
+                    title=f"used-{year}-{self.used_days}",
+                    organization=self.organization,
+                    resource=self.resource,
+                    compensation=self.free_compensation,
+                    start_date=date(year, 2, 1) + timedelta(days=self.used_days),
+                    uses_free_booking=True,
+                    **kwargs,
+                )
+            )
+        return bookings
+
+    def get_choices(self, selected_compensation=None, **data):
+        payload = {
+            "resource": self.resource.id,
+            "organization": self.organization.id,
+            "starttime": "10:00",
+            "startdate": "2027-03-01",
+        }
+        payload.update(data)
+        request = self.factory.post(
+            reverse("resources:get-compensations", kwargs={"selected_compensation": 0}),
+            payload,
+        )
+        request.user = self.user
+        return get_compensations(
+            request, selected_compensation=selected_compensation
+        ).content.decode()
+
+    def test_consuming_compensation_hidden_when_exhausted(self):
+        self.use_free_bookings(2)
+
+        content = self.get_choices()
+
+        assert "Free of charge" not in content
+        assert "Hourly rate" in content
+
+    def test_remaining_free_bookings_shown(self):
+        self.use_free_bookings(1)
+
+        content = self.get_choices()
+
+        assert "Free of charge" in content
+        assert "1 free booking left in 2027" in content
+
+    def test_plural_note(self):
+        content = self.get_choices()
+
+        assert "2 free bookings left in 2027" in content
+
+    def test_unlimited_organization_sees_no_note(self):
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+        self.use_free_bookings(2)
+
+        content = self.get_choices()
+
+        assert "Free of charge" in content
+        assert "free booking" not in content
+
+    def test_before_the_valid_from_date_there_is_no_note(self):
+        content = self.get_choices(startdate="2026-12-31")
+
+        assert "Free of charge" in content
+        assert "free booking" not in content
+
+    def test_no_choices_when_only_the_consuming_compensation_is_exhausted(self):
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+        self.use_free_bookings(2)
+
+        content = self.get_choices()
+
+        assert "Free of charge" not in content
+        assert 'name="compensation"' not in content
+
+    def test_edit_of_pre_quota_booking_keeps_its_compensation(self):
+        booking = BookingFactory(
+            title="pre-quota",
+            organization=self.organization,
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=date(2027, 6, 1),
+            uses_free_booking=False,
+        )
+        self.use_free_bookings(2)
+
+        content = self.get_choices(
+            selected_compensation=self.free_compensation.id, booking=booking.id
+        )
+
+        assert "Free of charge" in content
+        assert f'value="{self.free_compensation.id}"' in content
+        assert "checked" in content
+
+    def test_edit_of_free_booking_does_not_count_the_booking_itself(self):
+        booking = self.use_free_bookings(1)[0]
+        self.use_free_bookings(1)
+
+        content = self.get_choices(booking=booking.id)
+
+        assert "Free of charge" in content
+        assert "1 free booking left in 2027" in content
+
+    def test_edit_moved_to_an_exhausted_year_hides_the_compensation(self):
+        booking = self.use_free_bookings(1)[0]
+        self.use_free_bookings(2, year=2028)
+
+        content = self.get_choices(booking=booking.id, startdate="2028-03-01")
+
+        assert "Free of charge" not in content
+
+    def test_edit_for_another_organization_hides_the_compensation(self):
+        booking = self.use_free_bookings(1)[0]
+        other = OrganizationFactory()
+        other.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=1,
+                free_bookings_valid_from=date(2027, 1, 1),
+            )
+        )
+        BookingPermissionFactory(
+            user=self.user,
+            organization=other,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        BookingFactory(
+            title="other-used",
+            organization=other,
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=date(2027, 5, 1),
+            uses_free_booking=True,
+        )
+
+        content = self.get_choices(booking=booking.id, organization=other.id)
+
+        assert "Free of charge" not in content
+
+    def test_booking_without_permission_is_ignored(self):
+        booking = BookingFactory(
+            title="foreign",
+            resource=self.resource,
+            compensation=self.free_compensation,
+            start_date=date(2027, 6, 1),
+        )
+        self.use_free_bookings(2)
+
+        content = self.get_choices(booking=booking.id)
+
+        assert "Free of charge" not in content
+
+    def test_series_in_exhausted_year_offered_with_paid_fallback(self):
+        self.use_free_bookings(2)
+
+        content = self.get_choices(rrule_repetitions="WEEKLY")
+
+        assert "Free of charge" in content
+
+    def test_series_in_exhausted_year_hidden_without_paid_fallback(self):
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+        self.use_free_bookings(2)
+
+        content = self.get_choices(rrule_repetitions="WEEKLY")
+
+        assert "Free of charge" not in content
+
+    def test_series_offers_fallback_choices_and_keeps_the_selection(self):
+        content = self.get_choices(
+            rrule_repetitions="WEEKLY",
+            fallback_compensation=self.paid_compensation.id,
+        )
+
+        assert 'name="fallback_compensation"' in content
+        assert f'id="fallback-{self.paid_compensation.id}"' in content
+        assert "checked" in content
+
+    def test_single_booking_offers_no_fallback_choices(self):
+        content = self.get_choices()
+
+        assert 'name="fallback_compensation"' not in content
+
+    def test_no_repetitions_is_a_single_booking(self):
+        self.use_free_bookings(2)
+
+        content = self.get_choices(rrule_repetitions="NO_REPETITIONS")
+
+        assert "Free of charge" not in content

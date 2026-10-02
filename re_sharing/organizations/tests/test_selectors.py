@@ -18,9 +18,13 @@ from re_sharing.organizations.models import Organization
 from re_sharing.organizations.selectors import get_booking_permission
 from re_sharing.organizations.selectors import get_custom_email_filterable_resources
 from re_sharing.organizations.selectors import get_filtered_organizations
+from re_sharing.organizations.selectors import get_free_bookings_allowance
+from re_sharing.organizations.selectors import get_free_bookings_used
 from re_sharing.organizations.selectors import get_organization_booking_stats
+from re_sharing.organizations.selectors import get_remaining_free_bookings
 from re_sharing.organizations.selectors import get_user_by_email
 from re_sharing.organizations.selectors import get_user_permissions_for_organization
+from re_sharing.organizations.selectors import is_free_bookings_allowance_limited_until
 from re_sharing.organizations.selectors import user_has_admin_permission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
@@ -560,3 +564,198 @@ class TestGetFilteredOrganizationsWithTotalAmount(TestCase):
 
         assert org_result is not None
         assert org_result.total_amount == 200  # noqa: PLR2004
+
+
+class TestFreeBookingsAllowanceSelectors(TestCase):
+    def setUp(self):
+        self.organization = OrganizationFactory()
+        self.limited_group = OrganizationGroupFactory(
+            free_bookings_per_year=5, free_bookings_valid_from=date(2027, 1, 1)
+        )
+
+    def test_organization_without_limited_group_is_unlimited(self):
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+
+        assert get_free_bookings_allowance(self.organization, date(2027, 6, 1)) is None
+
+    def test_organization_without_any_group_is_unlimited(self):
+        assert get_free_bookings_allowance(self.organization, date(2027, 6, 1)) is None
+
+    def test_allowance_is_unlimited_before_the_valid_from_date(self):
+        self.organization.organization_groups.add(self.limited_group)
+
+        assert (
+            get_free_bookings_allowance(self.organization, date(2026, 12, 31)) is None
+        )
+
+    def test_allowance_is_limited_from_the_valid_from_date(self):
+        self.organization.organization_groups.add(self.limited_group)
+
+        assert get_free_bookings_allowance(self.organization, date(2027, 1, 1)) == 5  # noqa: PLR2004
+
+    def test_highest_number_wins_among_limited_groups(self):
+        self.organization.organization_groups.add(self.limited_group)
+        self.organization.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=12, free_bookings_valid_from=date(2027, 1, 1)
+            )
+        )
+
+        assert get_free_bookings_allowance(self.organization, date(2027, 3, 1)) == 12  # noqa: PLR2004
+
+    def test_one_unlimited_group_makes_the_organization_unlimited(self):
+        self.organization.organization_groups.add(self.limited_group)
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+
+        assert get_free_bookings_allowance(self.organization, date(2027, 3, 1)) is None
+
+    def test_limited_until_is_false_before_the_valid_from_date(self):
+        self.organization.organization_groups.add(self.limited_group)
+
+        assert (
+            is_free_bookings_allowance_limited_until(
+                self.organization, date(2026, 12, 20)
+            )
+            is False
+        )
+
+    def test_limited_until_is_true_on_and_after_the_valid_from_date(self):
+        self.organization.organization_groups.add(self.limited_group)
+
+        assert is_free_bookings_allowance_limited_until(
+            self.organization, date(2027, 1, 1)
+        )
+        assert is_free_bookings_allowance_limited_until(
+            self.organization, date(2028, 10, 1)
+        )
+
+    def test_limited_until_is_false_for_unlimited_organizations(self):
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+
+        assert (
+            is_free_bookings_allowance_limited_until(
+                self.organization, date(2028, 10, 1)
+            )
+            is False
+        )
+
+
+class TestFreeBookingsUsedSelectors(TestCase):
+    def setUp(self):
+        self.organization = OrganizationFactory()
+        self.organization.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=5, free_bookings_valid_from=date(2027, 1, 1)
+            )
+        )
+
+    def _free_booking(self, title, **kwargs):
+        kwargs.setdefault("start_date", date(2027, 3, 1))
+        kwargs.setdefault("status", BookingStatus.CONFIRMED)
+        return BookingFactory(
+            title=title,
+            organization=self.organization,
+            uses_free_booking=True,
+            **kwargs,
+        )
+
+    def test_pending_and_confirmed_bookings_count_one_each(self):
+        self._free_booking(
+            "short", status=BookingStatus.PENDING, start_time=time(9), end_time=time(10)
+        )
+        self._free_booking("long", start_time=time(9), end_time=time(17))
+
+        assert get_free_bookings_used(self.organization, 2027) == 2  # noqa: PLR2004
+
+    def test_cancelled_and_unavailable_bookings_do_not_count(self):
+        self._free_booking("cancelled", status=BookingStatus.CANCELLED)
+        self._free_booking("unavailable", status=BookingStatus.UNAVAILABLE)
+
+        assert get_free_bookings_used(self.organization, 2027) == 0
+
+    def test_bookings_without_the_flag_do_not_count(self):
+        BookingFactory(
+            title="legacy",
+            organization=self.organization,
+            start_date=date(2027, 3, 1),
+            uses_free_booking=False,
+        )
+
+        assert get_free_bookings_used(self.organization, 2027) == 0
+
+    def test_bookings_of_other_years_do_not_count(self):
+        self._free_booking("this-year")
+        self._free_booking("other-year", start_date=date(2028, 3, 1))
+
+        assert get_free_bookings_used(self.organization, 2027) == 1
+
+    def test_bookings_of_other_organizations_do_not_count(self):
+        BookingFactory(
+            title="foreign",
+            start_date=date(2027, 3, 1),
+            uses_free_booking=True,
+        )
+
+        assert get_free_bookings_used(self.organization, 2027) == 0
+
+    def test_excluded_booking_is_skipped(self):
+        excluded = self._free_booking("excluded")
+        self._free_booking("counted")
+
+        assert get_free_bookings_used(self.organization, 2027) == 2  # noqa: PLR2004
+        assert (
+            get_free_bookings_used(self.organization, 2027, exclude_booking=excluded)
+            == 1
+        )
+
+    def test_remaining_is_unlimited_for_unlimited_organizations(self):
+        unlimited = OrganizationFactory()
+
+        assert get_remaining_free_bookings(unlimited, date(2027, 3, 1)) is None
+
+    def test_remaining_subtracts_used_free_bookings(self):
+        self._free_booking("one")
+        self._free_booking("two")
+
+        assert get_remaining_free_bookings(self.organization, date(2027, 6, 1)) == 3  # noqa: PLR2004
+
+    def test_remaining_excludes_a_given_booking(self):
+        booking = self._free_booking("one")
+
+        assert (
+            get_remaining_free_bookings(
+                self.organization, date(2027, 6, 1), exclude_booking=booking
+            )
+            == 5  # noqa: PLR2004
+        )
+
+    def test_remaining_is_unlimited_before_the_valid_from_date(self):
+        self._free_booking("one")
+
+        assert (
+            get_remaining_free_bookings(self.organization, date(2026, 12, 31)) is None
+        )
+
+    def test_remaining_floors_at_zero_when_the_allowance_was_lowered(self):
+        for i in range(5):
+            self._free_booking(f"booking-{i}")
+        group = self.organization.organization_groups.get()
+        group.free_bookings_per_year = 3
+        group.save()
+
+        assert get_remaining_free_bookings(self.organization, date(2027, 6, 1)) == 0
+
+    def test_organization_leaving_its_unlimited_group_gets_the_full_allowance(self):
+        unlimited_group = OrganizationGroupFactory()
+        self.organization.organization_groups.add(unlimited_group)
+        for i in range(10):
+            BookingFactory(
+                title=f"unlimited-{i}",
+                organization=self.organization,
+                start_date=date(2027, 3, 1),
+                uses_free_booking=False,
+            )
+
+        self.organization.organization_groups.remove(unlimited_group)
+
+        assert get_remaining_free_bookings(self.organization, date(2027, 6, 1)) == 5  # noqa: PLR2004

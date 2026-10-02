@@ -105,7 +105,12 @@ class BookingPermissionAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(OrganizationGroup)
 class OrganizationGroupAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name"]
+    list_display = [
+        "id",
+        "name",
+        "free_bookings_per_year",
+        "free_bookings_valid_from",
+    ]
     search_fields = ["id", "name"]
     list_filter = ["name"]
     ordering = ["-id"]

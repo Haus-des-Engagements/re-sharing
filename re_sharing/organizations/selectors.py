@@ -195,3 +195,75 @@ def get_organization_booking_stats(
         booking_count=Count("id"),
         total_amount=Coalesce(Sum("total_amount"), 0, output_field=DecimalField()),
     )
+
+
+FREE_BOOKINGS_COUNTED_STATUSES = (BookingStatus.PENDING, BookingStatus.CONFIRMED)
+
+
+def get_free_bookings_allowance(
+    organization: Organization, on_date: date
+) -> int | None:
+    """
+    Free bookings per calendar year the organization is entitled to for a
+    booking starting on ``on_date``.
+
+    The most generous allowance of all its groups wins. A group without a
+    number, or whose valid-from date lies after ``on_date``, grants an
+    unlimited allowance, which is represented by ``None``.
+    """
+    limited_allowances = []
+    for group in organization.organization_groups.all():
+        if group.free_bookings_per_year is None:
+            return None
+        if group.free_bookings_valid_from > on_date:
+            return None
+        limited_allowances.append(group.free_bookings_per_year)
+
+    if not limited_allowances:
+        return None
+    return max(limited_allowances)
+
+
+def is_free_bookings_allowance_limited_until(
+    organization: Organization, last_date: date
+) -> bool:
+    """
+    Whether the organization's allowance is limited on any date up to and
+    including ``last_date``.
+
+    A group's allowance can only change from unlimited to limited as the date
+    moves forward, so checking ``last_date`` itself is sufficient.
+    """
+    return get_free_bookings_allowance(organization, last_date) is not None
+
+
+def get_free_bookings_used(
+    organization: Organization, year: int, exclude_booking=None
+) -> int:
+    """
+    Number of the organization's pending or confirmed bookings starting in
+    ``year`` that used a free booking. Every booking counts as one.
+    """
+    bookings = organization.bookings_of_organization.filter(
+        uses_free_booking=True,
+        start_date__year=year,
+        status__in=FREE_BOOKINGS_COUNTED_STATUSES,
+    )
+    if exclude_booking is not None and exclude_booking.pk is not None:
+        bookings = bookings.exclude(pk=exclude_booking.pk)
+    return bookings.count()
+
+
+def get_remaining_free_bookings(
+    organization: Organization, on_date: date, exclude_booking=None
+) -> int | None:
+    """
+    Free bookings left for a booking starting on ``on_date``: the allowance
+    minus the used free bookings of that calendar year, never below zero.
+    ``None`` when the allowance is unlimited.
+    """
+    allowance = get_free_bookings_allowance(organization, on_date)
+    if allowance is None:
+        return None
+    used = get_free_bookings_used(organization, on_date.year, exclude_booking)
+    return max(allowance - used, 0)

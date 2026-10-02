@@ -7,6 +7,7 @@ from auditlog.context import set_actor
 from dateutil.rrule import rrulestr
 from django.contrib import admin
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
@@ -19,6 +20,7 @@ from import_export.admin import ImportExportMixin
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ForeignKeyWidget
 
+from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Resource
 from re_sharing.utils.models import BookingStatus
 
@@ -83,6 +85,7 @@ class BookingAdmin(ImportExportModelAdmin):
         "organization__organization_groups",
         "resource",
         "compensation",
+        "uses_free_booking",
         "resource__location",
     ]
     ordering = ["id"]
@@ -171,6 +174,7 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "first_booking_date",
         "last_booking_date",
         "status",
+        "is_quota_priced",
         "booking_count_link",
     ]
     resource_classes = [BookingSeriesResource]
@@ -186,6 +190,7 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
         "organization__monthly_bulk_access_codes",
         "reminder_emails",
         "status",
+        "is_quota_priced",
         "organization__organization_groups",
     ]
     readonly_fields = ["booking_count_link"]
@@ -214,16 +219,19 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
             previous = BookingSeries.objects.get(pk=obj.pk)
             bookings = Booking.objects.filter(booking_series=obj)
 
+            # Occurrences of a quota-priced series are priced individually, so
+            # their compensation and amount are left alone.
+            synced_fields = ["organization", "user", "title"]
+            if not obj.is_quota_priced:
+                synced_fields += ["compensation", "total_amount"]
             for booking in bookings:
                 booking.organization = obj.organization
                 booking.user = obj.user
-                booking.compensation = obj.compensation
-                booking.total_amount = obj.total_amount_per_booking
                 booking.title = obj.title
-            Booking.objects.bulk_update(
-                bookings,
-                ["organization", "user", "compensation", "total_amount", "title"],
-            )
+                if not obj.is_quota_priced:
+                    booking.compensation = obj.compensation
+                    booking.total_amount = obj.total_amount_per_booking
+            Booking.objects.bulk_update(bookings, synced_fields)
 
             if previous.rrule != obj.rrule:
                 if "COUNT" not in obj.rrule and "UNTIL" not in obj.rrule:
@@ -236,7 +244,11 @@ class BookingSeriesAdmin(ImportExportMixin, admin.ModelAdmin):
     @admin.action(description=_("Generate bookings"))
     def generate_bookings(self, request, queryset):
         for booking_series in queryset:
-            with set_actor(request.user):
+            with set_actor(request.user), transaction.atomic():
+                # one transaction per series, under the organization's lock
+                Organization.objects.select_for_update().get(
+                    pk=booking_series.organization_id
+                )
                 max_booking_date = timezone.now().date() + timedelta(
                     days=max_future_booking_date
                 )

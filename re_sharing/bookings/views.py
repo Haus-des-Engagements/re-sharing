@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
@@ -7,6 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
@@ -22,6 +25,7 @@ from .forms import BookingForm
 from .forms import MessageForm
 from .models import Booking
 from .services import MIN_ACCESS_CODE_SEARCH_LENGTH
+from .services import FreeBookingsExhaustedError
 from .services import bookings_webview
 from .services import cancel_booking
 from .services import create_booking_data
@@ -45,6 +49,7 @@ from .services_booking_series import get_bookings_of_booking_series
 from .services_booking_series import manager_cancel_booking_series
 from .services_booking_series import manager_filter_booking_series_list
 from .services_booking_series import save_booking_series
+from .services_pricing import get_free_bookings_remaining_after
 
 
 @require_http_methods(["GET", "POST"])
@@ -101,6 +106,27 @@ def create_booking_data_form_view(request):
     )
 
 
+def _redirect_to_booking_form(request, booking_data, error):
+    """Send the user back to the form with the entered data after a pricing error."""
+    messages.error(request, error.message)
+    if booking_data.get("booking_id"):
+        booking = get_object_or_404(Booking, id=booking_data["booking_id"])
+        return redirect("bookings:update-booking", booking_slug=booking.slug)
+
+    params = {
+        "startdate": booking_data.get("start_date"),
+        "starttime": (booking_data.get("start_time") or "")[:5],
+        "endtime": (booking_data.get("end_time") or "")[:5],
+        "resource": booking_data.get("resource"),
+        "organization": booking_data.get("organization"),
+        "title": booking_data.get("title"),
+        "activity_description": booking_data.get("activity_description"),
+        "attendees": booking_data.get("number_of_attendees"),
+    }
+    query = urlencode({key: value for key, value in params.items() if value})
+    return redirect(f"{reverse('bookings:create-booking')}?{query}")
+
+
 @require_http_methods(["GET", "POST"])
 @login_required
 def preview_and_save_booking_view(request):
@@ -108,16 +134,28 @@ def preview_and_save_booking_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    booking = generate_booking(booking_data)
+    try:
+        booking = generate_booking(booking_data)
+    except FreeBookingsExhaustedError as error:
+        return _redirect_to_booking_form(request, booking_data, error)
+
     if request.method == "GET":
         return render(
             request,
             "bookings/preview-booking.html",
-            {"booking": booking},
+            {
+                "booking": booking,
+                "free_bookings_remaining_after": get_free_bookings_remaining_after(
+                    booking
+                ),
+            },
         )
 
     if request.method == "POST":
-        booking = save_booking(request.user, booking)
+        try:
+            booking = save_booking(request.user, booking)
+        except FreeBookingsExhaustedError as error:
+            return _redirect_to_booking_form(request, booking_data, error)
 
         request.session.pop("booking_data", None)
         if booking.status == BookingStatus.CONFIRMED:
@@ -310,7 +348,7 @@ def preview_and_save_booking_series_view(request):
     if not booking_data:
         return redirect("bookings:create-booking")
 
-    bookings, booking_series, bookable = create_booking_series_and_bookings(
+    bookings, booking_series, bookable, pricing = create_booking_series_and_bookings(
         booking_data
     )
 
@@ -322,6 +360,7 @@ def preview_and_save_booking_series_view(request):
                 "bookings": bookings,
                 "booking_series": booking_series,
                 "bookable": bookable,
+                "pricing": pricing,
             },
         )
 

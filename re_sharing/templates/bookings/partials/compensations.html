@@ -1,8 +1,12 @@
 {% load i18n %}
 
-<div class="mb-3 mt-3"
-     id="compensations-container"
-     x-data="{ showBilling: false, hasInvoiceAddress: false }">
+<div class="mb-3 mt-3" id="compensations-container" x-data="{ showBilling: false, hasInvoiceAddress: false, needsFallback:
+  {% if selected_compensation.counts_against_free_bookings %}
+    true
+  {% else %}
+    false
+  {% endif %}
+  }">
   <label for="id_compensation" class="form-label requiredField">
     {% trans "Donation / Billing" %}<span class="asteriskField">*</span>
   </label>
@@ -25,7 +29,7 @@
                id="{{ compensation.id }}"
                value="{{ compensation.id }}"
                required
-               x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}"
+               x-on:change="showBilling ={% if compensation.hourly_rate %}true{% else %}false{% endif %}; needsFallback = {% if compensation.counts_against_free_bookings %}true{% else %}false{% endif %}"
                {% if compensation == selected_compensation %}checked{% endif %} />
         <label class="form-check-label" for="{{ compensation.id }}">
           {{ compensation.name }}
@@ -33,6 +37,15 @@
             ({{ compensation.hourly_rate }} € /{% trans "hour" %})
           {% endif %}
           {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
+          {% if compensation.counts_against_free_bookings and remaining_free_bookings is not None %}
+            <span class="text-muted">
+              {% blocktranslate count counter=remaining_free_bookings with year=quota_year trimmed %}
+                ({{ counter }} free booking left in {{ year }})
+              {% plural %}
+                ({{ counter }} free bookings left in {{ year }})
+              {% endblocktranslate %}
+            </span>
+          {% endif %}
         </label>
       </div>
     {% empty %}
@@ -40,6 +53,32 @@
         <em>{% trans "Please select a resource first." %}</em>
       </p>
     {% endfor %}
+    {% if fallback_compensations %}
+      {# djlint:off H021 #}
+      <div class="mt-3" x-show="needsFallback" style="display: none">
+        {# djlint:on #}
+        <label class="form-label">
+          {% trans "Compensation once your free bookings of a year are used up" %}<span class="asteriskField">*</span>
+        </label>
+        <div class="form-text mb-1">
+          {% trans "Each booking of the series uses one free booking of its year. Further bookings of that year are charged with this compensation." %}
+        </div>
+        {% for compensation in fallback_compensations %}
+          <div class="form-check">
+            <input class="form-check-input"
+                   type="radio"
+                   name="fallback_compensation"
+                   id="fallback-{{ compensation.id }}"
+                   value="{{ compensation.id }}"
+                   {% if compensation.id == selected_fallback %}checked{% endif %} />
+            <label class="form-check-label" for="fallback-{{ compensation.id }}">
+              {{ compensation.name }} ({{ compensation.hourly_rate }} € /{% trans "hour" %})
+              {% if compensation.conditions %}: {{ compensation.conditions }}{% endif %}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {# djlint:off H021 #}
     <div class="mt-3" x-show="showBilling" style="display: none">
       {# djlint:on #}

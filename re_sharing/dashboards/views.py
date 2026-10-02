@@ -13,6 +13,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
+from re_sharing.dashboards.services import get_free_bookings_overview
 from re_sharing.dashboards.services import get_users_bookings_and_permissions
 from re_sharing.organizations.models import Organization
 from re_sharing.resources.models import Compensation
@@ -29,6 +30,12 @@ def users_bookings_and_permissions_dashboard_view(request: HttpRequest) -> HttpR
     bookings, booking_permissions, equipment_loans = get_users_bookings_and_permissions(
         user=request.user
     )
+    free_bookings_overview = get_free_bookings_overview(user=request.user)
+    booking_permissions = list(booking_permissions)
+    for booking_permission in booking_permissions:
+        booking_permission.free_bookings = free_bookings_overview.get(
+            booking_permission.organization_id, []
+        )
 
     return render(
         request,

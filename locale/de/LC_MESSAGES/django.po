@@ -2822,3 +2822,170 @@ msgstr "Keine Buchung zeigt in diesem Zeitraum den Code %(code)s an."
 
 msgid "No bookings found."
 msgstr "Keine Buchungen gefunden."
+
+msgid "Free bookings per year"
+msgstr "Freie Buchungen pro Jahr"
+
+msgid ""
+"Number of free bookings per calendar year for organizations in this group. "
+"Leave empty for unlimited free bookings. An organization gets the most "
+"generous allowance of all its groups. Changes only affect bookings made "
+"afterwards."
+msgstr ""
+"Anzahl der freien Buchungen pro Kalenderjahr für Organisationen in dieser "
+"Gruppe. Leer lassen für unbegrenzt viele freie Buchungen. Eine Organisation "
+"erhält das großzügigste Kontingent all ihrer Gruppen. Änderungen wirken sich "
+"nur auf danach erstellte Buchungen aus."
+
+msgid "Free bookings limit valid from"
+msgstr "Begrenzung der freien Buchungen gültig ab"
+
+msgid ""
+"Bookings starting on or after this date count against the free bookings. "
+"Required when a number of free bookings is set."
+msgstr ""
+"Buchungen, die an oder nach diesem Datum beginnen, zählen zu den freien "
+"Buchungen. Pflichtfeld, wenn eine Anzahl freier Buchungen gesetzt ist."
+
+msgid "Free bookings per year and the valid-from date have to be set together."
+msgstr ""
+"Freie Buchungen pro Jahr und das Gültig-ab-Datum müssen gemeinsam gesetzt "
+"werden."
+
+msgid "Required when free bookings per year is set."
+msgstr "Pflichtfeld, wenn freie Buchungen pro Jahr gesetzt ist."
+
+msgid "Required when a valid-from date is set."
+msgstr "Pflichtfeld, wenn ein Gültig-ab-Datum gesetzt ist."
+
+msgid "Counts against free bookings"
+msgstr "Zählt zu den freien Buchungen"
+
+msgid ""
+"Bookings with this compensation use one of the organization's free bookings "
+"per year. Only possible for compensations without a rate."
+msgstr ""
+"Buchungen mit dieser Gegenleistung verbrauchen eine der freien Buchungen der "
+"Organisation pro Jahr. Nur für Gegenleistungen ohne Tarif möglich."
+
+msgid "A compensation with a rate cannot count against free bookings."
+msgstr ""
+"Eine Gegenleistung mit Tarif kann nicht zu den freien Buchungen zählen."
+
+msgid "Fallback compensation"
+msgstr "Ersatz-Gegenleistung"
+
+msgid ""
+"Paid compensation used for occurrences once the organization's free bookings "
+"of a year are used up."
+msgstr ""
+"Kostenpflichtige Gegenleistung für die Termine, sobald die freien Buchungen "
+"der Organisation eines Jahres aufgebraucht sind."
+
+msgid "Occurrences priced against free bookings"
+msgstr "Termine werden gegen freie Buchungen berechnet"
+
+msgid ""
+"Occurrences of this series are priced individually against the "
+"organization's free bookings. Series created before the free bookings limit "
+"keep the series compensation."
+msgstr ""
+"Die Termine dieser Serie werden einzeln gegen die freien Buchungen der "
+"Organisation berechnet. Serien, die vor der Begrenzung der freien Buchungen "
+"erstellt wurden, behalten die Gegenleistung der Serie."
+
+msgid "Uses a free booking"
+msgstr "Verbraucht eine freie Buchung"
+
+msgid "This booking used one of the organization's free bookings of the year."
+msgstr ""
+"Diese Buchung hat eine der freien Buchungen der Organisation in diesem Jahr "
+"verbraucht."
+
+#, python-format
+msgid "No free bookings left for %(year)s. Please choose another compensation."
+msgstr ""
+"Für %(year)s sind keine freien Buchungen mehr übrig. Bitte wähle eine andere "
+"Gegenleistung."
+
+msgid "Compensation once your free bookings of a year are used up"
+msgstr ""
+"Gegenleistung, sobald eure freien Buchungen eines Jahres aufgebraucht sind"
+
+msgid "Please choose a paid compensation available for this resource."
+msgstr ""
+"Bitte wähle eine kostenpflichtige Gegenleistung, die für diese Ressource "
+"verfügbar ist."
+
+msgid ""
+"Please choose the compensation for the bookings once your free bookings of a "
+"year are used up."
+msgstr ""
+"Bitte wähle die Gegenleistung für die Buchungen, sobald eure freien "
+"Buchungen eines Jahres aufgebraucht sind."
+
+msgid "Free booking"
+msgstr "Freie Buchung"
+
+msgid "Free bookings"
+msgstr "Freie Buchungen"
+
+msgid ""
+"Each booking of the series uses one free booking of its year. Further "
+"bookings of that year are charged with this compensation."
+msgstr ""
+"Jede Buchung der Serie verbraucht eine freie Buchung ihres Jahres. Weitere "
+"Buchungen dieses Jahres werden mit dieser Gegenleistung berechnet."
+
+#, python-format
+msgid "%(year)s: %(used)s of %(allowance)s used"
+msgstr "%(year)s: %(used)s von %(allowance)s verbraucht"
+
+#, python-format
+msgid "(%(counter)s free booking left in %(year)s)"
+msgid_plural "(%(counter)s free bookings left in %(year)s)"
+msgstr[0] "(noch %(counter)s freie Buchung in %(year)s)"
+msgstr[1] "(noch %(counter)s freie Buchungen in %(year)s)"
+
+#, python-format
+msgid ""
+"This booking uses one of your free bookings. Afterwards %(counter)s free "
+"booking remains for %(year)s."
+msgid_plural ""
+"This booking uses one of your free bookings. Afterwards %(counter)s free "
+"bookings remain for %(year)s."
+msgstr[0] ""
+"Diese Buchung verbraucht eine eurer freien Buchungen. Danach bleibt für "
+"%(year)s noch %(counter)s freie Buchung."
+msgstr[1] ""
+"Diese Buchung verbraucht eine eurer freien Buchungen. Danach bleiben für "
+"%(year)s noch %(counter)s freie Buchungen."
+
+#, python-format
+msgid "%(counter)s free booking"
+msgid_plural "%(counter)s free bookings"
+msgstr[0] "%(counter)s freie Buchung"
+msgstr[1] "%(counter)s freie Buchungen"
+
+#, python-format
+msgid "%(counter)s booking charged at %(rate)s €/hour (total %(total)s €)"
+msgid_plural ""
+"%(counter)s bookings charged at %(rate)s €/hour (total %(total)s €)"
+msgstr[0] "%(counter)s Buchung zu %(rate)s €/Stunde (gesamt %(total)s €)"
+msgstr[1] "%(counter)s Buchungen zu %(rate)s €/Stunde (gesamt %(total)s €)"
+
+#, python-format
+msgid ""
+"%(counter)s booking cannot be created: no free booking is left for its year "
+"and this resource has no paid compensation."
+msgid_plural ""
+"%(counter)s bookings cannot be created: no free booking is left for their "
+"year and this resource has no paid compensation."
+msgstr[0] ""
+"%(counter)s Buchung kann nicht erstellt werden: Für ihr Jahr ist keine freie "
+"Buchung mehr übrig und diese Ressource hat keine kostenpflichtige "
+"Gegenleistung."
+msgstr[1] ""
+"%(counter)s Buchungen können nicht erstellt werden: Für ihr Jahr ist keine "
+"freie Buchung mehr übrig und diese Ressource hat keine kostenpflichtige "
+"Gegenleistung."

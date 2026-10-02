@@ -11,6 +11,7 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_list_or_404
 from django.shortcuts import get_object_or_404
@@ -21,6 +22,12 @@ from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingMessage
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services_booking_series import create_rrule
+from re_sharing.bookings.services_pricing import FreeBookingsExhaustedError
+from re_sharing.bookings.services_pricing import _as_date
+from re_sharing.bookings.services_pricing import _hourly_total
+from re_sharing.bookings.services_pricing import get_usable_fallback_compensation
+from re_sharing.bookings.services_pricing import needs_quota_reevaluation
+from re_sharing.bookings.services_pricing import price_booking
 from re_sharing.organizations.mails import send_booking_cancellation_email
 from re_sharing.organizations.mails import send_booking_confirmation_email
 from re_sharing.organizations.mails import send_booking_not_available_email
@@ -28,6 +35,7 @@ from re_sharing.organizations.mails import send_booking_series_confirmation_emai
 from re_sharing.organizations.mails import send_manager_new_booking_email
 from re_sharing.organizations.mails import send_new_booking_message_email
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.selectors import get_remaining_free_bookings
 from re_sharing.organizations.services import (
     organizations_with_confirmed_bookingpermission,
 )
@@ -36,6 +44,7 @@ from re_sharing.resources.models import Compensation
 from re_sharing.resources.models import Location
 from re_sharing.resources.models import PermanentCode
 from re_sharing.resources.models import Resource
+from re_sharing.resources.selectors import get_paid_fallback_compensations
 from re_sharing.resources.services import get_access_code
 from re_sharing.users.models import User
 from re_sharing.utils.models import BookingStatus
@@ -88,7 +97,39 @@ class InvalidBookingOperationError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
-def is_bookable_by_organization(user, organization, resource, compensation):
+def _exceeds_free_bookings(  # noqa: PLR0913
+    organization, resource, compensation, start_date, booking, *, is_series
+):
+    if not compensation.counts_against_free_bookings:
+        return False
+    if not needs_quota_reevaluation(booking, organization, compensation, start_date):
+        return False
+    # Occurrences of a series beyond the allowance are charged with the fallback,
+    # so a series may start in a year whose free bookings are used up.
+    if is_series and get_paid_fallback_compensations(organization, resource).exists():
+        return False
+    remaining = get_remaining_free_bookings(
+        organization, _as_date(start_date), exclude_booking=booking
+    )
+    return remaining is not None and remaining < 1
+
+
+def is_bookable_by_organization(  # noqa: PLR0913
+    user,
+    organization,
+    resource,
+    compensation,
+    start_date=None,
+    booking=None,
+    *,
+    is_series=False,
+):
+    # the free bookings allowance applies to managers too, so it is checked first
+    if start_date is not None and _exceeds_free_bookings(
+        organization, resource, compensation, start_date, booking, is_series=is_series
+    ):
+        return False
+
     # staff users are allowed to book any combination
     if user.is_manager():
         return True
@@ -177,6 +218,8 @@ def create_booking_data(user, form):
         "activity_description": form.cleaned_data["activity_description"],
         "number_of_attendees": form.cleaned_data["number_of_attendees"],
     }
+    fallback = form.cleaned_data.get("fallback_compensation")
+    booking_data["fallback_compensation"] = fallback.id if fallback else None
     rrule = None
     if form.cleaned_data["rrule_repetitions"] != "NO_REPETITIONS":
         rrule = create_rrule(form.cleaned_data)
@@ -194,19 +237,14 @@ def generate_booking(booking_data):
     resource = get_object_or_404(Resource, slug=booking_data["resource"])
     user = get_object_or_404(User, slug=booking_data["user"])
 
-    start = timespan[0]
-    end = timespan[1]
     compensation = get_object_or_404(Compensation, id=booking_data["compensation"])
-    if compensation.hourly_rate is not None:
-        total_amount = (end - start).total_seconds() / 3600 * compensation.hourly_rate
-    else:
-        total_amount = None
 
     if booking_data.get("booking_id"):
         # Retrieve the existing booking object
         booking = get_object_or_404(Booking, id=booking_data["booking_id"])
-        if booking.total_amount != total_amount:
-            booking.total_amount = total_amount
+        reevaluate_quota = needs_quota_reevaluation(
+            booking, organization, compensation, booking_data["start_date"]
+        )
 
         # Update the existing object's fields
         booking.user = user
@@ -220,9 +258,15 @@ def generate_booking(booking_data):
         booking.end_date = booking_data["end_date"]
         booking.start_time = booking_data["start_time"]
         booking.end_time = booking_data["end_time"]
-        booking.compensation = compensation
         booking.invoice_address = booking_data["invoice_address"]
         booking.activity_description = booking_data["activity_description"]
+
+        if reevaluate_quota:
+            price_booking(booking, compensation, exclude_booking=booking)
+        else:
+            # Other edits keep whether the booking is free (uses_free_booking)
+            booking.compensation = compensation
+            booking.total_amount = _hourly_total(booking, compensation)
 
     else:
         # Create a new booking object
@@ -238,11 +282,10 @@ def generate_booking(booking_data):
             end_date=booking_data["end_date"],
             start_time=booking_data["start_time"],
             end_time=booking_data["end_time"],
-            compensation=compensation,
-            total_amount=total_amount,
             invoice_address=booking_data["invoice_address"],
             activity_description=booking_data["activity_description"],
         )
+        price_booking(booking, compensation)
 
     return booking
 
@@ -250,12 +293,29 @@ def generate_booking(booking_data):
 def save_booking(user, booking):
     if not user_has_bookingpermission(user, booking):
         raise PermissionDenied
-    if not is_bookable_by_organization(
-        user, booking.organization, booking.resource, booking.compensation
-    ):
-        raise PermissionDenied
 
-    booking.save()
+    with transaction.atomic():
+        # Bookings of one organization are serialized on its row, so two
+        # simultaneous requests cannot both take the last free booking.
+        Organization.objects.select_for_update().get(pk=booking.organization_id)
+        original = Booking.objects.get(pk=booking.pk) if booking.pk else None
+        if booking.compensation.counts_against_free_bookings and (
+            needs_quota_reevaluation(
+                original, booking.organization, booking.compensation, booking.start_date
+            )
+        ):
+            price_booking(booking, booking.compensation, exclude_booking=original)
+        if not is_bookable_by_organization(
+            user,
+            booking.organization,
+            booking.resource,
+            booking.compensation,
+            start_date=booking.start_date,
+            booking=original,
+        ):
+            raise PermissionDenied
+
+        booking.save()
     # re-retrieve booking object, to be able to call timespan.lower
     booking.refresh_from_db()
     if booking.status == BookingStatus.PENDING:
@@ -729,24 +789,56 @@ def manager_confirm_booking(user, booking_slug):
     raise InvalidBookingOperationError
 
 
+def _price_occurrence_on_confirmation(user, booking_series, booking):
+    """
+    An unavailable occurrence of a quota-priced series was never priced. When
+    confirmation finds the room free, price it now; delete it if that fails.
+    Returns False when the occurrence was deleted.
+    """
+    if (
+        booking.status != BookingStatus.UNAVAILABLE
+        or not booking_series.is_quota_priced
+    ):
+        return True
+    try:
+        price_booking(
+            booking,
+            booking_series.compensation,
+            fallback_compensation=get_usable_fallback_compensation(booking_series),
+        )
+    except FreeBookingsExhaustedError:
+        with set_actor(user):
+            booking.delete()
+        return False
+    return True
+
+
 def manager_confirm_booking_series(user, booking_series_uuid):
     booking_series = get_object_or_404(BookingSeries, uuid=booking_series_uuid)
     bookings = get_list_or_404(Booking, booking_series=booking_series)
     booking_series.status = BookingStatus.CONFIRMED
     booking_series.save()
-    for booking in bookings:
+    confirmed = []
+    # date order, so earlier occurrences get the free bookings
+    for booking in sorted(bookings, key=lambda booking: booking.start_date):
         if booking.status != BookingStatus.CANCELLED:
             overlapping_bookings = Booking.objects.filter(
                 status=BookingStatus.CONFIRMED,
                 resource=booking.resource,
                 timespan__overlap=booking.timespan,
             ).exclude(id=booking.id)
-            with set_actor(user):
-                if overlapping_bookings.exists():
+            if overlapping_bookings.exists():
+                with set_actor(user):
                     booking.status = BookingStatus.UNAVAILABLE
-                else:
-                    booking.status = BookingStatus.CONFIRMED
+                    booking.save()
+                continue
+            if not _price_occurrence_on_confirmation(user, booking_series, booking):
+                continue
+            with set_actor(user):
+                booking.status = BookingStatus.CONFIRMED
                 booking.save()
+        confirmed.append(booking)
+    bookings = confirmed
 
     send_booking_series_confirmation_email.enqueue(booking_series.id)
 

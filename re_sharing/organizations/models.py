@@ -10,6 +10,7 @@ from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import CheckConstraint
 from django.db.models import DateField
 from django.db.models import EmailField
 from django.db.models import FileField
@@ -18,6 +19,8 @@ from django.db.models import Index
 from django.db.models import IntegerChoices
 from django.db.models import IntegerField
 from django.db.models import ManyToManyField
+from django.db.models import PositiveIntegerField
+from django.db.models import Q
 from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import URLField
@@ -76,14 +79,68 @@ class OrganizationGroup(TimeStampedModel):
         blank=True,
     )
     default_group = BooleanField(_("Group activated by default"), default=False)
+    free_bookings_per_year = PositiveIntegerField(
+        _("Free bookings per year"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Number of free bookings per calendar year for organizations in this "
+            "group. Leave empty for unlimited free bookings. An organization gets "
+            "the most generous allowance of all its groups. Changes only affect "
+            "bookings made afterwards."
+        ),
+    )
+    free_bookings_valid_from = DateField(
+        _("Free bookings limit valid from"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Bookings starting on or after this date count against the free "
+            "bookings. Required when a number of free bookings is set."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Organization group")
         verbose_name_plural = _("Organization groups")
         ordering = ["id"]
+        constraints = [
+            CheckConstraint(
+                condition=(
+                    Q(free_bookings_per_year__isnull=True)
+                    & Q(free_bookings_valid_from__isnull=True)
+                )
+                | (
+                    Q(free_bookings_per_year__isnull=False)
+                    & Q(free_bookings_valid_from__isnull=False)
+                ),
+                name="organizationgroup_free_bookings_fields_set_together",
+                violation_error_message=_(
+                    "Free bookings per year and the valid-from date have to be set "
+                    "together."
+                ),
+            ),
+        ]
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        has_number = self.free_bookings_per_year is not None
+        has_date = self.free_bookings_valid_from is not None
+        if has_number and not has_date:
+            raise ValidationError(
+                {
+                    "free_bookings_valid_from": _(
+                        "Required when free bookings per year is set."
+                    )
+                }
+            )
+        if has_date and not has_number:
+            raise ValidationError(
+                {"free_bookings_per_year": _("Required when a valid-from date is set.")}
+            )
 
 
 def custom_usage_agreement_upload_to(instance, filename):

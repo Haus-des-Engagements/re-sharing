@@ -224,6 +224,16 @@ To help keeping a good style, GitLab is running the following pipeline after pus
 3. Communicate with users through the messaging system
 4. View your booking calendar to see all upcoming bookings
 
+#### Configuring the free bookings allowance
+Organizations can be limited to a number of free bookings per calendar year (see ADR 0023). Deploying the code changes nothing; the restriction starts with this configuration in the admin:
+
+1. Flag the free room compensation with *Counts against free bookings*. The flag is not allowed on compensations with a rate.
+2. On every organization group that should be limited, set *Free bookings per year* and *Free bookings limit valid from* (for example 2027-01-01). Both fields have to be set together. Leave member, self-help and rental groups empty: a group without a number grants unlimited free bookings, and the most generous group wins.
+3. Create paid hourly compensations for the rooms that should stay bookable once the free bookings are used. Rooms without one become unbookable for limited organizations for the rest of the year.
+4. Do this when the announcement goes out: bookings starting on or after the valid-from date are priced against the allowance from that moment, earlier bookings are not touched.
+
+Changes to the number, the date or the flag only affect bookings priced afterwards. Booking series created before the configuration keep today's pricing in the nightly extension until the transition command marks them as quota-priced. When confirming new organizations, check that an organization is not being split only to multiply its allowance.
+
 ### For Users
 
 #### Finding Resources
