@@ -57,4 +57,4 @@ Free bookings are allocated in creation order; a series created in November uses
 - Deploying the change does nothing until the free compensation is flagged and allowances with a valid-from date are set in the admin.
 - Rooms without a paid compensation become unbookable for a limited organization once its free bookings are used; open-ended series on such rooms only get the first occurrences of each year.
 - Organizations see their used free bookings per year on the dashboard, in the compensation selector and in both previews.
-- Series created before the quota keep today's pricing in the nightly extension until a separate transition command marks them as quota-priced.
+- Series created before the quota keep today's pricing in the nightly extension until the transition command `apply_free_bookings_quota` marks them as quota-priced. That one-time transition allocates the remaining free bookings of a year to the earliest legacy bookings, a deliberate exception to first created, first served, because those bookings were created before the rule existed.

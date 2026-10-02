@@ -20,6 +20,7 @@ from re_sharing.organizations.selectors import get_custom_email_filterable_resou
 from re_sharing.organizations.selectors import get_filtered_organizations
 from re_sharing.organizations.selectors import get_free_bookings_allowance
 from re_sharing.organizations.selectors import get_free_bookings_used
+from re_sharing.organizations.selectors import get_limited_organizations
 from re_sharing.organizations.selectors import get_organization_booking_stats
 from re_sharing.organizations.selectors import get_remaining_free_bookings
 from re_sharing.organizations.selectors import get_user_by_email
@@ -759,3 +760,44 @@ class TestFreeBookingsUsedSelectors(TestCase):
         self.organization.organization_groups.remove(unlimited_group)
 
         assert get_remaining_free_bookings(self.organization, date(2027, 6, 1)) == 5  # noqa: PLR2004
+
+
+class TestGetLimitedOrganizations(TestCase):
+    def setUp(self):
+        self.limited_group = OrganizationGroupFactory(
+            free_bookings_per_year=5, free_bookings_valid_from=date(2027, 1, 1)
+        )
+        self.unlimited_group = OrganizationGroupFactory()
+
+    def confirmed(self, name, *groups):
+        organization = OrganizationFactory(
+            name=name, status=Organization.Status.CONFIRMED
+        )
+        organization.organization_groups.add(*groups)
+        return organization
+
+    def test_returns_confirmed_organizations_in_limited_groups_once(self):
+        other_limited = OrganizationGroupFactory(
+            free_bookings_per_year=3, free_bookings_valid_from=date(2027, 1, 1)
+        )
+        limited = self.confirmed("Limited", self.limited_group, other_limited)
+
+        assert list(get_limited_organizations()) == [limited]
+
+    def test_excludes_organizations_with_an_unlimited_group(self):
+        self.confirmed("Member", self.limited_group, self.unlimited_group)
+
+        assert list(get_limited_organizations()) == []
+
+    def test_excludes_pending_organizations_and_organizations_without_groups(self):
+        pending = OrganizationFactory(status=Organization.Status.PENDING)
+        pending.organization_groups.add(self.limited_group)
+        self.confirmed("No groups")
+
+        assert list(get_limited_organizations()) == []
+
+    def test_ordered_by_name(self):
+        second = self.confirmed("B Org", self.limited_group)
+        first = self.confirmed("A Org", self.limited_group)
+
+        assert list(get_limited_organizations()) == [first, second]

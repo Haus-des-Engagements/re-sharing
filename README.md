@@ -234,6 +234,15 @@ Organizations can be limited to a number of free bookings per calendar year (see
 
 Changes to the number, the date or the flag only affect bookings priced afterwards. Booking series created before the configuration keep today's pricing in the nightly extension until the transition command marks them as quota-priced. When confirming new organizations, check that an organization is not being split only to multiply its allowance.
 
+##### Transition of bookings created before the quota
+After the announcement grace period, bring the remaining legacy bookings of limited organizations under the quota with one command:
+
+1. `uv run python manage.py apply_free_bookings_quota --dry-run -v 2` prints, per organization, which future bookings keep the remaining free bookings of their year (earliest dates first), which are charged with the cheapest paid compensation of the room, which are removed because the room has no paid compensation, and which series get the fallback and the quota marker. Nothing is changed.
+2. Review the report and inform the affected organizations; the command sends no emails.
+3. `uv run python manage.py apply_free_bookings_quota` applies it. `--organizations slug ...` restricts a run to some organizations, so it can be done in batches.
+
+Running the command again is safe: a completed organization reports "nothing to do". Past and invoiced bookings are never touched.
+
 ### For Users
 
 #### Finding Resources

@@ -25,6 +25,7 @@ from re_sharing.utils.models import BookingStatus
 
 from .models import BookingPermission
 from .models import Organization
+from .models import OrganizationGroup
 
 
 def get_booking_permission(
@@ -267,3 +268,26 @@ def get_remaining_free_bookings(
         return None
     used = get_free_bookings_used(organization, on_date.year, exclude_booking)
     return max(allowance - used, 0)
+
+
+def get_limited_organizations() -> QuerySet[Organization]:
+    """
+    Confirmed organizations whose free bookings are limited: in a group that
+    carries a number and in no group without one, because an unlimited group
+    makes the whole organization unlimited.
+    """
+    limited_groups = OrganizationGroup.objects.filter(
+        free_bookings_per_year__isnull=False
+    )
+    unlimited_groups = OrganizationGroup.objects.filter(
+        free_bookings_per_year__isnull=True
+    )
+    return (
+        Organization.objects.filter(
+            status=Organization.Status.CONFIRMED,
+            organization_groups__in=limited_groups,
+        )
+        .exclude(organization_groups__in=unlimited_groups)
+        .distinct()
+        .order_by("name")
+    )
