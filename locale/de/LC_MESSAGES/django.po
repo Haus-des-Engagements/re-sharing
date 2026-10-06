@@ -1168,6 +1168,15 @@ msgstr ""
 msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
 
+#, python-format
+msgid ""
+"Your organization has no free booking left in %(year)s. This resource has "
+"no paid compensation, so it cannot be booked in %(year)s."
+msgstr ""
+"Deine Organisation hat in %(year)s keine freie Buchung mehr übrig. Diese "
+"Ressource hat keine kostenpflichtige Gegenleistung und kann daher in "
+"%(year)s nicht gebucht werden."
+
 msgid "Resource updated."
 msgstr "Ressource aktualisiert."
 

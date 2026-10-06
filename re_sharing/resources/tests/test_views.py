@@ -1048,6 +1048,31 @@ class GetCompensationsFreeBookingsViewTest(TestCase):
 
         assert "Free of charge" not in content
         assert 'name="compensation"' not in content
+        assert "no free booking left in 2027" in content
+        assert "cannot be booked in 2027" in content
+        assert "Please select a resource first." not in content
+
+    def test_exhausted_message_not_shown_while_a_paid_compensation_is_offered(
+        self,
+    ):
+        self.use_free_bookings(2)
+
+        content = self.get_choices()
+
+        assert "Hourly rate" in content
+        assert "no free booking left" not in content
+
+    def test_exhausted_message_not_shown_without_any_compensation(self):
+        self.free_compensation.is_active = False
+        self.free_compensation.save()
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+        self.use_free_bookings(2)
+
+        content = self.get_choices()
+
+        assert "no free booking left" not in content
+        assert "Please select a resource first." in content
 
     def test_edit_of_pre_quota_booking_keeps_its_compensation(self):
         booking = BookingFactory(

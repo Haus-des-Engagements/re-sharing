@@ -813,6 +813,15 @@ msgstr "Compensations"
 msgid "Please select a resource first."
 msgstr "Veuillez d'abord sélectionner une ressource."
 
+#, python-format
+msgid ""
+"Your organization has no free booking left in %(year)s. This resource has "
+"no paid compensation, so it cannot be booked in %(year)s."
+msgstr ""
+"Votre organisation n'a plus de réservation gratuite en %(year)s. Cette "
+"ressource n'a pas de compensation payante et ne peut donc pas être "
+"réservée en %(year)s."
+
 msgid "Sign In"
 msgstr "Se connecter"
 

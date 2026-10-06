@@ -30,6 +30,7 @@ from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceImage
 from re_sharing.resources.models import ResourceRestriction
 from re_sharing.resources.selectors import get_bookable_compensations
+from re_sharing.resources.selectors import get_compensations_for
 from re_sharing.resources.selectors import get_paid_fallback_compensations
 from re_sharing.resources.services import create_resource
 from re_sharing.resources.services import filter_resources
@@ -257,6 +258,21 @@ def get_compensations(request, selected_compensation=None):
     compensations, remaining_free_bookings = get_bookable_compensations(
         organization, resource, start_date, booking, is_series=is_series
     )
+    # Only consuming compensations exist for the resource and none is left to
+    # offer: the free bookings of the year are used up, so say so instead of
+    # showing an empty list.
+    if (
+        bookable
+        and remaining_free_bookings == 0
+        and not compensations.exists()
+        and get_compensations_for(organization, resource).exists()
+    ):
+        bookable = False
+        restriction_message = _(
+            "Your organization has no free booking left in %(year)s. This "
+            "resource has no paid compensation, so it cannot be booked in "
+            "%(year)s."
+        ) % {"year": start_date.year}
     # a series with a consuming compensation names the paid fallback up front
     fallback_compensations = Compensation.objects.none()
     if (

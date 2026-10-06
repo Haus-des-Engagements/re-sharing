@@ -65,6 +65,11 @@ When a booking series is requested and a paid fallback compensation is available
 - **WHEN** the compensation selector is requested for a limited organization with 0 remaining free bookings in the selected year
 - **THEN** the consuming compensation is not in the rendered choices
 
+#### Scenario: Only consuming compensations exist and are exhausted
+
+- **WHEN** the compensation selector is requested for a limited organization with 0 remaining free bookings in the selected year and every compensation of the resource counts against free bookings
+- **THEN** no choice is rendered and the selector states that no free booking is left in that year and the resource cannot be booked in it
+
 #### Scenario: Remaining free bookings shown
 
 - **WHEN** the compensation selector is requested for a limited organization with 2 remaining free bookings
