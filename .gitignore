@@ -336,3 +336,5 @@ re_sharing/media/
 
 # Database dumps (may contain production data)
 *.dmp
+
+/.agents/skills/security-review/

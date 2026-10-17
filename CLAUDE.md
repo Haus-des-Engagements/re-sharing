@@ -6,12 +6,6 @@ This file contains specific development guidelines and rules for working with th
 
 ### Pre-commit Configuration
 - **Always respect the `.pre-commit-config.yaml` configuration**
-- The project uses the following tools that must pass before commits:
-  - **Ruff** for Python linting and formatting
-  - **Django-upgrade** for Django version compatibility
-  - **djLint** for Django template formatting and linting
-  - Standard pre-commit hooks for file quality checks
-- Run `pre-commit install` to set up hooks locally
 - All code changes must pass pre-commit checks before committing
 - **Commit only when asked.** Never auto-commit — report what changed and wait
   for an explicit "commit" / "commit and push".
@@ -45,20 +39,6 @@ This file contains specific development guidelines and rules for working with th
 - Mock external dependencies appropriately
 - Combine duplicate test classes when found
 
-### Code Style
-- Follow PEP 8 standards (enforced by Ruff)
-- Use type hints where beneficial
-- Write clear, descriptive variable and function names
-- Add docstrings for complex functions and classes
-- Keep functions focused and single-purpose
-
-### Security Considerations
-- Always validate user permissions before operations
-- Never expose sensitive information in logs or responses
-- Use Django's built-in security features
-- Validate and sanitize user inputs
-- Follow principle of least privilege
-
 ## Project-Specific Rules
 
 ### ADR
@@ -82,13 +62,6 @@ This file contains specific development guidelines and rules for working with th
 - Run tests: `export DJANGO_READ_DOT_ENV_FILE=true && python -m pytest`
 - Coverage report: `export DJANGO_READ_DOT_ENV_FILE=true && python -m pytest --cov=re_sharing --cov-report=html`
 - Specific test: `export DJANGO_READ_DOT_ENV_FILE=true && python -m pytest path/to/test.py::TestClass::test_method`
-
-## Maintenance Notes
-- Keep dependencies updated via pre-commit autoupdate
-- Regularly review and improve test coverage
-- Refactor code when patterns emerge
-- Document complex business logic
-- Monitor performance of database queries
 
 ---
 *This file should be updated as the project evolves and new patterns emerge.*
