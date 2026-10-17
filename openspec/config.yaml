@@ -1,11 +1,9 @@
 schema: spec-driven
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
 
 context: |
   Tech stack: Django, Postgres, htmx
   We use conventional commits
+  We work trunk based.
   Domain: Booking software
 
 
@@ -16,4 +14,5 @@ rules:
     - Always include a "Non-goals" section
   tasks:
     - Break tasks into chunks of max 2 hours
-    - always work with test-drive (red green)
+    - always work test-drive (TDD red/green)
+    - run the full test suite pre-commit at the end, fix all errors
