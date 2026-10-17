@@ -2,7 +2,7 @@
 
 ### Requirement: Fee collections are created per billing period
 
-A daily command SHALL create a fee collection for every active agreement whose next billing period starts within the configured lookahead. The collection SHALL copy the agreement's amount and payment method, SHALL reference the agreement's active mandate for direct debit, SHALL have the kind's collection day of the period as due date, and SHALL have status `Planned`. Creation SHALL be idempotent per agreement, kind and period start. No collection SHALL be created for periods starting after the agreement's end date.
+A daily command SHALL create a fee collection for every active agreement whose next billing period starts within the configured lookahead. The collection SHALL copy the agreement's amount, SHALL reference the agreement's active mandate, SHALL have the kind's collection day of the period as due date, SHALL receive a generated collection reference, and SHALL have status `Planned`. Creation SHALL be idempotent per agreement, kind and period start. No collection SHALL be created for periods starting after the agreement's end date.
 
 #### Scenario: Monthly fee collection
 
@@ -25,102 +25,143 @@ A daily command SHALL create a fee collection for every active agreement whose n
 - **WHEN** an agreement ends on 2027-03-31
 - **THEN** no fee collection with a period start after 2027-03-31 is created
 
-### Requirement: Notification and invoice creation
+### Requirement: Pre-notification
 
-When a planned fee collection reaches the notification date (due date minus the configured pre-notification days), the system SHALL create an outbound invoice in the accounting system with the collection's due date and store the invoice number on the collection, SHALL send a pre-notification email for direct debit when the kind requires it, SHALL send a payment request email naming the invoice number as purpose for bank transfer, and SHALL set the status to `Notified`. Deposit collections SHALL NOT create invoices.
+When a planned collection reaches its notification date (due date minus the configured pre-notification days), the system SHALL send a pre-notification email naming amount, due date, mandate reference and creditor identifier when the kind's notification mode is per collection, and SHALL send nothing when the mode is once at approval. In both cases the collection SHALL become `Notified`. The approval email of a kind with mode once at approval SHALL state amount, interval and collection day.
 
-#### Scenario: Direct debit with per-collection notification
+#### Scenario: Per-collection notification
 
-- **WHEN** the notification date of a direct debit fee collection of a kind with per-collection notification is reached
-- **THEN** an invoice exists in the accounting system and its number is stored on the collection
-- **AND** the organization receives an email naming amount, due date, mandate reference and creditor identifier
+- **WHEN** the notification date of a collection of a kind with per-collection mode is reached
+- **THEN** the organization receives the pre-notification email
 - **AND** the collection status is `Notified`
 
-#### Scenario: Direct debit without per-collection notification
+#### Scenario: Once-at-approval mode
 
-- **WHEN** the notification date of a direct debit fee collection of a kind without per-collection notification is reached
-- **THEN** the invoice is created and the status is `Notified`
-- **AND** no email is sent
-
-#### Scenario: Bank transfer payment request
-
-- **WHEN** the notification date of a bank transfer fee collection is reached
-- **THEN** the organization receives an email with amount, due date, the creditor's bank account and the invoice number as payment purpose
+- **WHEN** the notification date of a collection of a kind with once-at-approval mode is reached
+- **THEN** no email is sent
 - **AND** the collection status is `Notified`
 
-#### Scenario: Invoice creation fails
+#### Scenario: Approval email as standing notification
 
-- **WHEN** the accounting system returns an error on invoice creation
-- **THEN** the collection stays `Planned`, no email is sent, and the error is logged
-
-#### Scenario: Deposit has no invoice
-
-- **WHEN** a deposit collection reaches its notification date
-- **THEN** the organization receives the payment request email
-- **AND** no invoice is created
+- **WHEN** an agreement of a kind with once-at-approval mode is approved
+- **THEN** the decision email states amount, billing interval and collection day
 
 ### Requirement: SEPA collection runs
 
-The system SHALL allow a manager to build a collection run for a chosen collection date from all notified direct debit collections with an active mandate and a due date up to that date. The run SHALL produce a pain.008 CORE XML file stored in private storage, with sequence type RCUR, the collection id as end-to-end id, the invoice number as remittance information, and the creditor identifier from settings. Collections in the run SHALL become `Submitted`. A manager SHALL be able to delete a run while none of its collections is paid, returning them to `Notified`.
+The system SHALL allow a manager to build a run for a chosen collection date from all notified collections with an active mandate and a due date up to that date. The run SHALL produce a pain.008 CORE XML file in private storage with batch booking disabled, sequence type RCUR, the collection reference as end-to-end id, the mandate reference and signature date, and the creditor data from settings. Collections in the run SHALL become `Submitted`. A manager SHALL mark a run as uploaded. A run not marked uploaded SHALL be deletable, returning its collections to `Notified`; an uploaded run SHALL NOT be deletable.
 
 #### Scenario: Build a run
 
-- **WHEN** a manager builds a run for 2027-03-05 and three notified direct debit collections are due by then
+- **WHEN** a manager builds a run for 2027-03-05 and three notified collections are due by then
 - **THEN** a run with three transactions and the summed amount exists and its XML file can be downloaded
+- **AND** the XML carries each collection's reference as end-to-end id and each mandate's reference
 - **AND** the three collections are `Submitted` and reference the run
+
+#### Scenario: Deposit in the run
+
+- **WHEN** a notified deposit collection is due by the collection date
+- **THEN** it is included in the run under the agreement's mandate
 
 #### Scenario: Collection without mandate excluded
 
-- **WHEN** a notified direct debit collection's mandate was revoked
+- **WHEN** a notified collection's mandate was revoked
 - **THEN** it is not included in a run and is listed as needing attention
 
-#### Scenario: Delete an unpaid run
+#### Scenario: Mark uploaded
 
-- **WHEN** a manager deletes a run none of whose collections is paid
+- **WHEN** a manager marks a run as uploaded
+- **THEN** the run stores the upload time and the manager
+
+#### Scenario: Delete a run before upload
+
+- **WHEN** a manager deletes a run that is not marked uploaded
 - **THEN** its collections are `Notified` again and no longer reference the run
 
-#### Scenario: Delete a run with a paid collection
+#### Scenario: Delete an uploaded run
 
-- **WHEN** a manager deletes a run with at least one paid collection
+- **WHEN** a manager tries to delete an uploaded run
 - **THEN** the action is refused
 
-### Requirement: Payment status synchronisation
+### Requirement: Collected by absence of return
 
-A nightly command SHALL read outbound receipts from the accounting system and set collections with a paid invoice to `Paid` with the payment date. Collections still unpaid after due date plus the grace period SHALL become `Overdue` for bank transfer, with one reminder email. Submitted direct debit collections unpaid after the grace period SHALL become `Returned` when a negative bank transaction carrying the invoice number exists, and otherwise SHALL be listed for manager attention.
+A nightly command SHALL set submitted collections of uploaded runs to `Collected` when the run's collection date lies more than the configured return window in the past and no return has been recorded. Collections of runs not marked uploaded SHALL stay `Submitted`.
 
-#### Scenario: Paid invoice
+#### Scenario: Collected after the window
 
-- **WHEN** the sync runs and the accounting system reports the collection's invoice as paid
-- **THEN** the collection is `Paid`
+- **WHEN** the command runs 8 days after the collection date of an uploaded run with a return window of 7 days and a collection has no return
+- **THEN** the collection is `Collected` with the collection date stored
 
-#### Scenario: Overdue transfer
+#### Scenario: Inside the window
 
-- **WHEN** the sync runs 8 days after the due date of an unpaid bank transfer collection with a grace period of 7 days
-- **THEN** the collection is `Overdue`
-- **AND** the organization receives exactly one reminder email across later runs
+- **WHEN** the command runs 3 days after the collection date of an uploaded run
+- **THEN** its collections stay `Submitted`
 
-#### Scenario: Returned debit
+#### Scenario: Run never uploaded
 
-- **WHEN** the sync runs after the grace period for a submitted direct debit collection whose invoice is unpaid and a negative bank transaction with the invoice number exists
+- **WHEN** the command runs 30 days after the collection date of a run not marked uploaded
+- **THEN** its collections stay `Submitted` and the run is listed as needing attention
+
+### Requirement: Return detection
+
+The nightly command SHALL read bank transactions from the accounting system since the last successful run and SHALL mark a submitted or collected collection `Returned` when a transaction with a negative amount contains the collection reference, or the mandate reference together with the collection amount, in its purpose, booking text or payment reference. The matched text SHALL be stored. Negative direct debit transactions matching no collection SHALL be listed for manager attention. When the accounting system cannot be reached, no status SHALL change and the error SHALL be logged.
+
+#### Scenario: Return matched by collection reference
+
+- **WHEN** a transaction of -60 € whose purpose contains the collection reference exists
+- **THEN** the collection is `Returned` with the transaction text stored
+
+#### Scenario: Return matched by mandate reference and amount
+
+- **WHEN** a transaction of -120 € contains only the mandate reference of an agreement with one submitted collection of 120 €
+- **THEN** that collection is `Returned`
+
+#### Scenario: Return after collected
+
+- **WHEN** a collected collection's reference appears in a negative transaction five weeks later
 - **THEN** the collection is `Returned`
 
-#### Scenario: Unresolved debit
+#### Scenario: Unmatched return
 
-- **WHEN** the sync runs after the grace period for a submitted direct debit collection whose invoice is unpaid and no matching transaction exists
-- **THEN** the collection stays `Submitted` and appears in the manager's attention list
+- **WHEN** a negative direct debit transaction matches no collection
+- **THEN** it appears in the manager's attention list
 
 #### Scenario: Accounting system unreachable
 
 - **WHEN** the accounting system cannot be reached
 - **THEN** no collection status changes and the error is logged
 
+### Requirement: Return invoice
+
+A manager SHALL be able to invoice a returned collection. The system SHALL create an outbound invoice in the accounting system for the collection amount plus the configured return fee with the organization's address, SHALL store the invoice number and amount, SHALL set the status to `Invoiced`, and SHALL email the organization with the invoice number as payment purpose. The nightly command SHALL set invoiced collections to `Paid` when the accounting system reports the invoice as paid. Invoicing a collection that is not returned SHALL be refused.
+
+#### Scenario: Invoice a returned collection
+
+- **WHEN** a manager invoices a returned collection of 60 € with a return fee of 5 €
+- **THEN** an invoice of 65 € exists in the accounting system, its number is stored, the status is `Invoiced`
+- **AND** the organization receives an email naming the invoice number as payment purpose
+
+#### Scenario: Invoice creation fails
+
+- **WHEN** the accounting system returns an error
+- **THEN** the collection stays `Returned`, no email is sent, and the error is logged
+
+#### Scenario: Invoice paid
+
+- **WHEN** the nightly command runs and the accounting system reports the invoice as paid
+- **THEN** the collection is `Paid`
+
+#### Scenario: Invoice a collected collection
+
+- **WHEN** a manager tries to invoice a collection that is not returned
+- **THEN** the action is refused
+
 ### Requirement: Manual settlement and overview
 
-A manager SHALL be able to mark a deposit, deposit refund or any collection as paid or cancelled by hand with a note. Managers SHALL see collections filterable by status, kind and payment method within their scope. Organization users SHALL see their own collections with status and amount.
+A manager SHALL be able to mark any non-final collection as paid or cancelled by hand with a note; deposit refunds SHALL only be settled this way. Managers SHALL see collections filterable by status, kind and agreement kind within their scope, with an attention list of returned, invoiced-past-due and never-uploaded items first. Organization users SHALL see their own collections with status and amount.
 
-#### Scenario: Deposit marked received
+#### Scenario: Deposit refund settled
 
-- **WHEN** a manager marks a deposit collection as paid with a note
+- **WHEN** a manager marks a deposit refund as paid with a note
 - **THEN** the collection is `Paid` and the note is stored
 
 #### Scenario: Cancel a planned collection
@@ -133,7 +174,7 @@ A manager SHALL be able to mark a deposit, deposit refund or any collection as p
 - **WHEN** a manager tries to cancel a paid collection
 - **THEN** the action is refused
 
-#### Scenario: Attention list
+#### Scenario: Organization sees own collections
 
-- **WHEN** a manager opens the collections overview
-- **THEN** overdue, returned, and submitted-past-grace collections are shown first
+- **WHEN** a confirmed user of an organization opens its agreements page
+- **THEN** the organization's collections are listed with status and amount and no bank data

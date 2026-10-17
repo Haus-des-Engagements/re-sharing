@@ -1,53 +1,52 @@
 ## Context
 
-Four paper processes exist today, each ending in a signed document and a manual payment arrangement:
+Four paper processes exist today, each ending in a signed contract:
 
-| Kind | Interval | Pays by | Deposit | Notice | Kind-specific data |
+| Kind | Interval | Deposit | Notice | Kind-specific data | Visible |
 |---|---|---|---|---|---|
-| Member | yearly | direct debit | no | per statutes | representative's function, solidarity amount |
-| Coworker | monthly | direct debit | yes | 4 weeks to month end | desks, hours per week |
-| Office tenant | monthly | bank transfer | 3 months' rent | 3 months to month end | room, fixed end date |
-| Cellar tenant | monthly | bank transfer | no | not stated | area in m² |
+| Member | yearly | no | per statutes | representative's function, solidarity amount | yes |
+| Coworker | monthly | yes | 4 weeks to month end | desks, hours per week | yes |
+| Office tenant | monthly | 3 months' rent | 3 months to month end | room, fixed end date | later |
+| Cellar tenant | monthly | no | not stated | area in m² | later |
 
-Mandate references are written by hand, the yearly or monthly debit is uploaded to the bank manually, and nobody can see in one place who owes what. The accounting system (BuchhaltungsButler) is already used for booking invoices through a client that is inlined four times in `bookings/tasks.py`. Its API (v1.9.1) can create invoices, list receipts with a `payment_status` of paid or unpaid, and list bank transactions. It cannot store mandates, execute direct debits, or push webhooks.
+Members and coworkers already pay by direct debit with hand-written mandate references; tenants currently transfer. The stakeholder decided that all payments go through SEPA direct debit, and that a failed debit is followed by an invoice carrying the return fee.
 
-In the codebase, `OrganizationGroup` already expresses "is a member", "is a coworker" and so on, and drives permissions, pricing and the free-bookings quota. `PermanentCode` grants entrance codes per organization with a hardcoded set of accesses. Managers are scoped by organization groups (ADR 21). Emails are sent through `django-tasks` from `mails.py` modules, periodic work runs as management commands.
+Organization registration, the signed document it collects and the manager's confirmation stay as they are: a confirmed organization receives the default group and may book rooms. Agreements start from there. Room terms as click-accepted, versioned documents are the subject of the separate change `organization-terms`.
 
-Constraints: HackSoft style (services, selectors, thin views), coverage above 95 percent, one outward relation per app (ADR 9), private storage for signed documents (ADR 20), audit log on business models (ADR 13).
+BuchhaltungsButler (API v1.9.1) can create invoices, list receipts with a `payment_status`, and list bank transactions with `amount`, `purpose`, `booking_text`, `type` and `payment_reference`. It cannot store mandates, execute debits or push webhooks. Its client is inlined four times in `bookings/tasks.py`.
+
+`OrganizationGroup` already expresses "may book rooms", "is a member" and so on, and drives permissions, pricing and the free-bookings quota. `PermanentCode` grants entrance codes with a hardcoded access set. Managers are scoped by groups (ADR 21). Emails go through `django-tasks` from `mails.py`, periodic work runs as management commands.
+
+Constraints: HackSoft style, coverage above 95 percent, one outward relation per app (ADR 9), private storage (ADR 20), audit log (ADR 13).
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- One place that knows which organization holds which agreement, at what price, paid how, and whether each period was paid.
-- Group membership and entrance codes follow the agreement, never the other way round.
-- Direct debit handled end to end except for the bank upload: mandate, pre-notification, XML file, result.
-- Bank transfer handled with the same collection records and the same paid signal.
+- One place that knows which organization holds which agreement, at what price, and whether each period was collected.
+- Group membership and entrance codes follow agreements.
+- Direct debit end to end except the bank upload: mandate, pre-notification, XML file, return detection, return invoice.
 - The accounting client shared between bookings and agreements.
 
 **Non-Goals:**
 
-- Individuals as members, automatic debit execution, contract PDF generation, key inventories, dunning, changes to registration (see proposal).
-- Encrypting bank data at rest (see risks).
-- Historic reconstruction of past payments. The system starts with the first collection it creates.
+- See the proposal. Additionally: encrypting bank data at rest, and reconstructing past payments.
 
 ## Decisions
 
 ### D1: A new `agreements` app with one outward relation
 
-Models live in `re_sharing/agreements/`. The only foreign key out of the app points to `Organization`. `AgreementKind` references `OrganizationGroup` and `Access` as configuration, which is the same kind of relation `Compensation` already has to groups. Views for applicants sit under `/agreements/`, manager views under `/agreements/manage/`, using `manager_required`.
+Models live in `re_sharing/agreements/`. The only foreign key out of the app points to `Organization`; `AgreementKind` references `OrganizationGroup` and `Access` as configuration, like `Compensation` references groups. Applicant views under `/agreements/`, manager views under `/agreements/manage/` with `manager_required`.
 
-Alternative: extend `organizations`. Rejected, the models file there is already the largest in the project and membership is a different lifecycle from the organization itself.
+Alternative: extend `organizations`. Rejected, that models file is already the largest and membership is a separate lifecycle.
 
 ### D2: Kinds are configuration, agreements are one model
 
-`AgreementKind` is a model edited in the admin: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `allowed_payment_methods` (direct debit, bank transfer, both), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M to `Access`), `notify_each_collection`, `collection_day` (day of month for monthly, month and day for yearly), `intro_text`, `is_active`.
+`AgreementKind`: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M), `notification_mode` (each collection, once at approval), `collection_day`, `intro_text`, `is_active`, `accepting_applications`. Every kind is paid: an agreement always has an amount, a mandate and collections. `accepting_applications` hides a kind from applicants while managers can still create agreements of it in the admin.
 
-`Agreement` carries what every kind shares: `organization`, `kind`, `status`, `payment_method`, `amount`, `deposit_amount`, `start_date`, `end_date`, `contact_person_function`, `details` (JSONField), `signed_document` (private storage, PDF validated as for the usage agreement), `decided_at`, `decided_by`, `notes`, `history`.
+`Agreement`: `organization`, `kind`, `status`, `amount`, `deposit_amount`, `start_date`, `end_date`, `contact_person_function`, `details` (JSONField for the kind-specific values), `signed_document` (private storage, PDF validated), `signed_on`, `decided_at`, `decided_by`, `permanent_code`, `notes`, `history`. The application form per kind writes its fields into `details`; a fifth kind is a form change, not a migration. `clean()` rejects a deposit on kinds without one and requires an amount above zero.
 
-`details` holds the kind-specific values from the paper forms: desks and hours per week for coworkers, room for office tenants, area for cellar tenants, solidarity amount for members. The application form per kind is a form class per kind that writes into `details`; the model does not know the keys. This keeps a fifth kind a form change, not a migration.
-
-Alternative: four models with multi-table inheritance. Rejected, every workflow, listing and permission check would be written four times for a handful of differing fields.
+Alternative: four models with inheritance. Rejected, every workflow would exist four times for a handful of fields.
 
 ### D3: Agreement lifecycle
 
@@ -57,90 +56,84 @@ Alternative: four models with multi-table inheritance. Rejected, every workflow,
      └──reject──▶ rejected
 ```
 
-A manager records the board decision with `decided_at` (date, required on approve and reject). Approval requires a signed document and, for direct debit, an active mandate; both are uploaded by the manager or the applicant before approval. Side effects of approval in one service `approve_agreement`:
+A confirmed organization's admin may apply. Pending, rejected and deactivated organizations may not. Approval requires `decided_at`, a signed document and an active mandate. `approve_agreement`:
 
-1. add the kind's group to the organization,
-2. create a `PermanentCode` with the kind's accesses through `create_permanent_code_for_organization`, which gains an `accesses` parameter and keeps the current hardcoded set as default,
-3. create the deposit collection when the kind requires one,
-4. send the confirmation email.
+1. adds the kind's group,
+2. creates a `PermanentCode` with the kind's accesses when the kind has any, through `create_permanent_code_for_organization`, which gains an `accesses` parameter with the current hardcoded set as default,
+3. creates the deposit collection when the kind requires one,
+4. sends the decision email.
 
-`end_agreement` sets `end_date` if empty, removes the group unless another active agreement of the organization grants the same group, sets `validity_end` on the code created by this agreement (the agreement stores the code's id for that), and cancels planned collections after the end date. A daily command ends agreements whose `end_date` has passed.
+Organization status is never touched by agreement actions. `end_agreement` sets `end_date` if empty, removes the group unless another active agreement grants it, sets `validity_end` on the agreement's code, cancels planned collections after the end date, creates a manual deposit refund record when a paid deposit exists. A daily command ends agreements whose `end_date` has passed.
 
-An agreement with a fixed `end_date` in the future stays active until then. Notice periods are informative for the manager; the system does not compute termination dates.
+Which groups may book which rooms stays group configuration. Which terms a member must accept before booking is handled by the terms scopes in `organization-terms`.
 
-### D4: Payment method on the agreement, one mandate per agreement
+### D4: One mandate per agreement
 
-`payment_method` is chosen at application from the kind's allowed methods. `SepaMandate` has a foreign key to the agreement, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on`, `signed_document`, `revoked_on`. A partial unique constraint allows one non-revoked mandate per agreement; a new bank account means a new mandate and revoking the old one.
+`SepaMandate`: `agreement`, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on`, `signed_document`, `revoked_on`. Partial unique constraint: one non-revoked mandate per agreement. Reference `<prefix>-<agreement id, six digits>-<n>`, generated, never typed, except that existing paper references can be entered in the admin when unique. IBAN validated with checksum, stored without spaces, masked except on the manager's mandate page, excluded from audit log diffs, never in emails. Encryption at rest is deferred.
 
-The reference is generated, never typed: `<prefix>-<agreement id, zero padded to 6>-<mandate number>`, prefix from settings. The existing handwritten references on paper mandates are entered through the admin for agreements registered after the fact; the generator skips references that already exist.
+### D5: Collections and their identifiers
 
-IBAN is validated (format and checksum) in the form and stored as entered without spaces. It is excluded from audit log diffs, rendered masked (last four characters) everywhere except the manager's mandate detail, and never put into emails. Encrypting it at rest is deferred: the accounting system and the bank hold the same data, and the private media volume already holds the signed mandates with the IBAN in full.
-
-Alternative: mandate per organization reused across agreements. Rejected by the stakeholder; per agreement matches the paper process and makes revocation equal to ending the agreement.
-
-### D5: Collections are the unit of money
-
-`Collection`: `agreement`, `kind` (fee, deposit, deposit refund), `period_start`, `period_end`, `due_date`, `amount`, `payment_method` (snapshot), `mandate` (snapshot, nullable), `status`, `invoice_number`, `run`, `notified_at`, `paid_at`, `status_note`. Unique on (`agreement`, `kind`, `period_start`).
+`Collection`: `agreement`, `kind` (fee, deposit, deposit refund), `period_start`, `period_end`, `due_date`, `amount`, `mandate`, `status`, `reference`, `run`, `notified_at`, `collected_at`, `returned_at`, `return_text`, `invoice_number`, `invoice_amount`, `paid_at`, `status_note`. Unique on (`agreement`, `kind`, `period_start`). `reference` is `<prefix>-C-<collection id, six digits>` and is the SEPA end-to-end id; the mandate reference is the SEPA mandate id. Both appear on bank statements and on every return.
 
 ```
- planned ──notify/request──▶ notified ──(direct debit) add to run──▶ submitted ──▶ paid
-                                │                                        │
-                                │ (transfer)                             └──▶ returned
-                                └──────────────────────────────────────────▶ paid | overdue
- any non-final ──cancel──▶ cancelled
+ planned ─▶ notified ─▶ submitted ─▶ collected
+                            │
+                            └─▶ returned ─▶ invoiced ─▶ paid
+ deposit refund: planned ─▶ paid (manual)
+ any non-final ─▶ cancelled
 ```
 
-A daily command `create_agreement_collections` creates fee collections for every active agreement whose next period starts within the lookahead (settings, default 45 days), using the kind's interval and collection day and the agreement's current amount. It is idempotent through the unique constraint. Deposits are created once at approval with `due_date` equal to `start_date`; deposit refunds once at ending, as a negative-direction record that a manager marks settled by hand. Deposits never create invoices.
+A daily command `create_agreement_collections` creates fee collections for active agreements whose next period starts within the lookahead (settings, default 45 days), idempotent through the unique constraint, never for periods after the end date. The amount is frozen at creation; changing the agreement affects later collections. Deposits are created at approval with the start date as due date.
 
-The amount is copied from the agreement at creation. Changing the agreement's amount affects only collections created afterwards; an existing planned collection can be cancelled and recreated by the manager.
+### D6: Pre-notification
 
-### D6: Invoice-centric reconciliation through the shared accounting client
+When a planned collection reaches due date minus `PRE_NOTIFICATION_DAYS` (default 14): kinds with mode "each collection" get an email naming amount, due date, mandate reference and creditor identifier; kinds with mode "once at approval" rely on the approval email, which states amount, interval and collection day and is a valid standing pre-notification under SEPA. Either way the collection becomes `notified`.
 
-The inline HTTP code in `bookings/tasks.py` moves to `re_sharing/utils/buchhaltungsbutler.py` with `create_invoice`, `create_draft_invoice`, `create_einvoice`, `get_receipts`, `get_transactions`, each returning parsed JSON or raising one client error. The bookings tasks keep their names and results.
+### D7: SEPA runs, upload confirmation, collected by absence of return
 
-When a fee collection reaches `notified`, a task creates an outbound invoice (`/invoices/create`, not a draft) with the organization as recipient, the agreement kind and period as line item, a due date equal to the collection's due date, and the final provisions text per payment method: the direct debit clause with mandate reference and creditor identifier, or the transfer request. The returned invoice number is stored on the collection and is the payment purpose in the SEPA file and in the payment request email.
+`CollectionRun`: `collection_date`, `xml_file`, `created_by`, `uploaded_at`, `uploaded_by`, `total_amount`, `count`. A manager builds a run from notified collections with an active mandate and due date up to the collection date. The XML is a pain.008 CORE file generated with `sepaxml`, sequence type RCUR, batch booking false so the bank books one line per debit, end-to-end id equal to the collection reference, mandate id and signature date from the mandate, remittance information naming the kind and period. Collections become `submitted`.
 
-A nightly command `sync_collection_payments` lists outbound receipts changed since the last run and sets `paid` on collections whose invoice is paid. Collections still unpaid after `due_date` plus the grace period (settings, default 7 days) become `overdue` for transfers and get one reminder email. For direct debits the same unpaid state after grace is reported as `returned` only when a bank transaction with a negative amount and the invoice number in its purpose exists; otherwise the collection stays `submitted` and appears in the manager's attention list.
+The manager marks the run uploaded after the bank accepted the file. A run that is not marked uploaded can be deleted, returning its collections to `notified`; its collections never become `collected`. A nightly command `sync_collection_payments` sets `collected` on submitted collections of uploaded runs whose collection date lies more than `COLLECTION_RETURN_WINDOW_DAYS` (default 7) in the past and that have no return.
 
-Alternative: skipping invoices and scanning bank transactions for mandate references. Rejected, it depends on parsing bank-formatted text and gives the bookkeeper no receipt.
+Alternative: positive confirmation by matching credit transactions. Rejected, a bank may book the batch as one aggregated credit, and the absence-of-return rule is what SEPA direct debit gives you anyway.
 
-Alternative: BuchhaltungsButler's own recurring invoices. Rejected, re-sharing would not know the invoice numbers it needs for the XML.
+### D8: Return detection and return invoices
 
-### D7: SEPA runs built by a manager, uploaded by hand
+The nightly command lists BuchhaltungsButler transactions since the last run and marks a submitted or collected collection `returned` when a transaction with negative amount contains the collection reference or, failing that, the mandate reference plus the amount, in `purpose`, `booking_text` or `payment_reference`. The matched text is stored as `return_text`. Collected collections can therefore still turn returned, since a debtor refund is possible for eight weeks.
 
-`CollectionRun`: `collection_date`, `xml_file` (private storage), `created_by`, `created`, `total_amount`, `count`. A manager builds a run from all `notified` direct-debit collections with a due date up to the chosen collection date. The file is a pain.008 CORE file generated with the `sepaxml` package, sequence type `RCUR` for every transaction (first-use marking has not been required since 2016), end-to-end id equal to the collection id, remittance information equal to the invoice number. Collections in the run become `submitted`. A run can be deleted while none of its collections is paid, which returns them to `notified`.
+For a returned collection the manager triggers `invoice_returned_collection`: an outbound invoice in BuchhaltungsButler for the collection amount plus `SEPA_RETURN_FEE`, due in 14 days, with the organization address and a transfer request; the invoice number and amount are stored and the status becomes `invoiced`, and an email with the invoice number as payment purpose goes to the organization. The nightly command then reads the receipt by invoice number and sets `paid`. Managers can also mark any collection paid or cancelled by hand with a note.
 
-Pre-notification: when the kind has `notify_each_collection`, the daily command sends the pre-notification email `PRE_NOTIFICATION_DAYS` (settings, default 14) before the due date, naming amount, date, mandate reference and creditor identifier, and moves the collection to `notified`. When the kind does not, the approval email already states the fixed amount, interval and collection day, which SEPA accepts as a standing pre-notification, and the collection moves to `notified` without a mail. Transfer collections always get the payment request email.
+### D9: Shared accounting client
 
-### D8: Permissions
+`re_sharing/utils/buchhaltungsbutler.py` with `create_invoice`, `create_draft_invoice`, `create_einvoice`, `get_receipts`, `get_transactions`, raising one `BuchhaltungsButlerError`. The bookings tasks keep names and results.
 
-Applying requires a confirmed admin booking permission on a confirmed organization. Applicants see their own agreements, mandates and collections. Managers see agreements whose kind's group is within their scope, following `manager_filter_organizations_list`. Only managers approve, reject, end, build runs and mark deposits. The admin exposes everything for corrections.
+### D10: Existing agreements
 
-### D9: Emails and templates
+Existing members and coworkers are entered in the admin as active agreements with their paper mandate references, signed contracts and signing dates; no data migration is needed because nothing about them exists in the database today. Groups and codes they already hold are left alone; the admin form does not call the approval service. Tenants are entered the same way once their kinds open and their mandates exist.
 
-New enqueued mails in `agreements/mails.py`: application received (to the organization and the managers), decision, pre-notification, payment request, overdue reminder, agreement ended. Templates follow the existing `templates/emails/` layout and are translated.
+### D11: Permissions and emails
+
+Applicants need a confirmed admin booking permission on a confirmed organization. They see their own agreements, mandates and collections. Managers see agreements whose kind's group is within scope, following `manager_filter_organizations_list`, and alone approve, reject, end, build runs, invoice returns and settle by hand. New enqueued mails: application received, decision, pre-notification, return invoice, agreement ended.
 
 ## Risks / Trade-offs
 
-- [BuchhaltungsButler may not flip a receipt to unpaid after a returned debit] → Returned detection also scans transactions; unresolved submitted collections are listed for the manager after the grace period. Verify with one real returned debit in the pilot year.
-- [The invoice `email` parameter might send mail from the accounting system] → Never pass it; recipient data goes in the address fields only.
-- [IBAN stored in clear text] → Masked rendering, audit log exclusion, private storage, no emails. Revisit encryption if the hosting changes.
-- [A run is built but never uploaded] → Runs show their age; collections stay `submitted`; the sync command flags them after grace.
-- [Amount changes between pre-notification and run] → Amount is frozen on the collection at creation, and the run uses the collection amount.
-- [Hardcoded accesses in the permanent code service] → The parameter keeps the current default, so existing manager actions are unchanged.
-- [Two sources of truth for group membership during the transition] → Managers register existing members and tenants through the admin first; until then groups are edited as today.
+- [Bank books the batch as one aggregated credit despite batch booking false] → Irrelevant for collected detection, which needs no credit matching; returns are always booked individually.
+- [Return text format differs from expectations] → Match on collection reference first, mandate reference plus amount second; unmatched negative direct debit transactions are listed for the manager. Verify with one real return in the pilot cycle.
+- [A run built but never uploaded] → Collections of runs without `uploaded_at` never become collected and the run list shows its age.
+- [Debtor refund after collected] → Collected is not final; the sync keeps scanning and flips to returned.
+- [IBAN in clear text] → Masked rendering, audit exclusion, private storage, no emails.
+- [Existing tenants have no mandate] → Their kinds stay hidden; when opened, each tenant signs a mandate and a contract amendment before a manager creates the agreement in the admin.
+- [Admin-created agreements drift from approved ones] → Both end up in the same status with the same fields; only the side effects of approval are skipped, and the admin shows whether group and code are present.
 
 ## Migration Plan
 
-1. Deploy with the new app, settings (`SEPA_CREDITOR_ID`, `SEPA_MANDATE_PREFIX`, `PRE_NOTIFICATION_DAYS`, `COLLECTION_LOOKAHEAD_DAYS`, `COLLECTION_GRACE_DAYS`) and three new cron entries (create collections, sync payments, end expired agreements).
-2. Create the four kinds in the admin, pointing at the existing groups and entrances.
-3. Managers register existing agreements in the admin with their current amounts, start dates and existing mandate references; no automatic data migration.
-4. First collection run for members in the next yearly cycle; monthly runs from the following month.
-5. Rollback: disable the cron entries; the app's tables are unused by other apps and can stay.
+1. Deploy with the app, settings (`SEPA_CREDITOR_ID`, `SEPA_CREDITOR_NAME`, `SEPA_CREDITOR_IBAN`, `SEPA_CREDITOR_BIC`, `SEPA_MANDATE_PREFIX`, `PRE_NOTIFICATION_DAYS`, `COLLECTION_LOOKAHEAD_DAYS`, `COLLECTION_RETURN_WINDOW_DAYS`, `SEPA_RETURN_FEE`) and three cron entries.
+2. Create the kinds in the admin: membership and coworking open; office and cellar with applications closed.
+3. Enter existing member and coworker agreements with their paper mandate references in the admin.
+4. First yearly member run in the next cycle; monthly runs from the following month.
+5. Rollback: disable the cron entries; the tables stay and the registration flow was never touched.
 
 ## Open Questions
 
-- Whether the yearly member fee is collected on one fixed date for everyone or per anniversary. The design assumes one fixed date per kind.
-- Whether the accounting side wants an invoice receipt for member fees of a registered association, or a different document type. The design assumes an invoice.
-- Behaviour of receipts after a returned debit in BuchhaltungsButler (see risks).
-- Whether deposit refunds should ever go through the SEPA credit side. The design marks them by hand.
+- Whether the yearly member fee is collected on one fixed date for everyone. The design assumes one date per kind.
+- The exact wording of return transactions from the bank in BuchhaltungsButler (see risks).

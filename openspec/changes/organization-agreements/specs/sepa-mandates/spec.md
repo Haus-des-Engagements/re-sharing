@@ -1,23 +1,18 @@
 ## ADDED Requirements
 
-### Requirement: One active mandate per direct debit agreement
+### Requirement: One active mandate per agreement
 
-The system SHALL allow a mandate to be added to an agreement with payment method direct debit, capturing account holder, IBAN, BIC, bank name, signature date and the signed mandate PDF. At most one non-revoked mandate SHALL exist per agreement. Agreements with payment method bank transfer SHALL NOT accept a mandate.
+The system SHALL allow a mandate to be added to an agreement, capturing account holder, IBAN, BIC, bank name, signature date and the signed mandate PDF. At most one non-revoked mandate SHALL exist per agreement.
 
 #### Scenario: Applicant adds a mandate
 
-- **WHEN** a confirmed admin of the organization adds a mandate with valid bank data and a signed PDF to a submitted direct debit agreement
+- **WHEN** a confirmed admin of the organization adds a mandate with valid bank data and a signed PDF to a submitted agreement
 - **THEN** an active mandate exists for the agreement
 
 #### Scenario: Second active mandate refused
 
 - **WHEN** a mandate is added to an agreement that already has a non-revoked mandate
 - **THEN** the action is refused with a message pointing to revoking the existing mandate
-
-#### Scenario: Mandate on transfer agreement refused
-
-- **WHEN** a mandate is added to an agreement with payment method bank transfer
-- **THEN** the action is refused
 
 ### Requirement: Mandate reference is generated
 
@@ -64,13 +59,13 @@ The system SHALL validate the IBAN format and checksum and store it without spac
 
 ### Requirement: Revocation
 
-The system SHALL allow a manager to revoke a mandate, recording the revocation date. A revoked mandate SHALL NOT be used for new collections. Collections already submitted in a run SHALL keep their mandate snapshot.
+The system SHALL allow a manager to revoke a mandate, recording the revocation date. A revoked mandate SHALL NOT be used for new runs. Collections already submitted in a run SHALL keep their mandate.
 
 #### Scenario: Revoke a mandate
 
 - **WHEN** a manager revokes the active mandate of an agreement
 - **THEN** the mandate has a revocation date
-- **AND** a new collection for the agreement cannot be added to a run until a new mandate exists
+- **AND** notified collections of the agreement are excluded from runs until a new mandate exists
 
 #### Scenario: Submitted collection keeps mandate
 
