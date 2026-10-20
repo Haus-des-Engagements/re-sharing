@@ -7,7 +7,7 @@ Signed documents reach re-sharing as uploads: users download a PDF, print it, si
 - A new `signing` app with a generic signing flow: the user reads the document, types their name and function, draws their signature and confirms that they sign on behalf of their organization.
 - The server appends a signature page to the source PDF: the key facts of the document, one slot per expected signer with signature image, typed name, function and time, and the SHA-256 of the source. It then seals the result with the operator's own certificate so later changes are detectable. Each signature is stored with user, time, IP address, user agent and the hashes before and after signing.
 - A document can expect more than one signature. Later signatures are added in incremental updates to the same file, so the first seal stays valid.
-- Signers receive the signed PDF by email; SEPA mandates are downloadable instead, because emails never contain an IBAN.
+- Signed documents are never emailed, whatever their type. They stay in private storage and can be downloaded from the page they belong to. Signers receive a notification without attachment that links to that page.
 - Templates for signable documents are managed in the admin.
 - **Registration document:** the creation form offers "sign online" next to the upload and fills the same fields.
 - **Agreement contracts:** an agreement kind can have a contract template. The applicant signs it online when applying or afterwards; the signature page lists kind, amount, interval, start date, deposit and the kind-specific details.
@@ -41,5 +41,5 @@ None. The registration form requirements live in the unarchived change `organiza
 - `providers`: `Manager.may_countersign` and `signatory_title`.
 - New dependencies: `pyhanko` (sealing), `pypdf` (appending pages), `reportlab` (rendering pages), `signature_pad` (vendored JS).
 - New settings: path to the sealing certificate and key, key passphrase, the slug of the registration template. Sealing is skipped with a warning when no certificate is configured (development, tests by default).
-- Personal data: IP address and user agent are stored with each signature; the privacy policy needs a sentence about it. Signed mandates contain the IBAN and stay in private storage, never in emails.
+- Personal data: IP address and user agent are stored with each signature; the privacy policy needs a sentence about it. Signed documents, including mandates with the IBAN, stay in private storage and never leave the system by email.
 - Legal checks before rollout, listed in the ADR: statutes on membership form, commercial lease text form, the bank's creditor agreement on mandate form.

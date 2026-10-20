@@ -79,25 +79,30 @@ Every signature SHALL be recorded with the signed document it belongs to, its ro
 - **WHEN** staff open a signature record in the admin
 - **THEN** all fields are read-only and the record cannot be deleted
 
-### Requirement: Signer receives a copy
+### Requirement: Signed documents stay in the system
 
-After signing, the system SHALL enqueue an email to the signer with the signed PDF attached. When a document becomes complete through a later signature, every earlier signer SHALL receive the complete PDF as well. Documents containing bank data SHALL NOT be attached; their signers SHALL receive an email without attachment pointing to the download on the page where they signed.
+The system SHALL NOT attach signed documents to emails, regardless of their type. A signed document SHALL be downloadable from the page it belongs to by the users allowed to see that page: the organization page for the registration document, the agreement page for contracts, the mandate page for mandates. After a signature, the system SHALL enqueue a notification to the signer without attachment, linking to that page. When a document becomes complete through a later signature, every earlier signer SHALL receive the same kind of notification.
 
-#### Scenario: Copy sent
+#### Scenario: Notification without attachment
 
 - **WHEN** a user signs a document
-- **THEN** an email to the user's address with the signed PDF as attachment is enqueued
+- **THEN** an email to the user's address is enqueued
+- **AND** it has no attachment and links to the page where the document can be downloaded
 
-#### Scenario: Complete copy after countersignature
+#### Scenario: Notification after countersignature
 
 - **WHEN** a countersigner signs a document an applicant signed before
-- **THEN** both the applicant and the countersigner receive the complete PDF
+- **THEN** both the applicant and the countersigner receive a notification without attachment
 
-#### Scenario: Mandate copy without attachment
+#### Scenario: Mandate notification contains no bank data
 
 - **WHEN** a user signs a SEPA mandate
-- **THEN** the email to the user has no attachment and contains no IBAN
-- **AND** links to the mandate page where the PDF can be downloaded
+- **THEN** the notification has no attachment and contains no IBAN
+
+#### Scenario: Download restricted to the page's viewers
+
+- **WHEN** a user who may not view an agreement requests its signed document
+- **THEN** access is denied
 
 ### Requirement: Later signatures keep earlier seals valid
 

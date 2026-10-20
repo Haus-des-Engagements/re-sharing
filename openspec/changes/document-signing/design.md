@@ -4,7 +4,7 @@ After `organization-terms`, registration collects one signed document in `Organi
 
 The stakeholder wants the signature as a moral hurdle, not an effort hurdle: typing your name and drawing a signature feels harder to lie on than a checkbox. No third-party signing service unless it is cheap and adds a lot of value. There is a single legal entity. Coworking, office lease and cellar lease contracts are countersigned by one manager who is managing director and signs alone; membership is not countersigned, its decision is recorded by a manager.
 
-Constraints: HackSoft style with services and selectors, coverage above 95 percent, explicit relations between apps (ADR 9), private storage for signed documents (ADR 20), auditlog for model changes (ADR 13), mails enqueued as tasks with attachments supported (`email.attach` is already used for iCal files), IBAN never in emails (`organization-agreements`).
+Constraints: HackSoft style with services and selectors, coverage above 95 percent, explicit relations between apps (ADR 9), private storage for signed documents (ADR 20), auditlog for model changes (ADR 13), mails enqueued as tasks, IBAN never in emails (`organization-agreements`).
 
 ## Goals / Non-Goals
 
@@ -39,7 +39,7 @@ Alternative: a generic foreign key from `SignedDocument` to its owner. Rejected,
 
 `SigningTemplate`: `name`, `slug` (unique), `file` (PDF, private storage), `is_active`. Managed in the admin. Used for the registration document and contract templates.
 
-`SignedDocument`: `template` (nullable FK, `PROTECT`; null for generated mandates), `document_name`, `organization_name`, `key_facts` (JSONField, list of label and value pairs as printed), `source_sha256`, `expected_signatures` (default 1), `contains_bank_data` (bool), `completed_at`, `created_at`. Complete when the number of signatures reaches `expected_signatures`.
+`SignedDocument`: `template` (nullable FK, `PROTECT`; null for generated mandates), `document_name`, `organization_name`, `key_facts` (JSONField, list of label and value pairs as printed), `source_sha256`, `expected_signatures` (default 1), `page_path` (the caller's page where the document is downloaded), `completed_at`, `created_at`. Complete when the number of signatures reaches `expected_signatures`.
 
 `Signature`: `signed_document`, `role` (signer, countersigner), `slot` (1-based position on the signature page), `user`, `typed_name`, `function`, `on_behalf_of`, `confirmation_text`, `signed_at`, `ip_address`, `user_agent`, `sha256_before`, `sha256_after`. Unique on (`signed_document`, `slot`). Read-only in the admin, no delete permission, registered with auditlog.
 
@@ -76,7 +76,7 @@ The fields form a reusable form mixin. Every form with a sign-online option uses
 ```
 sign_document(*, source_pdf, document_name, organization_name, key_facts, signer,
               signing_data, client_meta, expected_signatures=1, template=None,
-              contains_bank_data=False) -> (SignedDocument, bytes)
+              page_path) -> (SignedDocument, bytes)
 
 add_signature(*, signed_document, current_pdf, signer, signing_data, client_meta,
               role) -> bytes
@@ -84,9 +84,13 @@ add_signature(*, signed_document, current_pdf, signer, signing_data, client_meta
 
 `add_signature` refuses a complete document, and refuses a `current_pdf` whose hash differs from the latest after-hash, which catches a replaced upload. Views pass IP address (`REMOTE_ADDR`, or the first `X-Forwarded-For` hop behind a trusted proxy) and user agent. The services do not read the request. Callers run them inside their own `transaction.atomic`, and mails are enqueued `on_commit`.
 
-### D8: Signed copies
+### D8: Documents stay in the system
 
-`signed_document_copy_email(signature_id, file_name)` is enqueued after every signature. The task loads the file from the caller's field through a small resolver passed as dotted path and object id, attaches it as `<document name>.pdf` and sends it to the signer. When a signature completes a document, earlier signers receive the complete PDF too. For `contains_bank_data` documents the email has no attachment and links to the page with the download. Mails are translated like the others.
+Signed documents are never attached to emails, whatever their type. This keeps one rule for all documents instead of an exception for mandates with bank data, and keeps signed files out of mailboxes. They stay in private storage and are downloaded from the caller's page through the existing private-storage URLs, which only those pages render: the organization page, the agreement page, the mandate page. Access follows those pages' permissions.
+
+`signed_document_notification_email(signature_id)` is enqueued after every signature. It names the document and links to `page_path` as an absolute URL. When a signature completes a document, earlier signers receive the same notification. The email contains no attachment and no bank data. Mails are translated like the others.
+
+Alternative: attach the PDF and make an exception for mandates. Rejected by the stakeholder.
 
 ### D9: Registration
 
@@ -121,7 +125,7 @@ Alternative: countersign first, approve as a separate click. Rejected, a counter
 
 There is no template: the mandate is rendered by reportlab from the standard SEPA core mandate text (German, with an English translation below), followed by creditor name, creditor identifier, mandate reference, account holder, IBAN, BIC, bank name, and type "recurring payment". This page is the source PDF; the signature page follows it with one slot, so mandates look like every other signed document.
 
-`create_mandate` generates the reference first, then signs inside the same transaction, saves the bytes into `SepaMandate.signed_document`, today into `signed_on`, and links the record with `contains_bank_data=True`. The IBAN is printed in full on the PDF, which stays in private storage. Revocation does not touch the PDF.
+`create_mandate` generates the reference first, then signs inside the same transaction, saves the bytes into `SepaMandate.signed_document`, today into `signed_on`, and links the record with the mandate page as `page_path`. The IBAN is printed in full on the PDF, which stays in private storage. Revocation does not touch the PDF.
 
 ## Risks / Trade-offs
 
