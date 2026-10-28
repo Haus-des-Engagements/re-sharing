@@ -5,22 +5,27 @@ TBD - created by archiving change organization-agreements. Update Purpose after 
 ## Requirements
 ### Requirement: Agreement kinds are configuration
 
-The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, for yearly kinds the collection month, an intro text shown on the application page, an active flag and an accepting-applications flag.
+The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, an optional minimum amount, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, for yearly kinds the collection month, an intro text shown on the application page, its application fields, an active flag and an accepting-applications flag. Kinds SHALL NOT be editable outside the admin. A kind with agreements SHALL NOT be deletable; it is deactivated instead.
 
 #### Scenario: Kind not accepting applications is hidden
 
 - **WHEN** a kind has its accepting-applications flag unset
 - **THEN** it is not offered on the application page
-- **AND** staff can still create agreements of that kind in the admin
+- **AND** managers can still create agreements of that kind
 
 #### Scenario: Inactive kind
 
 - **WHEN** a kind has its active flag unset
-- **THEN** it is not offered on the application page and no new collections are created for its agreements
+- **THEN** it is not offered on the application page, managers cannot create agreements of it, and no new collections are created for its agreements
+
+#### Scenario: Kind in use cannot be deleted
+
+- **WHEN** staff try to delete a kind that has agreements in the admin
+- **THEN** the deletion is not offered
 
 ### Requirement: Organization admins can apply
 
-The system SHALL allow a user with a confirmed admin booking permission on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, amount, kind-specific details and SHALL have status `Submitted`. The system SHALL reject applications from users without an admin permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
+The system SHALL allow a user with a confirmed admin booking permission on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, an amount not below the kind's minimum amount where one is set, the answers to the kind's active application fields and SHALL have status `Submitted`. The system SHALL reject applications from users without an admin permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
 
 #### Scenario: Confirmed organization applies
 
@@ -48,10 +53,16 @@ The system SHALL allow a user with a confirmed admin booking permission on an or
 - **WHEN** an organization already has a submitted or active agreement of a kind and applies for it again
 - **THEN** the form is rejected with a message naming the existing agreement
 
+#### Scenario: Amount below the minimum
+
+- **WHEN** a kind has the minimum amount 60 € and an admin applies with 40 €
+- **THEN** the form is rejected with a message naming the minimum
+- **AND** the amount field shows the minimum as a hint
+
 #### Scenario: Kind-specific details are stored
 
-- **WHEN** a coworker application is submitted with a number of desks and hours per week
-- **THEN** both values are stored in the agreement's details and shown on the agreement page
+- **WHEN** a coworking kind defines the fields desks and hours per week and an application is submitted with both
+- **THEN** both values are stored in the agreement's details under their keys and shown on the agreement page with their labels
 
 ### Requirement: Signed document
 
@@ -142,15 +153,52 @@ On approval the system SHALL add the kind's organization group to the organizati
 
 ### Requirement: Ending an agreement
 
-The system SHALL allow a manager to end an active agreement. Ending SHALL set the end date to today if empty, SHALL remove the kind's group unless another active agreement of the organization grants the same group, SHALL set the validity end of the agreement's permanent code to the end date when it has one, SHALL cancel planned collections with a period start after the end date, SHALL create a deposit refund record when a paid deposit exists, and SHALL send an ended email. A daily command SHALL end active agreements whose end date has passed.
+The system SHALL allow a manager to end an active agreement on a given date, defaulting to today. A future end date SHALL NOT be before the agreement's start date; ending immediately SHALL be possible before the start date, for an agreement withdrawn before it began. The given date SHALL replace an existing end date. With today or a past date the agreement SHALL end immediately. With a future date the system SHALL only save the end date and remove the agreement's collections for periods starting after it: planned ones are deleted and notified ones cancelled; the agreement SHALL stay active with its group, code and remaining collections until a daily command ends it after that date. Changing the end date in the manager's edit form SHALL remove collections in the same way. Ending SHALL set the status `Ended`, SHALL remove the kind's group unless another active agreement of the organization grants the same group, SHALL set the validity end of the agreement's permanent code to the end date when it has one, SHALL remove collections for periods starting after the end date as above, SHALL create a deposit refund record when a paid deposit exists, and SHALL send an ended email. A daily command SHALL end active agreements whose end date has passed. The agreement page SHALL show a scheduled end date while the agreement is still active.
 
 #### Scenario: Manager ends an agreement
 
-- **WHEN** a manager ends an active agreement with no end date whose kind grants a permanent code
+- **WHEN** a manager ends an active agreement with no end date whose kind grants a permanent code, without entering a date
 - **THEN** the status becomes `Ended` with today as end date
 - **AND** the organization is no longer in the kind's group
 - **AND** the agreement's permanent code has a validity end
-- **AND** planned collections for later periods are cancelled
+- **AND** planned collections for later periods are removed
+
+#### Scenario: Ending scheduled for a future date
+
+- **WHEN** a manager ends an active membership agreement with the end date 31 December of the current year
+- **THEN** the agreement stays `Active` with that end date and the organization stays in the member group
+- **AND** no ended email is sent
+- **AND** the agreement page shows the scheduled end date
+
+#### Scenario: Scheduled end reached
+
+- **WHEN** the daily command runs on the day after a scheduled end date
+- **THEN** the agreement is ended with that end date, the group is removed and the ended email is sent
+
+#### Scenario: Collections after a scheduled end
+
+- **WHEN** an end date is scheduled for an agreement that has a planned and a notified collection for periods starting after it
+- **THEN** the planned collection is deleted and the notified collection is cancelled
+
+#### Scenario: Scheduled end moved later
+
+- **WHEN** a manager moves a scheduled end date later
+- **THEN** the new date is saved and the daily job creates the planned collections up to it again
+
+#### Scenario: Date replaces an existing end date
+
+- **WHEN** a manager ends an agreement that has a fixed end date next year with today's date
+- **THEN** the agreement ends today
+
+#### Scenario: Future date before the start
+
+- **WHEN** a manager enters a future end date before the agreement's start date
+- **THEN** the action is refused with a message
+
+#### Scenario: Withdrawn before the start
+
+- **WHEN** a manager ends an active agreement today whose start date is next month
+- **THEN** the agreement ends today and all its planned collections are removed
 
 #### Scenario: Ending an agreement without code
 
@@ -193,9 +241,10 @@ The system SHALL show an organization's agreements with status, amount and colle
 
 ### Requirement: Existing agreements entered in the admin
 
-Staff SHALL be able to create an active agreement with its mandate in the admin for an organization that already holds the kind's group, without triggering the approval side effects.
+Staff SHALL be able to create an active agreement with its mandate in the admin for an organization that already holds the kind's group, without triggering the approval side effects. Managers SHALL be able to do the same in the frontend as described in `manager-agreement-management`.
 
 #### Scenario: Existing member entered
 
 - **WHEN** staff create an active membership agreement with a paper mandate reference for an organization that is already in the member group
 - **THEN** the agreement and mandate exist, no email is sent, and the organization's groups and codes are unchanged
+
