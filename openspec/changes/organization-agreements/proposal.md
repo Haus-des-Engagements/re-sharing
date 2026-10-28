@@ -4,9 +4,9 @@ Membership, coworking and leases run on paper forms, hand-written mandate refere
 
 ## What Changes
 
-- A new `agreements` app. An agreement kind is configuration: the OrganizationGroup it grants, billing interval (yearly, monthly), deposit, notice period, entrances, pre-notification mode, and whether applications are open. Initial kinds: membership (includes lending), coworking, office lease and cellar lease; the last two stay hidden.
+- A new `agreements` app. An agreement kind is configuration: the OrganizationGroup it grants, billing interval (yearly, monthly), deposit, notice period, the entrances of a permanent code where the kind grants one, pre-notification mode, and whether applications are open. Initial kinds: membership (includes lending), coworking, office lease and cellar lease; the last two stay hidden.
 - A confirmed organization applies for a kind from its organization page. Registration and the manager's confirmation stay as they are. Amount, start date, signed contract and kind-specific details are stored per agreement.
-- The board decides outside the system; a manager records the decision and its date. Approval adds the kind's group and creates a permanent code with the kind's entrances. Ending removes the group and ends the code.
+- The board decides outside the system; a manager records the decision and its date. For kinds whose contract is countersigned online (`document-signing`), the countersignature is the decision. Approval adds the kind's group and, only for kinds that grant entrances such as coworking, creates a permanent code with them; membership grants none. Ending removes the group and ends the code where one exists.
 - Payment is SEPA direct debit only. Every agreement carries one mandate: bank details, signed PDF, generated reference, revocation.
 - Collections are created per billing period with the amount frozen from the agreement. Deposits are one-off debits under the same mandate.
 - A manager builds a SEPA XML run and marks it uploaded. A collection counts as collected when no return appears within the return window. A nightly job scans BuchhaltungsButler bank transactions for returns, identified by mandate and collection reference.
@@ -19,13 +19,13 @@ Membership, coworking and leases run on paper forms, hand-written mandate refere
 - Room usage. Registration keeps its signed document and its confirmation; the room terms become click-accepted terms in the separate change `organization-terms`.
 - Individuals joining as supporting members. Only organizations apply.
 - Bank transfer as a regular payment method, or executing debits automatically.
-- Pre-filled contract PDFs. The signed document is uploaded.
+- Generating contract text from data. This change collects the signed contract and mandate as uploads; `document-signing` adds signing them online.
 - Physical key management, deposit refunds through SEPA, dunning beyond the return invoice.
 
 ## Capabilities
 
 ### New Capabilities
-- `organization-agreements`: agreement kinds, application per kind, recording the board decision, lifecycle and its effect on groups and permanent codes.
+- `organization-agreements`: agreement kinds, application per kind, recording the board decision, lifecycle and its effect on groups and, for kinds that grant entrances, permanent codes.
 - `sepa-mandates`: capturing, referencing, storing and revoking one mandate per agreement.
 - `agreement-collections`: fee and deposit collections, pre-notification, SEPA XML runs, return detection through BuchhaltungsButler, return invoices.
 

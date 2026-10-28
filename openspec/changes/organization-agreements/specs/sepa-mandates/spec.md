@@ -35,7 +35,7 @@ The system SHALL generate the mandate reference from a configured prefix, the ag
 
 ### Requirement: Bank data validation and protection
 
-The system SHALL validate the IBAN format and checksum and store it without spaces. The IBAN SHALL be rendered masked except on the manager's mandate detail, SHALL be excluded from audit log diffs, and SHALL NOT appear in emails. Signed mandate PDFs SHALL be stored in private storage and validated as PDF.
+The system SHALL validate the IBAN format and checksum and store it without spaces. The IBAN SHALL be rendered masked on pages except the manager's mandate detail, SHALL be excluded from audit log diffs, and SHALL NOT appear in emails. Signed mandate PDFs SHALL be stored in private storage, validated as PDF, and downloadable from the mandate page by the organization's admins and managers in scope; the PDF carries the full IBAN.
 
 #### Scenario: Invalid IBAN
 
@@ -51,6 +51,12 @@ The system SHALL validate the IBAN format and checksum and store it without spac
 
 - **WHEN** a mandate's IBAN is changed
 - **THEN** the audit log entry does not contain the old or new IBAN
+
+#### Scenario: Signed mandate download
+
+- **WHEN** a confirmed admin of the organization downloads the signed mandate from the mandate page
+- **THEN** the PDF is served from private storage
+- **AND** a user without a confirmed permission on the organization is denied
 
 #### Scenario: Non-PDF upload
 

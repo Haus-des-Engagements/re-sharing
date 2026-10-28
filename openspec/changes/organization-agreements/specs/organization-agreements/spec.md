@@ -2,7 +2,7 @@
 
 ### Requirement: Agreement kinds are configuration
 
-The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval, a notification mode of per collection or once at approval, the collection day, an intro text, an active flag and an accepting-applications flag.
+The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, an intro text, an active flag and an accepting-applications flag.
 
 #### Scenario: Kind not accepting applications is hidden
 
@@ -52,7 +52,7 @@ The system SHALL allow a user with a confirmed admin booking permission on an or
 
 ### Requirement: Signed document
 
-An agreement SHALL carry a signed document (PDF, private storage) with its signing date, uploaded by the applicant with the application or afterwards, or by a manager. Approval SHALL require it.
+An agreement SHALL carry a signed document (PDF, private storage) with its signing date, provided by the applicant with the application or afterwards, or by a manager. An uploaded document SHALL count as complete. Approval SHALL require a complete signed document.
 
 #### Scenario: Upload after application
 
@@ -66,11 +66,11 @@ An agreement SHALL carry a signed document (PDF, private storage) with its signi
 
 ### Requirement: Manager records the board decision
 
-The system SHALL allow a manager within scope to approve or reject a submitted agreement, recording a decision date. Approval SHALL require a signed document and an active mandate. Deciding on an agreement that is not submitted SHALL be refused. Non-managers SHALL be denied. Agreement decisions SHALL NOT change the organization status.
+The system SHALL allow a manager within scope to approve or reject a submitted agreement, recording a decision date. Approval SHALL require a complete signed document and an active mandate. Deciding on an agreement that is not submitted SHALL be refused. Non-managers SHALL be denied. Agreement decisions SHALL NOT change the organization status.
 
 #### Scenario: Approve a submitted agreement
 
-- **WHEN** a manager approves a submitted agreement that has a signed document and an active mandate, entering a decision date
+- **WHEN** a manager approves a submitted agreement that has a complete signed document and an active mandate, entering a decision date
 - **THEN** the agreement status becomes `Active` with decision date and deciding manager stored
 - **AND** the organization receives a decision email
 - **AND** the organization status is unchanged
@@ -129,15 +129,20 @@ On approval the system SHALL add the kind's organization group to the organizati
 
 ### Requirement: Ending an agreement
 
-The system SHALL allow a manager to end an active agreement. Ending SHALL set the end date to today if empty, SHALL remove the kind's group unless another active agreement of the organization grants the same group, SHALL set the validity end of the agreement's permanent code to the end date, SHALL cancel planned collections with a period start after the end date, SHALL create a deposit refund record when a paid deposit exists, and SHALL send an ended email. A daily command SHALL end active agreements whose end date has passed.
+The system SHALL allow a manager to end an active agreement. Ending SHALL set the end date to today if empty, SHALL remove the kind's group unless another active agreement of the organization grants the same group, SHALL set the validity end of the agreement's permanent code to the end date when it has one, SHALL cancel planned collections with a period start after the end date, SHALL create a deposit refund record when a paid deposit exists, and SHALL send an ended email. A daily command SHALL end active agreements whose end date has passed.
 
 #### Scenario: Manager ends an agreement
 
-- **WHEN** a manager ends an active agreement with no end date
+- **WHEN** a manager ends an active agreement with no end date whose kind grants a permanent code
 - **THEN** the status becomes `Ended` with today as end date
 - **AND** the organization is no longer in the kind's group
 - **AND** the agreement's permanent code has a validity end
 - **AND** planned collections for later periods are cancelled
+
+#### Scenario: Ending an agreement without code
+
+- **WHEN** a manager ends an active membership agreement, whose kind grants no permanent code
+- **THEN** the agreement is ended and no permanent code is touched
 
 #### Scenario: Group kept for another active agreement
 

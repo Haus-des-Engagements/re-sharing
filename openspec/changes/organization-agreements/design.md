@@ -2,16 +2,16 @@
 
 Four paper processes exist today, each ending in a signed contract:
 
-| Kind | Interval | Deposit | Notice | Kind-specific data | Visible |
-|---|---|---|---|---|---|
-| Member | yearly | no | per statutes | representative's function, solidarity amount | yes |
-| Coworker | monthly | yes | 4 weeks to month end | desks, hours per week | yes |
-| Office tenant | monthly | 3 months' rent | 3 months to month end | room, fixed end date | later |
-| Cellar tenant | monthly | no | not stated | area in m² | later |
+| Kind | Interval | Deposit | Notice | Entrance code | Kind-specific data | Visible |
+|---|---|---|---|---|---|---|
+| Member | yearly | no | per statutes | no | representative's function, solidarity amount | yes |
+| Coworker | monthly | yes | 4 weeks to month end | yes | desks, hours per week | yes |
+| Office tenant | monthly | 3 months' rent | 3 months to month end | per kind configuration | room, fixed end date | later |
+| Cellar tenant | monthly | no | not stated | per kind configuration | area in m² | later |
 
 Members and coworkers already pay by direct debit with hand-written mandate references; tenants currently transfer. The stakeholder decided that all payments go through SEPA direct debit, and that a failed debit is followed by an invoice carrying the return fee.
 
-Organization registration, the signed document it collects and the manager's confirmation stay as they are: a confirmed organization receives the default group and may book rooms. Agreements start from there. Room terms as click-accepted, versioned documents are the subject of the separate change `organization-terms`.
+Organization registration, the signed document it collects and the manager's confirmation stay as they are: a confirmed organization receives the default group and may book rooms. Agreements start from there. Room and lending terms as click-accepted, versioned documents are the subject of the separate change `organization-terms`; they are accepted at the first booking, not when applying.
 
 BuchhaltungsButler (API v1.9.1) can create invoices, list receipts with a `payment_status`, and list bank transactions with `amount`, `purpose`, `booking_text`, `type` and `payment_reference`. It cannot store mandates, execute debits or push webhooks. Its client is inlined four times in `bookings/tasks.py`.
 
@@ -24,7 +24,7 @@ Constraints: HackSoft style, coverage above 95 percent, one outward relation per
 **Goals:**
 
 - One place that knows which organization holds which agreement, at what price, and whether each period was collected.
-- Group membership and entrance codes follow agreements.
+- Group membership follows agreements; entrance codes follow the agreements whose kind grants them.
 - Direct debit end to end except the bank upload: mandate, pre-notification, XML file, return detection, return invoice.
 - The accounting client shared between bookings and agreements.
 
@@ -42,7 +42,7 @@ Alternative: extend `organizations`. Rejected, that models file is already the l
 
 ### D2: Kinds are configuration, agreements are one model
 
-`AgreementKind`: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M), `notification_mode` (each collection, once at approval), `collection_day`, `intro_text`, `is_active`, `accepting_applications`. Every kind is paid: an agreement always has an amount, a mandate and collections. `accepting_applications` hides a kind from applicants while managers can still create agreements of it in the admin.
+`AgreementKind`: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M, empty for kinds without an entrance code such as membership), `notification_mode` (each collection, once at approval), `collection_day`, `intro_text`, `is_active`, `accepting_applications`. Every kind is paid: an agreement always has an amount, a mandate and collections. `accepting_applications` hides a kind from applicants while managers can still create agreements of it in the admin.
 
 `Agreement`: `organization`, `kind`, `status`, `amount`, `deposit_amount`, `start_date`, `end_date`, `contact_person_function`, `details` (JSONField for the kind-specific values), `signed_document` (private storage, PDF validated), `signed_on`, `decided_at`, `decided_by`, `permanent_code`, `notes`, `history`. The application form per kind writes its fields into `details`; a fifth kind is a form change, not a migration. `clean()` rejects a deposit on kinds without one and requires an amount above zero.
 
@@ -56,20 +56,20 @@ Alternative: four models with inheritance. Rejected, every workflow would exist 
      └──reject──▶ rejected
 ```
 
-A confirmed organization's admin may apply. Pending, rejected and deactivated organizations may not. Approval requires `decided_at`, a signed document and an active mandate. `approve_agreement`:
+A confirmed organization's admin may apply. Pending, rejected and deactivated organizations may not. Approval requires `decided_at`, a complete signed document and an active mandate. A signed document is complete when it was uploaded, or when every signature expected by `document-signing` was made. For kinds whose contract is countersigned online, the countersignature is the decision and `decided_at` is the signing date; for the others a manager enters the board's decision date. `approve_agreement`:
 
 1. adds the kind's group,
 2. creates a `PermanentCode` with the kind's accesses when the kind has any, through `create_permanent_code_for_organization`, which gains an `accesses` parameter with the current hardcoded set as default,
 3. creates the deposit collection when the kind requires one,
 4. sends the decision email.
 
-Organization status is never touched by agreement actions. `end_agreement` sets `end_date` if empty, removes the group unless another active agreement grants it, sets `validity_end` on the agreement's code, cancels planned collections after the end date, creates a manual deposit refund record when a paid deposit exists. A daily command ends agreements whose `end_date` has passed.
+Organization status is never touched by agreement actions. `end_agreement` sets `end_date` if empty, removes the group unless another active agreement grants it, sets `validity_end` on the agreement's code when it has one, cancels planned collections after the end date, creates a manual deposit refund record when a paid deposit exists. A daily command ends agreements whose `end_date` has passed.
 
-Which groups may book which rooms stays group configuration. Which terms a member must accept before booking is handled by the terms scopes in `organization-terms`.
+Which groups may book which rooms stays group configuration. Room and lending terms are accepted at the first booking (`organization-terms`), not as part of the application.
 
 ### D4: One mandate per agreement
 
-`SepaMandate`: `agreement`, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on`, `signed_document`, `revoked_on`. Partial unique constraint: one non-revoked mandate per agreement. Reference `<prefix>-<agreement id, six digits>-<n>`, generated, never typed, except that existing paper references can be entered in the admin when unique. IBAN validated with checksum, stored without spaces, masked except on the manager's mandate page, excluded from audit log diffs, never in emails. Encryption at rest is deferred.
+`SepaMandate`: `agreement`, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on`, `signed_document`, `revoked_on`. Partial unique constraint: one non-revoked mandate per agreement. Reference `<prefix>-<agreement id, six digits>-<n>`, generated, never typed, except that existing paper references can be entered in the admin when unique. IBAN validated with checksum, stored without spaces, masked on pages except the manager's mandate page, excluded from audit log diffs, never in emails. The signed mandate PDF carries the full IBAN and is downloadable from the mandate page by the organization's admins and managers in scope. Encryption at rest is deferred.
 
 ### D5: Collections and their identifiers
 
@@ -128,7 +128,7 @@ Applicants need a confirmed admin booking permission on a confirmed organization
 ## Migration Plan
 
 1. Deploy with the app, settings (`SEPA_CREDITOR_ID`, `SEPA_CREDITOR_NAME`, `SEPA_CREDITOR_IBAN`, `SEPA_CREDITOR_BIC`, `SEPA_MANDATE_PREFIX`, `PRE_NOTIFICATION_DAYS`, `COLLECTION_LOOKAHEAD_DAYS`, `COLLECTION_RETURN_WINDOW_DAYS`, `SEPA_RETURN_FEE`) and three cron entries.
-2. Create the kinds in the admin: membership and coworking open; office and cellar with applications closed.
+2. Create the kinds in the admin: membership and coworking open; office and cellar with applications closed. Only coworking gets accesses; membership grants no code.
 3. Enter existing member and coworker agreements with their paper mandate references in the admin.
 4. First yearly member run in the next cycle; monthly runs from the following month.
 5. Rollback: disable the cron entries; the tables stay and the registration flow was never touched.

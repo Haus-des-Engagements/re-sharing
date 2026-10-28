@@ -2,23 +2,23 @@
 
 ### Requirement: Registration collects one signed document and the registration terms
 
-The organization creation form SHALL require a signed registration document (PDF, private storage) with its signing date, SHALL render every active terms document with the registration scope as a required checkbox, and SHALL NOT contain a values approval checkbox. On creation the system SHALL record an acceptance of the current version of each registration document for the organization with the creating user.
+The organization creation form SHALL require a signed registration document (PDF, private storage) with its signing date, SHALL render one required checkbox naming every active clicked terms document with the registration scope with a link to its current version, and SHALL NOT contain a values approval checkbox. On creation the system SHALL record an acceptance of the current version of each registration document for the organization with the creating user, the signed document included.
 
 #### Scenario: Registration with documents configured
 
-- **WHEN** a user creates an organization with a signed PDF, a signing date and the privacy, platform and internet terms boxes checked
+- **WHEN** a user creates an organization with a signed PDF, a signing date and the terms checkbox checked while privacy, platform and internet terms carry the registration scope
 - **THEN** the organization stores the document and date
-- **AND** an acceptance of the current privacy, platform and internet terms versions exists for the organization with that user
+- **AND** an acceptance of the current version of each registration document exists for the organization with that user
 
 #### Scenario: Missing checkbox
 
-- **WHEN** a user submits the creation form without checking a registration document
-- **THEN** the form is rejected naming the document
+- **WHEN** a user submits the creation form without checking the terms checkbox
+- **THEN** the form is rejected naming the documents
 
 #### Scenario: No registration documents configured
 
 - **WHEN** no active document has the registration scope
-- **THEN** the creation form shows no terms checkboxes and the organization can be created with the signed document alone
+- **THEN** the creation form shows no terms checkbox and the organization can be created with the signed document alone
 
 #### Scenario: Non-PDF registration document
 
@@ -27,7 +27,7 @@ The organization creation form SHALL require a signed registration document (PDF
 
 ### Requirement: Terms documents, scopes and versions are configuration
 
-Staff SHALL manage terms documents with one or more scopes (registration, room booking, item lending, agreement kind) and an optional location, and versions with label, file or link, publication date, change summary and a re-acceptance flag. The current version SHALL be the latest version whose publication date is not in the future. Inactive documents and documents without a current version SHALL never be required.
+Staff SHALL manage terms documents with scopes (registration, room booking, item lending, any combination or none), an optional location and a signature flag, and versions with label, file or link, publication date, change summary and a re-acceptance flag. The signature flag SHALL be allowed only on registration documents and on at most one active document; versions of such documents SHALL have a file. The current version SHALL be the latest version whose publication date is not in the future. Inactive documents and documents without a current version SHALL never be required.
 
 #### Scenario: Future version not yet current
 
@@ -44,9 +44,14 @@ Staff SHALL manage terms documents with one or more scopes (registration, room b
 - **WHEN** a house rules document is bound to location A
 - **THEN** it is required for room bookings at location A and not at location B
 
+#### Scenario: Second signed document refused
+
+- **WHEN** staff set the signature flag on a second active document
+- **THEN** the document is not saved and a validation error is shown
+
 ### Requirement: Missing terms are determined per organization and scope
 
-The system SHALL determine, for an organization and a scope, the current versions it must accept: a document is missing when the organization accepted no version of it, or when a version with the re-acceptance flag was published after the latest version the organization accepted. A version without the flag SHALL NOT make a document missing for organizations that accepted an earlier version.
+The system SHALL determine, for an organization and a scope, the current versions it must accept: every active clicked document carrying that scope or the registration scope is missing when the organization accepted no version of it, or when a version with the re-acceptance flag was published after the latest version the organization accepted. A version without the flag SHALL NOT make a document missing for organizations that accepted an earlier version. The signed registration document SHALL never be missing.
 
 #### Scenario: Never accepted
 
@@ -68,9 +73,14 @@ The system SHALL determine, for an organization and a scope, the current version
 - **WHEN** an organization accepts version 2
 - **THEN** nothing is missing for that document
 
+#### Scenario: Changed registration document at a booking gate
+
+- **WHEN** the privacy policy receives a version with the flag and the organization accepted the current room terms
+- **THEN** only the privacy policy is missing for the room booking scope
+
 ### Requirement: Interstitial at room and item booking previews
 
-Room booking previews SHALL check the room booking scope with the booking's location, and the item booking preview SHALL check the item lending scope. When documents are missing, the system SHALL show an interstitial listing each missing document with its link and a checkbox, SHALL store one acceptance per document on submit with the acting user, and SHALL then return to the preview with the entered booking data intact. When nothing is missing the preview SHALL open directly. Documents flagged admin-only SHALL be shown to a booker without a checkbox and with the organization's admins to ask, and the interstitial SHALL NOT be submittable until an admin accepted them.
+Room booking previews SHALL check the room booking scope with the booking's location, and the item booking preview SHALL check the item lending scope. When documents are missing, the system SHALL show an interstitial listing each missing document with its link and a checkbox, SHALL store one acceptance per document on submit with the acting user, and SHALL then return to the preview with the entered booking data intact. When nothing is missing the preview SHALL open directly.
 
 #### Scenario: Booker accepts room terms
 
@@ -83,12 +93,6 @@ Room booking previews SHALL check the room booking scope with the booking's loca
 - **WHEN** a booker of an organization that accepted all current room booking documents opens a preview
 - **THEN** no interstitial is shown
 
-#### Scenario: Admin-only document for a booker
-
-- **WHEN** a booker hits an interstitial that contains an admin-only document
-- **THEN** the document is listed without a checkbox and the organization's admins are named
-- **AND** submitting is refused until an admin accepted it
-
 #### Scenario: Item lending terms
 
 - **WHEN** a user of an organization that never accepted the lending terms opens the item booking preview
@@ -98,20 +102,6 @@ Room booking previews SHALL check the room booking scope with the booking's loca
 
 - **WHEN** the interstitial is called with an external next URL
 - **THEN** the system redirects to the organization page after acceptance instead
-
-### Requirement: Interstitial at agreement application
-
-The agreement application SHALL check the agreement kind scope of the chosen kind. Documents accepted there SHALL count for every scope they carry.
-
-#### Scenario: Room terms accepted at membership application
-
-- **WHEN** an admin accepts the room terms, which carry the membership kind and the room booking scope, while applying for membership
-- **THEN** the organization's first room booking preview shows no interstitial for the room terms
-
-#### Scenario: Kind without documents
-
-- **WHEN** no active document carries the chosen kind
-- **THEN** the application form opens directly
 
 ### Requirement: Announcing a version
 
@@ -127,14 +117,9 @@ Staff SHALL be able to trigger an announcement email for a version to the admins
 - **WHEN** a version is created
 - **THEN** no email is sent
 
-### Requirement: Manager and admin visibility
+### Requirement: Visibility
 
-The manager organization list SHALL show per organization the number of missing room booking documents. The organization page SHALL list the organization's acceptances with version, user and time to its confirmed users and to managers. The admin SHALL list acceptances read-only, filterable by organization and document.
-
-#### Scenario: Manager list column
-
-- **WHEN** a manager opens the organization list and one organization lacks two current room booking documents
-- **THEN** that organization shows the count two
+The organization page SHALL list the organization's acceptances with version, user and time to its confirmed users and to managers. The admin SHALL list acceptances read-only, filterable by organization and document.
 
 #### Scenario: Acceptances on the organization page
 
@@ -153,4 +138,4 @@ The fields holding the former usage agreement SHALL be renamed and keep their fi
 #### Scenario: Existing organization at next booking
 
 - **WHEN** an organization registered before this change opens a room booking preview
-- **THEN** the interstitial lists the current room booking documents
+- **THEN** the interstitial lists the current room booking and registration documents

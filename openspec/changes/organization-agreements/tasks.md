@@ -30,7 +30,7 @@
 - [ ] 4.3 Add an `accesses` parameter to `create_permanent_code_for_organization` defaulting to the current hardcoded set, with a test that the default is unchanged and a test for custom accesses
 - [ ] 4.4 Add tests for `approve_agreement(manager, agreement, decided_at)`: refused without signed document, refused without active mandate, refused outside scope, refused when not submitted; on success the organization status is unchanged, group added, permanent code with kind accesses created and stored or none when the kind has no accesses, deposit collection created when required, decision email enqueued stating amount, interval and collection day for once-at-approval kinds
 - [ ] 4.5 Add tests for `reject_agreement(manager, agreement, decided_at)`: status, email, organization status unchanged, no side effects
-- [ ] 4.6 Add tests for `end_agreement(manager, agreement, end_date=None)`: end date defaulting to today, group removed, group kept when another active agreement grants it, code validity end set, later planned collections cancelled, deposit refund created when a paid deposit exists, ended email enqueued
+- [ ] 4.6 Add tests for `end_agreement(manager, agreement, end_date=None)`: end date defaulting to today, group removed, group kept when another active agreement grants it, code validity end set when the agreement has a code and nothing touched otherwise, later planned collections cancelled, deposit refund created when a paid deposit exists, ended email enqueued
 - [ ] 4.7 Implement the lifecycle services and a `manager_can_manage_agreement(manager, agreement)` selector following the organization scoping rule
 - [ ] 4.8 Add the management command `end_expired_agreements` with a test
 
@@ -53,15 +53,15 @@
 ## 6. Forms, views and templates
 
 - [ ] 6.1 Add the application form base with start date, amount, deposit amount where required, signed document and signing date, contact person function; one subclass per kind writing the kind-specific fields into `details`; form tests for each kind
-- [ ] 6.2 Add applicant views: list of open kinds on the organization page as available actions for confirmed organizations, apply, agreement detail with collections, add mandate, upload signed document; view tests for permissions and success paths
+- [ ] 6.2 Add applicant views: list of open kinds on the organization page as available actions for confirmed organizations, apply, agreement detail with collections and the signed document download, add mandate, mandate detail with the signed mandate download, upload signed document; view tests for permissions, download access and success paths
 - [ ] 6.3 Add manager views: agreement list with filters and submitted count linked from the organization list, agreement detail with approve, reject and end actions (decision date input), mandate detail with full IBAN and revoke, collections overview with attention list, filters, manual settle or cancel and return invoice action, run list with build, mark uploaded, delete and XML download; view tests for every action and denial
 - [ ] 6.4 Add email templates and `mails.py` tasks: application received (organization and managers), decision, pre-notification, return invoice, agreement ended; tests assert recipients and that no email contains an IBAN
 - [ ] 6.5 Translations for all new strings (`makemessages`, German translations)
 
 ## 7. Documentation and rollout
 
-- [ ] 7.1 Add ADR `0024-Agreements-App-and-Manual-SEPA-Export.md` covering D1 to D8 and D10
-- [ ] 7.2 Add ADR `0025-Shared-Accounting-Client.md`
+- [ ] 7.1 Add an ADR with the next free number, `Agreements-App-and-Manual-SEPA-Export`, covering D1 to D8 and D10
+- [ ] 7.2 Add an ADR with the next free number, `Shared-Accounting-Client`
 - [ ] 7.3 Add the three cron entries to the deployment documentation and README (create collections daily, sync payments nightly, end expired agreements daily)
 - [ ] 7.4 Document the rollout steps from the design's migration plan in the README, including the kinds to create and entering existing agreements with paper mandate references
 - [ ] 7.5 Run the full test suite with coverage and confirm it stays above 95 percent; run pre-commit on all changed files
