@@ -1,0 +1,93 @@
+# sepa-mandates Specification
+
+## Purpose
+TBD - created by archiving change organization-agreements. Update Purpose after archive.
+## Requirements
+### Requirement: One active mandate per agreement
+
+The system SHALL allow a mandate to be added to an agreement, capturing account holder, IBAN, BIC and bank name, and the signed mandate PDF with its signature date either at once or later. A mandate SHALL be active when it has a signed PDF and is not revoked. At most one non-revoked mandate SHALL exist per agreement. A mandate without signed PDF SHALL show its reference and bank data on its page together with a link to the blank mandate form and an upload for the signed PDF.
+
+#### Scenario: Applicant adds a mandate
+
+- **WHEN** a confirmed admin of the organization adds a mandate with valid bank data and a signed PDF to a submitted agreement
+- **THEN** an active mandate exists for the agreement
+
+#### Scenario: Mandate saved before signing
+
+- **WHEN** a confirmed admin adds a mandate with valid bank data and no signed PDF
+- **THEN** a mandate with a generated reference exists and is not active
+- **AND** its page shows the reference, a link to the blank mandate form and an upload
+
+#### Scenario: Signed mandate uploaded later
+
+- **WHEN** the admin uploads the signed PDF with its signature date to that mandate
+- **THEN** the mandate is active
+
+#### Scenario: Second active mandate refused
+
+- **WHEN** a mandate is added to an agreement that already has a non-revoked mandate
+- **THEN** the action is refused with a message pointing to revoking the existing mandate
+
+### Requirement: Mandate reference is generated
+
+The system SHALL generate the mandate reference from a configured prefix, the agreement id padded to six digits and a running number per agreement. The reference SHALL be unique. References entered through the admin for existing paper mandates SHALL be accepted when unique, and the generator SHALL never produce a reference that already exists.
+
+#### Scenario: First mandate reference
+
+- **WHEN** the first mandate for agreement 42 is created with prefix `HDE`
+- **THEN** its reference is `HDE-000042-1`
+
+#### Scenario: Replacement mandate reference
+
+- **WHEN** a second mandate is created for agreement 42 after the first was revoked
+- **THEN** its reference is `HDE-000042-2`
+
+#### Scenario: Duplicate reference entered in the admin
+
+- **WHEN** staff enter a reference that already exists on another mandate
+- **THEN** the form is rejected
+
+### Requirement: Bank data validation and protection
+
+The system SHALL validate the IBAN format and checksum and store it without spaces. The IBAN SHALL be rendered masked on pages except the manager's mandate detail, SHALL be excluded from audit log diffs, and SHALL NOT appear in emails. Signed mandate PDFs SHALL be stored in private storage, validated as PDF, and downloadable from the mandate page by the organization's admins and managers in scope; the PDF carries the full IBAN.
+
+#### Scenario: Invalid IBAN
+
+- **WHEN** a mandate is submitted with an IBAN whose checksum is wrong
+- **THEN** the form is rejected with an IBAN error
+
+#### Scenario: Masked display
+
+- **WHEN** an organization user views a mandate
+- **THEN** only the last four characters of the IBAN are shown
+
+#### Scenario: Audit log excludes IBAN
+
+- **WHEN** a mandate's IBAN is changed
+- **THEN** the audit log entry does not contain the old or new IBAN
+
+#### Scenario: Signed mandate download
+
+- **WHEN** a confirmed admin of the organization downloads the signed mandate from the mandate page
+- **THEN** the PDF is served from private storage
+- **AND** a user without a confirmed permission on the organization is denied
+
+#### Scenario: Non-PDF upload
+
+- **WHEN** a mandate is submitted with a non-PDF file as signed document
+- **THEN** the form is rejected
+
+### Requirement: Revocation
+
+The system SHALL allow a manager to revoke a mandate, recording the revocation date. A revoked mandate SHALL NOT be used for new runs. Collections already submitted in a run SHALL keep their mandate.
+
+#### Scenario: Revoke a mandate
+
+- **WHEN** a manager revokes the active mandate of an agreement
+- **THEN** the mandate has a revocation date
+- **AND** notified collections of the agreement are excluded from runs until a new mandate exists
+
+#### Scenario: Submitted collection keeps mandate
+
+- **WHEN** a mandate is revoked after a collection using it was submitted in a run
+- **THEN** that collection still references the revoked mandate
