@@ -47,6 +47,13 @@ def agreement_can_be_deleted(agreement: Agreement) -> bool:
     )
 
 
+def contract_document_available(agreement: Agreement) -> bool:
+    return bool(agreement.kind.contract_template) and agreement.status in (
+        Agreement.Status.SUBMITTED,
+        Agreement.Status.ACTIVE,
+    )
+
+
 def field_has_answers(field) -> bool:
     return Agreement.objects.filter(
         kind=field.kind_id, details__has_key=field.key

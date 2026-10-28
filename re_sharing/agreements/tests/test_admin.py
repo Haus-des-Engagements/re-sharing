@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.core import mail
+from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -13,6 +14,7 @@ from re_sharing.agreements.tests.factories import AgreementKindFieldFactory
 from re_sharing.agreements.tests.factories import CollectionFactory
 from re_sharing.agreements.tests.factories import MembershipKindFactory
 from re_sharing.agreements.tests.factories import SepaMandateFactory
+from re_sharing.agreements.tests.factories import fillable_pdf
 from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import OrganizationFactory
@@ -252,3 +254,35 @@ class AdminDeleteRulesTest(TestCase):
         assert status(submitted) == HTTPStatus.OK
         assert status(active) == HTTPStatus.FORBIDDEN
         assert status(with_collection) == HTTPStatus.FORBIDDEN
+
+
+class ContractTemplateAdminTest(TestCase):
+    def setUp(self):
+        self.client.force_login(UserFactory(is_staff=True, is_superuser=True))
+
+    def _page(self, kind):
+        url = reverse("admin:agreements_agreementkind_change", args=[kind.id])
+        return self.client.get(url).content.decode()
+
+    def test_lists_template_fields(self):
+        kind = MembershipKindFactory(
+            contract_template=fillable_pdf(["organization_name", "place_date"])
+        )
+
+        page = self._page(kind)
+
+        assert "<code>organization_name</code>: filled" in page
+        assert "<code>place_date</code>: left empty" in page
+
+    def test_without_template_or_fields(self):
+        assert "No contract template uploaded." in self._page(MembershipKindFactory())
+        kind = MembershipKindFactory(contract_template=fillable_pdf())
+        assert "has no form fields" in self._page(kind)
+
+    def test_unreadable_template(self):
+        kind = MembershipKindFactory(contract_template=pdf_file())
+        kind.contract_template.save(
+            "broken.pdf", ContentFile(b"%PDF-1.4 broken"), save=True
+        )
+
+        assert "could not be read" in self._page(kind)

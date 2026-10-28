@@ -73,6 +73,12 @@
           {% else %}
             {% trans "Not uploaded yet." %}
           {% endif %}
+          {% if contract_available %}
+            <div class="mt-1">
+              <a class="btn btn-sm btn-outline-primary"
+                 href="{% url 'agreements:contract-document' agreement=agreement.uuid %}">{% trans "Download prefilled contract" %}</a>
+            </div>
+          {% endif %}
         </td>
       </tr>
       <tr>

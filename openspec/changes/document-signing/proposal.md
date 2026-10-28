@@ -1,3 +1,5 @@
+> **Note (agreement-documents):** the change `agreement-documents` already generates the SEPA mandate from creditor data, reference and bank details, and fills a fillable contract template per kind with the agreement's data. This change should sign those documents instead of rendering its own mandate and taking the contract from a terms document; revise it before implementing.
+
 ## Why
 
 Signed documents reach re-sharing as uploads: users download a PDF, print it, sign, scan and upload it, or paste a picture of their signature onto it. A scan is a copy, so legally it is a simple electronic signature already, only without any record of who signed what and when. Signing inside re-sharing keeps the moral weight of a signature, removes the printer, and leaves better evidence than a scan. No third-party service is needed, because none of the documents requires a qualified signature. With `organization-agreements`, contracts and SEPA mandates add two more signed uploads; they should be signed the same way from the start.

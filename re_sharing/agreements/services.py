@@ -163,6 +163,7 @@ def create_agreement(user, organization, kind, form) -> Agreement:
             details=form.details(),
             signed_document=data.get("signed_document") or None,
             signed_on=data.get("signed_on"),
+            contact_person=user,
         )
         transaction.on_commit(
             lambda: send_agreement_application_emails.enqueue(agreement.id)

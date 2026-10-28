@@ -69,13 +69,12 @@
   {% if not mandate.signed_document and not mandate.revoked_on %}
     <h2 class="mt-5">{% trans "Sign the mandate" %}</h2>
     <p>
-      {% blocktrans with reference=mandate.reference %}Print the mandate form, fill in the bank details and the mandate reference {{ reference }}, sign it and upload the scan below.{% endblocktrans %}
+      {% trans "Download the mandate, which already contains the mandate reference and the bank details, sign it and upload the scan below." %}
     </p>
-    {% if mandate_form_url %}
-      <p>
-        <a class="btn btn-outline-primary" href="{{ mandate_form_url }}">{% trans "Download the mandate form" %}</a>
-      </p>
-    {% endif %}
+    <p>
+      <a class="btn btn-outline-primary"
+         href="{% url 'agreements:mandate-document' mandate=mandate.uuid %}">{% trans "Download the mandate" %}</a>
+    </p>
     <form method="post"
           enctype="multipart/form-data"
           action="{% url 'agreements:upload-signed-mandate' mandate=mandate.uuid %}">

@@ -89,6 +89,7 @@ class CreateAgreementTest(TestCase):
         assert agreement.status == Agreement.Status.SUBMITTED
         assert agreement.amount == Decimal("60.00")
         assert agreement.contact_person_function == "Treasurer"
+        assert agreement.contact_person == self.admin
         recipients = [message.to for message in mail.outbox]
         assert [self.admin.email] in recipients
         assert ["manager@example.com"] in recipients

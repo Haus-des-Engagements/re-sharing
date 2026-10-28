@@ -1,7 +1,8 @@
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -13,6 +14,7 @@ from django.views.decorators.http import require_POST
 from re_sharing.organizations.models import Organization
 from re_sharing.providers.decorators import manager_required
 
+from . import documents
 from . import selectors
 from . import services
 from . import services_collections
@@ -93,7 +95,16 @@ def apply_view(request, organization, kind):
             except AgreementError as error:
                 form.add_error(None, error.message)
             else:
-                messages.success(request, _("Your application was submitted."))
+                if agreement.kind.contract_template:
+                    messages.success(
+                        request,
+                        _(
+                            "Your application was submitted. Download the "
+                            "prefilled contract below, sign it and upload it."
+                        ),
+                    )
+                else:
+                    messages.success(request, _("Your application was submitted."))
                 return redirect(agreement.get_absolute_url())
 
     context = {"organization": organization, "kind": kind, "form": form}
@@ -130,6 +141,8 @@ def show_agreement_view(request, agreement):
         and agreement.end_date is not None,
         "is_open": agreement.status
         in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE),
+        "contract_available": can_administer
+        and selectors.contract_document_available(agreement),
     }
     return render(request, "agreements/show_agreement.html", context)
 
@@ -151,6 +164,41 @@ def upload_signed_document_view(request, agreement):
     else:
         messages.success(request, _("The signed contract was uploaded."))
     return redirect(agreement.get_absolute_url())
+
+
+def _pdf_response(content: bytes, filename: str) -> HttpResponse:
+    response = HttpResponse(content, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+def contract_document_view(request, agreement):
+    """The kind's contract template, prefilled with the agreement's data."""
+    agreement = _agreement_for(request, agreement)
+    if not selectors.user_can_administer_agreement(request.user, agreement):
+        raise PermissionDenied
+    if not selectors.contract_document_available(agreement):
+        raise Http404
+    person = agreement.contact_person
+    if person is None and selectors.is_confirmed_admin(
+        request.user, agreement.organization
+    ):
+        person = request.user
+    content = documents.prefilled_contract(agreement, person)
+    filename = f"{agreement.kind.slug}-{agreement.organization.slug}.pdf"
+    return _pdf_response(content, filename)
+
+
+@login_required
+def mandate_document_view(request, mandate):
+    """The generated mandate with reference and bank data. Carries the IBAN."""
+    mandate = _mandate_for(request, mandate)
+    if mandate.revoked_on is not None:
+        raise Http404
+    content = documents.render_mandate(mandate)
+    return _pdf_response(content, f"sepa-mandat-{mandate.reference}.pdf")
 
 
 @login_required
@@ -200,7 +248,6 @@ def show_mandate_view(request, mandate):
         "is_manager": is_manager,
         "upload_form": SignedDocumentForm(),
         "revoke_form": RevokeMandateForm(initial={"revoked_on": timezone.localdate()}),
-        "mandate_form_url": settings.SEPA_MANDATE_FORM_URL,
     }
     return render(request, "agreements/show_mandate.html", context)
 

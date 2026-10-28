@@ -33,6 +33,8 @@ dependencies = [
     "django-tasks>=0.11.0",
     "django-tasks-db>=0.12.0",
     "sepaxml>=2.7.0",
+    "pypdf>=6.21.1",
+    "reportlab>=5.0.1",
 ]
 
 [project.optional-dependencies]

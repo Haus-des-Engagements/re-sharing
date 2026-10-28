@@ -140,3 +140,20 @@ class CollectionFactory(DjangoModelFactory):
 
     class Meta:
         model = Collection
+
+
+def fillable_pdf(text_fields=(), checkboxes=(), name="template.pdf"):
+    """A one-page PDF with the given form fields, as an upload."""
+    from io import BytesIO
+
+    from reportlab.pdfgen import canvas
+
+    output = BytesIO()
+    pdf = canvas.Canvas(output)
+    for index, field in enumerate(text_fields):
+        pdf.acroForm.textfield(name=field, x=50, y=750 - index * 25, width=300)
+    for index, field in enumerate(checkboxes):
+        pdf.acroForm.checkbox(name=field, x=400, y=750 - index * 25)
+    pdf.showPage()
+    pdf.save()
+    return SimpleUploadedFile(name, output.getvalue(), content_type="application/pdf")

@@ -3266,9 +3266,6 @@ msgstr "Tag im Monat, an dem Beiträge fällig sind (1 bis 28)."
 msgid "Yearly kinds only: month of the yearly collection date."
 msgstr "Nur für jährliche Arten: Monat des jährlichen Einzugs."
 
-msgid "Shown on the application page. Link the contract to download here."
-msgstr "Wird auf der Antragsseite angezeigt. Verlinke hier den Vertrag zum Herunterladen."
-
 msgid "Submitted"
 msgstr "Eingereicht"
 
@@ -3557,9 +3554,6 @@ msgstr "Wartet auf das unterschriebene Mandat"
 msgid "Sign the mandate"
 msgstr "Mandat unterschreiben"
 
-msgid "Download the mandate form"
-msgstr "Mandatsformular herunterladen"
-
 msgid "Upload signed mandate"
 msgstr "Unterschriebenes Mandat hochladen"
 
@@ -3571,9 +3565,6 @@ msgstr "Dieses Mandat widerrufen?"
 
 msgid "Revoke mandate"
 msgstr "Mandat widerrufen"
-
-msgid "Print the mandate form, fill in the bank details and the mandate reference %(reference)s, sign it and upload the scan below."
-msgstr "Drucke das Mandatsformular aus, trage die Bankverbindung und die Mandatsreferenz %(reference)s ein, unterschreibe es und lade den Scan unten hoch."
 
 msgid "Agreement application received"
 msgstr "Antrag auf Vereinbarung eingegangen"
@@ -3787,3 +3778,48 @@ msgstr "Die Vereinbarung bleibt bis zu diesem Datum aktiv."
 
 msgid "Change end date"
 msgstr "Enddatum ändern"
+
+msgid "Contract template"
+msgstr "Vertragsvorlage"
+
+msgid "Fillable PDF. Its form fields are filled by name with the agreement's data when an applicant downloads the contract."
+msgstr "Ausfüllbares PDF. Seine Formularfelder werden beim Herunterladen des Vertrags anhand ihres Namens mit den Daten der Vereinbarung gefüllt."
+
+msgid "Contact person"
+msgstr "Ansprechperson"
+
+msgid "Applied for the agreement and is named in the contract."
+msgstr "Hat die Vereinbarung beantragt und wird im Vertrag genannt."
+
+msgid "Your application was submitted. Download the prefilled contract below, sign it and upload it."
+msgstr "Dein Antrag wurde eingereicht. Lade unten den vorausgefüllten Vertrag herunter, unterschreibe ihn und lade ihn hoch."
+
+msgid "Fields of the contract template"
+msgstr "Felder der Vertragsvorlage"
+
+msgid "No contract template uploaded."
+msgstr "Keine Vertragsvorlage hochgeladen."
+
+msgid "The contract template could not be read."
+msgstr "Die Vertragsvorlage konnte nicht gelesen werden."
+
+msgid "The contract template has no form fields."
+msgstr "Die Vertragsvorlage hat keine Formularfelder."
+
+msgid "filled"
+msgstr "wird ausgefüllt"
+
+msgid "left empty"
+msgstr "bleibt leer"
+
+msgid "Download the mandate, which already contains the mandate reference and the bank details, sign it and upload the scan below."
+msgstr "Lade das Mandat herunter, das Mandatsreferenz und Bankdaten bereits enthält, unterschreibe es und lade den Scan unten hoch."
+
+msgid "Download the mandate"
+msgstr "Mandat herunterladen"
+
+msgid "Download prefilled contract"
+msgstr "Vorausgefüllten Vertrag herunterladen"
+
+msgid "Shown on the application page, for example what applicants should know before applying. The contract itself is uploaded as contract template."
+msgstr "Wird auf der Antragsseite angezeigt, zum Beispiel was Antragstellende vorher wissen sollten. Der Vertrag selbst wird als Vertragsvorlage hochgeladen."

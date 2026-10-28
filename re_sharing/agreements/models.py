@@ -55,6 +55,11 @@ def agreement_document_upload_to(instance, filename):
     return _upload_path("agreements", "contract", instance, filename)
 
 
+def kind_template_upload_to(instance, filename):
+    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+    return str(Path("agreement_templates") / f"{timestamp}_{instance.slug}.pdf")
+
+
 def mandate_document_upload_to(instance, filename):
     return _upload_path("mandates", "mandate", instance, filename)
 
@@ -130,7 +135,21 @@ class AgreementKind(TimeStampedModel):
         _("Intro text"),
         blank=True,
         help_text=_(
-            "Shown on the application page. Link the contract to download here."
+            "Shown on the application page, for example what applicants should "
+            "know before applying. The contract itself is uploaded as contract "
+            "template."
+        ),
+    )
+    contract_template = FileField(
+        _("Contract template"),
+        upload_to=kind_template_upload_to,
+        validators=[validate_is_pdf],
+        storage=select_private_storage,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Fillable PDF. Its form fields are filled by name with the "
+            "agreement's data when an applicant downloads the contract."
         ),
     )
     is_active = BooleanField(_("Active"), default=True)
@@ -326,6 +345,16 @@ class Agreement(TimeStampedModel):
         blank=True,
         related_name="agreements_of_permanentcode",
         related_query_name="agreement_of_permanentcode",
+    )
+    contact_person = ForeignKey(
+        "users.User",
+        verbose_name=_("Contact person"),
+        on_delete=SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contactagreements_of_user",
+        related_query_name="contactagreement_of_user",
+        help_text=_("Applied for the agreement and is named in the contract."),
     )
     notes = TextField(_("Internal notes"), blank=True)
 

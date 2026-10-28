@@ -84,10 +84,10 @@ For information about settings configuration, see: https://cookiecutter-django.r
 | Variable | Default | Meaning |
 |---|---|---|
 | `SEPA_CREDITOR_ID` | empty | Creditor identifier printed in pre-notifications and the SEPA file |
-| `SEPA_CREDITOR_NAME` | empty | Creditor name in the SEPA file |
+| `SEPA_CREDITOR_NAME` | empty | Creditor name in the SEPA file and on the generated mandate |
+| `SEPA_CREDITOR_ADDRESS` | empty | Creditor address in one line, printed on the generated mandate |
 | `SEPA_CREDITOR_IBAN` / `SEPA_CREDITOR_BIC` | empty | Account the debits are collected to |
 | `SEPA_MANDATE_PREFIX` | `RS` | Prefix of mandate and collection references |
-| `SEPA_MANDATE_FORM_URL` | empty | Blank mandate form linked on mandates awaiting their signed PDF |
 | `SEPA_RETURN_FEE` | `0.00` | Fee added to the invoice for a returned debit |
 | `PRE_NOTIFICATION_DAYS` | `14` | Days between pre-notification and due date |
 | `COLLECTION_LOOKAHEAD_DAYS` | `45` | How far ahead collections are created |
@@ -327,7 +327,8 @@ Run these once a day, for example from cron:
    - Membership: yearly, the minimum amount, collection month 3 and the collection day, pre-notification "once with the approval", the member group, no accesses, no fields, applications open.
    - Coworking: monthly, deposit required, notice period, the coworking group, the accesses of its entrance code, fields `desks` and `hours_per_week` (whole numbers, minimum 1), applications open.
    - Office and cellar lease: monthly, fields `room` (text) and `area_m2` (decimal, minimum 1), applications closed until their mandates exist.
-   - Put a link to each contract in the kind's intro text.
+   - Upload the contract as a fillable PDF under "Contract template". Its form fields are filled by name when the contract is downloaded from the agreement page; the kind's page lists which fields the template has and which are filled. Names: `organization_name`, `organization_address`, `organization_phone`, `organization_email`, `organization_website`, `represented_by_person` (checkbox), `representative_name`, `representative_function`, `representative_email`, `amount`, `start_date`, `end_date`, `deposit_amount`, `kind_name`, and `detail_<key>` for the kind's application fields. Other fields stay empty for the signer.
+   - The SEPA mandate is generated with the creditor data from the settings, the mandate reference and the bank details; it needs no upload.
    - A kind's minimum amount binds applicants only; managers can enter lower amounts for existing agreements.
 3. Create and activate the email templates for the agreement emails (application received, manager notice, approved, rejected, ended, pre-notification, return invoice). The context offers `organization`, `agreement`, `kind`, `agreement_url`, `mandate_reference`, `creditor_id`, `creditor_name`, `first_collection` and, for collection emails, `collection`; bank details are never part of it.
 4. Enter existing members and coworkers as active agreements, each with its paper mandate reference, signed contract and signing date: managers use "New agreement" under Manage agreements (status "Active", which adds the kind's group if missing), staff can also use the admin (which changes no groups). Neither creates collections for periods due before the agreement was entered, entrance codes or emails.

@@ -21,11 +21,21 @@ urlpatterns = [
         name="upload-signed-document",
     ),
     path(
+        "<uuid:agreement>/contract.pdf",
+        views.contract_document_view,
+        name="contract-document",
+    ),
+    path(
         "<uuid:agreement>/mandate/new/",
         views.create_mandate_view,
         name="create-mandate",
     ),
     path("mandates/<uuid:mandate>/", views.show_mandate_view, name="show-mandate"),
+    path(
+        "mandates/<uuid:mandate>/mandate.pdf",
+        views.mandate_document_view,
+        name="mandate-document",
+    ),
     path(
         "mandates/<uuid:mandate>/signed-document/",
         views.upload_signed_mandate_view,

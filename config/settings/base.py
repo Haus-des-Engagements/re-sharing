@@ -276,10 +276,11 @@ BUCHHALTUNGSBUTLER_BASE_URL = env(
 # ------------------------------------------------------------------------------
 SEPA_CREDITOR_ID = env("SEPA_CREDITOR_ID", default="")
 SEPA_CREDITOR_NAME = env("SEPA_CREDITOR_NAME", default="")
+# One line, printed on the generated mandate, e.g. "Street 1, 12345 City".
+SEPA_CREDITOR_ADDRESS = env("SEPA_CREDITOR_ADDRESS", default="")
 SEPA_CREDITOR_IBAN = env("SEPA_CREDITOR_IBAN", default="")
 SEPA_CREDITOR_BIC = env("SEPA_CREDITOR_BIC", default="")
 SEPA_MANDATE_PREFIX = env("SEPA_MANDATE_PREFIX", default="RS")
-SEPA_MANDATE_FORM_URL = env("SEPA_MANDATE_FORM_URL", default="")
 SEPA_RETURN_FEE = Decimal(env("SEPA_RETURN_FEE", default="0.00"))
 PRE_NOTIFICATION_DAYS = env.int("PRE_NOTIFICATION_DAYS", default=14)
 COLLECTION_LOOKAHEAD_DAYS = env.int("COLLECTION_LOOKAHEAD_DAYS", default=45)

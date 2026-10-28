@@ -312,7 +312,6 @@ class AgreementPageTest(TestCase):
         assert "closed agreement" in response.content.decode()
 
 
-@override_settings(SEPA_MANDATE_FORM_URL="https://example.com/mandate.pdf")
 class MandateViewsTest(TestCase):
     def setUp(self):
         self.agreement = AgreementFactory()
@@ -332,7 +331,10 @@ class MandateViewsTest(TestCase):
         self.assertRedirects(response, mandate.get_absolute_url())
         page = self.client.get(mandate.get_absolute_url()).content.decode()
         assert mandate.reference in page
-        assert "https://example.com/mandate.pdf" in page
+        assert (
+            reverse("agreements:mandate-document", kwargs={"mandate": mandate.uuid})
+            in page
+        )
         assert (
             reverse(
                 "agreements:upload-signed-mandate", kwargs={"mandate": mandate.uuid}

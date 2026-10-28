@@ -2,8 +2,12 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
+from django.utils.html import format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from pypdf.errors import PdfReadError
 
+from . import documents
 from . import selectors
 from .models import Agreement
 from .models import AgreementKind
@@ -71,6 +75,31 @@ class AgreementKindAdmin(admin.ModelAdmin):
     list_filter = ["is_active", "accepting_applications", "billing_interval"]
     filter_horizontal = ["accesses"]
     inlines = [AgreementKindFieldInline]
+    readonly_fields = ["template_fields"]
+
+    @admin.display(description=_("Fields of the contract template"))
+    def template_fields(self, obj):
+        if obj is None or not obj.contract_template:
+            return _("No contract template uploaded.")
+        try:
+            names = documents.template_field_names(obj)
+        except PdfReadError:
+            return _("The contract template could not be read.")
+        if not names:
+            return _("The contract template has no form fields.")
+        return format_html_join(
+            mark_safe("<br>"),  # noqa: S308
+            "<code>{}</code>: {}",
+            (
+                (
+                    name,
+                    _("filled")
+                    if documents.is_filled_field(obj, name)
+                    else _("left empty"),
+                )
+                for name in names
+            ),
+        )
 
     def has_delete_permission(self, request, obj=None):
         if obj is not None and obj.agreements_of_kind.exists():
