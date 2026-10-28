@@ -84,31 +84,53 @@ def apply_view(request, organization, kind):
     if not (kind.is_active and kind.accepting_applications):
         raise PermissionDenied
 
-    form = ApplicationForm(kind=kind)
-    if request.method == "POST":
+    if request.method != "POST":
+        form = ApplicationForm(kind=kind)
+    else:
         form = ApplicationForm(data=request.POST, files=request.FILES, kind=kind)
-        if form.is_valid():
-            try:
-                agreement = services.create_agreement(
-                    request.user, organization, kind, form
-                )
-            except AgreementError as error:
-                form.add_error(None, error.message)
-            else:
-                if agreement.kind.contract_template:
-                    messages.success(
-                        request,
-                        _(
-                            "Your application was submitted. Download the "
-                            "prefilled contract below, sign it and upload it."
-                        ),
-                    )
-                else:
-                    messages.success(request, _("Your application was submitted."))
-                return redirect(agreement.get_absolute_url())
+        if "preview" in request.POST:
+            response = _contract_preview(request, organization, kind, form)
+        else:
+            response = _submit_application(request, organization, kind, form)
+        if response is not None:
+            return response
 
     context = {"organization": organization, "kind": kind, "form": form}
     return render(request, "agreements/apply.html", context)
+
+
+def _contract_preview(request, organization, kind, form):
+    """The contract filled with the entered values; nothing is saved."""
+    if not kind.contract_template:
+        raise Http404
+    if not form.is_valid():
+        return None
+    agreement = services.agreement_from_application(
+        organization, kind, form, request.user
+    )
+    content = documents.prefilled_contract(agreement, request.user)
+    return _pdf_response(content, f"{kind.slug}-{organization.slug}.pdf")
+
+
+def _submit_application(request, organization, kind, form):
+    if not form.is_valid():
+        return None
+    try:
+        agreement = services.create_agreement(request.user, organization, kind, form)
+    except AgreementError as error:
+        form.add_error(None, error.message)
+        return None
+    if kind.contract_template:
+        messages.success(
+            request,
+            _(
+                "Your application was submitted. Download the prefilled contract "
+                "below, sign it and upload it."
+            ),
+        )
+    else:
+        messages.success(request, _("Your application was submitted."))
+    return redirect(agreement.get_absolute_url())
 
 
 def _agreement_for(request, agreement_uuid) -> Agreement:

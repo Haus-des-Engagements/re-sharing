@@ -133,6 +133,25 @@ def _refuse_duplicate(organization, kind):
         raise AgreementError(msg)
 
 
+def agreement_from_application(organization, kind, form, user) -> Agreement:
+    """The unsaved agreement a valid application form describes. Used for
+    submitting and for the contract preview, so both fill the same values."""
+    data = form.cleaned_data
+    return Agreement(
+        organization=organization,
+        kind=kind,
+        amount=data["amount"],
+        deposit_amount=data.get("deposit_amount"),
+        start_date=data["start_date"],
+        end_date=data.get("end_date"),
+        contact_person_function=data.get("contact_person_function", ""),
+        details=form.details(),
+        signed_document=data.get("signed_document") or None,
+        signed_on=data.get("signed_on"),
+        contact_person=user,
+    )
+
+
 def create_agreement(user, organization, kind, form) -> Agreement:
     """An organization's admin applies for a kind."""
     from .mails import send_agreement_application_emails
@@ -150,21 +169,9 @@ def create_agreement(user, organization, kind, form) -> Agreement:
         raise AgreementError(msg)
     _refuse_duplicate(organization, kind)
 
-    data = form.cleaned_data
+    agreement = agreement_from_application(organization, kind, form, user)
     with transaction.atomic(), set_actor(user):
-        agreement = Agreement.objects.create(
-            organization=organization,
-            kind=kind,
-            amount=data["amount"],
-            deposit_amount=data.get("deposit_amount"),
-            start_date=data["start_date"],
-            end_date=data.get("end_date"),
-            contact_person_function=data.get("contact_person_function", ""),
-            details=form.details(),
-            signed_document=data.get("signed_document") or None,
-            signed_on=data.get("signed_on"),
-            contact_person=user,
-        )
+        agreement.save()
         transaction.on_commit(
             lambda: send_agreement_application_emails.enqueue(agreement.id)
         )

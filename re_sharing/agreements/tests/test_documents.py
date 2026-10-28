@@ -273,3 +273,68 @@ class ApplicationMessageTest(TestCase):
         )
 
         assert "Download the prefilled contract below" in response.content.decode()
+
+
+class ContractPreviewOnApplyTest(TestCase):
+    def setUp(self):
+        self.kind = _kind_with_template()
+        self.organization = AgreementFactory().organization
+        Agreement.objects.all().delete()
+        self.admin = make_admin(
+            self.organization, first_name="Alex", last_name="Example"
+        )
+        self.client.force_login(self.admin)
+        self.url = reverse(
+            "agreements:apply",
+            kwargs={"organization": self.organization.slug, "kind": self.kind.slug},
+        )
+        self.data = {
+            "start_date": "2027-03-01",
+            "amount": "80",
+            "contact_person_function": "Board",
+            "area": "10.5",
+            "since": "2026-05-01",
+            "preview": "1",
+        }
+
+    def test_page_offers_the_download(self):
+        page = self.client.get(self.url).content.decode()
+
+        assert 'name="preview"' in page
+        assert "download the contract again" in page
+
+    def test_valid_input_returns_prefilled_contract_without_saving(self):
+        with self.captureOnCommitCallbacks() as callbacks:
+            response = self.client.post(self.url, self.data)
+
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"].startswith("attachment;")
+        values = _values(response.content)
+        assert values["organization_name"] == self.organization.name
+        assert values["representative_name"] == "Alex Example"
+        assert values["representative_function"] == "Board"
+        assert values["amount"] == "80,00"
+        assert values["detail_area"] == "10,5"
+        assert not Agreement.objects.exists()
+        assert callbacks == []
+
+    def test_invalid_input_shows_errors(self):
+        self.kind.minimum_amount = Decimal(60)
+        self.kind.save()
+
+        response = self.client.post(self.url, {**self.data, "amount": "20"})
+
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"].startswith("text/html")
+        assert "The amount must be at least" in response.content.decode()
+        assert not Agreement.objects.exists()
+
+    def test_kind_without_template(self):
+        self.kind.contract_template = None
+        self.kind.save()
+
+        assert 'name="preview"' not in self.client.get(self.url).content.decode()
+        response = self.client.post(self.url, self.data)
+        assert response.status_code == HTTPStatus.NOT_FOUND
+        assert not Agreement.objects.exists()

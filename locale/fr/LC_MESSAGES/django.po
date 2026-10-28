@@ -1925,3 +1925,20 @@ msgstr "Aucune réservation n'affiche le code %(code)s sur cette période."
 
 msgid "No bookings found."
 msgstr "Aucune réservation trouvée."
+
+msgid ""
+"Fill in the form and download the prefilled contract. Sign it and upload it "
+"here before submitting, or later from the agreement page."
+msgstr ""
+"Remplissez le formulaire et téléchargez le contrat prérempli. Signez-le et "
+"déposez-le ici avant l'envoi, ou plus tard depuis la page de la convention."
+
+msgid "Download prefilled contract"
+msgstr "Télécharger le contrat prérempli"
+
+msgid ""
+"If you change any values after downloading, download the contract again "
+"before signing."
+msgstr ""
+"Si vous modifiez des valeurs après le téléchargement, téléchargez à nouveau "
+"le contrat avant de le signer."

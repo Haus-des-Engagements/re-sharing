@@ -3823,3 +3823,18 @@ msgstr "Vorausgefüllten Vertrag herunterladen"
 
 msgid "Shown on the application page, for example what applicants should know before applying. The contract itself is uploaded as contract template."
 msgstr "Wird auf der Antragsseite angezeigt, zum Beispiel was Antragstellende vorher wissen sollten. Der Vertrag selbst wird als Vertragsvorlage hochgeladen."
+
+msgid ""
+"Fill in the form and download the prefilled contract. Sign it and upload it "
+"here before submitting, or later from the agreement page."
+msgstr ""
+"Fülle das Formular aus und lade den vorausgefüllten Vertrag herunter. "
+"Unterschreibe ihn und lade ihn vor dem Absenden hier hoch oder später auf der "
+"Seite der Vereinbarung."
+
+msgid ""
+"If you change any values after downloading, download the contract again "
+"before signing."
+msgstr ""
+"Wenn du nach dem Herunterladen Angaben änderst, lade den Vertrag vor dem "
+"Unterschreiben erneut herunter."

@@ -22,11 +22,25 @@
   <h1 class="mt-4">{% blocktrans with kind=kind.name %}Apply for {{ kind }}{% endblocktrans %}</h1>
   {% if kind.intro_text %}<div class="mt-3" id="kind-intro">{{ kind.intro_text|safe }}</div>{% endif %}
   <p class="mt-3">
-    {% trans "Download the contract, sign it and upload it here. You can also upload it later from the agreement page." %}
+    {% if kind.contract_template %}
+      {% trans "Fill in the form and download the prefilled contract. Sign it and upload it here before submitting, or later from the agreement page." %}
+    {% else %}
+      {% trans "Download the contract, sign it and upload it here. You can also upload it later from the agreement page." %}
+    {% endif %}
   </p>
   <form method="post" enctype="multipart/form-data" class="mt-3">
     {% csrf_token %}
     {{ form|crispy }}
     <button type="submit" class="btn btn-primary">{% trans "Submit application" %}</button>
+    {% if kind.contract_template %}
+      <button type="submit"
+              name="preview"
+              value="1"
+              class="btn btn-outline-primary"
+              id="download-prefilled-contract">{% trans "Download prefilled contract" %}</button>
+      <p class="form-text mt-2">
+        {% trans "If you change any values after downloading, download the contract again before signing." %}
+      </p>
+    {% endif %}
   </form>
 {% endblock content %}
