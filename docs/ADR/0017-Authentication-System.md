@@ -58,6 +58,7 @@ Configuration choices:
 * Username field exists in User model but remains unused (allauth requirement)
 * Social authentication can be enabled by adding provider configurations
 * MFA can be enabled per-user without code changes
+* Staff, superusers and managers must use MFA: `RequireStaffMFAMiddleware` sends them to the MFA setup until they have an authenticator app or passkey, because they can see bank data of many organizations (switch: `REQUIRE_STAFF_MFA`)
 * Custom authentication logic must integrate with allauth's session management
 * Email verification step adds friction to user registration but improves security
 * Password policies and validation can be configured through allauth settings

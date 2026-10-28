@@ -164,6 +164,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
     "hijack.middleware.HijackUserMiddleware",
+    "re_sharing.users.middleware.RequireStaffMFAMiddleware",
 ]
 
 # STATIC
@@ -361,6 +362,8 @@ SOCIALACCOUNT_ADAPTER = "re_sharing.users.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_FORMS = {"signup": "re_sharing.users.forms.UserSocialSignupForm"}
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+# Staff and managers must set up two-factor authentication before using the site.
+REQUIRE_STAFF_MFA = env.bool("REQUIRE_STAFF_MFA", default=True)
 
 
 # Your stuff...

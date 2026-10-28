@@ -79,6 +79,12 @@ For more detailed setup instructions, see: https://cookiecutter-django.readthedo
 ### Settings
 For information about settings configuration, see: https://cookiecutter-django.readthedocs.io/en/latest/settings.html
 
+#### Two-factor authentication
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `REQUIRE_STAFF_MFA` | `True` | Staff, superusers and managers must set up two-factor authentication (authenticator app or passkey) before using the site. Set to `False` to switch off, e.g. locally. If a manager loses their device and recovery codes, delete their authenticator in the admin so they can set it up again. |
+
 #### Agreements and SEPA direct debit
 
 | Variable | Default | Meaning |

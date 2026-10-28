@@ -39,6 +39,9 @@ MEDIA_URL = "http://media.testserver"
 
 LANGUAGE_CODE = "en"
 
+# Enforcement is tested in re_sharing/users/tests/test_middleware.py.
+REQUIRE_STAFF_MFA = False
+
 # DJANGO TASKS
 # ------------------------------------------------------------------------------
 # Use ImmediateBackend for tests so tasks run synchronously

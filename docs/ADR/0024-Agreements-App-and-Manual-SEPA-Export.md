@@ -26,7 +26,7 @@ A kind defines the group it grants, yearly or monthly billing, deposit, notice p
 
 ### One mandate per agreement
 
-A mandate holds bank details, a generated reference (`<prefix>-<agreement id>-<n>`), the signed PDF and a revocation date. It may be saved before the signed PDF exists and only counts as active with the PDF and without revocation. The IBAN is validated, masked outside the manager's mandate page, excluded from the audit log and never put into an email context.
+A mandate holds bank details, a generated reference (`<prefix>-<running number>`, e.g. `HDE-VM-009`, continuing after the highest existing number so that paper mandates entered in the admin keep their place), the signed PDF and a revocation date. It may be saved before the signed PDF exists and only counts as active with the PDF and without revocation. The IBAN is validated, masked outside the manager's mandate page, excluded from the audit log and never put into an email context.
 
 ### Collections per period, prorated from the start date
 
