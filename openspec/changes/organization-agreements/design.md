@@ -42,7 +42,7 @@ Alternative: extend `organizations`. Rejected, that models file is already the l
 
 ### D2: Kinds are configuration, agreements are one model
 
-`AgreementKind`: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M, empty for kinds without an entrance code such as membership), `notification_mode` (each collection, once at approval), `collection_day`, `intro_text`, `is_active`, `accepting_applications`. Every kind is paid: an agreement always has an amount, a mandate and collections. `accepting_applications` hides a kind from applicants while managers can still create agreements of it in the admin.
+`AgreementKind`: `name`, `slug`, `organization_group`, `billing_interval` (yearly, monthly), `requires_deposit`, `notice_period_weeks`, `requires_end_date`, `accesses` (M2M, empty for kinds without an entrance code such as membership), `notification_mode` (each collection, once at approval), `collection_day`, `collection_month` (yearly kinds only), `intro_text` (shown on the application page, links the contract to download), `is_active`, `accepting_applications`. Every kind is paid: an agreement always has an amount, a mandate and collections. `accepting_applications` hides a kind from applicants while managers can still create agreements of it in the admin.
 
 `Agreement`: `organization`, `kind`, `status`, `amount`, `deposit_amount`, `start_date`, `end_date`, `contact_person_function`, `details` (JSONField for the kind-specific values), `signed_document` (private storage, PDF validated), `signed_on`, `decided_at`, `decided_by`, `permanent_code`, `notes`, `history`. The application form per kind writes its fields into `details`; a fifth kind is a form change, not a migration. `clean()` rejects a deposit on kinds without one and requires an amount above zero.
 
@@ -56,12 +56,13 @@ Alternative: four models with inheritance. Rejected, every workflow would exist 
      └──reject──▶ rejected
 ```
 
-A confirmed organization's admin may apply. Pending, rejected and deactivated organizations may not. Approval requires `decided_at`, a complete signed document and an active mandate. A signed document is complete when it was uploaded, or when every signature expected by `document-signing` was made. For kinds whose contract is countersigned online, the countersignature is the decision and `decided_at` is the signing date; for the others a manager enters the board's decision date. `approve_agreement`:
+A confirmed organization's admin may apply. Pending, rejected and deactivated organizations may not. Approval requires `decided_at`, a complete signed document and an active mandate; an uploaded document is complete. A manager enters the board's decision date. `approve_agreement`:
 
 1. adds the kind's group,
 2. creates a `PermanentCode` with the kind's accesses when the kind has any, through `create_permanent_code_for_organization`, which gains an `accesses` parameter with the current hardcoded set as default,
 3. creates the deposit collection when the kind requires one,
-4. sends the decision email.
+4. creates the first-period fee collection when the start date lies within a period (D5),
+5. sends the decision email.
 
 Organization status is never touched by agreement actions. `end_agreement` sets `end_date` if empty, removes the group unless another active agreement grants it, sets `validity_end` on the agreement's code when it has one, cancels planned collections after the end date, creates a manual deposit refund record when a paid deposit exists. A daily command ends agreements whose `end_date` has passed.
 
@@ -69,11 +70,13 @@ Which groups may book which rooms stays group configuration. Room and lending te
 
 ### D4: One mandate per agreement
 
-`SepaMandate`: `agreement`, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on`, `signed_document`, `revoked_on`. Partial unique constraint: one non-revoked mandate per agreement. Reference `<prefix>-<agreement id, six digits>-<n>`, generated, never typed, except that existing paper references can be entered in the admin when unique. IBAN validated with checksum, stored without spaces, masked on pages except the manager's mandate page, excluded from audit log diffs, never in emails. The signed mandate PDF carries the full IBAN and is downloadable from the mandate page by the organization's admins and managers in scope. Encryption at rest is deferred.
+`SepaMandate`: `agreement`, `reference` (unique), `account_holder`, `iban`, `bic`, `bank_name`, `signed_on` and `signed_document` (both nullable), `revoked_on`. Partial unique constraint: one non-revoked mandate per agreement. A mandate is active when it has a signed document and is not revoked.
+
+The applicant may save the bank data before the signed PDF exists. The mandate page then shows the generated reference and the bank data, links the blank mandate form (`SEPA_MANDATE_FORM_URL`) to print, fill in, sign and upload, and offers the upload. A hand-signed form without the reference written on it is accepted, because the reference is also stated on the mandate page and in the approval email. Reference `<prefix>-<agreement id, six digits>-<n>`, generated, never typed, except that existing paper references can be entered in the admin when unique. IBAN validated with checksum, stored without spaces, masked on pages except the manager's mandate page, excluded from audit log diffs, never in emails. The signed mandate PDF carries the full IBAN and is downloadable from the mandate page by the organization's admins and managers in scope. Encryption at rest is deferred.
 
 ### D5: Collections and their identifiers
 
-`Collection`: `agreement`, `kind` (fee, deposit, deposit refund), `period_start`, `period_end`, `due_date`, `amount`, `mandate`, `status`, `reference`, `run`, `notified_at`, `collected_at`, `returned_at`, `return_text`, `invoice_number`, `invoice_amount`, `paid_at`, `status_note`. Unique on (`agreement`, `kind`, `period_start`). `reference` is `<prefix>-C-<collection id, six digits>` and is the SEPA end-to-end id; the mandate reference is the SEPA mandate id. Both appear on bank statements and on every return.
+`Collection`: `agreement`, `kind` (fee, deposit, deposit refund), `period_start`, `period_end`, `due_date`, `amount`, `mandate` (empty only for deposit refunds), `status`, `reference`, `run`, `notified_at`, `collected_at`, `returned_at`, `return_text`, `invoice_number`, `invoice_amount`, `paid_at`, `status_note`. Unique on (`agreement`, `kind`, `period_start`). `reference` is `<prefix>-C-<collection id, six digits>` and is the SEPA end-to-end id; the mandate reference is the SEPA mandate id. Both appear on bank statements and on every return.
 
 ```
  planned ─▶ notified ─▶ submitted ─▶ collected
@@ -83,11 +86,22 @@ Which groups may book which rooms stays group configuration. Room and lending te
  any non-final ─▶ cancelled
 ```
 
-A daily command `create_agreement_collections` creates fee collections for active agreements whose next period starts within the lookahead (settings, default 45 days), idempotent through the unique constraint, never for periods after the end date. The amount is frozen at creation; changing the agreement affects later collections. Deposits are created at approval with the start date as due date.
+Billing periods: monthly kinds bill calendar months, due on the kind's `collection_day`. Yearly kinds bill calendar years, due on one fixed date for all agreements of the kind, `collection_month` and `collection_day` (membership: a day in March).
+
+A daily command `create_agreement_collections` creates fee collections for active agreements whose next due date lies within the lookahead (settings, default 45 days), idempotent through the unique constraint, never for periods after the end date. The amount is frozen at creation; changing the agreement affects later collections. Deposits are created at approval with the start date as due date.
+
+First period: when an agreement's start date lies within a billing period instead of on its first day, `approve_agreement` creates one prorated collection for the rest of that period. The start date of the agreement is decisive, never the signing date or the decision date. Amounts are rounded to the cent.
+
+- Yearly kinds, start date not 1 January: one twelfth of the amount for each full month after the start month up to December. A start in October means November and December, two twelfths; the period runs from the first day of the following month to 31 December. A start in December leaves no full month and creates no collection.
+- Monthly kinds, start date not the first of the month: the amount times the days from the start date to the end of the month, both included, divided by the days of that month. A start on 20 March means 12 of 31 days; the period runs from the start date to the end of the month.
+
+The due date is the later of the period's regular due date (yearly: the year's fixed date; monthly: the collection day of the start month) and the decision date plus `PRE_NOTIFICATION_DAYS`. The daily command creates full-period collections only for periods starting on or after the start date, so the partial period is never billed twice. Agreements entered in the admin get no first-period collection; they paid on paper.
 
 ### D6: Pre-notification
 
 When a planned collection reaches due date minus `PRE_NOTIFICATION_DAYS` (default 14): kinds with mode "each collection" get an email naming amount, due date, mandate reference and creditor identifier; kinds with mode "once at approval" rely on the approval email, which states amount, interval and collection day and is a valid standing pre-notification under SEPA. Either way the collection becomes `notified`.
+
+The first-period collection (D5) gets no pre-notification email, whatever the kind and mode: it is created as `notified`, and the approval email states its amount and due date, which lies at least `PRE_NOTIFICATION_DAYS` after the decision.
 
 ### D7: SEPA runs, upload confirmation, collected by absence of return
 
@@ -127,13 +141,12 @@ Applicants need a confirmed admin booking permission on a confirmed organization
 
 ## Migration Plan
 
-1. Deploy with the app, settings (`SEPA_CREDITOR_ID`, `SEPA_CREDITOR_NAME`, `SEPA_CREDITOR_IBAN`, `SEPA_CREDITOR_BIC`, `SEPA_MANDATE_PREFIX`, `PRE_NOTIFICATION_DAYS`, `COLLECTION_LOOKAHEAD_DAYS`, `COLLECTION_RETURN_WINDOW_DAYS`, `SEPA_RETURN_FEE`) and three cron entries.
-2. Create the kinds in the admin: membership and coworking open; office and cellar with applications closed. Only coworking gets accesses; membership grants no code.
+1. Deploy with the app, settings (`SEPA_CREDITOR_ID`, `SEPA_CREDITOR_NAME`, `SEPA_CREDITOR_IBAN`, `SEPA_CREDITOR_BIC`, `SEPA_MANDATE_PREFIX`, `SEPA_MANDATE_FORM_URL`, `PRE_NOTIFICATION_DAYS`, `COLLECTION_LOOKAHEAD_DAYS`, `COLLECTION_RETURN_WINDOW_DAYS`, `SEPA_RETURN_FEE`) and three cron entries.
+2. Create the kinds in the admin: membership (yearly, collection date in March) and coworking open; office and cellar with applications closed. Only coworking gets accesses; membership grants no code.
 3. Enter existing member and coworker agreements with their paper mandate references in the admin.
 4. First yearly member run in the next cycle; monthly runs from the following month.
 5. Rollback: disable the cron entries; the tables stay and the registration flow was never touched.
 
 ## Open Questions
 
-- Whether the yearly member fee is collected on one fixed date for everyone. The design assumes one date per kind.
 - The exact wording of return transactions from the bank in BuchhaltungsButler (see risks).

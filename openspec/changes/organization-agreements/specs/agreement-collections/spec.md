@@ -2,7 +2,7 @@
 
 ### Requirement: Fee collections are created per billing period
 
-A daily command SHALL create a fee collection for every active agreement whose next billing period starts within the configured lookahead. The collection SHALL copy the agreement's amount, SHALL reference the agreement's active mandate, SHALL have the kind's collection day of the period as due date, SHALL receive a generated collection reference, and SHALL have status `Planned`. Creation SHALL be idempotent per agreement, kind and period start. No collection SHALL be created for periods starting after the agreement's end date.
+A daily command SHALL create a fee collection for every active agreement whose next due date lies within the configured lookahead. Monthly kinds SHALL bill calendar months due on the kind's collection day; yearly kinds SHALL bill calendar years due on one fixed collection month and day for all agreements of the kind. The collection SHALL copy the agreement's amount, SHALL reference the agreement's active mandate, SHALL receive a generated collection reference, and SHALL have status `Planned`. Creation SHALL be idempotent per agreement, kind and period start. No collection SHALL be created for periods starting after the agreement's end date.
 
 #### Scenario: Monthly fee collection
 
@@ -12,8 +12,8 @@ A daily command SHALL create a fee collection for every active agreement whose n
 
 #### Scenario: Yearly fee collection
 
-- **WHEN** the command runs within the lookahead of the yearly collection date for a member agreement of 60 €
-- **THEN** one fee collection for the calendar year with amount 60 € exists
+- **WHEN** the command runs on 2027-02-01 with a lookahead of 45 days for a member agreement of 60 € started in 2026, whose kind collects on 15 March
+- **THEN** one fee collection for 2027-01-01 to 2027-12-31 with amount 60 € and due date 2027-03-15 exists
 
 #### Scenario: Amount frozen at creation
 
@@ -25,9 +25,55 @@ A daily command SHALL create a fee collection for every active agreement whose n
 - **WHEN** an agreement ends on 2027-03-31
 - **THEN** no fee collection with a period start after 2027-03-31 is created
 
+### Requirement: First period is prorated from the start date
+
+On approval of an agreement whose start date lies within a billing period instead of on its first day, the system SHALL create one prorated fee collection for the rest of that period, calculated from the agreement's start date and never from the signing or decision date, rounded to the cent. For yearly kinds it SHALL be one twelfth of the amount for each full month after the start month up to December, for the period from the first day of the following month to 31 December; no collection SHALL be created when no full month remains. For monthly kinds it SHALL be the amount times the days from the start date to the end of the month, both included, divided by the days of that month, for the period from the start date to the end of the month. Its due date SHALL be the later of the period's regular due date and the decision date plus the configured pre-notification days. It SHALL be created as `Notified` without a pre-notification email; the decision email SHALL state its amount and due date. The daily command SHALL NOT create a full-period collection for the start period. Agreements entered in the admin SHALL get no first-period collection.
+
+#### Scenario: Joining in October
+
+- **WHEN** a membership of 60 € starting 2027-10-10 is approved on 2027-10-12, with the fixed date 15 March and 14 pre-notification days
+- **THEN** a fee collection of 10 € for 2027-11-01 to 2027-12-31 with due date 2027-10-26 and status `Notified` exists
+- **AND** no pre-notification email is sent
+- **AND** the decision email states 10 € and 2027-10-26
+
+#### Scenario: Joining before the fixed date
+
+- **WHEN** a membership of 60 € starting 2027-01-20 is approved on 2027-02-01
+- **THEN** a fee collection of 55 € for 2027-02-01 to 2027-12-31 with due date 2027-03-15 exists
+- **AND** the daily command creates no full-year collection for 2027
+
+#### Scenario: Joining in December
+
+- **WHEN** a membership starting 2027-12-03 is approved
+- **THEN** no fee collection for 2027 exists
+- **AND** the daily command creates the full-year collection for 2028
+
+#### Scenario: Starting on 1 January
+
+- **WHEN** a membership starting 2028-01-01 is approved in December 2027
+- **THEN** no first-period collection is created
+- **AND** the daily command creates the full-year collection for 2028
+
+#### Scenario: Coworking starting mid-month
+
+- **WHEN** a coworking agreement of 120 € with collection day 5 and start date 2027-03-20 is approved on 2027-03-10, with 14 pre-notification days
+- **THEN** a fee collection of 46.45 € (12 of 31 days) for 2027-03-20 to 2027-03-31 with due date 2027-03-24 and status `Notified` exists
+- **AND** the daily command creates no full-month collection for March 2027 and creates the one for April 2027
+
+#### Scenario: Start date decides, not the signing date
+
+- **WHEN** a coworking agreement of 120 € with start date 2027-04-16 was signed on 2027-02-25 and is approved on 2027-03-01
+- **THEN** a fee collection of 60 € (15 of 30 days) for 2027-04-16 to 2027-04-30 with due date 2027-04-05 exists
+
+#### Scenario: Monthly start on the first
+
+- **WHEN** a coworking agreement starting 2027-05-01 is approved
+- **THEN** no first-period collection is created
+- **AND** the daily command creates the full-month collection for May 2027
+
 ### Requirement: Pre-notification
 
-When a planned collection reaches its notification date (due date minus the configured pre-notification days), the system SHALL send a pre-notification email naming amount, due date, mandate reference and creditor identifier when the kind's notification mode is per collection, and SHALL send nothing when the mode is once at approval. In both cases the collection SHALL become `Notified`. The approval email of a kind with mode once at approval SHALL state amount, interval and collection day.
+When a planned collection reaches its notification date (due date minus the configured pre-notification days), the system SHALL send a pre-notification email naming amount, due date, mandate reference and creditor identifier when the kind's notification mode is per collection, and SHALL send nothing when the mode is once at approval. In both cases the collection SHALL become `Notified`. The approval email of a kind with mode once at approval SHALL state amount, interval and collection date. First-year collections of yearly kinds are notified at creation and SHALL NOT receive a pre-notification email.
 
 #### Scenario: Per-collection notification
 
@@ -44,7 +90,7 @@ When a planned collection reaches its notification date (due date minus the conf
 #### Scenario: Approval email as standing notification
 
 - **WHEN** an agreement of a kind with once-at-approval mode is approved
-- **THEN** the decision email states amount, billing interval and collection day
+- **THEN** the decision email states amount, billing interval and collection date
 
 ### Requirement: SEPA collection runs
 
@@ -157,7 +203,7 @@ A manager SHALL be able to invoice a returned collection. The system SHALL creat
 
 ### Requirement: Manual settlement and overview
 
-A manager SHALL be able to mark any non-final collection as paid or cancelled by hand with a note; deposit refunds SHALL only be settled this way. Managers SHALL see collections filterable by status, kind and agreement kind within their scope, with an attention list of returned, invoiced-past-due and never-uploaded items first. Organization users SHALL see their own collections with status and amount.
+A manager SHALL be able to mark any non-final collection as paid or cancelled by hand with a note; deposit refunds SHALL only be settled this way, have no mandate and are never part of a run. Managers SHALL see collections filterable by status, kind and agreement kind within their scope, with an attention list of returned, invoiced-past-due and never-uploaded items first. Organization users SHALL see their own collections with status and amount.
 
 #### Scenario: Deposit refund settled
 

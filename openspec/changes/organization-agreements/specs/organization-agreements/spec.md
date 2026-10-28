@@ -2,7 +2,7 @@
 
 ### Requirement: Agreement kinds are configuration
 
-The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, an intro text, an active flag and an accepting-applications flag.
+The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, for yearly kinds the collection month, an intro text shown on the application page, an active flag and an accepting-applications flag.
 
 #### Scenario: Kind not accepting applications is hidden
 
@@ -52,7 +52,12 @@ The system SHALL allow a user with a confirmed admin booking permission on an or
 
 ### Requirement: Signed document
 
-An agreement SHALL carry a signed document (PDF, private storage) with its signing date, provided by the applicant with the application or afterwards, or by a manager. An uploaded document SHALL count as complete. Approval SHALL require a complete signed document.
+An agreement SHALL carry a signed document (PDF, private storage) with its signing date, provided by the applicant with the application or afterwards, or by a manager. The application page SHALL show the kind's intro text, which links the contract to download. An uploaded document SHALL count as complete. Approval SHALL require a complete signed document.
+
+#### Scenario: Contract download
+
+- **WHEN** an admin opens the application page of a kind
+- **THEN** the kind's intro text with the link to the contract is shown
 
 #### Scenario: Upload after application
 
@@ -85,6 +90,11 @@ The system SHALL allow a manager within scope to approve or reject a submitted a
 - **WHEN** a manager approves a submitted agreement without an active mandate
 - **THEN** the approval is refused with a message naming the missing mandate
 
+#### Scenario: Approval with mandate awaiting its signed PDF
+
+- **WHEN** a manager approves a submitted agreement whose mandate was saved without a signed PDF
+- **THEN** the approval is refused with a message naming the missing signed mandate
+
 #### Scenario: Reject a submitted agreement
 
 - **WHEN** a manager rejects a submitted agreement entering a decision date
@@ -104,7 +114,7 @@ The system SHALL allow a manager within scope to approve or reject a submitted a
 
 ### Requirement: Approval grants group and entrance code
 
-On approval the system SHALL add the kind's organization group to the organization, SHALL create a permanent code with exactly the kind's accesses when the kind has any and store it on the agreement, and SHALL create a deposit collection when the kind requires a deposit.
+On approval the system SHALL add the kind's organization group to the organization, SHALL create a permanent code with exactly the kind's accesses when the kind has any and store it on the agreement, SHALL create a deposit collection when the kind requires a deposit, and SHALL create the prorated first-period collection as described under agreement collections.
 
 #### Scenario: Group added on approval
 

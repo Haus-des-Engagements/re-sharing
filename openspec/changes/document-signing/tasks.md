@@ -1,6 +1,6 @@
 ## 1. Setup
 
-- [ ] 1.1 Confirm `organization-terms` is merged: the `registration_document*` fields and the `terms` app with the signed registration document are the base of this change
+- [ ] 1.1 Confirm the prerequisites per part: none for tasks 1 to 4; `organization-terms` for task 5 (the `registration_document*` fields and the signed registration document); `organization-agreements` and `organization-terms` for task 6; `organization-agreements` for task 7
 - [ ] 1.2 Add `pyhanko`, `pypdf` and `reportlab` to the dependencies; vendor `signature_pad` (pinned version) into static files
 - [ ] 1.3 Add settings `SIGNING_SEAL_P12_PATH` and `SIGNING_SEAL_P12_PASSPHRASE` (both optional) with env defaults; document them in the README and `.envs` templates
 - [ ] 1.4 Create the `signing` app (apps.py, admin, models, selectors, services, forms, tests package, factories) and register it in `LOCAL_APPS`
@@ -37,11 +37,11 @@
 - [ ] 5.6 Update the creation template with the choice, the signature pad, clear button and the link to view the current version; make the pad work on phone width
 - [ ] 5.7 Show "signed online by <name>, <time>" on the organization page and the manager list when a record is linked, with template tests for both displays
 
-## 6. Agreement contracts and countersignature (after `organization-agreements`)
+## 6. Agreement contracts and countersignature (after `organization-agreements` and `organization-terms`)
 
 - [ ] 6.1 Add `AgreementKind.contract_document` (nullable FK to `terms.TermsDocument`, `PROTECT`) and `requires_countersignature`, `Agreement.signed_document_record`, `Manager.may_countersign` and `signatory_title` with `clean()` requiring a title when flagged; add migrations; update admin and factories
-- [ ] 6.2 Add form tests for the application form and the signed document upload: sign-online only when the contract document has a current version with a file, exactly one of upload or signature, function taken from `contact_person_function`
-- [ ] 6.3 Add service tests for signing a contract: key facts and document name with version label as in design D10, two expected signatures for countersigned kinds, one otherwise, `signed_document`, `signed_on` and record set; uploading a new document clears the record link; completeness of uploaded and signed documents
+- [ ] 6.2 Add form tests for the application form and the signed document upload: sign-online only when the contract document has a current version with a file, exactly one of upload or signature, function taken from `contact_person_function`, the current contract version linked for download in both paths instead of the intro text link
+- [ ] 6.3 Add service tests for signing a contract: key facts and document name with version label as in design D10, two expected signatures for countersigned kinds, one otherwise, `signed_document`, `signed_on` and record set; uploading a new document clears the record link and keeps the record, and an agreement signed online by the applicant and then uploaded countersigned on paper is approved by plain approval; completeness of uploaded and signed documents
 - [ ] 6.4 Add tests for `countersign_agreement`: refused without flag, out of scope, without applicant signature, without active mandate, when not submitted, for kinds without countersignature; on success complete and sealed document, agreement active with the signing date as decision date and the manager as deciding manager, all approval effects, decision email names the contract on the agreement page; failure in approval leaves nothing signed
 - [ ] 6.5 Add tests for `approve_agreement`: refused with a pointer to countersigning for an incomplete record, allowed for uploaded contracts and for membership signed online
 - [ ] 6.6 Implement the form changes, the contract signing in `create_agreement` and `upload_signed_document`, `countersign_agreement`, the approval message and the decision email wording
@@ -51,8 +51,8 @@
 
 - [ ] 7.1 Add `SepaMandate.signed_document_record`; add migration
 - [ ] 7.2 Add tests for rendering the mandate page: standard mandate text, creditor name and identifier, mandate reference, account holder, IBAN, BIC, bank name, recurring payment
-- [ ] 7.3 Add tests for `create_mandate` with online signing: reference generated before rendering and shown on the PDF, signed document and date set, record linked, function from the agreement, invalid IBAN signs nothing, no email enqueued
-- [ ] 7.4 Implement the mandate renderer, the form choice and the service change
+- [ ] 7.3 Add tests for `create_mandate` with online signing: reference generated before rendering and shown on the PDF, signed document and date set, record linked, function from the agreement, invalid IBAN signs nothing, no email enqueued; for a mandate saved without PDF: the page offers the rendered mandate without signature page for download, `sign_mandate` signs it and makes it active, an uploaded hand-signed PDF still makes it active
+- [ ] 7.4 Implement the mandate renderer, the unsigned mandate download replacing the blank form link, the form choice, `sign_mandate` and the service change
 
 ## 8. Documentation and rollout
 

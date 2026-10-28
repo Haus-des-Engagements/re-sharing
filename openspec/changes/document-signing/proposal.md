@@ -12,8 +12,8 @@ Signed documents reach re-sharing as uploads: users download a PDF, print it, si
 - **Registration document:** the creation form offers "sign online" next to the upload and fills the same fields.
 - **Agreement contracts:** an agreement kind can point at a contract document. The applicant signs its current version online when applying or afterwards; the signature page lists kind, amount, interval, start date, deposit and the kind-specific details.
 - **Countersignature:** an agreement kind can require a countersignature (coworking, office lease, cellar lease; not membership). A manager flagged as authorized signatory, with a title such as managing director, countersigns the same file alone. Countersigning is the decision: it completes the contract and approves the agreement with the signing date as decision date.
-- **SEPA mandates:** the mandate is generated from the standard mandate text, creditor data, generated reference and bank details, and signed online by the account holder's representative.
-- Upload stays as fallback everywhere, for existing paper documents and for users who prefer it.
+- **SEPA mandates:** the mandate is generated from the standard mandate text, creditor data, generated reference and bank details, and signed online by the account holder's representative. The same rendering without signature page replaces the blank form offered for download, so a mandate signed by hand carries its reference and bank data.
+- Downloading, signing by hand and uploading stays possible everywhere, for existing paper documents and for users who prefer it: every form that offers online signing links the document for download, and an upload replaces an online signature in progress.
 - ADR on the signature level: simple electronic signature with an audit trail, why it meets or exceeds the status quo, and when a qualified signature would be needed.
 
 ### Non-goals
@@ -32,7 +32,7 @@ Signed documents reach re-sharing as uploads: users download a PDF, print it, si
 
 ### Modified Capabilities
 
-None. The registration form requirements live in the unarchived change `organization-terms`, the agreement and mandate requirements in `organization-agreements`. Both are worded so that this change adds an alternative way to provide the same signed document: `organization-terms` requires a signed registration document without saying how it is provided, and `organization-agreements` requires a complete signed document, where an upload is always complete and this change defines when an online signature is. This change depends on both; the registration part can ship after `organization-terms` alone.
+None. The registration form requirements live in the unarchived change `organization-terms`, the agreement and mandate requirements in `organization-agreements`. Both are worded so that this change adds an alternative way to provide the same signed document: `organization-terms` requires a signed registration document without saying how it is provided, and `organization-agreements` requires a complete signed document, where an upload is always complete and this change defines when an online signature is. The signing core depends on neither; the registration part needs `organization-terms`, contracts need both, mandates only `organization-agreements`.
 
 ## Impact
 

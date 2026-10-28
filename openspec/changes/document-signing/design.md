@@ -1,6 +1,6 @@
 ## Context
 
-After `organization-terms`, registration collects one signed document in `Organization.registration_document` (FileField, private storage, PDF validated) and `registration_document_date`, and the document itself is a terms document with the signature flag whose current version holds the PDF. `organization-agreements` adds two more uploads of the same kind: `Agreement.signed_document` with `signed_on`, and `SepaMandate.signed_document` with `signed_on`. Users fill all of them by printing, signing, scanning and uploading, or by pasting a signature image onto the PDF. In `organization-agreements`, approval requires a complete signed document and an active mandate; for countersigned kinds the countersignature is the decision.
+After `organization-terms`, registration collects one signed document in `Organization.registration_document` (FileField, private storage, PDF validated) and `registration_document_date`, and the document itself is a terms document with the signature flag whose current version holds the PDF. `organization-agreements` adds two more uploads of the same kind: `Agreement.signed_document` with `signed_on`, and `SepaMandate.signed_document` with `signed_on`. Users fill all of them by printing, signing, scanning and uploading, or by pasting a signature image onto the PDF. In `organization-agreements`, approval requires a complete signed document, where an upload is complete, and an active mandate, which is a mandate with a signed PDF that is not revoked. A mandate can be saved with bank data before its signed PDF exists. Applicants download the contract from a link in the kind's intro text and the mandate as a blank form. That change knows only a decision recorded by a manager; countersigning as the decision is added here.
 
 The stakeholder wants the signature as a moral hurdle, not an effort hurdle: typing your name and drawing a signature feels harder to lie on than a checkbox. No third-party signing service unless it is cheap and adds a lot of value. There is a single legal entity. Coworking, office lease and cellar lease contracts are countersigned by one manager who is managing director and signs alone; membership is not countersigned, its decision is recorded by a manager.
 
@@ -123,7 +123,13 @@ Alternative: countersign first, approve as a separate click. Rejected, a counter
 
 There is no source document: the mandate is rendered by reportlab from the standard SEPA core mandate text (German, with an English translation below), followed by creditor name, creditor identifier, mandate reference, account holder, IBAN, BIC, bank name, and type "recurring payment". This page is the source PDF; the signature page follows it with one slot, so mandates look like every other signed document.
 
-`create_mandate` generates the reference first, then signs inside the same transaction, saves the bytes into `SepaMandate.signed_document`, the signing date into `signed_on`, and links the record. The IBAN is printed in full on the PDF, which stays in private storage and is downloadable from the mandate page as `organization-agreements` states. Revocation does not touch the PDF.
+`create_mandate` generates the reference first, then signs inside the same transaction, saves the bytes into `SepaMandate.signed_document`, the signing date into `signed_on`, and links the record. A mandate saved without signed PDF can be signed online later from its page with `sign_mandate(user, mandate, signing_data, client_meta)`, which renders from the stored data.
+
+### D13: Signing by hand stays possible
+
+Every form that offers online signing keeps the upload and links the document for download in both paths: the registration form links the current version of the signed registration document (`organization-terms` D1), the application and upload forms link the current version of the kind's contract document instead of the intro text link, and the page of a mandate without signed PDF offers the mandate rendered by D12 without signature page, with reference and bank data filled in, instead of the blank form.
+
+An upload always wins. It replaces the file, stores the typed signing date and clears the record link; the record itself stays as evidence. A contract the applicant signed online and the authorized manager countersigns on paper is therefore downloaded from the agreement page, signed, uploaded by the manager and approved as an uploaded contract. A contract the applicant uploaded has no record and is countersigned the same way, on paper. The sign-online option is offered only where the document can still be signed, so a document with a record that is complete is replaced only by an upload. The IBAN is printed in full on the PDF, which stays in private storage and is downloadable from the mandate page as `organization-agreements` states. Revocation does not touch the PDF.
 
 ## Risks / Trade-offs
 
@@ -134,12 +140,12 @@ There is no source document: the mandate is rendered by reportlab from the stand
 - [Signer is not the legal representative] → The confirmation states the authority, and the function is recorded. Same as on paper.
 - [Terms version replaced while a user has the form open] → The current version is loaded at submit time and its hash is recorded; versions are never edited, so the hash identifies the version.
 - [Contract data changed in the admin after signing] → The record keeps the signed key facts; the admin shows a mismatch warning.
-- [Uploaded file replaced after an online signature] → `add_signature` checks the hash and refuses; a replaced upload means the record link must be cleared, which the upload service does.
+- [Uploaded file replaced after an online signature] → `add_signature` checks the hash and refuses; a replaced upload means the record link must be cleared, which the upload service does (D13).
 - [pyHanko adds a cryptography stack] → Mature library, pure Python on top of `cryptography`.
 
 ## Migration Plan
 
-1. Registration part (tasks 1 to 5) ships after `organization-terms`. Contract, countersignature and mandate parts (tasks 6 to 8) ship after `organization-agreements`, or are folded into its forms if it is still in progress.
+1. The signing core (tasks 1 to 4) depends on neither change. The registration part (task 5) ships after `organization-terms`, contracts and countersignature (task 6) after `organization-agreements` and `organization-terms`, mandates (task 7) after `organization-agreements`. Planned order: `organization-agreements`, `organization-terms`, this change.
 2. Deploy the migrations (`signing` models, links on `Organization`, `Agreement`, `SepaMandate`, the kind and manager fields).
 3. Create the seal certificate, store it outside the repository, set the two settings.
 4. In the terms admin, make sure the values sheet (registration scope, signature flag) has a current version with a file; create one contract document without scopes per kind with its current version; point each kind at its contract document and set `requires_countersignature` on coworking, office lease and cellar lease.

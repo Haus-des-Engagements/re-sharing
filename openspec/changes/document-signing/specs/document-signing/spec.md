@@ -120,6 +120,38 @@ A document expecting more than one signature SHALL accept further signatures in 
 - **WHEN** a further signature is requested and the stored PDF's SHA-256 differs from the after-hash of the latest signature
 - **THEN** the action is refused and the mismatch is logged
 
+### Requirement: Signing by hand stays possible
+
+Every form that offers online signing SHALL link the document to be signed for download and SHALL accept an uploaded hand-signed PDF instead. An upload SHALL replace the stored file and its date and SHALL clear the link to an online signature record, while the record is kept. A mandate saved without signed PDF SHALL offer for download its mandate rendered with reference and bank data and without signature page, and SHALL offer signing it online.
+
+#### Scenario: Contract linked for download
+
+- **WHEN** an admin opens the application form of a kind whose contract document has a current version with a file
+- **THEN** that version is linked for download whether the admin chooses upload or online signing
+
+#### Scenario: Countersigned on paper
+
+- **WHEN** a manager uploads a coworking contract signed by both parties for an agreement the applicant signed online
+- **THEN** the agreement's signed document is the uploaded file and no longer linked to the record
+- **AND** the record with the applicant's signature still exists
+- **AND** a plain approval by a manager approves the agreement
+
+#### Scenario: Uploaded contract countersigned by hand
+
+- **WHEN** an applicant uploaded the signed coworking contract
+- **THEN** no countersign action is offered
+- **AND** a manager can upload the version signed by both and approve
+
+#### Scenario: Pre-filled mandate for signing by hand
+
+- **WHEN** an admin opens a mandate saved without signed PDF
+- **THEN** a PDF with the mandate text, creditor identifier, mandate reference, account holder and IBAN and without signature page is offered for download
+
+#### Scenario: Mandate signed online after saving
+
+- **WHEN** an admin signs a mandate saved without signed PDF online from its page
+- **THEN** the mandate is active with the signed PDF as signed document, the signing date and a linked record
+
 ### Requirement: Registration document can be signed online
 
 The organization creation form SHALL offer signing the registration document online as an alternative to uploading it, when the registration document with the signature flag has a current version with a file. Exactly one of upload or online signature SHALL be provided. On creation with an online signature, the system SHALL sign that version on behalf of the new organization, store the signed PDF as the organization's registration document, set the registration document date to the signing date, and link the organization to the signed document. The organization page SHALL show who signed online and when; an uploaded document SHALL be shown as uploaded.
@@ -241,7 +273,7 @@ For kinds requiring a countersignature, an authorized manager within scope SHALL
 
 ### Requirement: SEPA mandate can be signed online
 
-The mandate form SHALL offer signing online as an alternative to uploading a signed mandate, with exactly one of the two. Signing online SHALL generate the mandate from the standard SEPA core mandate text with creditor name, creditor identifier, generated mandate reference, account holder, IBAN, BIC and bank name, and sign it with one signature using the agreement's contact person function. The signed PDF SHALL be stored as the mandate's signed document with the signing date, and the mandate SHALL be linked to the signed document. The mandate reference SHALL be generated before the PDF is rendered and SHALL appear on it.
+The mandate form SHALL offer signing online as an alternative to uploading a signed mandate, with at most one of the two; without either the mandate is saved without signed PDF. Signing online SHALL generate the mandate from the standard SEPA core mandate text with creditor name, creditor identifier, generated mandate reference, account holder, IBAN, BIC and bank name, and sign it with one signature using the agreement's contact person function. The signed PDF SHALL be stored as the mandate's signed document with the signing date, and the mandate SHALL be linked to the signed document. The mandate reference SHALL be generated before the PDF is rendered and SHALL appear on it.
 
 #### Scenario: Mandate signed online
 
