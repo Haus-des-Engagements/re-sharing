@@ -87,7 +87,8 @@ For information about settings configuration, see: https://cookiecutter-django.r
 | `SEPA_CREDITOR_NAME` | empty | Creditor name in the SEPA file and on the generated mandate |
 | `SEPA_CREDITOR_ADDRESS` | empty | Creditor address in one line, printed on the generated mandate |
 | `SEPA_CREDITOR_IBAN` / `SEPA_CREDITOR_BIC` | empty | Account the debits are collected to |
-| `SEPA_MANDATE_PREFIX` | `RS` | Prefix of mandate and collection references |
+| `SEPA_MANDATE_PREFIX` | `RS` | Prefix of collection references; also marks bank transactions as possible returns |
+| `SEPA_MANDATE_REFERENCE_PREFIX` | `<SEPA_MANDATE_PREFIX>-VM` | Prefix of mandate references, followed by a running number: `HDE-VM-009` continues after the highest existing `HDE-VM` number, so enter old paper mandates in the admin with their references first |
 | `SEPA_RETURN_FEE` | `0.00` | Fee added to the invoice for a returned debit |
 | `PRE_NOTIFICATION_DAYS` | `14` | Days between pre-notification and due date |
 | `COLLECTION_LOOKAHEAD_DAYS` | `45` | How far ahead collections are created |

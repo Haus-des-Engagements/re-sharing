@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from http import HTTPStatus
 from io import BytesIO
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.test import override_settings
@@ -11,11 +12,14 @@ from pypdf import PdfReader
 from re_sharing.agreements import documents
 from re_sharing.agreements.models import Agreement
 from re_sharing.agreements.models import AgreementKindField
+from re_sharing.agreements.models import SepaMandate
+from re_sharing.agreements.tests.factories import VALID_IBAN
 from re_sharing.agreements.tests.factories import AgreementFactory
 from re_sharing.agreements.tests.factories import AgreementKindFieldFactory
 from re_sharing.agreements.tests.factories import MembershipKindFactory
 from re_sharing.agreements.tests.factories import SepaMandateFactory
 from re_sharing.agreements.tests.factories import fillable_pdf
+from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.agreements.tests.helpers import make_admin
 from re_sharing.agreements.tests.helpers import make_booker
 from re_sharing.agreements.tests.helpers import make_manager
@@ -338,3 +342,121 @@ class ContractPreviewOnApplyTest(TestCase):
         response = self.client.post(self.url, self.data)
         assert response.status_code == HTTPStatus.NOT_FOUND
         assert not Agreement.objects.exists()
+
+
+class MandatePreviewTest(TestCase):
+    def setUp(self):
+        self.agreement = AgreementFactory()
+        self.client.force_login(make_admin(self.agreement.organization))
+        self.url = reverse(
+            "agreements:create-mandate", kwargs={"agreement": self.agreement.uuid}
+        )
+        self.data = {
+            "account_holder": "Holder e.V.",
+            "iban": VALID_IBAN,
+            "preview": "1",
+        }
+
+    def test_page_offers_the_download(self):
+        page = self.client.get(self.url).content.decode()
+
+        assert 'name="preview"' in page
+        assert "download the mandate again" in page
+
+    def test_valid_input_returns_mandate_with_upcoming_reference(self):
+        response = self.client.post(self.url, self.data)
+
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"].startswith("attachment;")
+        assert response["Cache-Control"] == "no-store"
+        text = PdfReader(BytesIO(response.content)).pages[0].extract_text()
+        assert "Holder e.V." in text
+        assert "DE89 3704 0044 0532 0130 00" in text
+        assert not SepaMandate.objects.exists()
+
+        del self.data["preview"]
+        self.client.post(self.url, self.data)
+        assert SepaMandate.objects.get().reference in text
+
+    def test_invalid_iban_shows_errors(self):
+        response = self.client.post(self.url, {**self.data, "iban": "DE00123"})
+
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"].startswith("text/html")
+        assert "This is not a valid IBAN." in response.content.decode()
+        assert not SepaMandate.objects.exists()
+
+    def test_closed_agreement_refused(self):
+        self.agreement.status = Agreement.Status.ENDED
+        self.agreement.save()
+
+        response = self.client.post(self.url, self.data)
+
+        assert response["Content-Type"].startswith("text/html")
+        assert "Mandates can only be added" in response.content.decode()
+        assert not SepaMandate.objects.exists()
+
+
+class MandateFileNameTest(TestCase):
+    def setUp(self):
+        self.mandate = SepaMandateFactory(
+            reference="HDE-VM-008",
+            agreement__organization__name="Example e.V.",
+            signed_document=None,
+            signed_on=None,
+        )
+
+    def test_document_filename(self):
+        assert self.mandate.document_filename(date(2024, 4, 15)) == (
+            "HDE-VM-008_SEPA-Lastschriftmandat_Example eV_2024-04-15.pdf"
+        )
+
+    def test_unsafe_characters_removed(self):
+        organization = self.mandate.agreement.organization
+        organization.name = 'A/B: "Club"  für\tAlle e.V.'
+        organization.save()
+
+        assert self.mandate.document_filename(date(2024, 4, 15)) == (
+            "HDE-VM-008_SEPA-Lastschriftmandat_AB Club für Alle eV_2024-04-15.pdf"
+        )
+
+    def test_signed_pdf_stored_under_readable_name(self):
+        self.mandate.signed_on = date(2024, 4, 15)
+        self.mandate.signed_document = pdf_file()
+        self.mandate.save()
+
+        assert self.mandate.signed_document.name == (
+            "mandates/HDE-VM-008_SEPA-Lastschriftmandat_Example eV_2024-04-15.pdf"
+        )
+
+    def test_repeated_upload_keeps_both_files(self):
+        self.mandate.signed_on = date(2024, 4, 15)
+        self.mandate.signed_document = pdf_file()
+        self.mandate.save()
+        first = self.mandate.signed_document.name
+
+        self.mandate.signed_document = pdf_file()
+        self.mandate.save()
+
+        second = self.mandate.signed_document.name
+        assert second != first
+        assert second.startswith("mandates/HDE-VM-008_SEPA-Lastschriftmandat_")
+
+    @override_settings(**CREDITOR)
+    def test_generated_mandate_named_with_download_date(self):
+        self.mandate.agreement.organization.name = "Verein für Alle e.V."
+        self.mandate.agreement.organization.save()
+        self.client.force_login(make_admin(self.mandate.agreement.organization))
+        url = reverse(
+            "agreements:mandate-document", kwargs={"mandate": self.mandate.uuid}
+        )
+
+        today = date(2026, 10, 28)
+        with patch("django.utils.timezone.localdate", return_value=today):
+            response = self.client.get(url)
+
+        assert response["Content-Disposition"] == (
+            "attachment; filename*=utf-8''HDE-VM-008_SEPA-Lastschriftmandat_"
+            "Verein%20f%C3%BCr%20Alle%20eV_2026-10-28.pdf"
+        )

@@ -1,6 +1,8 @@
 from datetime import date
+from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.test import override_settings
@@ -36,28 +38,42 @@ def _mandate_form(with_pdf=False):  # noqa: FBT002
     return form
 
 
-@override_settings(SEPA_MANDATE_PREFIX="RS")
+@override_settings(SEPA_MANDATE_PREFIX="RS", SEPA_MANDATE_REFERENCE_PREFIX="RS-VM")
 class ReferenceTest(TestCase):
     def test_first_mandate_reference(self):
+        assert generate_mandate_reference() == "RS-VM-001"
+
+    def test_continues_after_highest_number(self):
+        SepaMandateFactory(reference="RS-VM-007")
+        SepaMandateFactory(reference="RS-VM-008", revoked_on=date(2027, 1, 1))
+
+        assert generate_mandate_reference() == "RS-VM-009"
+
+    def test_ignores_other_formats(self):
+        SepaMandateFactory(reference="RS-000042-1")
+        SepaMandateFactory(reference="RS-VM-12a")
+        SepaMandateFactory(reference="RS-VMX-050")
+
+        assert generate_mandate_reference() == "RS-VM-001"
+
+    def test_grows_beyond_three_digits(self):
+        SepaMandateFactory(reference="RS-VM-999")
+
+        assert generate_mandate_reference() == "RS-VM-1000"
+
+    def test_create_retries_when_the_number_is_taken(self):
         agreement = AgreementFactory()
+        SepaMandateFactory(reference="RS-VM-001")
+        with patch(
+            "re_sharing.agreements.services.generate_mandate_reference",
+            side_effect=["RS-VM-001", "RS-VM-002"],
+        ):
+            mandate = create_mandate(
+                make_admin(agreement.organization), agreement, _mandate_form()
+            )
 
-        assert generate_mandate_reference(agreement) == f"RS-{agreement.id:06d}-1"
-
-    def test_reference_after_revocation(self):
-        agreement = AgreementFactory()
-        SepaMandateFactory(
-            agreement=agreement,
-            reference=f"RS-{agreement.id:06d}-1",
-            revoked_on=date(2027, 1, 1),
-        )
-
-        assert generate_mandate_reference(agreement) == f"RS-{agreement.id:06d}-2"
-
-    def test_skips_hand_entered_reference(self):
-        agreement = AgreementFactory()
-        SepaMandateFactory(reference=f"RS-{agreement.id:06d}-1")
-
-        assert generate_mandate_reference(agreement) == f"RS-{agreement.id:06d}-2"
+        mandate.refresh_from_db()
+        assert mandate.reference == "RS-VM-002"
 
     def test_collection_reference(self):
         collection = CollectionFactory()
@@ -75,7 +91,7 @@ class CreateMandateTest(TestCase):
     def test_admin_saves_mandate_without_pdf(self):
         mandate = create_mandate(self.admin, self.agreement, _mandate_form())
 
-        assert mandate.reference.endswith(f"{self.agreement.id:06d}-1")
+        assert mandate.reference == f"{settings.SEPA_MANDATE_REFERENCE_PREFIX}-001"
         assert mandate.iban == VALID_IBAN
         assert not mandate.is_active
 

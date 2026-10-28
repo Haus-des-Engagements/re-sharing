@@ -8,6 +8,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils import formats
 from django.utils import timezone
+from django.utils.http import content_disposition_header
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
@@ -190,7 +191,9 @@ def upload_signed_document_view(request, agreement):
 
 def _pdf_response(content: bytes, filename: str) -> HttpResponse:
     response = HttpResponse(content, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = content_disposition_header(
+        as_attachment=True, filename=filename
+    )
     response["Cache-Control"] = "no-store"
     return response
 
@@ -220,7 +223,7 @@ def mandate_document_view(request, mandate):
     if mandate.revoked_on is not None:
         raise Http404
     content = documents.render_mandate(mandate)
-    return _pdf_response(content, f"sepa-mandat-{mandate.reference}.pdf")
+    return _pdf_response(content, mandate.document_filename(timezone.localdate()))
 
 
 @login_required
@@ -234,8 +237,17 @@ def create_mandate_view(request, agreement):
     form = MandateForm()
     if request.method == "POST":
         form = MandateForm(data=request.POST, files=request.FILES)
+        preview = "preview" in request.POST
         if form.is_valid():
             try:
+                if preview:
+                    # The generated mandate with the entered data; nothing is saved.
+                    user = request.user
+                    mandate = services.mandate_from_form(user, agreement, form)
+                    content = documents.render_mandate(mandate)
+                    return _pdf_response(
+                        content, mandate.document_filename(timezone.localdate())
+                    )
                 mandate = services.create_mandate(request.user, agreement, form)
             except AgreementError as error:
                 form.add_error(None, error.message)

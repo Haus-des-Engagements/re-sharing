@@ -1,3 +1,4 @@
+import re
 import uuid
 from decimal import Decimal
 from pathlib import Path
@@ -5,6 +6,7 @@ from pathlib import Path
 from auditlog.models import AuditlogHistoryField
 from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
+from django.core.files.utils import validate_file_name
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db.models import CASCADE
@@ -61,7 +63,30 @@ def kind_template_upload_to(instance, filename):
 
 
 def mandate_document_upload_to(instance, filename):
-    return _upload_path("mandates", "mandate", instance, filename)
+    """``mandates/<readable name>``: downloads from private storage carry the
+    stored name. References are unique; storage suffixes the rare repeat."""
+    name = instance.document_filename(instance.signed_on or timezone.localdate())
+    return str(Path("mandates") / name)
+
+
+class ReadableNameFileField(FileField):
+    """Stores files under the name ``upload_to`` returns, spaces included,
+    instead of the storage's ASCII-safe variant with underscores."""
+
+    def generate_filename(self, instance, filename):
+        return validate_file_name(
+            self.upload_to(instance, filename), allow_relative_path=True
+        )
+
+
+FILENAME_UNSAFE = re.compile(r'[\\/:*?"<>|.\x00-\x1f]+')
+FILENAME_PART_LENGTH = 80
+
+
+def filename_part(text: str) -> str:
+    """``text`` usable in a file name: without dots and invalid characters."""
+    cleaned = " ".join(FILENAME_UNSAFE.sub("", " ".join(text.split())).split())
+    return cleaned[:FILENAME_PART_LENGTH].strip()
 
 
 def run_xml_upload_to(instance, filename):
@@ -429,13 +454,14 @@ class SepaMandate(TimeStampedModel):
     bic = CharField(_("BIC"), max_length=11, blank=True)
     bank_name = CharField(_("Bank"), max_length=100, blank=True)
     signed_on = DateField(_("Signed on"), null=True, blank=True)
-    signed_document = FileField(
+    signed_document = ReadableNameFileField(
         _("Signed mandate"),
         upload_to=mandate_document_upload_to,
         validators=[validate_is_pdf],
         storage=select_private_storage,
         null=True,
         blank=True,
+        max_length=255,
     )
     revoked_on = DateField(_("Revoked on"), null=True, blank=True)
 
@@ -460,6 +486,14 @@ class SepaMandate(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.iban = normalize_iban(self.iban)
         super().save(*args, **kwargs)
+
+    def document_filename(self, on) -> str:
+        """``<reference>_SEPA-Lastschriftmandat_<organization>_<date>.pdf``."""
+        organization = filename_part(self.agreement.organization.name)
+        return (
+            f"{self.reference}_SEPA-Lastschriftmandat_"
+            f"{organization}_{on:%Y-%m-%d}.pdf"
+        )
 
     @property
     def is_active(self):

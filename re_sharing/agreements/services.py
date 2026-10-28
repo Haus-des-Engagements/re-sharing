@@ -3,12 +3,14 @@
 Collections, runs and returns live in ``services_collections``.
 """
 
+import re
 from datetime import datetime
 from datetime import time
 
 from auditlog.context import set_actor
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.db import transaction
 from django.utils import formats
 from django.utils import timezone
@@ -22,6 +24,8 @@ from .models import SepaMandate
 from .selectors import manager_can_manage_agreement
 from .selectors import manager_can_manage_kind
 from .selectors import user_can_administer_agreement
+
+MANDATE_SAVE_ATTEMPTS = 3
 
 
 class AgreementError(Exception):
@@ -37,15 +41,20 @@ class AgreementError(Exception):
 # =============================================================================
 
 
-def generate_mandate_reference(agreement: Agreement) -> str:
-    """``<prefix>-<agreement id, six digits>-<n>``, skipping taken references."""
-    prefix = settings.SEPA_MANDATE_PREFIX
-    number = agreement.mandates_of_agreement.count() + 1
-    while True:
-        reference = f"{prefix}-{agreement.id:06d}-{number}"
-        if not SepaMandate.objects.filter(reference=reference).exists():
-            return reference
-        number += 1
+def generate_mandate_reference() -> str:
+    """``<prefix>-<running number, three digits>``, after the highest number
+    with that prefix. References in other formats are ignored."""
+    prefix = settings.SEPA_MANDATE_REFERENCE_PREFIX
+    pattern = re.compile(rf"{re.escape(prefix)}-(\d+)")
+    references = SepaMandate.objects.filter(
+        reference__startswith=f"{prefix}-"
+    ).values_list("reference", flat=True)
+    numbers = [
+        int(match.group(1))
+        for reference in references
+        if (match := pattern.fullmatch(reference))
+    ]
+    return f"{prefix}-{max(numbers, default=0) + 1:03d}"
 
 
 def generate_collection_reference(collection: Collection) -> str:
@@ -58,8 +67,9 @@ def generate_collection_reference(collection: Collection) -> str:
 # =============================================================================
 
 
-def create_mandate(user, agreement: Agreement, form) -> SepaMandate:
-    """Save bank data, with or without the signed mandate PDF."""
+def mandate_from_form(user, agreement: Agreement, form) -> SepaMandate:
+    """The unsaved mandate a valid mandate form describes, with the reference
+    saving assigns. Used for saving and for the mandate preview."""
     if not user_can_administer_agreement(user, agreement):
         raise PermissionDenied
     if agreement.status not in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE):
@@ -73,17 +83,32 @@ def create_mandate(user, agreement: Agreement, form) -> SepaMandate:
         raise AgreementError(msg)
 
     data = form.cleaned_data
+    return SepaMandate(
+        agreement=agreement,
+        reference=generate_mandate_reference(),
+        account_holder=data["account_holder"],
+        iban=data["iban"],
+        bic=data.get("bic", ""),
+        bank_name=data.get("bank_name", ""),
+        signed_document=data.get("signed_document") or None,
+        signed_on=data.get("signed_on"),
+    )
+
+
+def create_mandate(user, agreement: Agreement, form) -> SepaMandate:
+    """Save bank data, with or without the signed mandate PDF."""
+    mandate = mandate_from_form(user, agreement, form)
+    for _attempt in range(MANDATE_SAVE_ATTEMPTS - 1):
+        try:
+            return _save_mandate(user, mandate)
+        except IntegrityError:
+            # Another mandate took the number in the meantime.
+            mandate.reference = generate_mandate_reference()
+    return _save_mandate(user, mandate)
+
+
+def _save_mandate(user, mandate: SepaMandate) -> SepaMandate:
     with transaction.atomic(), set_actor(user):
-        mandate = SepaMandate(
-            agreement=agreement,
-            reference=generate_mandate_reference(agreement),
-            account_holder=data["account_holder"],
-            iban=data["iban"],
-            bic=data.get("bic", ""),
-            bank_name=data.get("bank_name", ""),
-            signed_document=data.get("signed_document") or None,
-            signed_on=data.get("signed_on"),
-        )
         mandate.save()
     return mandate
 

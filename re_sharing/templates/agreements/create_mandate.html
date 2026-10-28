@@ -18,11 +18,19 @@
   </div>
   <h1 class="mt-4">{% trans "SEPA direct debit mandate" %}</h1>
   <p class="mt-3">
-    {% trans "Enter the bank details. If you have no signed mandate yet, save the details first: the next page shows the mandate reference and the form to print, sign and upload." %}
+    {% trans "Enter the bank details and download the prefilled mandate. Sign it and upload it here before saving, or save first and upload it later from the mandate page." %}
   </p>
   <form method="post" enctype="multipart/form-data" class="mt-3">
     {% csrf_token %}
     {{ form|crispy }}
     <button type="submit" class="btn btn-primary">{% trans "Save mandate" %}</button>
+    <button type="submit"
+            name="preview"
+            value="1"
+            class="btn btn-outline-primary"
+            id="download-prefilled-mandate">{% trans "Download prefilled mandate" %}</button>
+    <p class="form-text mt-2">
+      {% trans "If you change any values after downloading, download the mandate again before signing." %}
+    </p>
   </form>
 {% endblock content %}
