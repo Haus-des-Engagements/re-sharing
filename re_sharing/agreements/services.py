@@ -19,6 +19,7 @@ from .models import Agreement
 from .models import Collection
 from .models import SepaMandate
 from .selectors import manager_can_manage_agreement
+from .selectors import manager_can_manage_kind
 from .selectors import user_can_administer_agreement
 
 
@@ -118,6 +119,19 @@ def revoke_mandate(user, mandate: SepaMandate, revoked_on) -> SepaMandate:
 # =============================================================================
 
 
+def _refuse_duplicate(organization, kind):
+    existing = Agreement.objects.filter(
+        organization=organization,
+        kind=kind,
+        status__in=[Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE],
+    ).first()
+    if existing:
+        msg = _("The organization already has this agreement: %(agreement)s") % {
+            "agreement": existing
+        }
+        raise AgreementError(msg)
+
+
 def create_agreement(user, organization, kind, form) -> Agreement:
     """An organization's admin applies for a kind."""
     from .mails import send_agreement_application_emails
@@ -133,16 +147,7 @@ def create_agreement(user, organization, kind, form) -> Agreement:
     if not (kind.is_active and kind.accepting_applications):
         msg = _("Applications for this kind of agreement are closed.")
         raise AgreementError(msg)
-    existing = Agreement.objects.filter(
-        organization=organization,
-        kind=kind,
-        status__in=[Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE],
-    ).first()
-    if existing:
-        msg = _("Your organization already has this agreement: %(agreement)s") % {
-            "agreement": existing
-        }
-        raise AgreementError(msg)
+    _refuse_duplicate(organization, kind)
 
     data = form.cleaned_data
     with transaction.atomic(), set_actor(user):
@@ -322,3 +327,109 @@ def end_expired_agreements(today) -> list[Agreement]:
         status=Agreement.Status.ACTIVE, end_date__lt=today
     ).select_related("kind", "organization", "permanent_code")
     return [end_agreement(None, agreement) for agreement in expired]
+
+
+# =============================================================================
+# Managers: create, edit, delete
+# =============================================================================
+
+
+def manager_create_agreement(user, organization, kind, form) -> Agreement:
+    """Enter a paper application (submitted) or an existing agreement (active).
+
+    An active agreement only gets the kind's group; no code, no collections and
+    no email, since it already runs outside the system. The daily job bills
+    periods due after it was created.
+    """
+    if not manager_can_manage_kind(user, kind):
+        raise PermissionDenied
+    if not kind.is_active:
+        msg = _("This kind of agreement is inactive.")
+        raise AgreementError(msg)
+    if organization.status != Organization.Status.CONFIRMED:
+        msg = _("Only confirmed organizations can have agreements.")
+        raise AgreementError(msg)
+    _refuse_duplicate(organization, kind)
+
+    data = form.cleaned_data
+    status = data["status"]
+    is_active = status == Agreement.Status.ACTIVE
+    with transaction.atomic(), set_actor(user):
+        agreement = Agreement.objects.create(
+            organization=organization,
+            kind=kind,
+            status=status,
+            amount=data["amount"],
+            deposit_amount=data.get("deposit_amount"),
+            start_date=data["start_date"],
+            end_date=data.get("end_date"),
+            contact_person_function=data.get("contact_person_function", ""),
+            details=form.details(),
+            signed_document=data.get("signed_document") or None,
+            signed_on=data.get("signed_on"),
+            notes=data.get("notes", ""),
+            decided_at=(data.get("decided_at") or timezone.localdate())
+            if is_active
+            else None,
+            decided_by=user if is_active else None,
+        )
+        if is_active:
+            organization.organization_groups.add(kind.organization_group)
+    return agreement
+
+
+def manager_update_agreement(user, agreement: Agreement, form) -> Agreement:
+    """Change the data of an open agreement. Existing collections keep their
+    amounts; a new amount applies to collections created afterwards."""
+    if not manager_can_manage_agreement(user, agreement):
+        raise PermissionDenied
+    if agreement.status not in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE):
+        msg = _("Closed agreements cannot be edited.")
+        raise AgreementError(msg)
+
+    data = form.cleaned_data
+    with transaction.atomic(), set_actor(user):
+        agreement.start_date = data["start_date"]
+        agreement.amount = data["amount"]
+        if "end_date" in form.fields:
+            agreement.end_date = data.get("end_date")
+        if "deposit_amount" in form.fields:
+            agreement.deposit_amount = data.get("deposit_amount")
+        agreement.contact_person_function = data.get("contact_person_function", "")
+        agreement.notes = data.get("notes", "")
+        agreement.details = {**agreement.details, **form.details()}
+        agreement.save()
+    return agreement
+
+
+def delete_agreement(user, agreement: Agreement) -> None:
+    """Delete an untouched agreement with its mandates and stored documents."""
+    from .selectors import agreement_can_be_deleted
+
+    if not manager_can_manage_agreement(user, agreement):
+        raise PermissionDenied
+    if not agreement_can_be_deleted(agreement):
+        msg = _(
+            "Only submitted agreements without collections can be deleted. "
+            "Reject or end it instead."
+        )
+        raise AgreementError(msg)
+
+    mandates = list(agreement.mandates_of_agreement.all())
+    files = [
+        document
+        for document in [agreement.signed_document]
+        + [mandate.signed_document for mandate in mandates]
+        if document
+    ]
+    stored = [(document.storage, document.name) for document in files]
+
+    def remove_files():
+        for storage, name in stored:
+            storage.delete(name)
+
+    with transaction.atomic(), set_actor(user):
+        for mandate in mandates:
+            mandate.delete()
+        agreement.delete()
+        transaction.on_commit(remove_files)

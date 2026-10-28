@@ -1448,7 +1448,7 @@ msgid ""
 msgstr "Dans cette vue, vous pouvez voir les horaires libres pour toutes les ressources. Cliquez sur un créneau libre (blanc) pour accéder directement à la page de réservation."
 
 msgid "We provide rooms at different locations, please select accordingly:"
-msgstr ""
+msgstr "Nous proposons des salles sur plusieurs sites, veuillez choisir le vôtre :"
 
 msgid "Persons"
 msgstr "Personnes"
@@ -1486,7 +1486,7 @@ msgstr "Planificateur"
 msgid ""
 "In this view, you can see the free times for all resources. Click on a free "
 "slot to go directly to the booking page."
-msgstr ""
+msgstr "Cette vue affiche les créneaux libres de toutes les ressources. Cliquez sur un créneau libre pour accéder directement à la page de réservation."
 
 msgid "HdE | Room"
 msgstr "HdE | Salle"

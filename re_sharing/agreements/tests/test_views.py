@@ -15,6 +15,7 @@ from re_sharing.agreements.tests.factories import VALID_IBAN
 from re_sharing.agreements.tests.factories import AgreementFactory
 from re_sharing.agreements.tests.factories import CollectionFactory
 from re_sharing.agreements.tests.factories import CollectionRunFactory
+from re_sharing.agreements.tests.factories import CoworkingKindFactory
 from re_sharing.agreements.tests.factories import MembershipKindFactory
 from re_sharing.agreements.tests.factories import SepaMandateFactory
 from re_sharing.agreements.tests.factories import pdf_file
@@ -208,7 +209,9 @@ class ApplyViewTest(TestCase):
 
 class AgreementPageTest(TestCase):
     def setUp(self):
-        self.agreement = AgreementFactory(details={"desks": 2, "hours_per_week": 10})
+        self.agreement = AgreementFactory(
+            kind=CoworkingKindFactory(), details={"desks": 2, "hours_per_week": 10}
+        )
         self.admin = make_admin(self.agreement.organization)
         self.url = self.agreement.get_absolute_url()
 

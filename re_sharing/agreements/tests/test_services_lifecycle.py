@@ -12,8 +12,7 @@ from django.test import TestCase
 from django.test import override_settings
 from django.utils import timezone
 
-from re_sharing.agreements.forms import CoworkingApplicationForm
-from re_sharing.agreements.forms import MembershipApplicationForm
+from re_sharing.agreements.forms import ApplicationForm
 from re_sharing.agreements.forms import SignedDocumentForm
 from re_sharing.agreements.models import Agreement
 from re_sharing.agreements.models import Collection
@@ -27,6 +26,7 @@ from re_sharing.agreements.services import upload_signed_document
 from re_sharing.agreements.tests.factories import AgreementFactory
 from re_sharing.agreements.tests.factories import AgreementKindFactory
 from re_sharing.agreements.tests.factories import CollectionFactory
+from re_sharing.agreements.tests.factories import CoworkingKindFactory
 from re_sharing.agreements.tests.factories import MembershipKindFactory
 from re_sharing.agreements.tests.factories import SepaMandateFactory
 from re_sharing.agreements.tests.factories import pdf_file
@@ -64,7 +64,7 @@ def _membership_form(kind, **overrides):
         "contact_person_function": "Treasurer",
     }
     data.update(overrides)
-    form = MembershipApplicationForm(data=data, kind=kind)
+    form = ApplicationForm(data=data, kind=kind)
     assert form.is_valid(), form.errors
     return form
 
@@ -94,8 +94,8 @@ class CreateAgreementTest(TestCase):
         assert ["manager@example.com"] in recipients
 
     def test_details_stored(self):
-        kind = AgreementKindFactory()
-        form = CoworkingApplicationForm(
+        kind = CoworkingKindFactory()
+        form = ApplicationForm(
             data={
                 "start_date": "2027-03-01",
                 "amount": "120",
@@ -112,7 +112,7 @@ class CreateAgreementTest(TestCase):
         assert agreement.details == {"desks": 2, "hours_per_week": 20}
 
     def test_with_signed_document(self):
-        form = MembershipApplicationForm(
+        form = ApplicationForm(
             data={
                 "start_date": "2027-10-10",
                 "amount": "60",

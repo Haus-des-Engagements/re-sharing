@@ -8,7 +8,6 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from re_sharing.agreements.models import Agreement
-from re_sharing.agreements.models import AgreementKind
 from re_sharing.agreements.models import Collection
 from re_sharing.agreements.models import SyncState
 from re_sharing.agreements.models import UnmatchedReturn
@@ -212,6 +211,3 @@ class OtherModelsTest(TestCase):
         assert str(run) == "2027-03-05 (3)"
         assert str(state).startswith("returns: 2027-03-01")
         assert str(unmatched) == "2027-03-08 -60 €"
-
-    def test_kind_choices(self):
-        assert AgreementKind.FormType.MEMBERSHIP == "membership"

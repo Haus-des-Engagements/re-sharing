@@ -15,15 +15,17 @@ from re_sharing.providers.decorators import manager_required
 from . import selectors
 from . import services
 from . import services_collections
+from .fields import detail_items
+from .forms import ApplicationForm
 from .forms import BuildRunForm
 from .forms import CollectionNoteForm
 from .forms import DecisionForm
 from .forms import EndAgreementForm
+from .forms import ManagerAgreementEditForm
+from .forms import ManagerAgreementForm
 from .forms import MandateForm
 from .forms import RevokeMandateForm
 from .forms import SignedDocumentForm
-from .forms import application_form_class
-from .forms import detail_items
 from .models import Agreement
 from .models import AgreementKind
 from .models import Collection
@@ -79,10 +81,9 @@ def apply_view(request, organization, kind):
     if not (kind.is_active and kind.accepting_applications):
         raise PermissionDenied
 
-    form_class = application_form_class(kind)
-    form = form_class(kind=kind)
+    form = ApplicationForm(kind=kind)
     if request.method == "POST":
-        form = form_class(data=request.POST, files=request.FILES, kind=kind)
+        form = ApplicationForm(data=request.POST, files=request.FILES, kind=kind)
         if form.is_valid():
             try:
                 agreement = services.create_agreement(
@@ -119,6 +120,7 @@ def show_agreement_view(request, agreement):
         "mandates": agreement.mandates_of_agreement.all(),
         "open_mandate": agreement.open_mandate,
         "is_manager": is_manager,
+        "can_delete": is_manager and selectors.agreement_can_be_deleted(agreement),
         "can_administer": can_administer,
         "upload_form": SignedDocumentForm(),
         "decision_form": DecisionForm(initial={"decided_at": timezone.localdate()}),
@@ -239,6 +241,104 @@ def manager_list_agreements_view(request):
         "submitted_count": selectors.manager_submitted_agreements_count(request.user),
     }
     return render(request, "agreements/manager_list_agreements.html", context)
+
+
+@manager_required
+def manager_new_agreement_view(request):
+    """Step one: the kind decides which fields the agreement has."""
+    context = {
+        "kinds": selectors.manager_creatable_kinds(request.user),
+        "organization": request.GET.get("organization", ""),
+    }
+    return render(request, "agreements/manager_new_agreement.html", context)
+
+
+@manager_required
+def manager_create_agreement_view(request, kind):
+    kind = get_object_or_404(selectors.manager_creatable_kinds(request.user), slug=kind)
+    initial = {"decided_at": timezone.localdate()}
+    organization_slug = request.GET.get("organization")
+    if organization_slug:
+        initial["organization"] = Organization.objects.filter(
+            slug=organization_slug
+        ).first()
+
+    form = ManagerAgreementForm(kind=kind, initial=initial)
+    if request.method == "POST":
+        form = ManagerAgreementForm(data=request.POST, files=request.FILES, kind=kind)
+        if form.is_valid():
+            try:
+                agreement = services.manager_create_agreement(
+                    request.user, form.cleaned_data["organization"], kind, form
+                )
+            except AgreementError as error:
+                form.add_error(None, error.message)
+            else:
+                messages.success(request, _("The agreement was created."))
+                return redirect(agreement.get_absolute_url())
+
+    context = {"kind": kind, "form": form}
+    return render(request, "agreements/manager_agreement_form.html", context)
+
+
+def _managed_agreement(request, agreement_uuid) -> Agreement:
+    agreement = get_object_or_404(
+        Agreement.objects.select_related("organization", "kind"), uuid=agreement_uuid
+    )
+    if not selectors.manager_can_manage_agreement(request.user, agreement):
+        raise PermissionDenied
+    return agreement
+
+
+@manager_required
+def manager_edit_agreement_view(request, agreement):
+    agreement = _managed_agreement(request, agreement)
+    if agreement.status not in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE):
+        messages.error(request, _("Closed agreements cannot be edited."))
+        return redirect(agreement.get_absolute_url())
+
+    form = ManagerAgreementEditForm(agreement=agreement)
+    if request.method == "POST":
+        form = ManagerAgreementEditForm(data=request.POST, agreement=agreement)
+        if form.is_valid():
+            try:
+                services.manager_update_agreement(request.user, agreement, form)
+            except AgreementError as error:
+                form.add_error(None, error.message)
+            else:
+                messages.success(request, _("The agreement was saved."))
+                return redirect(agreement.get_absolute_url())
+
+    context = {"kind": agreement.kind, "agreement": agreement, "form": form}
+    return render(request, "agreements/manager_agreement_form.html", context)
+
+
+@manager_required
+def manager_delete_agreement_view(request, agreement):
+    agreement = _managed_agreement(request, agreement)
+    if not selectors.agreement_can_be_deleted(agreement):
+        messages.error(
+            request,
+            _(
+                "Only submitted agreements without collections can be deleted. "
+                "Reject or end it instead."
+            ),
+        )
+        return redirect(agreement.get_absolute_url())
+
+    if request.method == "POST":
+        organization = agreement.organization
+        services.delete_agreement(request.user, agreement)
+        messages.success(request, _("The agreement was deleted."))
+        return redirect(
+            "agreements:organization-agreements", organization=organization.slug
+        )
+
+    context = {
+        "agreement": agreement,
+        "mandates": agreement.mandates_of_agreement.all(),
+    }
+    return render(request, "agreements/manager_delete_agreement.html", context)
 
 
 def _manager_action(request, agreement_uuid, action):

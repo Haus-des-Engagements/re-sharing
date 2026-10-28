@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "New agreement" %}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{% url 'agreements:manager-list-agreements' %}">{% trans "Manage agreements" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "New agreement" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">{% trans "New agreement" %}</h1>
+  <p>{% trans "Choose the kind of agreement. Its fields depend on the kind." %}</p>
+  {% if kinds %}
+    <div class="list-group">
+      {% for kind in kinds %}
+        <a class="list-group-item list-group-item-action"
+           href="{% url 'agreements:manager-create-agreement' kind=kind.slug %}{% if organization %}?organization={{ organization|urlencode }}{% endif %}">
+          {{ kind.name }}
+          {% if not kind.accepting_applications %}
+            <span class="badge text-bg-secondary">{% trans "closed for applications" %}</span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>{% trans "There are no active kinds of agreement within your scope." %}</p>
+  {% endif %}
+{% endblock content %}

@@ -39,6 +39,24 @@ def manager_can_manage_agreement(user, agreement: Agreement) -> bool:
     return manager_can_manage_kind(user, agreement.kind)
 
 
+def agreement_can_be_deleted(agreement: Agreement) -> bool:
+    """Only submitted agreements on which nothing was collected yet."""
+    return (
+        agreement.status == Agreement.Status.SUBMITTED
+        and not agreement.collections_of_agreement.exists()
+    )
+
+
+def field_has_answers(field) -> bool:
+    return Agreement.objects.filter(
+        kind=field.kind_id, details__has_key=field.key
+    ).exists()
+
+
+def manager_creatable_kinds(user) -> QuerySet[AgreementKind]:
+    return manager_kinds(user).filter(is_active=True)
+
+
 def is_confirmed_admin(user, organization: Organization) -> bool:
     if not user.is_authenticated:
         return False

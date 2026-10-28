@@ -172,6 +172,12 @@
       <p>
         <a href="{% url 'agreements:organization-agreements' organization=organization.slug %}">{% trans "Agreements, mandates and collections" %}</a>
       </p>
+      {% if request.user.is_manager and organization.status == 2 %}
+        <p>
+          <a class="btn btn-outline-secondary"
+             href="{% url 'agreements:manager-new-agreement' %}?organization={{ organization.slug }}">{% trans "Add agreement as manager" %}</a>
+        </p>
+      {% endif %}
       {% if open_agreement_kinds %}
         <div>
           {% for kind in open_agreement_kinds %}

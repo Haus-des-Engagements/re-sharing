@@ -11,6 +11,7 @@ from factory.django import DjangoModelFactory
 
 from re_sharing.agreements.models import Agreement
 from re_sharing.agreements.models import AgreementKind
+from re_sharing.agreements.models import AgreementKindField
 from re_sharing.agreements.models import Collection
 from re_sharing.agreements.models import CollectionRun
 from re_sharing.agreements.models import SepaMandate
@@ -28,7 +29,6 @@ def pdf_file(name="signed.pdf"):
 
 class AgreementKindFactory(DjangoModelFactory):
     name = Sequence(lambda n: f"Kind {n}")
-    form_type = AgreementKind.FormType.COWORKING
     organization_group = SubFactory(OrganizationGroupFactory)
     billing_interval = AgreementKind.BillingInterval.MONTHLY
     notification_mode = AgreementKind.NotificationMode.EACH_COLLECTION
@@ -46,8 +46,39 @@ class AgreementKindFactory(DjangoModelFactory):
             self.accesses.set(extracted)
 
 
+class AgreementKindFieldFactory(DjangoModelFactory):
+    kind = SubFactory(AgreementKindFactory)
+    key = Sequence(lambda n: f"field_{n}")
+    label = Sequence(lambda n: f"Field {n}")
+    field_type = AgreementKindField.FieldType.TEXT
+    required = True
+    order = Sequence(lambda n: n)
+
+    class Meta:
+        model = AgreementKindField
+
+
+class CoworkingKindFactory(AgreementKindFactory):
+    """A kind asking for desks and hours per week, both at least 1."""
+
+    @post_generation
+    def coworking_fields(self, create, extracted, **kwargs):
+        if not create:
+            return
+        for order, (key, label) in enumerate(
+            [("desks", "Desks"), ("hours_per_week", "Hours per week")]
+        ):
+            AgreementKindFieldFactory(
+                kind=self,
+                key=key,
+                label=label,
+                field_type=AgreementKindField.FieldType.INTEGER,
+                min_value=Decimal(1),
+                order=order,
+            )
+
+
 class MembershipKindFactory(AgreementKindFactory):
-    form_type = AgreementKind.FormType.MEMBERSHIP
     billing_interval = AgreementKind.BillingInterval.YEARLY
     notification_mode = AgreementKind.NotificationMode.ONCE_AT_APPROVAL
     collection_day = 15

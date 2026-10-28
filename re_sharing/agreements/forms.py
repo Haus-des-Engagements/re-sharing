@@ -4,11 +4,14 @@ from decimal import Decimal
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from re_sharing.organizations.models import Organization
 from re_sharing.organizations.models import validate_is_pdf
 
+from .fields import add_detail_fields
+from .fields import details_from
 from .iban import normalize_iban
 from .iban import validate_iban
-from .models import AgreementKind
+from .models import Agreement
 
 BIC_PATTERN = re.compile(r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
 DATE_INPUT = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
@@ -73,10 +76,8 @@ class RevokeMandateForm(forms.Form):
 
 
 class ApplicationForm(SignedDocumentFields):
-    """Base application. Subclasses add the kind-specific ``DETAIL_FIELDS``,
-    which are stored in ``Agreement.details``."""
-
-    DETAIL_FIELDS: tuple[str, ...] = ()
+    """Common agreement data plus the kind's active application fields, whose
+    answers are stored in ``Agreement.details``."""
 
     start_date = forms.DateField(label=_("Start date"), widget=DATE_INPUT)
     end_date = forms.DateField(label=_("End date"), widget=DATE_INPUT, required=False)
@@ -97,7 +98,10 @@ class ApplicationForm(SignedDocumentFields):
         label=_("Your function in the organization"), max_length=100
     )
 
-    def __init__(self, *args, kind, **kwargs):
+    leading_fields: tuple[str, ...] = ()
+    trailing_fields: tuple[str, ...] = ("signed_document", "signed_on")
+
+    def __init__(self, *args, kind, details=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.kind = kind
         if kind.requires_deposit:
@@ -112,6 +116,22 @@ class ApplicationForm(SignedDocumentFields):
         self.fields["amount"].help_text = _("Charged %(interval)s.") % {
             "interval": interval
         }
+        self.detail_field_names = add_detail_fields(self, kind, details=details)
+        core = [
+            "start_date",
+            "end_date",
+            "amount",
+            "deposit_amount",
+            "contact_person_function",
+        ]
+        self.order_fields(
+            [
+                *self.leading_fields,
+                *core,
+                *self.detail_field_names,
+                *self.trailing_fields,
+            ]
+        )
 
     def clean(self):
         cleaned = super().clean()
@@ -121,61 +141,79 @@ class ApplicationForm(SignedDocumentFields):
         return cleaned
 
     def details(self) -> dict:
-        details = {}
-        for name in self.DETAIL_FIELDS:
-            value = self.cleaned_data.get(name)
-            if isinstance(value, Decimal):
-                value = str(value)
-            details[name] = value
-        return details
+        return details_from(self, self.kind)
 
 
-class MembershipApplicationForm(ApplicationForm):
-    pass
+class ManagerAgreementForm(ApplicationForm):
+    """A manager enters an agreement: a paper application or an existing one."""
 
+    STATUS_CHOICES = [
+        (Agreement.Status.SUBMITTED, _("Submitted, decision pending")),
+        (Agreement.Status.ACTIVE, _("Active, already agreed")),
+    ]
 
-class CoworkingApplicationForm(ApplicationForm):
-    DETAIL_FIELDS = ("desks", "hours_per_week")
-
-    desks = forms.IntegerField(label=_("Desks"), min_value=1)
-    hours_per_week = forms.IntegerField(label=_("Hours per week"), min_value=1)
-
-
-class OfficeApplicationForm(ApplicationForm):
-    DETAIL_FIELDS = ("room",)
-
-    room = forms.CharField(label=_("Room"), max_length=100)
-
-
-class CellarApplicationForm(ApplicationForm):
-    DETAIL_FIELDS = ("area_m2",)
-
-    area_m2 = forms.DecimalField(
-        label=_("Area in m²"), max_digits=6, decimal_places=2, min_value=Decimal(1)
+    organization = forms.ModelChoiceField(
+        label=_("Organization"),
+        queryset=Organization.objects.filter(
+            status=Organization.Status.CONFIRMED
+        ).order_by("name"),
+    )
+    status = forms.TypedChoiceField(
+        label=_("Status"), choices=STATUS_CHOICES, coerce=int
+    )
+    decided_at = forms.DateField(
+        label=_("Date of the board decision"),
+        widget=DATE_INPUT,
+        required=False,
+        help_text=_("Active agreements only. Leave empty for today."),
+    )
+    notes = forms.CharField(
+        label=_("Internal notes"),
+        widget=forms.Textarea(attrs={"rows": 3}),
+        required=False,
     )
 
+    leading_fields = ("organization", "status", "decided_at")
+    trailing_fields = ("signed_document", "signed_on", "notes")
 
-APPLICATION_FORMS = {
-    AgreementKind.FormType.MEMBERSHIP: MembershipApplicationForm,
-    AgreementKind.FormType.COWORKING: CoworkingApplicationForm,
-    AgreementKind.FormType.OFFICE: OfficeApplicationForm,
-    AgreementKind.FormType.CELLAR: CellarApplicationForm,
-}
-
-
-def application_form_class(kind) -> type[ApplicationForm]:
-    return APPLICATION_FORMS[kind.form_type]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields["contact_person_function"]
+        field.label = _("Function of the contact person")
+        field.required = False
 
 
-def detail_items(agreement) -> list[tuple[str, object]]:
-    """The kind-specific details with the labels of their form fields."""
-    form_class = application_form_class(agreement.kind)
-    fields = form_class.base_fields
-    return [
-        (fields[name].label, agreement.details.get(name))
-        for name in form_class.DETAIL_FIELDS
-        if name in agreement.details
-    ]
+class ManagerAgreementEditForm(ApplicationForm):
+    """Edits the data of an agreement; status, kind and organization stay."""
+
+    notes = forms.CharField(
+        label=_("Internal notes"),
+        widget=forms.Textarea(attrs={"rows": 3}),
+        required=False,
+    )
+
+    trailing_fields = ("notes",)
+
+    def __init__(self, *args, agreement, **kwargs):
+        kwargs.setdefault(
+            "initial",
+            {
+                "start_date": agreement.start_date,
+                "end_date": agreement.end_date,
+                "amount": agreement.amount,
+                "deposit_amount": agreement.deposit_amount,
+                "contact_person_function": agreement.contact_person_function,
+                "notes": agreement.notes,
+            },
+        )
+        super().__init__(
+            *args, kind=agreement.kind, details=agreement.details, **kwargs
+        )
+        del self.fields["signed_document"]
+        del self.fields["signed_on"]
+        field = self.fields["contact_person_function"]
+        field.label = _("Function of the contact person")
+        field.required = False
 
 
 class DecisionForm(forms.Form):

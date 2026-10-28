@@ -7,6 +7,7 @@ from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
+from django.db.models import CASCADE
 from django.db.models import PROTECT
 from django.db.models import SET_NULL
 from django.db.models import BooleanField
@@ -23,6 +24,7 @@ from django.db.models import ManyToManyField
 from django.db.models import PositiveIntegerField
 from django.db.models import PositiveSmallIntegerField
 from django.db.models import Q
+from django.db.models import SlugField
 from django.db.models import TextChoices
 from django.db.models import TextField
 from django.db.models import UniqueConstraint
@@ -70,20 +72,8 @@ class AgreementKind(TimeStampedModel):
         EACH_COLLECTION = "each_collection", _("Before each collection")
         ONCE_AT_APPROVAL = "once_at_approval", _("Once with the approval")
 
-    class FormType(TextChoices):
-        MEMBERSHIP = "membership", _("Membership")
-        COWORKING = "coworking", _("Coworking")
-        OFFICE = "office", _("Office lease")
-        CELLAR = "cellar", _("Cellar lease")
-
     name = CharField(_("Name"), max_length=160)
     slug = AutoSlugField(populate_from="name", unique=True, editable=True)
-    form_type = CharField(
-        _("Application form"),
-        max_length=20,
-        choices=FormType.choices,
-        help_text=_("Which kind-specific fields the application asks for."),
-    )
     organization_group = ForeignKey(
         "organizations.OrganizationGroup",
         verbose_name=_("Organization group"),
@@ -157,6 +147,114 @@ class AgreementKind(TimeStampedModel):
     @property
     def is_yearly(self):
         return self.billing_interval == self.BillingInterval.YEARLY
+
+    @property
+    def active_fields(self):
+        return [field for field in self.fields_of_kind.all() if field.is_active]
+
+
+# Names used by the agreement forms; field keys must not shadow them.
+RESERVED_FIELD_KEYS = frozenset(
+    {
+        "amount",
+        "contact_person_function",
+        "decided_at",
+        "deposit_amount",
+        "end_date",
+        "notes",
+        "organization",
+        "signed_document",
+        "signed_on",
+        "start_date",
+        "status",
+    }
+)
+
+
+class AgreementKindField(TimeStampedModel):
+    """One application field of a kind. Answers are stored in
+    ``Agreement.details`` under ``key``."""
+
+    class FieldType(TextChoices):
+        TEXT = "text", _("Text")
+        INTEGER = "integer", _("Whole number")
+        DECIMAL = "decimal", _("Decimal")
+        DATE = "date", _("Date")
+        CHOICE = "choice", _("Choice")
+
+    NUMBER_TYPES = (FieldType.INTEGER, FieldType.DECIMAL)
+
+    kind = ForeignKey(
+        AgreementKind,
+        verbose_name=_("Kind"),
+        on_delete=CASCADE,
+        related_name="fields_of_kind",
+        related_query_name="field_of_kind",
+    )
+    key = SlugField(
+        _("Key"),
+        max_length=50,
+        help_text=_(
+            "Name under which answers are stored. Cannot be changed afterwards."
+        ),
+    )
+    label = CharField(_("Label"), max_length=100)
+    field_type = CharField(_("Type"), max_length=10, choices=FieldType.choices)
+    required = BooleanField(_("Required"), default=True)
+    help_text = CharField(_("Help text"), max_length=200, blank=True)
+    choices = TextField(
+        _("Choices"), blank=True, help_text=_("Choice fields only: one per line.")
+    )
+    min_value = DecimalField(
+        _("Minimum"),
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Number fields only."),
+    )
+    order = PositiveSmallIntegerField(_("Order"), default=0)
+    is_active = BooleanField(_("Active"), default=True)
+
+    class Meta:
+        verbose_name = _("Application field")
+        verbose_name_plural = _("Application fields")
+        ordering = ["order", "id"]
+        constraints = [
+            UniqueConstraint(
+                fields=["kind", "key"],
+                name="agreementkindfield_unique_key_per_kind",
+                violation_error_message=_("This key is already used by this kind."),
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.kind} - {self.label}"
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.key in RESERVED_FIELD_KEYS:
+            errors["key"] = _("This key is reserved for the agreement itself.")
+        is_choice = self.field_type == self.FieldType.CHOICE
+        if is_choice and not self.choice_list:
+            errors["choices"] = _("Enter at least one choice.")
+        if not is_choice and self.choices.strip():
+            errors["choices"] = _("Only choice fields have choices.")
+        if self.min_value is not None:
+            if self.field_type not in self.NUMBER_TYPES:
+                errors["min_value"] = _("Only number fields have a minimum.")
+            elif (
+                self.field_type == self.FieldType.INTEGER
+                and self.min_value != self.min_value.to_integral_value()
+            ):
+                errors["min_value"] = _("Enter a whole number.")
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def choice_list(self) -> list[str]:
+        return [line.strip() for line in self.choices.splitlines() if line.strip()]
 
 
 class Agreement(TimeStampedModel):

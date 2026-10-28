@@ -37,6 +37,22 @@ urlpatterns = [
         views.manager_list_agreements_view,
         name="manager-list-agreements",
     ),
+    path("manage/new/", views.manager_new_agreement_view, name="manager-new-agreement"),
+    path(
+        "manage/new/<slug:kind>/",
+        views.manager_create_agreement_view,
+        name="manager-create-agreement",
+    ),
+    path(
+        "manage/<uuid:agreement>/edit/",
+        views.manager_edit_agreement_view,
+        name="manager-edit-agreement",
+    ),
+    path(
+        "manage/<uuid:agreement>/delete/",
+        views.manager_delete_agreement_view,
+        name="manager-delete-agreement",
+    ),
     path(
         "manage/<uuid:agreement>/approve/",
         views.manager_decide_agreement_view,

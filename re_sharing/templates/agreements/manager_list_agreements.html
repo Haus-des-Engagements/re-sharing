@@ -14,6 +14,10 @@
     <a href="{% url 'agreements:manager-collections' %}">{% trans "Collections" %}</a> ·
     <a href="{% url 'agreements:manager-runs' %}">{% trans "SEPA runs" %}</a>
   </p>
+  <p>
+    <a class="btn btn-primary"
+       href="{% url 'agreements:manager-new-agreement' %}">{% trans "New agreement" %}</a>
+  </p>
   <form class="row gx-3 gy-2 align-items-center mt-3" method="get">
     <div class="col-auto">
       <select name="status" class="form-select" aria-label="{% trans "Status" %}">

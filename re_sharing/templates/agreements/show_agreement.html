@@ -89,6 +89,12 @@
           {% endif %}
         </td>
       </tr>
+      {% if is_manager and agreement.notes %}
+        <tr>
+          <td class="first-column">{% trans "Internal notes" %}</td>
+          <td>{{ agreement.notes|linebreaksbr }}</td>
+        </tr>
+      {% endif %}
       {% if agreement.decided_at %}
         <tr>
           <td class="first-column">{% trans "Decided on" %}</td>
@@ -139,6 +145,16 @@
   {% endif %}
   {% if is_manager %}
     <h2 class="mt-5">{% trans "Manage" %}</h2>
+    <p>
+      {% if is_open %}
+        <a class="btn btn-outline-primary"
+           href="{% url 'agreements:manager-edit-agreement' agreement=agreement.uuid %}">{% trans "Edit" %}</a>
+      {% endif %}
+      {% if can_delete %}
+        <a class="btn btn-outline-danger"
+           href="{% url 'agreements:manager-delete-agreement' agreement=agreement.uuid %}">{% trans "Delete" %}</a>
+      {% endif %}
+    </p>
     {% if agreement.status == 1 %}
       <form method="post"
             class="row g-2 align-items-end"

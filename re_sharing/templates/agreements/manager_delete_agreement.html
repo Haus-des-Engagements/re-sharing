@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Delete agreement" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "Delete agreement" %}</h1>
+  <p>
+    {% blocktrans with agreement=agreement %}This permanently deletes {{ agreement }} and everything below:{% endblocktrans %}
+  </p>
+  <ul id="deleted-items">
+    <li>{% trans "the agreement and its details" %}</li>
+    {% if agreement.signed_document %}
+      <li>{% trans "the signed contract" %}</li>
+    {% endif %}
+    {% for mandate in mandates %}
+      <li>
+        {% blocktrans with reference=mandate.reference %}the SEPA mandate {{ reference }}{% endblocktrans %}
+        {% if mandate.signed_document %}
+          {% trans "with its signed PDF" %}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+    <a class="btn btn-outline-secondary"
+       href="{{ agreement.get_absolute_url }}">{% trans "Cancel" %}</a>
+  </form>
+{% endblock content %}

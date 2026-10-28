@@ -1,8 +1,13 @@
+from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
 
+from . import selectors
 from .models import Agreement
 from .models import AgreementKind
+from .models import AgreementKindField
 from .models import Collection
 from .models import CollectionRun
 from .models import SepaMandate
@@ -10,11 +15,54 @@ from .models import SyncState
 from .models import UnmatchedReturn
 
 
+class AgreementKindFieldForm(forms.ModelForm):
+    class Meta:
+        model = AgreementKindField
+        fields = [
+            "order",
+            "key",
+            "label",
+            "field_type",
+            "required",
+            "help_text",
+            "choices",
+            "min_value",
+            "is_active",
+        ]
+        widgets = {"choices": forms.Textarea(attrs={"rows": 2, "cols": 20})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["key"].disabled = True
+
+
+class AgreementKindFieldFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        for form in self.deleted_forms:
+            field = form.instance
+            if field.pk and selectors.field_has_answers(field):
+                raise ValidationError(
+                    _(
+                        "The field %(label)s has answers and cannot be deleted. "
+                        "Deactivate it instead."
+                    )
+                    % {"label": field.label}
+                )
+
+
+class AgreementKindFieldInline(admin.TabularInline):
+    model = AgreementKindField
+    form = AgreementKindFieldForm
+    formset = AgreementKindFieldFormSet
+    extra = 0
+
+
 @admin.register(AgreementKind)
 class AgreementKindAdmin(admin.ModelAdmin):
     list_display = [
         "name",
-        "form_type",
         "organization_group",
         "billing_interval",
         "is_active",
@@ -22,6 +70,12 @@ class AgreementKindAdmin(admin.ModelAdmin):
     ]
     list_filter = ["is_active", "accepting_applications", "billing_interval"]
     filter_horizontal = ["accesses"]
+    inlines = [AgreementKindFieldInline]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.agreements_of_kind.exists():
+            return False
+        return super().has_delete_permission(request, obj)
 
 
 class SepaMandateInline(admin.StackedInline):
@@ -74,6 +128,11 @@ class AgreementAdmin(admin.ModelAdmin):
     autocomplete_fields = ["organization", "permanent_code"]
     readonly_fields = ["group_present", "decided_by"]
     inlines = [SepaMandateInline, CollectionInline]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and not selectors.agreement_can_be_deleted(obj):
+            return False
+        return super().has_delete_permission(request, obj)
 
     @admin.display(description=_("Group of the kind present"), boolean=True)
     def group_present(self, obj):

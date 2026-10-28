@@ -188,7 +188,7 @@ msgid "The resource is already booked during your selected timeslot."
 msgstr "Die Ressource ist zu der Zeit (zumindest teilweise) belegt."
 
 msgid "Company name is required."
-msgstr ""
+msgstr "Der Firmenname ist erforderlich."
 
 msgid "Street is required."
 msgstr "Straße notwendig"
@@ -563,7 +563,7 @@ msgstr ""
 msgid ""
 "Your bookings can be displayed on info screens at the entrance of the "
 "meeting location."
-msgstr ""
+msgstr "Deine Buchungen können auf den Infobildschirmen am Eingang des Veranstaltungsorts angezeigt werden."
 
 msgid "Only organization name, time and room will be displayed."
 msgstr "Nur Name der Organisation, Zeit, und Raum werden angezeigt."
@@ -833,12 +833,12 @@ msgstr ""
 
 msgid ""
 "Show bookings on public info screens at the entrance of the meeting location"
-msgstr ""
+msgstr "Buchungen auf den öffentlichen Infobildschirmen am Eingang des Veranstaltungsorts anzeigen"
 
 msgid ""
 "If enabled, your bookings will show up on the info screens at the entrance "
 "of the meeting location."
-msgstr ""
+msgstr "Wenn aktiviert, erscheinen deine Buchungen auf den Infobildschirmen am Eingang des Veranstaltungsorts."
 
 msgid "Approval of values"
 msgstr "Bestätigung der Werte"
@@ -916,13 +916,13 @@ msgid "Booking not available"
 msgstr "Buchung nicht verfügbar"
 
 msgid "Permanent code created"
-msgstr ""
+msgstr "Dauerhafter Code erstellt"
 
 msgid "Permanent code renewed"
-msgstr ""
+msgstr "Dauerhafter Code erneuert"
 
 msgid "Permanent code invalidated"
-msgstr ""
+msgstr "Dauerhafter Code ungültig gemacht"
 
 msgid "Send this email out."
 msgstr "Sende diese E-Mails"
@@ -1034,7 +1034,7 @@ msgid "Instructions"
 msgstr "Anleitung"
 
 msgid "Smartlock ID"
-msgstr ""
+msgstr "Smartlock-ID"
 
 msgid "Parent Access"
 msgstr "Übergeordneter Zugang"
@@ -1052,10 +1052,10 @@ msgid "Validity end"
 msgstr "Gültigkeitsende"
 
 msgid "Permanent code"
-msgstr ""
+msgstr "Dauerhafter Code"
 
 msgid "Permanent codes"
-msgstr ""
+msgstr "Dauerhafte Codes"
 
 msgid "Room"
 msgstr "Raum"
@@ -1163,7 +1163,7 @@ msgstr "Gegenleistung"
 
 #, python-format
 msgid "Organization already has an active permanent code: %(code)s"
-msgstr ""
+msgstr "Die Organisation hat bereits einen aktiven dauerhaften Code: %(code)s"
 
 msgid "Please select a resource first."
 msgstr "Bitte wähle zunächst eine Ressource aus."
@@ -1297,7 +1297,7 @@ msgstr ""
 msgid ""
 "To borrow equipment you need to <a href=\"%(login_url)s\">log in</a> and be "
 "a confirmed member of an eligible organisation."
-msgstr ""
+msgstr "Um Equipment auszuleihen, musst du dich <a href=\"%(login_url)s\">anmelden</a> und bestätigtes Mitglied einer berechtigten Organisation sein."
 
 msgid "Select Dates"
 msgstr "Daten auswählen"
@@ -1549,7 +1549,7 @@ msgstr "Nach Organisation gebündelte Rechnungen"
 msgid ""
 "Create a single draft invoice per organization containing all uninvoiced "
 "bookings."
-msgstr ""
+msgstr "Pro Organisation einen Rechnungsentwurf mit allen noch nicht abgerechneten Buchungen erstellen."
 
 msgid "Uninvoiced bookings"
 msgstr "nicht in Rechnung gestellte Buchungen"
@@ -3258,7 +3258,7 @@ msgid "Granted while an agreement of this kind is active."
 msgstr "Wird vergeben, solange eine Vereinbarung dieser Art aktiv ist."
 
 msgid "Accesses of the permanent code"
-msgstr "Zugänge des Dauercodes"
+msgstr "Zugänge des dauerhaften Codes"
 
 msgid "Leave empty when the kind grants no entrance code."
 msgstr "Leer lassen, wenn diese Art keinen Zugangscode vergibt."
@@ -3362,8 +3362,8 @@ msgstr "Der unterschriebene Vertrag fehlt."
 msgid "Only active agreements can be ended."
 msgstr "Nur aktive Vereinbarungen können beendet werden."
 
-msgid "Your organization already has this agreement: %(agreement)s"
-msgstr "Deine Organisation hat diese Vereinbarung bereits: %(agreement)s"
+msgid "The organization already has this agreement: %(agreement)s"
+msgstr "Die Organisation hat diese Vereinbarung bereits: %(agreement)s"
 
 msgid "The signed SEPA mandate is missing."
 msgstr "Das unterschriebene SEPA-Lastschriftmandat fehlt."
@@ -3601,3 +3601,149 @@ msgstr "Rechnung für eine Rücklastschrift"
 
 msgid "Agreements, mandates and collections"
 msgstr "Vereinbarungen, Mandate und Einzüge"
+
+msgid "Active agreements only. Leave empty for today."
+msgstr "Nur für aktive Vereinbarungen. Leer lassen für heute."
+
+msgid "Active, already agreed"
+msgstr "Aktiv, bereits vereinbart"
+
+msgid "Add agreement as manager"
+msgstr "Vereinbarung als Manager*in anlegen"
+
+msgid "Application field"
+msgstr "Antragsfeld"
+
+msgid "Application fields"
+msgstr "Antragsfelder"
+
+msgid "Choice"
+msgstr "Auswahl"
+
+msgid "Choice fields only: one per line."
+msgstr "Nur für Auswahlfelder: eine Option pro Zeile."
+
+msgid "Choices"
+msgstr "Optionen"
+
+msgid "Choose the kind of agreement. Its fields depend on the kind."
+msgstr "Wähle die Art der Vereinbarung. Die Felder hängen von der Art ab."
+
+msgid "Closed agreements cannot be edited."
+msgstr "Abgeschlossene Vereinbarungen können nicht bearbeitet werden."
+
+msgid "Collections that already exist keep their amount and period. A changed amount applies to collections created from now on."
+msgstr "Bestehende Einzüge behalten Betrag und Zeitraum. Ein geänderter Betrag gilt für alle ab jetzt erstellten Einzüge."
+
+msgid "Decimal"
+msgstr "Dezimalzahl"
+
+msgid "Delete agreement"
+msgstr "Vereinbarung löschen"
+
+#, python-format
+msgid "Edit %(agreement)s"
+msgstr "%(agreement)s bearbeiten"
+
+msgid "Edit agreement"
+msgstr "Vereinbarung bearbeiten"
+
+msgid "Enter a whole number."
+msgstr "Gib eine ganze Zahl ein."
+
+msgid "Enter at least one choice."
+msgstr "Gib mindestens eine Option ein."
+
+msgid "Help text"
+msgstr "Hilfetext"
+
+msgid "Label"
+msgstr "Bezeichnung"
+
+msgid "Minimum"
+msgstr "Minimum"
+
+msgid "Name under which answers are stored. Cannot be changed afterwards."
+msgstr "Name, unter dem die Antworten gespeichert werden. Kann danach nicht mehr geändert werden."
+
+msgid "New agreement"
+msgstr "Neue Vereinbarung"
+
+#, python-format
+msgid "New agreement: %(kind)s"
+msgstr "Neue Vereinbarung: %(kind)s"
+
+msgid "Number fields only."
+msgstr "Nur für Zahlenfelder."
+
+msgid "Only choice fields have choices."
+msgstr "Nur Auswahlfelder haben Optionen."
+
+msgid "Only confirmed organizations can have agreements."
+msgstr "Nur bestätigte Organisationen können Vereinbarungen haben."
+
+msgid "Only number fields have a minimum."
+msgstr "Nur Zahlenfelder haben ein Minimum."
+
+msgid "Only submitted agreements without collections can be deleted. Reject or end it instead."
+msgstr "Nur eingereichte Vereinbarungen ohne Einzüge können gelöscht werden. Lehne sie stattdessen ab oder beende sie."
+
+msgid "Order"
+msgstr "Reihenfolge"
+
+msgid "Required"
+msgstr "Pflichtfeld"
+
+msgid "Submitted agreements follow the usual mandate and decision steps. Active agreements are for agreements that already exist: they only add the organization group, without entrance code, collections for past periods or emails."
+msgstr "Eingereichte Vereinbarungen durchlaufen die üblichen Schritte mit Mandat und Entscheidung. Aktive Vereinbarungen sind für bereits bestehende Vereinbarungen: Sie fügen nur die Organisationsgruppe hinzu, ohne Zugangscode, Einzüge für vergangene Zeiträume oder E-Mails."
+
+msgid "Submitted, decision pending"
+msgstr "Eingereicht, Entscheidung ausstehend"
+
+msgid "The agreement was created."
+msgstr "Die Vereinbarung wurde angelegt."
+
+msgid "The agreement was deleted."
+msgstr "Die Vereinbarung wurde gelöscht."
+
+msgid "The agreement was saved."
+msgstr "Die Vereinbarung wurde gespeichert."
+
+#, python-format
+msgid "The field %(label)s has answers and cannot be deleted. Deactivate it instead."
+msgstr "Das Feld %(label)s hat Antworten und kann nicht gelöscht werden. Deaktiviere es stattdessen."
+
+msgid "There are no active kinds of agreement within your scope."
+msgstr "In deinem Bereich gibt es keine aktiven Arten von Vereinbarungen."
+
+msgid "This key is already used by this kind."
+msgstr "Dieser Schlüssel wird bei dieser Art bereits verwendet."
+
+msgid "This key is reserved for the agreement itself."
+msgstr "Dieser Schlüssel ist für die Vereinbarung selbst reserviert."
+
+msgid "This kind of agreement is inactive."
+msgstr "Diese Art von Vereinbarung ist inaktiv."
+
+#, python-format
+msgid "This permanently deletes %(agreement)s and everything below:"
+msgstr "Damit werden %(agreement)s und alles Folgende endgültig gelöscht:"
+
+msgid "Whole number"
+msgstr "Ganze Zahl"
+
+msgid "closed for applications"
+msgstr "keine Anträge möglich"
+
+#, python-format
+msgid "the SEPA mandate %(reference)s"
+msgstr "das SEPA-Mandat %(reference)s"
+
+msgid "the agreement and its details"
+msgstr "die Vereinbarung und ihre Angaben"
+
+msgid "the signed contract"
+msgstr "der unterschriebene Vertrag"
+
+msgid "with its signed PDF"
+msgstr "mit dem unterschriebenen PDF"
