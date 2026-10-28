@@ -10,6 +10,7 @@ from auditlog.context import set_actor
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.utils import formats
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -265,11 +266,12 @@ def end_agreement(user, agreement: Agreement, end_date=None) -> Agreement:
     if agreement.status != Agreement.Status.ACTIVE:
         msg = _("Only active agreements can be ended.")
         raise AgreementError(msg)
+    end_date = end_date or agreement.end_date or timezone.localdate()
 
     organization = agreement.organization
     group = agreement.kind.organization_group
     with transaction.atomic(), set_actor(user):
-        agreement.end_date = agreement.end_date or end_date or timezone.localdate()
+        agreement.end_date = end_date
         agreement.status = Agreement.Status.ENDED
         agreement.save()
 
@@ -292,13 +294,51 @@ def end_agreement(user, agreement: Agreement, end_date=None) -> Agreement:
                 code.validity_end = code_end
                 code.save(update_fields=["validity_end"])
 
-        agreement.collections_of_agreement.filter(
-            status__in=[Collection.Status.PLANNED, Collection.Status.NOTIFIED],
-            period_start__gt=agreement.end_date,
-        ).update(status=Collection.Status.CANCELLED)
+        _drop_collections_after(agreement)
 
         _create_deposit_refund(agreement)
         transaction.on_commit(lambda: send_agreement_ended_email.enqueue(agreement.id))
+    return agreement
+
+
+def _require_end_not_before_start(agreement: Agreement, end_date):
+    if end_date < agreement.start_date:
+        msg = _("The end date cannot be before the start date.")
+        raise AgreementError(msg)
+
+
+def _drop_collections_after(agreement: Agreement) -> None:
+    """Remove collections for periods after the end date. Planned ones are
+    deleted so they come back if the date moves later; notified ones were
+    announced to the organization and are cancelled instead."""
+    later = agreement.collections_of_agreement.filter(
+        period_start__gt=agreement.end_date
+    )
+    later.filter(status=Collection.Status.PLANNED).delete()
+    later.filter(status=Collection.Status.NOTIFIED).update(
+        status=Collection.Status.CANCELLED,
+        status_note=_("The agreement ends on %(date)s.")
+        % {"date": formats.date_format(agreement.end_date, "SHORT_DATE_FORMAT")},
+    )
+
+
+def schedule_agreement_end(user, agreement: Agreement, end_date) -> Agreement:
+    """Save a future end date. The agreement stays active with its group and
+    code; the daily command ends it after the date."""
+    if not manager_can_manage_agreement(user, agreement):
+        raise PermissionDenied
+    if agreement.status != Agreement.Status.ACTIVE:
+        msg = _("Only active agreements can be ended.")
+        raise AgreementError(msg)
+    if end_date <= timezone.localdate():
+        msg = _("A scheduled end date must be in the future.")
+        raise AgreementError(msg)
+    _require_end_not_before_start(agreement, end_date)
+
+    with transaction.atomic(), set_actor(user):
+        agreement.end_date = end_date
+        agreement.save()
+        _drop_collections_after(agreement)
     return agreement
 
 
@@ -388,6 +428,7 @@ def manager_update_agreement(user, agreement: Agreement, form) -> Agreement:
         raise AgreementError(msg)
 
     data = form.cleaned_data
+    previous_end = agreement.end_date
     with transaction.atomic(), set_actor(user):
         agreement.start_date = data["start_date"]
         agreement.amount = data["amount"]
@@ -399,6 +440,8 @@ def manager_update_agreement(user, agreement: Agreement, form) -> Agreement:
         agreement.notes = data.get("notes", "")
         agreement.details = {**agreement.details, **form.details()}
         agreement.save()
+        if agreement.end_date and agreement.end_date != previous_end:
+            _drop_collections_after(agreement)
     return agreement
 
 

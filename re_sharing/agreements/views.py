@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils import formats
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -124,7 +125,9 @@ def show_agreement_view(request, agreement):
         "can_administer": can_administer,
         "upload_form": SignedDocumentForm(),
         "decision_form": DecisionForm(initial={"decided_at": timezone.localdate()}),
-        "end_form": EndAgreementForm(),
+        "end_form": EndAgreementForm(initial={"end_date": agreement.end_date}),
+        "end_scheduled": agreement.status == Agreement.Status.ACTIVE
+        and agreement.end_date is not None,
         "is_open": agreement.status
         in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE),
     }
@@ -373,11 +376,22 @@ def manager_decide_agreement_view(request, agreement, decision):
 @require_POST
 def manager_end_agreement_view(request, agreement):
     form = EndAgreementForm(data=request.POST)
-    end_date = form.cleaned_data["end_date"] if form.is_valid() else None
+    if not form.is_valid():
+        messages.error(request, _("Enter a valid end date."))
+        return redirect("agreements:show-agreement", agreement)
+    end_date = form.cleaned_data["end_date"] or timezone.localdate()
 
     def end(item):
-        services.end_agreement(request.user, item, end_date)
-        messages.success(request, _("The agreement was ended."))
+        if end_date > timezone.localdate():
+            services.schedule_agreement_end(request.user, item, end_date)
+            messages.success(
+                request,
+                _("The agreement ends on %(date)s and stays active until then.")
+                % {"date": formats.date_format(end_date, "SHORT_DATE_FORMAT")},
+            )
+        else:
+            services.end_agreement(request.user, item, end_date)
+            messages.success(request, _("The agreement was ended."))
 
     return _manager_action(request, agreement, end)
 

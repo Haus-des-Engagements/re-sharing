@@ -3050,9 +3050,6 @@ msgstr "Fläche in m²"
 msgid "Date of the board decision"
 msgstr "Datum des Vorstandsbeschlusses"
 
-msgid "Leave empty to end today or on the agreed end date."
-msgstr "Leer lassen, um heute oder zum vereinbarten Enddatum zu beenden."
-
 msgid "Note"
 msgstr "Notiz"
 
@@ -3761,3 +3758,32 @@ msgstr "Mindestens %(minimum)s €."
 #, python-format
 msgid "The amount must be at least %(minimum)s €."
 msgstr "Der Betrag muss mindestens %(minimum)s € betragen."
+
+msgid "Leave empty to end today. A future date keeps the agreement active until then."
+msgstr "Leer lassen, um heute zu beenden. Bei einem Datum in der Zukunft bleibt die Vereinbarung bis dahin aktiv."
+
+#, python-format
+msgid "The agreement ends on %(date)s."
+msgstr "Die Vereinbarung endet am %(date)s."
+
+msgid "A scheduled end date must be in the future."
+msgstr "Ein geplantes Enddatum muss in der Zukunft liegen."
+
+msgid "The end date cannot be before the start date."
+msgstr "Das Enddatum darf nicht vor dem Beginn liegen."
+
+msgid "Enter a valid end date."
+msgstr "Gib ein gültiges Enddatum ein."
+
+#, python-format
+msgid "The agreement ends on %(date)s and stays active until then."
+msgstr "Die Vereinbarung endet am %(date)s und bleibt bis dahin aktiv."
+
+msgid "End scheduled"
+msgstr "Ende geplant"
+
+msgid "The agreement stays active until this date."
+msgstr "Die Vereinbarung bleibt bis zu diesem Datum aktiv."
+
+msgid "Change end date"
+msgstr "Enddatum ändern"

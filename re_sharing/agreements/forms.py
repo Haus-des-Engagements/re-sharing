@@ -248,7 +248,10 @@ class EndAgreementForm(forms.Form):
         label=_("End date"),
         widget=DATE_INPUT,
         required=False,
-        help_text=_("Leave empty to end today or on the agreed end date."),
+        help_text=_(
+            "Leave empty to end today. A future date keeps the agreement active "
+            "until then."
+        ),
     )
 
 

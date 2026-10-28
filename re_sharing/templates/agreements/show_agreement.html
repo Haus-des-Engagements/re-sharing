@@ -46,7 +46,13 @@
       {% if agreement.end_date %}
         <tr>
           <td class="first-column">{% trans "End date" %}</td>
-          <td>{{ agreement.end_date }}</td>
+          <td id="end-date">
+            {{ agreement.end_date }}
+            {% if end_scheduled %}
+              <span class="badge text-bg-warning">{% trans "End scheduled" %}</span>
+              <div class="form-text">{% trans "The agreement stays active until this date." %}</div>
+            {% endif %}
+          </td>
         </tr>
       {% endif %}
       <tr>
@@ -178,7 +184,13 @@
         <div class="col-auto">
           <button type="submit"
                   class="btn btn-outline-danger"
-                  onclick="return confirm('{% trans "End this agreement?" %}')">{% trans "End agreement" %}</button>
+                  onclick="return confirm('{% trans "End this agreement?" %}')">
+            {% if end_scheduled %}
+              {% trans "Change end date" %}
+            {% else %}
+              {% trans "End agreement" %}
+            {% endif %}
+          </button>
         </div>
       </form>
     {% endif %}

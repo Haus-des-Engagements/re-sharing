@@ -6,6 +6,7 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from re_sharing.agreements.models import Agreement
 from re_sharing.agreements.models import Collection
@@ -545,11 +546,38 @@ class ManagerAgreementViewsTest(TestCase):
         self.agreement.status = Agreement.Status.ACTIVE
         self.agreement.save()
 
-        self._post("agreements:manager-end-agreement", {"end_date": "2027-12-31"})
+        response = self._post(
+            "agreements:manager-end-agreement", {"end_date": "2027-12-31"}
+        )
+
+        self.agreement.refresh_from_db()
+        assert self.agreement.status == Agreement.Status.ACTIVE
+        assert self.agreement.end_date == date(2027, 12, 31)
+        content = response.content.decode()
+        assert "stays active until then" in content
+        assert "Change end date" in content
+
+    def test_end_today(self, mock_code_email):
+        self.agreement.status = Agreement.Status.ACTIVE
+        self.agreement.save()
+
+        self._post("agreements:manager-end-agreement")
 
         self.agreement.refresh_from_db()
         assert self.agreement.status == Agreement.Status.ENDED
-        assert self.agreement.end_date == date(2027, 12, 31)
+        assert self.agreement.end_date == timezone.localdate()
+
+    def test_end_invalid_date(self, mock_code_email):
+        self.agreement.status = Agreement.Status.ACTIVE
+        self.agreement.save()
+
+        response = self._post(
+            "agreements:manager-end-agreement", {"end_date": "not a date"}
+        )
+
+        assert "Enter a valid end date." in response.content.decode()
+        self.agreement.refresh_from_db()
+        assert self.agreement.status == Agreement.Status.ACTIVE
 
     def test_end_submitted_refused(self, mock_code_email):
         response = self._post("agreements:manager-end-agreement")
