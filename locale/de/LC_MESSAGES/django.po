@@ -3747,3 +3747,17 @@ msgstr "der unterschriebene Vertrag"
 
 msgid "with its signed PDF"
 msgstr "mit dem unterschriebenen PDF"
+
+msgid "Minimum amount per period"
+msgstr "Mindestbetrag pro Zeitraum"
+
+msgid "Lowest amount applicants can enter. Managers may enter less. Leave empty for no minimum."
+msgstr "Niedrigster Betrag, den Antragstellende eingeben können. Manager*innen dürfen weniger eintragen. Leer lassen für keinen Mindestbetrag."
+
+#, python-format
+msgid "At least %(minimum)s €."
+msgstr "Mindestens %(minimum)s €."
+
+#, python-format
+msgid "The amount must be at least %(minimum)s €."
+msgstr "Der Betrag muss mindestens %(minimum)s € betragen."

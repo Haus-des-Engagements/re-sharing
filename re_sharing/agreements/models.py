@@ -90,6 +90,16 @@ class AgreementKind(TimeStampedModel):
         _("Notice period in weeks"), null=True, blank=True
     )
     requires_end_date = BooleanField(_("Requires an end date"), default=False)
+    minimum_amount = DecimalField(
+        _("Minimum amount per period"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Lowest amount applicants can enter. Managers may enter less. Leave "
+            "empty for no minimum."
+        ),
+        **MONEY,
+    )
     accesses = ManyToManyField(
         "resources.Access",
         verbose_name=_("Accesses of the permanent code"),

@@ -2,6 +2,7 @@ import re
 from decimal import Decimal
 
 from django import forms
+from django.utils.formats import localize
 from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.models import Organization
@@ -99,6 +100,7 @@ class ApplicationForm(SignedDocumentFields):
     )
 
     leading_fields: tuple[str, ...] = ()
+    enforce_minimum = True
     trailing_fields: tuple[str, ...] = ("signed_document", "signed_on")
 
     def __init__(self, *args, kind, details=None, **kwargs):
@@ -113,9 +115,14 @@ class ApplicationForm(SignedDocumentFields):
         else:
             del self.fields["end_date"]
         interval = kind.get_billing_interval_display().lower()
-        self.fields["amount"].help_text = _("Charged %(interval)s.") % {
-            "interval": interval
-        }
+        help_text = _("Charged %(interval)s.") % {"interval": interval}
+        if kind.minimum_amount is not None:
+            help_text += " " + _("At least %(minimum)s €.") % {
+                "minimum": localize(kind.minimum_amount)
+            }
+            if self.enforce_minimum:
+                self.fields["amount"].widget.attrs["min"] = kind.minimum_amount
+        self.fields["amount"].help_text = help_text
         self.detail_field_names = add_detail_fields(self, kind, details=details)
         core = [
             "start_date",
@@ -140,12 +147,24 @@ class ApplicationForm(SignedDocumentFields):
             self.add_error("end_date", _("The end date must be after the start."))
         return cleaned
 
+    def clean_amount(self):
+        amount = self.cleaned_data["amount"]
+        minimum = self.kind.minimum_amount
+        if self.enforce_minimum and minimum is not None and amount < minimum:
+            raise forms.ValidationError(
+                _("The amount must be at least %(minimum)s €.")
+                % {"minimum": localize(minimum)}
+            )
+        return amount
+
     def details(self) -> dict:
         return details_from(self, self.kind)
 
 
 class ManagerAgreementForm(ApplicationForm):
     """A manager enters an agreement: a paper application or an existing one."""
+
+    enforce_minimum = False
 
     STATUS_CHOICES = [
         (Agreement.Status.SUBMITTED, _("Submitted, decision pending")),
@@ -185,6 +204,8 @@ class ManagerAgreementForm(ApplicationForm):
 
 class ManagerAgreementEditForm(ApplicationForm):
     """Edits the data of an agreement; status, kind and organization stay."""
+
+    enforce_minimum = False
 
     notes = forms.CharField(
         label=_("Internal notes"),

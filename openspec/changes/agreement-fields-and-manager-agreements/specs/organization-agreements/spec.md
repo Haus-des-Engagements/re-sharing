@@ -2,7 +2,7 @@
 
 ### Requirement: Agreement kinds are configuration
 
-The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, for yearly kinds the collection month, an intro text shown on the application page, its application fields, an active flag and an accepting-applications flag. Kinds SHALL NOT be editable outside the admin. A kind with agreements SHALL NOT be deletable; it is deactivated instead.
+The system SHALL provide an agreement kind model edited by staff in the admin. A kind SHALL define the organization group it grants, a billing interval of yearly or monthly, whether a deposit is required, a notice period, whether an end date is required, an optional minimum amount, the entrances granted on approval (none for kinds without an entrance code), a notification mode of per collection or once at approval, the collection day, for yearly kinds the collection month, an intro text shown on the application page, its application fields, an active flag and an accepting-applications flag. Kinds SHALL NOT be editable outside the admin. A kind with agreements SHALL NOT be deletable; it is deactivated instead.
 
 #### Scenario: Kind not accepting applications is hidden
 
@@ -22,7 +22,7 @@ The system SHALL provide an agreement kind model edited by staff in the admin. A
 
 ### Requirement: Organization admins can apply
 
-The system SHALL allow a user with a confirmed admin booking permission on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, amount, the answers to the kind's active application fields and SHALL have status `Submitted`. The system SHALL reject applications from users without an admin permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
+The system SHALL allow a user with a confirmed admin booking permission on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, an amount not below the kind's minimum amount where one is set, the answers to the kind's active application fields and SHALL have status `Submitted`. The system SHALL reject applications from users without an admin permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
 
 #### Scenario: Confirmed organization applies
 
@@ -49,6 +49,12 @@ The system SHALL allow a user with a confirmed admin booking permission on an or
 
 - **WHEN** an organization already has a submitted or active agreement of a kind and applies for it again
 - **THEN** the form is rejected with a message naming the existing agreement
+
+#### Scenario: Amount below the minimum
+
+- **WHEN** a kind has the minimum amount 60 € and an admin applies with 40 €
+- **THEN** the form is rejected with a message naming the minimum
+- **AND** the amount field shows the minimum as a hint
 
 #### Scenario: Kind-specific details are stored
 

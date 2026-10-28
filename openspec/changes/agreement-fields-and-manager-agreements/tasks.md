@@ -42,3 +42,9 @@
 - [x] 7.1 Add German translations for the new strings to `locale/de/LC_MESSAGES/django.po`
 - [x] 7.2 Update the README rollout steps: set up each kind's application fields in the admin
 - [x] 7.3 Run the full test suite and pre-commit on the changed files; coverage of the new code above 95 percent
+
+## 8. Minimum amount per kind
+
+- [x] 8.1 Add `AgreementKind.minimum_amount` (optional) with migration `0005`
+- [x] 8.2 Enforce it in the application form with the minimum as hint; manager forms show the hint without enforcing it
+- [x] 8.3 Tests for the form rule, the manager exception and the hint; German translations; README rollout note

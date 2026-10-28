@@ -105,6 +105,49 @@ class ApplicationFormTest(TestCase):
         assert "signed_on" in form.errors
 
 
+class MinimumAmountTest(TestCase):
+    def setUp(self):
+        self.kind = MembershipKindFactory(minimum_amount=Decimal(60))
+
+    def test_below_minimum_rejected_with_hint(self):
+        form = ApplicationForm(data={**BASE, "amount": "40"}, kind=self.kind)
+
+        assert "60" in form.errors["amount"][0]
+        assert "60" in str(form.fields["amount"].help_text)
+        assert form.fields["amount"].widget.attrs["min"] == Decimal(60)
+
+    def test_minimum_accepted(self):
+        form = ApplicationForm(data={**BASE, "amount": "60"}, kind=self.kind)
+
+        assert form.is_valid(), form.errors
+
+    def test_no_minimum_no_hint(self):
+        form = ApplicationForm(kind=MembershipKindFactory())
+
+        assert "least" not in str(form.fields["amount"].help_text)
+
+    def test_managers_may_enter_less(self):
+        organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        create = ManagerAgreementForm(
+            data={
+                "organization": organization.id,
+                "status": Agreement.Status.ACTIVE,
+                "start_date": "2026-01-01",
+                "amount": "40",
+            },
+            kind=self.kind,
+        )
+        edit = ManagerAgreementEditForm(
+            data={**BASE, "amount": "40"},
+            agreement=AgreementFactory(kind=self.kind, amount=Decimal(40)),
+        )
+
+        assert create.is_valid(), create.errors
+        assert edit.is_valid(), edit.errors
+        assert "60" in str(create.fields["amount"].help_text)
+        assert create.fields["amount"].widget.attrs["min"] == Decimal("0.01")
+
+
 class ManagerAgreementFormTest(TestCase):
     def setUp(self):
         self.organization = OrganizationFactory(status=Organization.Status.CONFIRMED)

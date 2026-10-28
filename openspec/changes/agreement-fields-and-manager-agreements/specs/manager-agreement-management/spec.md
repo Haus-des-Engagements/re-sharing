@@ -2,7 +2,7 @@
 
 ### Requirement: Managers create agreements
 
-A manager SHALL be able to create an agreement in the frontend for a confirmed organization and an active kind within the manager's scope, whether or not the kind accepts applications. The manager SHALL first choose the kind, then fill the organization, the status `Submitted` or `Active`, the common agreement data, the kind's fields and optionally the signed document and notes. The system SHALL refuse kinds outside the manager's scope, inactive kinds, organizations that are not confirmed and an organization that already has a submitted or active agreement of the kind. Creating SHALL NOT send emails.
+A manager SHALL be able to create an agreement in the frontend for a confirmed organization and an active kind within the manager's scope, whether or not the kind accepts applications. The manager SHALL first choose the kind, then fill the organization, the status `Submitted` or `Active`, the common agreement data, the kind's fields and optionally the signed document and notes. The system SHALL refuse kinds outside the manager's scope, inactive kinds, organizations that are not confirmed and an organization that already has a submitted or active agreement of the kind. Creating SHALL NOT send emails. The kind's minimum amount SHALL NOT bind managers, so that existing agreements with lower amounts can be entered; it is shown as a hint.
 
 #### Scenario: Submitted agreement from a paper application
 
@@ -20,6 +20,11 @@ A manager SHALL be able to create an agreement in the frontend for a confirmed o
 
 - **WHEN** an active agreement is entered by a manager
 - **THEN** the daily job creates collections only for periods due after the agreement was created
+
+#### Scenario: Amount below the minimum entered by a manager
+
+- **WHEN** a manager creates or edits an agreement with an amount below the kind's minimum amount
+- **THEN** the agreement is saved with that amount
 
 #### Scenario: Kind outside scope
 

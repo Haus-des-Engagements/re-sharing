@@ -324,10 +324,11 @@ Run these once a day, for example from cron:
 
 1. Deploy, set the SEPA settings listed under [Settings](#settings) and add the three scheduled commands.
 2. Create the agreement kinds in the admin. Each kind lists its application fields (key, label, type, required, help text, choices, minimum, order); answers are stored under the key, which cannot be changed once created. Deactivate a field instead of deleting it once agreements have answered it.
-   - Membership: yearly, collection month 3 and the collection day, pre-notification "once with the approval", the member group, no accesses, no fields, applications open.
+   - Membership: yearly, the minimum amount, collection month 3 and the collection day, pre-notification "once with the approval", the member group, no accesses, no fields, applications open.
    - Coworking: monthly, deposit required, notice period, the coworking group, the accesses of its entrance code, fields `desks` and `hours_per_week` (whole numbers, minimum 1), applications open.
    - Office and cellar lease: monthly, fields `room` (text) and `area_m2` (decimal, minimum 1), applications closed until their mandates exist.
    - Put a link to each contract in the kind's intro text.
+   - A kind's minimum amount binds applicants only; managers can enter lower amounts for existing agreements.
 3. Create and activate the email templates for the agreement emails (application received, manager notice, approved, rejected, ended, pre-notification, return invoice). The context offers `organization`, `agreement`, `kind`, `agreement_url`, `mandate_reference`, `creditor_id`, `creditor_name`, `first_collection` and, for collection emails, `collection`; bank details are never part of it.
 4. Enter existing members and coworkers as active agreements, each with its paper mandate reference, signed contract and signing date: managers use "New agreement" under Manage agreements (status "Active", which adds the kind's group if missing), staff can also use the admin (which changes no groups). Neither creates collections for periods due before the agreement was entered, entrance codes or emails.
 5. The first yearly member run follows in the next collection cycle, monthly runs from the following month. Check the first returned debit against the matching in the nightly command.

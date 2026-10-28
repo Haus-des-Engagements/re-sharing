@@ -61,7 +61,13 @@ Status, kind and organization are not editable; the decision, end and delete act
 
 `services.delete_agreement(user, agreement)` refuses unless the agreement is `Submitted` and has no collections, then deletes its mandates and the agreement and removes their stored PDFs after commit. In practice a submitted agreement never has collections, since they start at approval, but the second check keeps the rule safe against admin-created data. A confirmation page at `/agreements/manage/<uuid>/delete/` names what is removed. `AgreementAdmin.has_delete_permission` and `AgreementKindAdmin.has_delete_permission` apply the same rules (kind: no agreements), so the admin cannot bypass them; `PROTECT` on `Agreement.kind` stays as the last guard.
 
-### D8: Scope and visibility
+### D8: Minimum amount
+
+`AgreementKind.minimum_amount` (optional, money). `ApplicationForm` refuses a lower amount and adds "at least X €" to the amount's help text. The manager forms set `enforce_minimum = False` and only show the hint, because existing agreements can have older, lower amounts.
+
+Alternative: a fixed amount per kind. Rejected, the membership amount is a solidarity amount chosen by the organization.
+
+### D9: Scope and visibility
 
 All three actions use `manager_can_manage_kind` / `manager_can_manage_agreement`. The agreement page shows edit and delete to managers in scope when allowed. Organization admins keep their current rights; this change gives them nothing new.
 
