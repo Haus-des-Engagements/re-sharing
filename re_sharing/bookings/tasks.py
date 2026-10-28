@@ -1,12 +1,31 @@
-import base64
 import logging
 
-import requests
-from django.conf import settings
 from django.tasks import task
 from django.utils import timezone
 
+from re_sharing.utils import buchhaltungsbutler
+from re_sharing.utils.buchhaltungsbutler import BuchhaltungsButlerError
+
 logger = logging.getLogger(__name__)
+
+
+def _uninvoiced_bookings(organization):
+    from re_sharing.bookings.models import Booking
+    from re_sharing.utils.models import BookingStatus
+
+    return list(
+        Booking.objects.filter(
+            organization=organization,
+            status=BookingStatus.CONFIRMED,
+            total_amount__gt=0,
+            invoice_number="",
+            timespan__endswith__lt=timezone.now(),
+        )
+        .exclude(invoice_address__contains={"single_invoice": True})
+        .exclude(resource__type="lendable_item")
+        .select_related("resource", "compensation")
+        .order_by("timespan")
+    )
 
 
 @task(queue_name="default")
@@ -19,40 +38,14 @@ def create_draft_invoice(booking_id: int) -> dict:
         "organization", "user", "resource", "compensation"
     ).get(id=booking_id)
 
-    payload = build_invoice_payload(booking)
-    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
-
-    credentials = base64.b64encode(
-        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
-    ).decode()
-
-    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/draft"
-
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            timeout=30,
-        )
-        if not response.ok:
-            logger.error(
-                "BuchhaltungsButler returned %s for booking %s: %s",
-                response.status_code,
-                booking_id,
-                response.text,
-            )
-        response.raise_for_status()
-    except requests.RequestException:
+        buchhaltungsbutler.create_draft_invoice(build_invoice_payload(booking))
+    except BuchhaltungsButlerError:
         logger.exception("Failed to create draft invoice for booking %s", booking_id)
         return {"booking_id": booking_id, "status": "error"}
-    else:
-        logger.info("Draft invoice created for booking %s", booking_id)
-        return {"booking_id": booking_id, "status": "success"}
+
+    logger.info("Draft invoice created for booking %s", booking_id)
+    return {"booking_id": booking_id, "status": "success"}
 
 
 @task(queue_name="default")
@@ -65,37 +58,16 @@ def create_einvoice(booking_id: int) -> dict:
         "organization", "user", "resource", "compensation"
     ).get(id=booking_id)
 
-    payload = build_einvoice_payload(booking)
-    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
-
-    credentials = base64.b64encode(
-        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
-    ).decode()
-
-    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/einvoice"
-
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            timeout=30,
-        )
-        if not response.ok:
-            logger.error(
-                "BuchhaltungsButler returned %s for booking %s: %s",
-                response.status_code,
-                booking_id,
-                response.text,
-            )
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException:
+        data = buchhaltungsbutler.create_einvoice(build_einvoice_payload(booking))
+    except BuchhaltungsButlerError as error:
         logger.exception("Failed to create e-invoice for booking %s", booking_id)
+        if error.api_message is not None:
+            return {
+                "booking_id": booking_id,
+                "status": "error",
+                "message": error.api_message,
+            }
         return {"booking_id": booking_id, "status": "error"}
 
     if data.get("success"):
@@ -124,74 +96,34 @@ def create_einvoice(booking_id: int) -> dict:
 @task(queue_name="default")
 def create_org_draft_invoice(organization_id: int) -> dict:
     """Create a bundled draft invoice for all uninvoiced bookings of an org."""
-    from re_sharing.bookings.models import Booking
     from re_sharing.bookings.services import build_org_invoice_payload
     from re_sharing.organizations.models import Organization
-    from re_sharing.utils.models import BookingStatus
 
     organization = Organization.objects.get(id=organization_id)
-
-    bookings = list(
-        Booking.objects.filter(
-            organization=organization,
-            status=BookingStatus.CONFIRMED,
-            total_amount__gt=0,
-            invoice_number="",
-            timespan__endswith__lt=timezone.now(),
-        )
-        .exclude(invoice_address__contains={"single_invoice": True})
-        .exclude(resource__type="lendable_item")
-        .select_related("resource", "compensation")
-        .order_by("timespan")
-    )
-
+    bookings = _uninvoiced_bookings(organization)
     if not bookings:
         return {"organization_id": organization_id, "status": "no_bookings"}
 
-    payload = build_org_invoice_payload(organization, bookings)
-    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
-
-    credentials = base64.b64encode(
-        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
-    ).decode()
-
-    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/draft"
-
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            timeout=30,
+        buchhaltungsbutler.create_draft_invoice(
+            build_org_invoice_payload(organization, bookings)
         )
-        if not response.ok:
-            logger.error(
-                "BuchhaltungsButler returned %s for org %s: %s",
-                response.status_code,
-                organization_id,
-                response.text,
-            )
-        response.raise_for_status()
-    except requests.RequestException:
+    except BuchhaltungsButlerError:
         logger.exception(
             "Failed to create org draft invoice for org %s", organization_id
         )
         return {"organization_id": organization_id, "status": "error"}
-    else:
-        logger.info(
-            "Org draft invoice created for org %s (%d bookings)",
-            organization_id,
-            len(bookings),
-        )
-        return {
-            "organization_id": organization_id,
-            "status": "success",
-            "booking_count": len(bookings),
-        }
+
+    logger.info(
+        "Org draft invoice created for org %s (%d bookings)",
+        organization_id,
+        len(bookings),
+    )
+    return {
+        "organization_id": organization_id,
+        "status": "success",
+        "booking_count": len(bookings),
+    }
 
 
 @task(queue_name="default")
@@ -200,58 +132,24 @@ def create_org_einvoice(organization_id: int) -> dict:
     from re_sharing.bookings.models import Booking
     from re_sharing.bookings.services import build_org_einvoice_payload
     from re_sharing.organizations.models import Organization
-    from re_sharing.utils.models import BookingStatus
 
     organization = Organization.objects.get(id=organization_id)
-
-    bookings = list(
-        Booking.objects.filter(
-            organization=organization,
-            status=BookingStatus.CONFIRMED,
-            total_amount__gt=0,
-            invoice_number="",
-            timespan__endswith__lt=timezone.now(),
-        )
-        .exclude(invoice_address__contains={"single_invoice": True})
-        .exclude(resource__type="lendable_item")
-        .select_related("resource", "compensation")
-        .order_by("timespan")
-    )
-
+    bookings = _uninvoiced_bookings(organization)
     if not bookings:
         return {"organization_id": organization_id, "status": "no_bookings"}
 
-    payload = build_org_einvoice_payload(organization, bookings)
-    payload["api_key"] = settings.BUCHHALTUNGSBUTLER_API_KEY
-
-    credentials = base64.b64encode(
-        f"{settings.BUCHHALTUNGSBUTLER_API_CLIENT}:{settings.BUCHHALTUNGSBUTLER_API_SECRET}".encode()
-    ).decode()
-
-    url = f"{settings.BUCHHALTUNGSBUTLER_BASE_URL}/invoices/create/einvoice"
-
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            timeout=30,
+        data = buchhaltungsbutler.create_einvoice(
+            build_org_einvoice_payload(organization, bookings)
         )
-        if not response.ok:
-            logger.error(
-                "BuchhaltungsButler returned %s for org %s: %s",
-                response.status_code,
-                organization_id,
-                response.text,
-            )
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException:
+    except BuchhaltungsButlerError as error:
         logger.exception("Failed to create org e-invoice for org %s", organization_id)
+        if error.api_message is not None:
+            return {
+                "organization_id": organization_id,
+                "status": "error",
+                "message": error.api_message,
+            }
         return {"organization_id": organization_id, "status": "error"}
 
     if data.get("success"):

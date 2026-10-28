@@ -79,6 +79,20 @@ For more detailed setup instructions, see: https://cookiecutter-django.readthedo
 ### Settings
 For information about settings configuration, see: https://cookiecutter-django.readthedocs.io/en/latest/settings.html
 
+#### Agreements and SEPA direct debit
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SEPA_CREDITOR_ID` | empty | Creditor identifier printed in pre-notifications and the SEPA file |
+| `SEPA_CREDITOR_NAME` | empty | Creditor name in the SEPA file |
+| `SEPA_CREDITOR_IBAN` / `SEPA_CREDITOR_BIC` | empty | Account the debits are collected to |
+| `SEPA_MANDATE_PREFIX` | `RS` | Prefix of mandate and collection references |
+| `SEPA_MANDATE_FORM_URL` | empty | Blank mandate form linked on mandates awaiting their signed PDF |
+| `SEPA_RETURN_FEE` | `0.00` | Fee added to the invoice for a returned debit |
+| `PRE_NOTIFICATION_DAYS` | `14` | Days between pre-notification and due date |
+| `COLLECTION_LOOKAHEAD_DAYS` | `45` | How far ahead collections are created |
+| `COLLECTION_RETURN_WINDOW_DAYS` | `7` | Days after the collection date until a debit counts as collected |
+
 ## Basic Commands
 
 ### Setting Up Your Users
@@ -292,6 +306,32 @@ For production deployment, follow these steps:
 7. Deploy the application code
 8. Run migrations and collect static files
 9. Start the application
+
+### Scheduled commands for agreements
+
+Run these once a day, for example from cron:
+
+```bash
+# Create fee collections within the lookahead and send pre-notifications
+15 6 * * * python manage.py create_agreement_collections
+# Mark debits collected after the return window, detect returns, sync paid return invoices
+30 2 * * * python manage.py sync_collection_payments
+# End agreements whose end date has passed
+45 0 * * * python manage.py end_expired_agreements
+```
+
+### Rolling out agreements
+
+1. Deploy, set the SEPA settings listed under [Settings](#settings) and add the three scheduled commands.
+2. Create the agreement kinds in the admin:
+   - Membership: form "Membership", yearly, collection month 3 and the collection day, pre-notification "once with the approval", the member group, no accesses, applications open.
+   - Coworking: form "Coworking", monthly, deposit required, notice period, the coworking group, the accesses of its entrance code, applications open.
+   - Office and cellar lease: forms "Office lease" and "Cellar lease", monthly, applications closed until their mandates exist.
+   - Put a link to each contract in the kind's intro text.
+3. Create and activate the email templates for the agreement emails (application received, manager notice, approved, rejected, ended, pre-notification, return invoice). The context offers `organization`, `agreement`, `kind`, `agreement_url`, `mandate_reference`, `creditor_id`, `creditor_name`, `first_collection` and, for collection emails, `collection`; bank details are never part of it.
+4. Enter existing members and coworkers in the admin as active agreements, each with its paper mandate reference, signed contract and signing date. The admin creates no collections for periods that were due before the agreement was entered and triggers no emails, groups or codes.
+5. The first yearly member run follows in the next collection cycle, monthly runs from the following month. Check the first returned debit against the matching in the nightly command.
+6. Rollback: remove the scheduled commands. The tables stay; registration and bookings are unaffected.
 
 ### Sentry
 

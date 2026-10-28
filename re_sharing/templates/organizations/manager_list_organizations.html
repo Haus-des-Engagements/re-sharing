@@ -16,6 +16,12 @@
       </svg>
       {% trans "New Organization" %}
     </a>
+    <a class="btn btn-outline-secondary"
+       href="{% url 'agreements:manager-list-agreements' %}?status=1"
+       role="button">
+      {% trans "Agreements" %}
+      <span class="badge text-bg-warning">{{ submitted_agreements_count }}</span>
+    </a>
   </h1>
   <form class="row gx-3 gy-2 align-items-center mt-3"
         action="{% url 'organizations:manager-list-organizations' %}"

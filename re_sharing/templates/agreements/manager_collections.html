@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Collections" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "Collections" %}</h1>
+  <p>
+    <a href="{% url 'agreements:manager-list-agreements' %}">{% trans "Agreements" %}</a> ·
+    <a href="{% url 'agreements:manager-runs' %}">{% trans "SEPA runs" %}</a>
+  </p>
+  {% if attention or runs_not_uploaded or unmatched_returns %}
+    <h2 class="mt-4">{% trans "Needs attention" %}</h2>
+    <ul class="list-group mb-4" id="attention-list">
+      {% for run in runs_not_uploaded %}
+        <li class="list-group-item list-group-item-warning">
+          {% blocktrans with date=run.collection_date debits=run.count %}SEPA run for {{ date }} with {{ debits }} debits is not marked as uploaded.{% endblocktrans %}
+          <a href="{% url 'agreements:manager-runs' %}">{% trans "SEPA runs" %}</a>
+        </li>
+      {% endfor %}
+      {% for collection in attention %}
+        <li class="list-group-item list-group-item-danger">
+          <a href="{{ collection.agreement.get_absolute_url }}">{{ collection.agreement }}</a>:
+          {{ collection.get_kind_display }} {{ collection.amount }} €, {{ collection.get_status_display }}
+          {% if collection.status == 5 %}
+            <form method="post"
+                  class="d-inline"
+                  action="{% url 'agreements:manager-collection-invoice' collection=collection.uuid %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Create return invoice" %}</button>
+            </form>
+          {% elif collection.status == 2 %}
+            ({% trans "no active mandate" %})
+          {% endif %}
+        </li>
+      {% endfor %}
+      {% for unmatched in unmatched_returns %}
+        <li class="list-group-item list-group-item-warning">
+          {% trans "Unmatched return" %} {{ unmatched.booked_on }} {{ unmatched.amount }} €: {{ unmatched.text }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form class="row gx-3 gy-2 align-items-center" method="get">
+    <div class="col-auto">
+      <select name="status" class="form-select" aria-label="{% trans "Status" %}">
+        <option value="">{% trans "all statuses" %}</option>
+        {% for value, label in statuses %}
+          <option value="{{ value }}"
+                  {% if selected.status == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="kind" class="form-select" aria-label="{% trans "Kind" %}">
+        <option value="">{% trans "all collection kinds" %}</option>
+        {% for value, label in kinds %}
+          <option value="{{ value }}"
+                  {% if selected.kind == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="agreement_kind"
+              class="form-select"
+              aria-label="{% trans "Agreement kind" %}">
+        <option value="">{% trans "all agreement kinds" %}</option>
+        {% for kind in agreement_kinds %}
+          <option value="{{ kind.slug }}"
+                  {% if selected.agreement_kind == kind.slug %}selected{% endif %}>{{ kind.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">{% trans "Filter" %}</button>
+    </div>
+  </form>
+  <div class="table-responsive mt-4">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Reference" %}</th>
+          <th scope="col">{% trans "Agreement" %}</th>
+          <th scope="col">{% trans "Kind" %}</th>
+          <th scope="col">{% trans "Due date" %}</th>
+          <th scope="col">{% trans "Amount" %}</th>
+          <th scope="col">{% trans "Status" %}</th>
+          <th scope="col">{% trans "Settle by hand" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for collection in collections %}
+          <tr>
+            <td>{{ collection.reference|default:"–" }}</td>
+            <td>
+              <a href="{{ collection.agreement.get_absolute_url }}">{{ collection.agreement }}</a>
+            </td>
+            <td>{{ collection.get_kind_display }}</td>
+            <td>{{ collection.due_date }}</td>
+            <td>{{ collection.amount }} €</td>
+            <td>
+              {{ collection.get_status_display }}
+              {% if collection.invoice_number %}({{ collection.invoice_number }}){% endif %}
+            </td>
+            <td>
+              {% if not collection.is_final %}
+                <form method="post"
+                      class="d-flex gap-1"
+                      action="{% url 'agreements:manager-collection-paid' collection=collection.uuid %}">
+                  {% csrf_token %}
+                  <input type="text"
+                         name="note"
+                         class="form-control form-control-sm"
+                         placeholder="{% trans "Note" %}"
+                         aria-label="{% trans "Note" %}"
+                         required />
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% trans "Paid" %}</button>
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-danger"
+                          formaction="{% url 'agreements:manager-collection-cancel' collection=collection.uuid %}">
+                    {% trans "Cancel" %}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">{% trans "No collections found." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

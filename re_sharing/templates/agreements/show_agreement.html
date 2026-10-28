@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% load i18n crispy_forms_tags %}
+
+{% block title %}
+  {{ agreement }}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{{ agreement.organization.get_absolute_url }}">{{ agreement.organization.name }}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url 'agreements:organization-agreements' organization=agreement.organization.slug %}">{% trans "Agreements" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ agreement.kind.name }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {{ agreement.kind.name }}
+    {% include "agreements/_status_badge.html" with status=agreement.status label=agreement.get_status_display %}
+  </h1>
+  <table class="table mt-3">
+    <tbody>
+      <tr>
+        <td class="first-column">{% trans "Organization" %}</td>
+        <td>{{ agreement.organization.name }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "Amount" %}</td>
+        <td>{{ agreement.amount }} € ({{ agreement.kind.get_billing_interval_display }})</td>
+      </tr>
+      {% if agreement.deposit_amount %}
+        <tr>
+          <td class="first-column">{% trans "Deposit" %}</td>
+          <td>{{ agreement.deposit_amount }} €</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td class="first-column">{% trans "Start date" %}</td>
+        <td>{{ agreement.start_date }}</td>
+      </tr>
+      {% if agreement.end_date %}
+        <tr>
+          <td class="first-column">{% trans "End date" %}</td>
+          <td>{{ agreement.end_date }}</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td class="first-column">{% trans "Function of the contact person" %}</td>
+        <td>{{ agreement.contact_person_function|default:"–" }}</td>
+      </tr>
+      {% for label, value in details %}
+        <tr>
+          <td class="first-column">{{ label }}</td>
+          <td>{{ value }}</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td class="first-column">{% trans "Signed contract" %}</td>
+        <td>
+          {% if agreement.signed_document %}
+            <a href="{{ agreement.signed_document.url }}">{% trans "Download" %}</a> ({{ agreement.signed_on }})
+          {% else %}
+            {% trans "Not uploaded yet." %}
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "SEPA mandate" %}</td>
+        <td>
+          {% if open_mandate %}
+            {% if can_administer %}
+              <a href="{{ open_mandate.get_absolute_url }}">{{ open_mandate.reference }}</a>
+            {% else %}
+              {{ open_mandate.reference }}
+            {% endif %}
+            {% if not open_mandate.is_active %}
+              ({% trans "awaiting the signed mandate" %})
+            {% endif %}
+          {% elif can_administer and is_open %}
+            <a class="btn btn-sm btn-outline-primary"
+               href="{% url 'agreements:create-mandate' agreement=agreement.uuid %}">{% trans "Add SEPA mandate" %}</a>
+          {% else %}
+            –
+          {% endif %}
+        </td>
+      </tr>
+      {% if agreement.decided_at %}
+        <tr>
+          <td class="first-column">{% trans "Decided on" %}</td>
+          <td>{{ agreement.decided_at }}</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% if can_administer and is_open %}
+    <h2 class="mt-5">{% trans "Upload signed contract" %}</h2>
+    {% if agreement.kind.intro_text %}<div class="mb-3">{{ agreement.kind.intro_text|safe }}</div>{% endif %}
+    <form method="post"
+          enctype="multipart/form-data"
+          action="{% url 'agreements:upload-signed-document' agreement=agreement.uuid %}">
+      {% csrf_token %}
+      {{ upload_form|crispy }}
+      <button type="submit" class="btn btn-primary">{% trans "Upload" %}</button>
+    </form>
+  {% endif %}
+  <h2 class="mt-5">{% trans "Collections" %}</h2>
+  {% if collections %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Kind" %}</th>
+            <th scope="col">{% trans "Period" %}</th>
+            <th scope="col">{% trans "Due date" %}</th>
+            <th scope="col">{% trans "Amount" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for collection in collections %}
+            <tr>
+              <td>{{ collection.get_kind_display }}</td>
+              <td>{{ collection.period_start }} – {{ collection.period_end }}</td>
+              <td>{{ collection.due_date }}</td>
+              <td>{{ collection.amount }} €</td>
+              <td>{{ collection.get_status_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>{% trans "No collections yet." %}</p>
+  {% endif %}
+  {% if is_manager %}
+    <h2 class="mt-5">{% trans "Manage" %}</h2>
+    {% if agreement.status == 1 %}
+      <form method="post"
+            class="row g-2 align-items-end"
+            action="{% url 'agreements:manager-approve-agreement' agreement=agreement.uuid %}">
+        {% csrf_token %}
+        <div class="col-auto">{{ decision_form.decided_at|as_crispy_field }}</div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-success">{% trans "Approve" %}</button>
+          <button type="submit"
+                  class="btn btn-outline-danger"
+                  formaction="{% url 'agreements:manager-reject-agreement' agreement=agreement.uuid %}"
+                  onclick="return confirm('{% trans "Reject this agreement?" %}')">{% trans "Reject" %}</button>
+        </div>
+      </form>
+    {% elif agreement.status == 2 %}
+      <form method="post"
+            class="row g-2 align-items-end"
+            action="{% url 'agreements:manager-end-agreement' agreement=agreement.uuid %}">
+        {% csrf_token %}
+        <div class="col-auto">{{ end_form.end_date|as_crispy_field }}</div>
+        <div class="col-auto">
+          <button type="submit"
+                  class="btn btn-outline-danger"
+                  onclick="return confirm('{% trans "End this agreement?" %}')">{% trans "End agreement" %}</button>
+        </div>
+      </form>
+    {% endif %}
+  {% endif %}
+{% endblock content %}

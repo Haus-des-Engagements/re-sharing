@@ -1,6 +1,7 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+from decimal import Decimal
 from pathlib import Path
 
 import environ
@@ -102,6 +103,7 @@ LOCAL_APPS = [
     "re_sharing.organizations",
     "re_sharing.dashboards",
     "re_sharing.providers",
+    "re_sharing.agreements",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -270,6 +272,19 @@ BUCHHALTUNGSBUTLER_BASE_URL = env(
     "BUCHHALTUNGSBUTLER_BASE_URL",
     default="https://app.buchhaltungsbutler.de/api/v1",
 )
+# SEPA DIRECT DEBIT (agreements)
+# ------------------------------------------------------------------------------
+SEPA_CREDITOR_ID = env("SEPA_CREDITOR_ID", default="")
+SEPA_CREDITOR_NAME = env("SEPA_CREDITOR_NAME", default="")
+SEPA_CREDITOR_IBAN = env("SEPA_CREDITOR_IBAN", default="")
+SEPA_CREDITOR_BIC = env("SEPA_CREDITOR_BIC", default="")
+SEPA_MANDATE_PREFIX = env("SEPA_MANDATE_PREFIX", default="RS")
+SEPA_MANDATE_FORM_URL = env("SEPA_MANDATE_FORM_URL", default="")
+SEPA_RETURN_FEE = Decimal(env("SEPA_RETURN_FEE", default="0.00"))
+PRE_NOTIFICATION_DAYS = env.int("PRE_NOTIFICATION_DAYS", default=14)
+COLLECTION_LOOKAHEAD_DAYS = env.int("COLLECTION_LOOKAHEAD_DAYS", default=45)
+COLLECTION_RETURN_WINDOW_DAYS = env.int("COLLECTION_RETURN_WINDOW_DAYS", default=7)
+
 EXTERNAL_EVENTS_ICS_URL = env(
     "EXTERNAL_EVENTS_ICS_URL",
     default="https://haus-des-engagements.de/angebote/fortbildungen/events.ics",

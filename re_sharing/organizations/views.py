@@ -73,10 +73,23 @@ def show_organization_view(request, organization):
         organization=organization
     ).order_by("-created")
 
+    from re_sharing.agreements.selectors import is_confirmed_admin
+    from re_sharing.agreements.selectors import open_kinds_for_organization
+    from re_sharing.agreements.selectors import user_can_view_organization_agreements
+
+    show_agreements = user_can_view_organization_agreements(request.user, organization)
+    can_apply = (
+        organization.status == Organization.Status.CONFIRMED
+        and is_confirmed_admin(request.user, organization)
+    )
     context = {
         "organization": organization,
         "permitted_users": permitted_users,
         "is_admin": is_admin,
+        "show_agreements": show_agreements,
+        "open_agreement_kinds": (
+            open_kinds_for_organization(organization) if can_apply else []
+        ),
         "organization_messages": organization_messages,
         "message_form": OrganizationMessageForm()
         if request.user.is_authenticated
@@ -176,10 +189,13 @@ def manager_list_organizations_view(request: HttpRequest) -> HttpResponse:
     if manager and manager.organization_groups.exists():
         available_groups = manager.organization_groups.all()
 
+    from re_sharing.agreements.selectors import manager_submitted_agreements_count
+
     context = {
         "organizations": organizations,
         "statuses": Organization.Status.choices,
         "groups": available_groups,
+        "submitted_agreements_count": manager_submitted_agreements_count(request.user),
     }
 
     if request.headers.get("HX-Request"):

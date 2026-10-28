@@ -166,6 +166,24 @@
       </div>
     {% endif %}
   </div>
+  {% if show_agreements %}
+    <div class="row mt-5 mb-2" id="agreements">
+      <h2>{% trans "Agreements" %}</h2>
+      <p>
+        <a href="{% url 'agreements:organization-agreements' organization=organization.slug %}">{% trans "Agreements, mandates and collections" %}</a>
+      </p>
+      {% if open_agreement_kinds %}
+        <div>
+          {% for kind in open_agreement_kinds %}
+            <a class="btn btn-outline-primary me-2 mb-2"
+               href="{% url 'agreements:apply' organization=organization.slug kind=kind.slug %}">
+              {% blocktrans with kind=kind.name %}Apply for {{ kind }}{% endblocktrans %}
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
   {% if request.user.is_authenticated %}
     <div class="row mt-5 mb-2">
       <h2>{% trans "Persons authorised to make bookings" %}</h2>

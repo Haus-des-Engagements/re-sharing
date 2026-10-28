@@ -2998,3 +2998,606 @@ msgstr[1] ""
 "%(counter)s Buchungen können nicht erstellt werden: Für ihr Jahr ist keine "
 "freie Buchung mehr übrig und diese Ressource hat keine kostenpflichtige "
 "Gegenleistung."
+
+msgid "Group of the kind present"
+msgstr "Gruppe der Art vorhanden"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "Agreements"
+msgstr "Vereinbarungen"
+
+msgid "Signed PDF"
+msgstr "Unterschriebenes PDF"
+
+msgid "Signed on"
+msgstr "Unterschrieben am"
+
+msgid "Account holder"
+msgstr "Kontoinhaber:in"
+
+msgid "BIC"
+msgstr "BIC"
+
+msgid "Bank"
+msgstr "Bank"
+
+msgid "Revoked on"
+msgstr "Widerrufen am"
+
+msgid "Amount per period in €"
+msgstr "Betrag pro Zeitraum in €"
+
+msgid "Deposit in €"
+msgstr "Kaution in €"
+
+msgid "Your function in the organization"
+msgstr "Deine Funktion in der Organisation"
+
+msgid "Charged %(interval)s."
+msgstr "Abrechnung: %(interval)s."
+
+msgid "Desks"
+msgstr "Arbeitsplätze"
+
+msgid "Hours per week"
+msgstr "Stunden pro Woche"
+
+msgid "Area in m²"
+msgstr "Fläche in m²"
+
+msgid "Date of the board decision"
+msgstr "Datum des Vorstandsbeschlusses"
+
+msgid "Leave empty to end today or on the agreed end date."
+msgstr "Leer lassen, um heute oder zum vereinbarten Enddatum zu beenden."
+
+msgid "Note"
+msgstr "Notiz"
+
+msgid "Collection date"
+msgstr "Einzugsdatum"
+
+msgid "Enter the date of the signature."
+msgstr "Gib das Datum der Unterschrift an."
+
+msgid "Upload the signed PDF."
+msgstr "Lade das unterschriebene PDF hoch."
+
+msgid "This is not a valid BIC."
+msgstr "Das ist keine gültige BIC."
+
+msgid "The end date must be after the start."
+msgstr "Das Enddatum muss nach dem Beginn liegen."
+
+msgid "This is not a valid IBAN."
+msgstr "Das ist keine gültige IBAN."
+
+msgid "Application form"
+msgstr "Antragsformular"
+
+msgid "Billing interval"
+msgstr "Abrechnungsintervall"
+
+msgid "Requires a deposit"
+msgstr "Kaution erforderlich"
+
+msgid "Notice period in weeks"
+msgstr "Kündigungsfrist in Wochen"
+
+msgid "Requires an end date"
+msgstr "Enddatum erforderlich"
+
+msgid "Pre-notification"
+msgstr "Vorabankündigung"
+
+msgid "Collection day"
+msgstr "Einzugstag"
+
+msgid "Collection month"
+msgstr "Einzugsmonat"
+
+msgid "Intro text"
+msgstr "Einleitungstext"
+
+msgid "Accepting applications"
+msgstr "Nimmt Anträge an"
+
+msgid "Agreement kind"
+msgstr "Vereinbarungsart"
+
+msgid "Agreement kinds"
+msgstr "Vereinbarungsarten"
+
+msgid "Amount per period"
+msgstr "Betrag pro Zeitraum"
+
+msgid "Deposit"
+msgstr "Kaution"
+
+msgid "Function of the contact person"
+msgstr "Funktion der Ansprechperson"
+
+msgid "Kind-specific details"
+msgstr "Angaben zur Vereinbarungsart"
+
+msgid "Signed contract"
+msgstr "Unterschriebener Vertrag"
+
+msgid "Decided on"
+msgstr "Entschieden am"
+
+msgid "Mandate reference"
+msgstr "Mandatsreferenz"
+
+msgid "Signed mandate"
+msgstr "Unterschriebenes Mandat"
+
+msgid "SEPA mandate"
+msgstr "SEPA-Lastschriftmandat"
+
+msgid "SEPA mandates"
+msgstr "SEPA-Lastschriftmandate"
+
+msgid "SEPA file"
+msgstr "SEPA-Datei"
+
+msgid "Uploaded at"
+msgstr "Hochgeladen am"
+
+msgid "Number of debits"
+msgstr "Anzahl Lastschriften"
+
+msgid "Collection run"
+msgstr "Einzugslauf"
+
+msgid "Collection runs"
+msgstr "Einzugsläufe"
+
+msgid "Kind"
+msgstr "Art"
+
+msgid "Period start"
+msgstr "Zeitraum ab"
+
+msgid "Period end"
+msgstr "Zeitraum bis"
+
+msgid "Due date"
+msgstr "Fälligkeit"
+
+msgid "Collection reference"
+msgstr "Einzugsreferenz"
+
+msgid "Notified at"
+msgstr "Angekündigt am"
+
+msgid "Collected on"
+msgstr "Eingezogen am"
+
+msgid "Returned at"
+msgstr "Zurückgegeben am"
+
+msgid "Return text"
+msgstr "Text der Rücklastschrift"
+
+msgid "Invoiced at"
+msgstr "In Rechnung gestellt am"
+
+msgid "Invoice amount"
+msgstr "Rechnungsbetrag"
+
+msgid "Paid at"
+msgstr "Bezahlt am"
+
+msgid "Collection"
+msgstr "Einzug"
+
+msgid "Collections"
+msgstr "Einzüge"
+
+msgid "Key"
+msgstr "Schlüssel"
+
+msgid "Last successful sync"
+msgstr "Letzte erfolgreiche Synchronisierung"
+
+msgid "Sync state"
+msgstr "Synchronisierungsstand"
+
+msgid "Sync states"
+msgstr "Synchronisierungsstände"
+
+msgid "Transaction"
+msgstr "Buchung"
+
+msgid "Booked on"
+msgstr "Gebucht am"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Resolved"
+msgstr "Erledigt"
+
+msgid "Unmatched return"
+msgstr "Nicht zugeordnete Rücklastschrift"
+
+msgid "Unmatched returns"
+msgstr "Nicht zugeordnete Rücklastschriften"
+
+msgid "Yearly"
+msgstr "Jährlich"
+
+msgid "Monthly"
+msgstr "Monatlich"
+
+msgid "Before each collection"
+msgstr "Vor jedem Einzug"
+
+msgid "Once with the approval"
+msgstr "Einmal mit der Zusage"
+
+msgid "Membership"
+msgstr "Mitgliedschaft"
+
+msgid "Coworking"
+msgstr "Coworking"
+
+msgid "Office lease"
+msgstr "Büromiete"
+
+msgid "Cellar lease"
+msgstr "Kellermiete"
+
+msgid "Which kind-specific fields the application asks for."
+msgstr "Welche besonderen Angaben der Antrag abfragt."
+
+msgid "Granted while an agreement of this kind is active."
+msgstr "Wird vergeben, solange eine Vereinbarung dieser Art aktiv ist."
+
+msgid "Accesses of the permanent code"
+msgstr "Zugänge des Dauercodes"
+
+msgid "Leave empty when the kind grants no entrance code."
+msgstr "Leer lassen, wenn diese Art keinen Zugangscode vergibt."
+
+msgid "Day of the month on which fees are due (1 to 28)."
+msgstr "Tag im Monat, an dem Beiträge fällig sind (1 bis 28)."
+
+msgid "Yearly kinds only: month of the yearly collection date."
+msgstr "Nur für jährliche Arten: Monat des jährlichen Einzugs."
+
+msgid "Shown on the application page. Link the contract to download here."
+msgstr "Wird auf der Antragsseite angezeigt. Verlinke hier den Vertrag zum Herunterladen."
+
+msgid "Submitted"
+msgstr "Eingereicht"
+
+msgid "Ended"
+msgstr "Beendet"
+
+msgid "Decided by"
+msgstr "Entschieden von"
+
+msgid "Created by"
+msgstr "Erstellt von"
+
+msgid "Uploaded by"
+msgstr "Hochgeladen von"
+
+msgid "Fee"
+msgstr "Beitrag"
+
+msgid "Deposit refund"
+msgstr "Kautionsrückzahlung"
+
+msgid "Planned"
+msgstr "Geplant"
+
+msgid "Notified"
+msgstr "Angekündigt"
+
+msgid "Collected"
+msgstr "Eingezogen"
+
+msgid "Invoiced"
+msgstr "In Rechnung gestellt"
+
+msgid "Paid"
+msgstr "Bezahlt"
+
+msgid "Mandate"
+msgstr "Mandat"
+
+msgid "Run"
+msgstr "Einzugslauf"
+
+msgid "Required for yearly kinds."
+msgstr "Für jährliche Arten erforderlich."
+
+msgid "Only yearly kinds have a collection month."
+msgstr "Nur jährliche Arten haben einen Einzugsmonat."
+
+msgid "The organization already has a submitted or active agreement of this kind."
+msgstr "Die Organisation hat bereits eine eingereichte oder aktive Vereinbarung dieser Art."
+
+msgid "The amount must be above zero."
+msgstr "Der Betrag muss größer als null sein."
+
+msgid "This kind of agreement has no deposit."
+msgstr "Diese Vereinbarungsart hat keine Kaution."
+
+msgid "This agreement already has a mandate that is not revoked."
+msgstr "Diese Vereinbarung hat bereits ein nicht widerrufenes Mandat."
+
+msgid "Mandates can only be added to submitted or active agreements."
+msgstr "Mandate können nur zu eingereichten oder aktiven Vereinbarungen hinzugefügt werden."
+
+msgid "This agreement already has a mandate. Ask a manager to revoke it before adding a new one."
+msgstr "Diese Vereinbarung hat bereits ein Mandat. Bitte das Team, es zu widerrufen, bevor du ein neues hinzufügst."
+
+msgid "A revoked mandate cannot be changed."
+msgstr "Ein widerrufenes Mandat kann nicht geändert werden."
+
+msgid "This mandate is already revoked."
+msgstr "Dieses Mandat ist bereits widerrufen."
+
+msgid "Your organization must be confirmed before it can apply for an agreement."
+msgstr "Deine Organisation muss bestätigt sein, bevor sie eine Vereinbarung beantragen kann."
+
+msgid "Applications for this kind of agreement are closed."
+msgstr "Für diese Vereinbarungsart werden keine Anträge angenommen."
+
+msgid "The contract of a closed agreement cannot be changed."
+msgstr "Der Vertrag einer abgeschlossenen Vereinbarung kann nicht geändert werden."
+
+msgid "Only submitted agreements can be decided."
+msgstr "Nur eingereichte Vereinbarungen können entschieden werden."
+
+msgid "The signed contract is missing."
+msgstr "Der unterschriebene Vertrag fehlt."
+
+msgid "Only active agreements can be ended."
+msgstr "Nur aktive Vereinbarungen können beendet werden."
+
+msgid "Your organization already has this agreement: %(agreement)s"
+msgstr "Deine Organisation hat diese Vereinbarung bereits: %(agreement)s"
+
+msgid "The signed SEPA mandate is missing."
+msgstr "Das unterschriebene SEPA-Lastschriftmandat fehlt."
+
+msgid "The SEPA mandate is missing."
+msgstr "Das SEPA-Lastschriftmandat fehlt."
+
+msgid "No notified collections are due by this date."
+msgstr "Bis zu diesem Datum sind keine angekündigten Einzüge fällig."
+
+msgid "This run is already marked as uploaded."
+msgstr "Dieser Einzugslauf ist bereits als hochgeladen markiert."
+
+msgid "An uploaded run cannot be deleted."
+msgstr "Ein hochgeladener Einzugslauf kann nicht gelöscht werden."
+
+msgid "Only returned collections can be invoiced."
+msgstr "Nur zurückgegebene Einzüge können in Rechnung gestellt werden."
+
+msgid "This collection is already settled."
+msgstr "Dieser Einzug ist bereits abgeschlossen."
+
+msgid "The invoice could not be created in the accounting system."
+msgstr "Die Rechnung konnte in der Buchhaltung nicht erstellt werden."
+
+msgid "The signed contract was uploaded."
+msgstr "Der unterschriebene Vertrag wurde hochgeladen."
+
+msgid "The signed mandate was uploaded."
+msgstr "Das unterschriebene Mandat wurde hochgeladen."
+
+msgid "Enter the date of the board decision."
+msgstr "Gib das Datum des Vorstandsbeschlusses an."
+
+msgid "The decision was recorded."
+msgstr "Die Entscheidung wurde gespeichert."
+
+msgid "The agreement was ended."
+msgstr "Die Vereinbarung wurde beendet."
+
+msgid "The collection was updated."
+msgstr "Der Einzug wurde aktualisiert."
+
+msgid "The mandate was revoked."
+msgstr "Das Mandat wurde widerrufen."
+
+msgid "The run is marked as uploaded."
+msgstr "Der Einzugslauf ist als hochgeladen markiert."
+
+msgid "The run was deleted."
+msgstr "Der Einzugslauf wurde gelöscht."
+
+msgid "Your application was submitted."
+msgstr "Dein Antrag wurde eingereicht."
+
+msgid "The mandate was saved."
+msgstr "Das Mandat wurde gespeichert."
+
+msgid "The SEPA file was created."
+msgstr "Die SEPA-Datei wurde erstellt."
+
+msgid "Download the contract, sign it and upload it here. You can also upload it later from the agreement page."
+msgstr "Lade den Vertrag herunter, unterschreibe ihn und lade ihn hier hoch. Du kannst ihn auch später auf der Seite der Vereinbarung hochladen."
+
+msgid "Submit application"
+msgstr "Antrag einreichen"
+
+msgid "Apply for %(kind)s"
+msgstr "%(kind)s beantragen"
+
+msgid "SEPA direct debit mandate"
+msgstr "SEPA-Lastschriftmandat"
+
+msgid "Enter the bank details. If you have no signed mandate yet, save the details first: the next page shows the mandate reference and the form to print, sign and upload."
+msgstr "Gib die Bankverbindung ein. Wenn du noch kein unterschriebenes Mandat hast, speichere zuerst die Angaben: Die nächste Seite zeigt die Mandatsreferenz und das Formular zum Ausdrucken, Unterschreiben und Hochladen."
+
+msgid "Save mandate"
+msgstr "Mandat speichern"
+
+msgid "SEPA runs"
+msgstr "SEPA-Einzugsläufe"
+
+msgid "Needs attention"
+msgstr "Braucht Aufmerksamkeit"
+
+msgid "Create return invoice"
+msgstr "Rechnung für die Rücklastschrift erstellen"
+
+msgid "no active mandate"
+msgstr "kein aktives Mandat"
+
+msgid "all collection kinds"
+msgstr "alle Einzugsarten"
+
+msgid "all agreement kinds"
+msgstr "alle Vereinbarungsarten"
+
+msgid "Filter"
+msgstr "Filtern"
+
+msgid "Reference"
+msgstr "Referenz"
+
+msgid "Settle by hand"
+msgstr "Von Hand abschließen"
+
+msgid "No collections found."
+msgstr "Keine Einzüge gefunden."
+
+msgid "SEPA run for %(date)s with %(debits)s debits is not marked as uploaded."
+msgstr "Der SEPA-Einzugslauf vom %(date)s mit %(debits)s Lastschriften ist nicht als hochgeladen markiert."
+
+msgid "Manage agreements"
+msgstr "Vereinbarungen verwalten"
+
+msgid "all kinds"
+msgstr "alle Arten"
+
+msgid "No agreements found."
+msgstr "Keine Vereinbarungen gefunden."
+
+msgid "Create SEPA file"
+msgstr "SEPA-Datei erstellen"
+
+msgid "Includes all notified collections with an active mandate that are due by the collection date. Upload the file to the bank, then mark the run as uploaded."
+msgstr "Enthält alle angekündigten Einzüge mit aktivem Mandat, die bis zum Einzugsdatum fällig sind. Lade die Datei bei der Bank hoch und markiere den Einzugslauf danach als hochgeladen."
+
+msgid "Debits"
+msgstr "Lastschriften"
+
+msgid "Uploaded"
+msgstr "Hochgeladen"
+
+msgid "not uploaded"
+msgstr "nicht hochgeladen"
+
+msgid "Mark uploaded"
+msgstr "Als hochgeladen markieren"
+
+msgid "Delete this run?"
+msgstr "Diesen Einzugslauf löschen?"
+
+msgid "No runs yet."
+msgstr "Noch keine Einzugsläufe."
+
+msgid "Your organization has no agreements yet."
+msgstr "Deine Organisation hat noch keine Vereinbarungen."
+
+msgid "Apply"
+msgstr "Beantragen"
+
+msgid "Download"
+msgstr "Herunterladen"
+
+msgid "Not uploaded yet."
+msgstr "Noch nicht hochgeladen."
+
+msgid "awaiting the signed mandate"
+msgstr "wartet auf das unterschriebene Mandat"
+
+msgid "Add SEPA mandate"
+msgstr "SEPA-Lastschriftmandat hinzufügen"
+
+msgid "Upload signed contract"
+msgstr "Unterschriebenen Vertrag hochladen"
+
+msgid "No collections yet."
+msgstr "Noch keine Einzüge."
+
+msgid "Manage"
+msgstr "Verwalten"
+
+msgid "Approve"
+msgstr "Zusagen"
+
+msgid "Reject this agreement?"
+msgstr "Diese Vereinbarung ablehnen?"
+
+msgid "Reject"
+msgstr "Ablehnen"
+
+msgid "End this agreement?"
+msgstr "Diese Vereinbarung beenden?"
+
+msgid "End agreement"
+msgstr "Vereinbarung beenden"
+
+msgid "Revoked"
+msgstr "Widerrufen"
+
+msgid "Awaiting the signed mandate"
+msgstr "Wartet auf das unterschriebene Mandat"
+
+msgid "Sign the mandate"
+msgstr "Mandat unterschreiben"
+
+msgid "Download the mandate form"
+msgstr "Mandatsformular herunterladen"
+
+msgid "Upload signed mandate"
+msgstr "Unterschriebenes Mandat hochladen"
+
+msgid "Revoke"
+msgstr "Widerrufen"
+
+msgid "Revoke this mandate?"
+msgstr "Dieses Mandat widerrufen?"
+
+msgid "Revoke mandate"
+msgstr "Mandat widerrufen"
+
+msgid "Print the mandate form, fill in the bank details and the mandate reference %(reference)s, sign it and upload the scan below."
+msgstr "Drucke das Mandatsformular aus, trage die Bankverbindung und die Mandatsreferenz %(reference)s ein, unterschreibe es und lade den Scan unten hoch."
+
+msgid "Agreement application received"
+msgstr "Antrag auf Vereinbarung eingegangen"
+
+msgid "Manager new agreement application"
+msgstr "Team: neuer Antrag auf Vereinbarung"
+
+msgid "Agreement approved"
+msgstr "Vereinbarung zugesagt"
+
+msgid "Agreement rejected"
+msgstr "Vereinbarung abgelehnt"
+
+msgid "Agreement ended"
+msgstr "Vereinbarung beendet"
+
+msgid "Direct debit pre-notification"
+msgstr "Vorabankündigung der Lastschrift"
+
+msgid "Invoice for a returned direct debit"
+msgstr "Rechnung für eine Rücklastschrift"
+
+msgid "Agreements, mandates and collections"
+msgstr "Vereinbarungen, Mandate und Einzüge"

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% load i18n crispy_forms_tags %}
+
+{% block title %}
+  {{ kind.name }}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{{ organization.get_absolute_url }}">{{ organization.name }}</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url 'agreements:organization-agreements' organization=organization.slug %}">{% trans "Agreements" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ kind.name }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">{% blocktrans with kind=kind.name %}Apply for {{ kind }}{% endblocktrans %}</h1>
+  {% if kind.intro_text %}<div class="mt-3" id="kind-intro">{{ kind.intro_text|safe }}</div>{% endif %}
+  <p class="mt-3">
+    {% trans "Download the contract, sign it and upload it here. You can also upload it later from the agreement page." %}
+  </p>
+  <form method="post" enctype="multipart/form-data" class="mt-3">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">{% trans "Submit application" %}</button>
+  </form>
+{% endblock content %}

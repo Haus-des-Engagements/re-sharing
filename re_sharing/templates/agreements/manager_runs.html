@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% load i18n crispy_forms_tags %}
+
+{% block title %}
+  {% trans "SEPA runs" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "SEPA runs" %}</h1>
+  <p>
+    <a href="{% url 'agreements:manager-list-agreements' %}">{% trans "Agreements" %}</a> ·
+    <a href="{% url 'agreements:manager-collections' %}">{% trans "Collections" %}</a>
+  </p>
+  <form method="post" class="row g-2 align-items-end mt-3">
+    {% csrf_token %}
+    <div class="col-auto">{{ form.collection_date|as_crispy_field }}</div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">{% trans "Create SEPA file" %}</button>
+    </div>
+  </form>
+  <p class="text-muted mt-2">
+    {% trans "Includes all notified collections with an active mandate that are due by the collection date. Upload the file to the bank, then mark the run as uploaded." %}
+  </p>
+  <div class="table-responsive mt-4">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Collection date" %}</th>
+          <th scope="col">{% trans "Debits" %}</th>
+          <th scope="col">{% trans "Total" %}</th>
+          <th scope="col">{% trans "Created" %}</th>
+          <th scope="col">{% trans "Uploaded" %}</th>
+          <th scope="col">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+          <tr>
+            <td>{{ run.collection_date }}</td>
+            <td>{{ run.count }}</td>
+            <td>{{ run.total_amount }} €</td>
+            <td>{{ run.created|date:"SHORT_DATETIME_FORMAT" }} {{ run.created_by|default:"" }}</td>
+            <td>
+              {% if run.uploaded_at %}
+                {{ run.uploaded_at|date:"SHORT_DATETIME_FORMAT" }} {{ run.uploaded_by|default:"" }}
+              {% else %}
+                <span class="badge text-bg-warning">{% trans "not uploaded" %}</span>
+              {% endif %}
+            </td>
+            <td class="d-flex gap-1">
+              {% if run.xml_file %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ run.xml_file.url }}">{% trans "SEPA file" %}</a>
+              {% endif %}
+              {% if not run.uploaded_at %}
+                <form method="post"
+                      action="{% url 'agreements:manager-run-uploaded' run=run.uuid %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% trans "Mark uploaded" %}</button>
+                </form>
+                <form method="post"
+                      action="{% url 'agreements:manager-run-delete' run=run.uuid %}">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-danger"
+                          onclick="return confirm('{% trans "Delete this run?" %}')">{% trans "Delete" %}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">{% trans "No runs yet." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

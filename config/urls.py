@@ -31,6 +31,7 @@ urlpatterns = [
     ),
     path("tinymce/", include("tinymce.urls")),
     path("dashboard/", include("re_sharing.dashboards.urls", namespace="dashboards")),
+    path("agreements/", include("re_sharing.agreements.urls", namespace="agreements")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

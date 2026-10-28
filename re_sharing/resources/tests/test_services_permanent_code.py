@@ -29,6 +29,19 @@ class TestCreatePermanentCode(TestCase):
         self.access2 = AccessFactory(id=2)
         self.access8 = AccessFactory(id=8)
 
+    @patch(
+        "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"
+    )
+    def test_create_permanent_code_with_custom_accesses(self, mock_email):
+        custom = AccessFactory(name="Coworking door", slug="coworking-door")
+
+        permanent_code = create_permanent_code_for_organization(
+            self.organization.slug, self.user, accesses=[custom]
+        )
+
+        assert list(permanent_code.accesses.all()) == [custom]
+        mock_email.enqueue.assert_called_once_with(permanent_code.id)
+
     @patch("re_sharing.resources.services_permanent_code._generate_permanent_code")
     @patch(
         "re_sharing.resources.services_permanent_code.send_permanent_code_created_email"

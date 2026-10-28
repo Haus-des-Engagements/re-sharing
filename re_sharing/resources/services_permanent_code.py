@@ -23,8 +23,11 @@ def _generate_permanent_code() -> str:
             return code
 
 
+DEFAULT_PERMANENT_CODE_ACCESS_IDS = [1, 2, 8]
+
+
 def create_permanent_code_for_organization(
-    organization_slug: str, created_by, name: str = ""
+    organization_slug: str, created_by, name: str = "", accesses=None
 ) -> PermanentCode:
     """Create a new permanent code for an organization.
 
@@ -33,6 +36,8 @@ def create_permanent_code_for_organization(
         created_by: The user creating the code (for audit)
         name: Optional custom name for the code. Falls back to a default
             derived from the organization name when blank.
+        accesses: The accesses the code opens. Defaults to the accesses
+            with the ids in ``DEFAULT_PERMANENT_CODE_ACCESS_IDS``.
 
     Returns:
         The created PermanentCode instance
@@ -42,8 +47,8 @@ def create_permanent_code_for_organization(
     # Generate new code
     code = _generate_permanent_code()
 
-    # Get accesses 1, 2, 8
-    accesses = Access.objects.filter(id__in=[1, 2, 8])
+    if accesses is None:
+        accesses = Access.objects.filter(id__in=DEFAULT_PERMANENT_CODE_ACCESS_IDS)
 
     # Use the provided name, falling back to a default derived from the org
     code_name = name.strip() or f"Permanent code for {organization.name}"

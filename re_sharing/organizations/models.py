@@ -453,6 +453,25 @@ class EmailTemplate(TimeStampedModel):
             "permanent_code_invalidated",
             _("Permanent code invalidated"),
         )
+        AGREEMENT_APPLICATION_RECEIVED = (
+            "agreement_application_received",
+            _("Agreement application received"),
+        )
+        MANAGER_NEW_AGREEMENT = (
+            "manager_new_agreement",
+            _("Manager new agreement application"),
+        )
+        AGREEMENT_APPROVED = "agreement_approved", _("Agreement approved")
+        AGREEMENT_REJECTED = "agreement_rejected", _("Agreement rejected")
+        AGREEMENT_ENDED = "agreement_ended", _("Agreement ended")
+        AGREEMENT_PRE_NOTIFICATION = (
+            "agreement_pre_notification",
+            _("Direct debit pre-notification"),
+        )
+        AGREEMENT_RETURN_INVOICE = (
+            "agreement_return_invoice",
+            _("Invoice for a returned direct debit"),
+        )
 
     email_type = CharField(max_length=50, choices=EmailTypeChoices, unique=True)
     subject = CharField(max_length=255)

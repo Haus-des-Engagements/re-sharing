@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load i18n crispy_forms_tags %}
+
+{% block title %}
+  {% trans "SEPA mandate" %}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{{ agreement.get_absolute_url }}">{{ agreement }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "SEPA mandate" %}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">{% trans "SEPA direct debit mandate" %}</h1>
+  <p class="mt-3">
+    {% trans "Enter the bank details. If you have no signed mandate yet, save the details first: the next page shows the mandate reference and the form to print, sign and upload." %}
+  </p>
+  <form method="post" enctype="multipart/form-data" class="mt-3">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">{% trans "Save mandate" %}</button>
+  </form>
+{% endblock content %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% load i18n crispy_forms_tags %}
+
+{% block title %}
+  {{ mandate.reference }}
+{% endblock title %}
+{% block content %}
+  <div class="my-3">
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb rounded-3">
+        <li class="breadcrumb-item">
+          <a href="{{ agreement.get_absolute_url }}">{{ agreement }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ mandate.reference }}</li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-4">
+    {% trans "SEPA mandate" %} {{ mandate.reference }}
+    {% if mandate.revoked_on %}
+      <span class="badge text-bg-secondary">{% trans "Revoked" %}</span>
+    {% elif mandate.is_active %}
+      <span class="badge text-bg-success">{% trans "Active" %}</span>
+    {% else %}
+      <span class="badge text-bg-warning">{% trans "Awaiting the signed mandate" %}</span>
+    {% endif %}
+  </h1>
+  <table class="table mt-3">
+    <tbody>
+      <tr>
+        <td class="first-column">{% trans "Mandate reference" %}</td>
+        <td>{{ mandate.reference }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "Account holder" %}</td>
+        <td>{{ mandate.account_holder }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "IBAN" %}</td>
+        <td id="mandate-iban">{{ iban }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "BIC" %}</td>
+        <td>{{ mandate.bic|default:"–" }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "Bank" %}</td>
+        <td>{{ mandate.bank_name|default:"–" }}</td>
+      </tr>
+      <tr>
+        <td class="first-column">{% trans "Signed mandate" %}</td>
+        <td>
+          {% if mandate.signed_document %}
+            <a href="{{ mandate.signed_document.url }}">{% trans "Download" %}</a> ({{ mandate.signed_on }})
+          {% else %}
+            {% trans "Not uploaded yet." %}
+          {% endif %}
+        </td>
+      </tr>
+      {% if mandate.revoked_on %}
+        <tr>
+          <td class="first-column">{% trans "Revoked on" %}</td>
+          <td>{{ mandate.revoked_on }}</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% if not mandate.signed_document and not mandate.revoked_on %}
+    <h2 class="mt-5">{% trans "Sign the mandate" %}</h2>
+    <p>
+      {% blocktrans with reference=mandate.reference %}Print the mandate form, fill in the bank details and the mandate reference {{ reference }}, sign it and upload the scan below.{% endblocktrans %}
+    </p>
+    {% if mandate_form_url %}
+      <p>
+        <a class="btn btn-outline-primary" href="{{ mandate_form_url }}">{% trans "Download the mandate form" %}</a>
+      </p>
+    {% endif %}
+    <form method="post"
+          enctype="multipart/form-data"
+          action="{% url 'agreements:upload-signed-mandate' mandate=mandate.uuid %}">
+      {% csrf_token %}
+      {{ upload_form|crispy }}
+      <button type="submit" class="btn btn-primary">{% trans "Upload signed mandate" %}</button>
+    </form>
+  {% endif %}
+  {% if is_manager and not mandate.revoked_on %}
+    <h2 class="mt-5">{% trans "Revoke" %}</h2>
+    <form method="post"
+          class="row g-2 align-items-end"
+          action="{% url 'agreements:manager-revoke-mandate' mandate=mandate.uuid %}">
+      {% csrf_token %}
+      <div class="col-auto">{{ revoke_form.revoked_on|as_crispy_field }}</div>
+      <div class="col-auto">
+        <button type="submit"
+                class="btn btn-outline-danger"
+                onclick="return confirm('{% trans "Revoke this mandate?" %}')">{% trans "Revoke mandate" %}</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock content %}

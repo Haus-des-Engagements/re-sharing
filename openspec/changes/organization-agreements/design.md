@@ -105,7 +105,7 @@ The first-period collection (D5) gets no pre-notification email, whatever the ki
 
 ### D7: SEPA runs, upload confirmation, collected by absence of return
 
-`CollectionRun`: `collection_date`, `xml_file`, `created_by`, `uploaded_at`, `uploaded_by`, `total_amount`, `count`. A manager builds a run from notified collections with an active mandate and due date up to the collection date. The XML is a pain.008 CORE file generated with `sepaxml`, sequence type RCUR, batch booking false so the bank books one line per debit, end-to-end id equal to the collection reference, mandate id and signature date from the mandate, remittance information naming the kind and period. Collections become `submitted`.
+`CollectionRun`: `collection_date`, `xml_file`, `created_by`, `uploaded_at`, `uploaded_by`, `total_amount`, `count`. A manager builds a run from notified collections with an active mandate and due date up to the collection date. The XML is a pain.008.001.08 CORE file generated with `sepaxml`, sequence type RCUR, batch booking false so the bank books one line per debit, end-to-end id equal to the collection reference, mandate id and signature date from the mandate, remittance information naming the kind and period. Collections become `submitted`.
 
 The manager marks the run uploaded after the bank accepted the file. A run that is not marked uploaded can be deleted, returning its collections to `notified`; its collections never become `collected`. A nightly command `sync_collection_payments` sets `collected` on submitted collections of uploaded runs whose collection date lies more than `COLLECTION_RETURN_WINDOW_DAYS` (default 7) in the past and that have no return.
 
@@ -115,11 +115,11 @@ Alternative: positive confirmation by matching credit transactions. Rejected, a 
 
 The nightly command lists BuchhaltungsButler transactions since the last run and marks a submitted or collected collection `returned` when a transaction with negative amount contains the collection reference or, failing that, the mandate reference plus the amount, in `purpose`, `booking_text` or `payment_reference`. The matched text is stored as `return_text`. Collected collections can therefore still turn returned, since a debtor refund is possible for eight weeks.
 
-For a returned collection the manager triggers `invoice_returned_collection`: an outbound invoice in BuchhaltungsButler for the collection amount plus `SEPA_RETURN_FEE`, due in 14 days, with the organization address and a transfer request; the invoice number and amount are stored and the status becomes `invoiced`, and an email with the invoice number as payment purpose goes to the organization. The nightly command then reads the receipt by invoice number and sets `paid`. Managers can also mark any collection paid or cancelled by hand with a note.
+For a returned collection the manager triggers `invoice_returned_collection`: an outbound e-invoice in BuchhaltungsButler for the collection amount plus `SEPA_RETURN_FEE`, due in 14 days, with the organization address and a transfer request; the invoice number and amount are stored and the status becomes `invoiced`, and an email with the invoice number as payment purpose goes to the organization. The nightly command then reads the receipt by invoice number and sets `paid`. Managers can also mark any collection paid or cancelled by hand with a note.
 
 ### D9: Shared accounting client
 
-`re_sharing/utils/buchhaltungsbutler.py` with `create_invoice`, `create_draft_invoice`, `create_einvoice`, `get_receipts`, `get_transactions`, raising one `BuchhaltungsButlerError`. The bookings tasks keep names and results.
+`re_sharing/utils/buchhaltungsbutler.py` with `create_draft_invoice`, `create_einvoice`, `get_receipts`, `get_transactions`, raising one `BuchhaltungsButlerError`. The bookings tasks keep names and results. Return invoices use `create_einvoice`, the endpoint that already returns the invoice number for bookings.
 
 ### D10: Existing agreements
 
