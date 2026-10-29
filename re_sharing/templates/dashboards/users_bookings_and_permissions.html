@@ -6,172 +6,74 @@
   {% trans "Dashboard" %}
 {% endblock title %}
 {% block content %}
-  <div class="my-3">
-    <nav class="breadcrumb-nav" aria-label="breadcrumb">
-      <ol class="breadcrumb rounded-3">
-        <li class="breadcrumb-item active" aria-current="page">{% trans "My Dashboard" %}</li>
-      </ol>
-    </nav>
-  </div>
-  <div class="row mt-4">
-    <h1>{% trans "Hi" %}, {{ user.first_name }}!</h1>
-  </div>
-  <div class="row mt-5 col-md-6">
-    <h2>
-      {% trans "My organizations" %}
-      <a class="btn btn-outline-primary"
-         href="{% url 'organizations:create-organization' %}"
-         role="button">
-        <svg width="1em" height="1em">
-          <use href="#bi-plus-lg" />
-        </svg>
-        {% trans "New Organization" %}
-      </a>
-    </h2>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Name" %}</th>
-            <th scope="col">{% trans "Status" %}</th>
-            <th scope="col">{% trans "Free bookings" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for bp in booking_permissions %}
-            <tr>
-              <td>
-                <a href="{% url "organizations:show-organization" bp.organization.slug %}">{{ bp.organization }}</a>
-              </td>
-              <td>
-                <span class="fs-6 badge text-bg-status-{{ bp.organization.status }}">{{ bp.organization.get_status_display }}</span>
-              </td>
-              <td>
-                {% for entry in bp.free_bookings %}
-                  {% blocktranslate with year=entry.year used=entry.used allowance=entry.allowance trimmed %}
-                    {{ year }}: {{ used }} of {{ allowance }} used
-                  {% endblocktranslate %}
-                  {% if not forloop.last %}<br />{% endif %}
-                {% endfor %}
-              </td>
-            </tr>
-          {% empty %}
-            <em>{% trans "No organizations yet. Go and add yours!" %}</em>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div class="row mt-5">
-    <h2>
-      {% trans "My upcoming bookings and requests" %}
-      <a class="btn btn-outline-primary"
-         href="{% url 'bookings:create-booking' %}"
-         role="button">
-        <svg width="1em" height="1em">
-          <use href="#bi-plus-lg" />
-        </svg>
-        {% trans "New Booking Request" %}
-      </a>
-    </h2>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Date" %}</th>
-            <th scope="col">{% trans "Timespan" %}</th>
-            <th scope="col">{% trans "Resource" %}</th>
-            <th scope="col">{% trans "Title" %}</th>
-            <th scope="col">{% trans "Organization" %}</th>
-            <th scope="col">{% trans "Status" %}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
-            <tr>
-              <td>{{ booking.timespan.lower|date:"l, d.m.Y" }}</td>
-              <td>{{ booking.timespan.lower|date:"H:i" }} - {{ booking.timespan.upper|date:"H:i" }}</td>
-              <td>{{ booking.resource }}</td>
-              <td>
-                <a href="{% url "bookings:show-booking" booking.slug %}">{{ booking.title }}</a>
-              </td>
-              <td>{{ booking.organization }}</td>
-              <td>
-                <span class="fs-6 badge text-bg-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
-              </td>
-              <td>
-                <a class="btn btn-outline-primary btn-sm"
-                   href="{% url 'bookings:show-booking' booking=booking.slug %}">{% trans "Details" %}</a>
-              </td>
-            </tr>
-          {% empty %}
-            <em>{% trans "No upcoming bookings" %}</em>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div>
-      <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a> {% trans "or" %} <a href="{% url "bookings:list-booking-series" %}">{% trans "show booking series." %}</a>
-    </div>
-  </div>
-  {% if request.user.is_manager %}
-    <div class="row mt-5">
-      <h2>
-        {% trans "My equipment loans" %}
-        <a class="btn btn-outline-primary"
-           href="{% url 'bookings:create-item-booking' %}"
-           role="button">
-          <svg width="1em" height="1em">
+  <h1 class="mt-4">{% trans "Hi" %}, {{ user.first_name }}!</h1>
+  <div class="d-flex flex-column gap-4 my-4">
+    <section class="card">
+      <div class="card-header d-flex align-items-center justify-content-between gap-2">
+        <h2 class="h5 mb-0">{% trans "My organizations" %}</h2>
+        <a class="btn btn-sm btn-outline-primary flex-shrink-0"
+           href="{% url 'organizations:create-organization' %}"
+           aria-label="{% trans "New Organization" %}">
+          <svg width="1em" height="1em" aria-hidden="true">
             <use href="#bi-plus-lg" />
           </svg>
-          {% trans "Borrow Equipment" %}
+          <span class="d-none d-sm-inline">{% trans "New Organization" %}</span>
         </a>
-      </h2>
-      <div class="table-responsive">
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th scope="col">{% trans "Created" %}</th>
-              <th scope="col">{% trans "Items" %}</th>
-              <th scope="col">{% trans "Period" %}</th>
-              <th scope="col">{% trans "Organization" %}</th>
-              <th scope="col">{% trans "Status" %}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for loan in equipment_loans %}
-              <tr>
-                <td>{{ loan.created|date:"d.m.Y" }}</td>
-                <td>
-                  {% for booking in loan.bookings_of_bookinggroup.all %}
-                    {{ booking.quantity }}x {{ booking.resource.name }}
-                    {% if not forloop.last %},{% endif %}
-                  {% endfor %}
-                </td>
-                <td>
-                  {% with first_booking=loan.bookings_of_bookinggroup.first %}
-                    {% if first_booking %}
-                      {{ first_booking.timespan.lower|date:"d.m." }} - {{ first_booking.timespan.upper|date:"d.m.Y" }}
-                    {% endif %}
-                  {% endwith %}
-                </td>
-                <td>{{ loan.organization }}</td>
-                <td>
-                  <span class="fs-6 badge text-bg-status-{{ loan.status }}">{{ loan.get_status_display }}</span>
-                </td>
-                <td>
-                  <a class="btn btn-outline-primary btn-sm"
-                     href="{% url 'bookings:show-booking-group' slug=loan.slug %}">{% trans "Details" %}</a>
-                </td>
-              </tr>
-            {% empty %}
-              <em>{% trans "No equipment loans" %}</em>
-            {% endfor %}
-          </tbody>
-        </table>
       </div>
-    </div>
-  {% endif %}
+      <div class="list-group list-group-flush">
+        {% for bp in booking_permissions %}
+          {% include "dashboards/_organization_row.html" with organization=bp.organization free_bookings=bp.free_bookings %}
+        {% empty %}
+          <div class="list-group-item text-body-secondary fst-italic">
+            {% trans "No organizations yet. Go and add yours!" %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-header d-flex align-items-center justify-content-between gap-2">
+        <h2 class="h5 mb-0">{% trans "My upcoming bookings and requests" %}</h2>
+        <a class="btn btn-sm btn-outline-primary flex-shrink-0"
+           href="{% url 'bookings:create-booking' %}"
+           aria-label="{% trans "New Booking Request" %}">
+          <svg width="1em" height="1em" aria-hidden="true">
+            <use href="#bi-plus-lg" />
+          </svg>
+          <span class="d-none d-sm-inline">{% trans "New Booking Request" %}</span>
+        </a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for booking in bookings %}
+          {% include "dashboards/_booking_row.html" %}
+        {% empty %}
+          <div class="list-group-item text-body-secondary fst-italic">{% trans "No upcoming bookings" %}</div>
+        {% endfor %}
+      </div>
+      <div class="card-footer small">
+        <a href="{% url "bookings:list-bookings" %}">{% trans "Show all bookings" %}</a> {% trans "or" %} <a href="{% url "bookings:list-booking-series" %}">{% trans "show booking series." %}</a>
+      </div>
+    </section>
+    {% if request.user.is_manager %}
+      <section class="card">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+          <h2 class="h5 mb-0">{% trans "My equipment loans" %}</h2>
+          <a class="btn btn-sm btn-outline-primary flex-shrink-0"
+             href="{% url 'bookings:create-item-booking' %}"
+             aria-label="{% trans "Borrow Equipment" %}">
+            <svg width="1em" height="1em" aria-hidden="true">
+              <use href="#bi-plus-lg" />
+            </svg>
+            <span class="d-none d-sm-inline">{% trans "Borrow Equipment" %}</span>
+          </a>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for loan in equipment_loans %}
+            {% include "dashboards/_loan_row.html" %}
+          {% empty %}
+            <div class="list-group-item text-body-secondary fst-italic">{% trans "No equipment loans" %}</div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
 {% endblock content %}

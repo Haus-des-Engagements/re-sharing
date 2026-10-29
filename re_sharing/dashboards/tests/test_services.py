@@ -137,3 +137,58 @@ class TestGetFreeBookingsOverview(TestCase):
         )
 
         assert get_free_bookings_overview(user=self.user) == {}
+
+
+class TestSelectableGroupsOnBookingPermissions(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+
+    def _organization_with_groups(self, name, groups):
+        organization = OrganizationFactory(name=name)
+        organization.organization_groups.add(*groups)
+        BookingPermissionFactory(
+            user=self.user,
+            organization=organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        return organization
+
+    def test_only_selectable_groups_sorted_by_name(self):
+        self._organization_with_groups(
+            "Org",
+            [
+                OrganizationGroupFactory(
+                    name="Self-help group", show_on_organization_creation=True
+                ),
+                OrganizationGroupFactory(
+                    name="Club member", show_on_organization_creation=True
+                ),
+                OrganizationGroupFactory(
+                    name="Internal tag", show_on_organization_creation=False
+                ),
+            ],
+        )
+
+        _, booking_permissions, _ = get_users_bookings_and_permissions(user=self.user)
+
+        groups = next(iter(booking_permissions)).organization.selectable_groups
+        assert [group.name for group in groups] == ["Club member", "Self-help group"]
+
+    def test_groups_load_in_constant_number_of_queries(self):
+        for i in range(3):
+            self._organization_with_groups(
+                f"Org {i}",
+                [
+                    OrganizationGroupFactory(
+                        name=f"Group {i}", show_on_organization_creation=True
+                    )
+                ],
+            )
+
+        # booking permissions + organizations (joined) + groups prefetch
+        with self.assertNumQueries(2):
+            _, booking_permissions, _ = get_users_bookings_and_permissions(
+                user=self.user
+            )
+            for booking_permission in booking_permissions:
+                list(booking_permission.organization.selectable_groups)

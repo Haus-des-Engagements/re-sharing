@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import time
 from datetime import timedelta
 from http import HTTPStatus
 
@@ -11,18 +12,179 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateformat import format as date_format
 
+from re_sharing.bookings.models import BookingGroup
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.dashboards.views import users_bookings_and_permissions_dashboard_view
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+from re_sharing.providers.tests.factories import ManagerFactory
 from re_sharing.resources.models import Resource
 from re_sharing.resources.tests.factories import CompensationFactory
 from re_sharing.resources.tests.factories import ResourceFactory
 from re_sharing.users.tests.factories import UserFactory
 from re_sharing.utils.models import BookingStatus
+
+DASHBOARD_URL_NAME = "dashboards:users_bookings_and_permissions"
+
+
+class TestDashboardLayout(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.organization = OrganizationFactory(name="Neighbourhood Club")
+        BookingPermissionFactory(
+            user=self.user,
+            organization=self.organization,
+            status=BookingPermission.Status.CONFIRMED,
+        )
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def _get(self):
+        return self.client.get(reverse(DASHBOARD_URL_NAME))
+
+    def _make_manager(self):
+        ManagerFactory(user=self.user)
+
+    def test_renders_cards_without_tables_or_breadcrumb(self):
+        response = self._get()
+
+        self.assertContains(response, 'class="card')
+        self.assertNotContains(response, "<table")
+        self.assertNotContains(response, "breadcrumb")
+
+    def test_regular_user_sees_organizations_before_bookings_and_no_loans(self):
+        html = self._get().content.decode()
+
+        assert html.index("My organizations") < html.index("My upcoming bookings")
+        assert "My equipment loans" not in html
+
+    def test_manager_sees_equipment_loans_after_bookings(self):
+        self._make_manager()
+
+        html = self._get().content.decode()
+
+        assert (
+            html.index("My organizations")
+            < html.index("My upcoming bookings")
+            < html.index("My equipment loans")
+        )
+
+    def test_organization_row_links_to_organization(self):
+        response = self._get()
+
+        self.assertContains(
+            response,
+            reverse("organizations:show-organization", args=[self.organization.slug]),
+        )
+        self.assertContains(response, "Neighbourhood Club")
+        self.assertContains(response, self.organization.get_status_display())
+
+    def test_organization_row_shows_selectable_groups_only(self):
+        self.organization.organization_groups.add(
+            OrganizationGroupFactory(
+                name="Self-help group", show_on_organization_creation=True
+            ),
+            OrganizationGroupFactory(
+                name="Internal tag", show_on_organization_creation=False
+            ),
+        )
+
+        response = self._get()
+
+        self.assertContains(response, "Self-help group")
+        self.assertNotContains(response, "Internal tag")
+
+    def test_booking_row_shows_details_and_links_to_booking(self):
+        resource = ResourceFactory(name="Big Hall")
+        booking = BookingFactory(
+            title="Plenary meeting",
+            organization=self.organization,
+            resource=resource,
+            status=BookingStatus.PENDING,
+            start_date=timezone.localdate() + timedelta(days=1),
+            start_time=time(18, 0),
+            end_time=time(20, 0),
+        )
+
+        response = self._get()
+
+        start = timezone.localtime(booking.timespan.lower)
+        self.assertContains(
+            response, reverse("bookings:show-booking", args=[booking.slug])
+        )
+        self.assertContains(response, date_format(start, "D d.m."))
+        self.assertContains(response, "18:00\N{EN DASH}20:00")
+        self.assertContains(response, "Plenary meeting")
+        self.assertContains(response, "Big Hall")
+        self.assertContains(response, booking.get_status_display())
+        self.assertNotContains(response, ">Details<")
+
+    def test_manager_sees_loan_row_linking_to_booking_group(self):
+        self._make_manager()
+        group = BookingGroup.objects.create(
+            organization=self.organization,
+            user=self.user,
+            status=BookingStatus.CONFIRMED,
+        )
+        BookingFactory(
+            organization=self.organization,
+            resource=ResourceFactory(name="Beamer"),
+            booking_group=group,
+            quantity=2,
+            is_item_booking=True,
+            start_date=timezone.localdate() + timedelta(days=2),
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+        )
+
+        response = self._get()
+
+        self.assertContains(
+            response,
+            reverse("bookings:show-booking-group", kwargs={"slug": group.slug}),
+        )
+        self.assertContains(response, "2 Beamer")
+        self.assertContains(response, group.get_status_display())
+
+    def test_empty_states_are_rows_inside_their_card(self):
+        user = UserFactory()
+        self.client.force_login(user)
+
+        response = self._get()
+
+        self.assertInHTML(
+            '<div class="list-group-item text-body-secondary fst-italic">'
+            "No organizations yet. Go and add yours!</div>",
+            response.content.decode(),
+        )
+        self.assertInHTML(
+            '<div class="list-group-item text-body-secondary fst-italic">'
+            "No upcoming bookings</div>",
+            response.content.decode(),
+        )
+
+    def test_create_actions_have_accessible_labels(self):
+        self._make_manager()
+
+        response = self._get()
+
+        for url_name, label in [
+            ("organizations:create-organization", "New Organization"),
+            ("bookings:create-booking", "New Booking Request"),
+            ("bookings:create-item-booking", "Borrow Equipment"),
+        ]:
+            self.assertContains(response, f'href="{reverse(url_name)}"')
+            self.assertContains(response, f'aria-label="{label}"')
+
+    def test_bookings_card_links_to_all_bookings_and_series(self):
+        response = self._get()
+
+        self.assertContains(response, reverse("bookings:list-bookings"))
+        self.assertContains(response, reverse("bookings:list-booking-series"))
 
 
 class TestListBookingsView(TestCase):

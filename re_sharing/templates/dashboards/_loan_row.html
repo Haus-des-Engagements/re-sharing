@@ -1,0 +1,15 @@
+<a class="list-group-item list-group-item-action"
+   href="{% url 'bookings:show-booking-group' slug=loan.slug %}">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <span>
+      {% with first_booking=loan.bookings_of_bookinggroup.first %}
+        {% if first_booking %}
+          {{ first_booking.timespan.lower|date:"d.m." }}–{{ first_booking.timespan.upper|date:"d.m.Y" }}
+        {% endif %}
+      {% endwith %}
+    </span>
+    <span class="badge flex-shrink-0 text-bg-status-{{ loan.status }}">{{ loan.get_status_display }}</span>
+  </div>
+  <div class="fw-semibold text-break">{{ loan.get_items_summary }}</div>
+  <div class="small text-body-secondary">{{ loan.organization }}</div>
+</a>

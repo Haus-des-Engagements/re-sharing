@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<a class="list-group-item list-group-item-action"
+   href="{% url "organizations:show-organization" organization.slug %}">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <span class="fw-semibold text-break">{{ organization }}</span>
+    <span class="badge flex-shrink-0 text-bg-status-{{ organization.status }}">{{ organization.get_status_display }}</span>
+  </div>
+  {% if organization.selectable_groups %}
+    <div class="d-flex flex-wrap gap-1 my-1">
+      {% for group in organization.selectable_groups %}
+        <span class="badge rounded-pill fw-normal text-body-secondary bg-body-tertiary border">{{ group.name }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% if free_bookings %}
+    <div class="small text-body-secondary">
+      {% for entry in free_bookings %}
+        {% blocktranslate with year=entry.year used=entry.used allowance=entry.allowance trimmed %}
+          {{ year }}: {{ used }} of {{ allowance }} used
+        {% endblocktranslate %}
+        {% if not forloop.last %}<br />{% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</a>

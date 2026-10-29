@@ -1,11 +1,13 @@
 from datetime import date
 
+from django.db.models import Prefetch
 from django.db.models import QuerySet
 from django.utils import timezone
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingGroup
 from re_sharing.organizations.models import BookingPermission
+from re_sharing.organizations.models import OrganizationGroup
 from re_sharing.organizations.selectors import get_free_bookings_allowance
 from re_sharing.organizations.selectors import get_free_bookings_used
 from re_sharing.organizations.services import (
@@ -18,7 +20,20 @@ from re_sharing.utils.models import BookingStatus
 def get_users_bookings_and_permissions(
     *, user: User
 ) -> tuple[QuerySet[Booking], QuerySet[BookingPermission], QuerySet[BookingGroup]]:
-    booking_permissions = BookingPermission.objects.filter(user=user)
+    booking_permissions = (
+        BookingPermission.objects.filter(user=user)
+        .select_related("organization")
+        .prefetch_related(
+            # only groups users choose themselves; the others are internal tags
+            Prefetch(
+                "organization__organization_groups",
+                queryset=OrganizationGroup.objects.filter(
+                    show_on_organization_creation=True
+                ).order_by("name"),
+                to_attr="selectable_groups",
+            )
+        )
+    )
     organizations = organizations_with_confirmed_bookingpermission(user)
     bookings = (
         Booking.objects.filter(organization__in=organizations)
