@@ -122,9 +122,10 @@ class ManagerCreateAgreementTest(TestCase):
     def test_unconfirmed_organization_refused(self):
         self.organization.status = Organization.Status.PENDING
         self.organization.save()
-        form = _create_form(
-            self.kind, OrganizationFactory(status=Organization.Status.CONFIRMED)
+        other = OrganizationFactory(
+            name="Other confirmed organization", status=Organization.Status.CONFIRMED
         )
+        form = _create_form(self.kind, other)
 
         with pytest.raises(AgreementError):
             manager_create_agreement(self.manager, self.organization, self.kind, form)

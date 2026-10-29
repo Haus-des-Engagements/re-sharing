@@ -8,6 +8,7 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 from django.test import TestCase
 from django.utils import timezone
@@ -160,6 +161,9 @@ def local_dt(day: date, hour: int = 10, minute: int = 0) -> datetime:
 def confirmed_booking(organization, day: date, hour=10, minute=0, **kwargs):
     start = local_dt(day, hour, minute)
     kwargs.setdefault("status", BookingStatus.CONFIRMED)
+    # Own room per booking: random room names can repeat, and the factory
+    # would then reuse a room with an overlapping booking.
+    kwargs.setdefault("resource", ResourceFactory(name=f"room-{uuid4().hex}"))
     return BookingFactory(
         organization=organization,
         timespan=(start, start + timedelta(minutes=30)),

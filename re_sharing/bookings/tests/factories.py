@@ -8,8 +8,10 @@ from django.utils import timezone
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
+from factory import Sequence
 from factory import SubFactory
 from factory.django import DjangoModelFactory
+from faker import Faker as FakerGenerator
 from psycopg.types.range import Range
 
 from re_sharing.bookings.models import Booking
@@ -29,9 +31,14 @@ def create_timespan(start_datetime, duration_in_hours):
     return Range(start_datetime, start_datetime + timedelta(hours=duration_in_hours))
 
 
+# Random default names get a running number: the factories look objects up
+# by slug, and a repeated random word would otherwise return an existing object.
+fake = FakerGenerator()
+
+
 class BookingFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
-    title = Faker("word")
+    title = Sequence(lambda n: f"{fake.word()}-{n}")
     slug = LazyAttribute(lambda o: slugify(o.title))
     organization = SubFactory(
         "re_sharing.organizations.tests.factories.OrganizationFactory"
@@ -91,7 +98,7 @@ class BookingSeriesFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
     rrule = "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=5;BYDAY=MO,TU"
     reminder_emails = True
-    title = Faker("word")
+    title = Sequence(lambda n: f"{fake.word()}-{n}")
     slug = LazyAttribute(lambda o: slugify(o.title))
     organization = SubFactory(
         "re_sharing.organizations.tests.factories.OrganizationFactory"

@@ -1,9 +1,11 @@
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
+from factory import Sequence
 from factory import SubFactory
 from factory import post_generation
 from factory.django import DjangoModelFactory
+from faker import Faker as FakerGenerator
 
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import EmailTemplate
@@ -12,10 +14,14 @@ from re_sharing.organizations.models import OrganizationGroup
 from re_sharing.organizations.models import OrganizationMessage
 from re_sharing.users.tests.factories import UserFactory
 
+# Random default names get a running number: the factories look objects up
+# by slug, and a repeated random word would otherwise return an existing object.
+fake = FakerGenerator("de_DE")
+
 
 class OrganizationFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
-    name = Faker("company", locale="de_DE")
+    name = Sequence(lambda n: f"{fake.company()} {n}")
     description = Faker("text", max_nb_chars=512)
     slug = LazyAttribute(lambda o: slugify(o.name))
     street_and_housenb = Faker("street_address", locale="de_DE")

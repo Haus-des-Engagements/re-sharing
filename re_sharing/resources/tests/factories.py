@@ -4,9 +4,11 @@ from django.utils import timezone
 from django.utils.text import slugify
 from factory import Faker
 from factory import LazyAttribute
+from factory import Sequence
 from factory import SubFactory
 from factory import post_generation
 from factory.django import DjangoModelFactory
+from faker import Faker as FakerGenerator
 
 from re_sharing.resources.models import Access
 from re_sharing.resources.models import Compensation
@@ -15,10 +17,14 @@ from re_sharing.resources.models import PermanentCode
 from re_sharing.resources.models import Resource
 from re_sharing.resources.models import ResourceRestriction
 
+# Random default names get a running number: the factories look objects up
+# by slug, and a repeated random word would otherwise return an existing object.
+fake = FakerGenerator()
+
 
 class AccessFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
-    name = Faker("word")
+    name = Sequence(lambda n: f"{fake.word()}-{n}")
     slug = LazyAttribute(lambda o: slugify(o.name))
     instructions = Faker("text", max_nb_chars=512)
 
@@ -37,7 +43,7 @@ class LocationFactory(DjangoModelFactory):
 
 class ResourceFactory(DjangoModelFactory):
     uuid = Faker("uuid4")
-    name = Faker("word")
+    name = Sequence(lambda n: f"{fake.word()}-{n}")
     slug = LazyAttribute(lambda o: slugify(o.name))
     description = Faker("text", max_nb_chars=512)
     max_persons = Faker("random_int", min=1, max=100)
