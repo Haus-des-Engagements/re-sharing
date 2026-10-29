@@ -28,7 +28,8 @@
     {# Placed at the top of the document so pages load faster with defer #}
     {% block javascript %}
       <!-- Bootstrap JS -->
-      <script defer src="{% static 'js/vendors/bootstrap/bootstrap.bundle.js' %}"></script>
+      <script defer
+              src="{% static 'js/vendors/bootstrap/bootstrap.bundle.min.js' %}"></script>
       <script defer src="{% static 'js/vendors/alpine/alpine_3.14.3.min.js' %}"></script>
       <!-- Your stuff: Third-party javascript libraries go here -->
       <!-- place project specific Javascript in this file -->
