@@ -5,6 +5,8 @@ from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from import_export.admin import ImportExportMixin
+from import_export.admin import ImportMixin
 from pypdf.errors import PdfReadError
 
 from . import documents
@@ -17,6 +19,8 @@ from .models import CollectionRun
 from .models import SepaMandate
 from .models import SyncState
 from .models import UnmatchedReturn
+from .resources import AgreementResource
+from .resources import SepaMandateResource
 
 
 class AgreementKindFieldForm(forms.ModelForm):
@@ -139,7 +143,7 @@ class CollectionInline(admin.TabularInline):
 
 
 @admin.register(Agreement)
-class AgreementAdmin(admin.ModelAdmin):
+class AgreementAdmin(ImportExportMixin, admin.ModelAdmin):
     """Creating agreements here never runs the approval: no emails, groups or
     codes. Used to enter agreements that already exist on paper."""
 
@@ -157,6 +161,7 @@ class AgreementAdmin(admin.ModelAdmin):
     autocomplete_fields = ["organization", "permanent_code"]
     readonly_fields = ["group_present", "decided_by"]
     inlines = [SepaMandateInline, CollectionInline]
+    resource_classes = [AgreementResource]
 
     def has_delete_permission(self, request, obj=None):
         if obj is not None and not selectors.agreement_can_be_deleted(obj):
@@ -173,7 +178,7 @@ class AgreementAdmin(admin.ModelAdmin):
 
 
 @admin.register(SepaMandate)
-class SepaMandateAdmin(admin.ModelAdmin):
+class SepaMandateAdmin(ImportMixin, admin.ModelAdmin):
     list_display = [
         "reference",
         "agreement",
@@ -184,6 +189,7 @@ class SepaMandateAdmin(admin.ModelAdmin):
     ]
     list_filter = ["revoked_on"]
     search_fields = ["reference", "account_holder", "agreement__organization__name"]
+    resource_classes = [SepaMandateResource]
 
     @admin.display(description=_("IBAN"))
     def masked_iban(self, obj):

@@ -1388,7 +1388,7 @@ msgid "all organizations"
 msgstr "alle Organisationen"
 
 msgid "all statuses"
-msgstr "alle Statuse"
+msgstr "alle Status"
 
 msgid "show past bookings"
 msgstr "zeige vergangene Buchungen"
@@ -3864,3 +3864,7 @@ msgid ""
 msgstr ""
 "Mitarbeitende und Manager*innen müssen die Zwei-Faktor-Authentifizierung "
 "nutzen. Richte sie ein, um fortzufahren."
+
+msgctxt "agreements"
+msgid "Agreement"
+msgstr "Vereinbarung"

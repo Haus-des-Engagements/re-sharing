@@ -3,6 +3,8 @@
 from datetime import timedelta
 
 from django.db.models import Count
+from django.db.models import Exists
+from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import QuerySet
 
@@ -163,6 +165,16 @@ def manager_collections(
     ).order_by("-due_date", "-id")
 
 
+def agreement_has_active_mandate() -> Exists:
+    """For collection querysets: the collection's agreement has a signed,
+    not revoked mandate."""
+    return Exists(
+        SepaMandate.objects.filter(
+            agreement=OuterRef("agreement"), revoked_on__isnull=True
+        ).exclude(Q(signed_document="") | Q(signed_document__isnull=True))
+    )
+
+
 def manager_attention_collections(user, *, today) -> QuerySet[Collection]:
     """Returned, invoiced past due, and notified without an active mandate."""
     collections = manager_collections(user)
@@ -170,11 +182,8 @@ def manager_attention_collections(user, *, today) -> QuerySet[Collection]:
         status=Collection.Status.INVOICED,
         invoiced_at__date__lt=today - timedelta(days=RETURN_INVOICE_DUE_DAYS),
     )
-    without_mandate = Q(status=Collection.Status.NOTIFIED) & (
-        Q(mandate__isnull=True)
-        | Q(mandate__revoked_on__isnull=False)
-        | Q(mandate__signed_document="")
-        | Q(mandate__signed_document__isnull=True)
+    without_mandate = (
+        Q(status=Collection.Status.NOTIFIED) & ~agreement_has_active_mandate()
     )
     return collections.filter(
         Q(status=Collection.Status.RETURNED) | invoice_due | without_mandate

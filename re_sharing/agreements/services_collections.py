@@ -21,7 +21,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from sepaxml import SepaDD
@@ -36,6 +35,7 @@ from .models import Collection
 from .models import CollectionRun
 from .models import SyncState
 from .models import UnmatchedReturn
+from .selectors import agreement_has_active_mandate
 from .selectors import manager_can_manage_agreement
 from .services import AgreementError
 from .services import generate_collection_reference
@@ -251,7 +251,9 @@ def notify_due_collections(today: date) -> list[Collection]:
     for collection in due:
         collection.status = Collection.Status.NOTIFIED
         collection.notified_at = timezone.now()
-        collection.save(update_fields=["status", "notified_at"])
+        # The pre-notification names the mandate that will be used.
+        collection.mandate = collection.agreement.active_mandate or collection.mandate
+        collection.save(update_fields=["status", "notified_at", "mandate"])
         mode = collection.agreement.kind.notification_mode
         if mode == AgreementKind.NotificationMode.EACH_COLLECTION:
             transaction.on_commit(
@@ -273,20 +275,20 @@ def _require_manager(user, agreement=None):
         raise PermissionDenied
 
 
-def _with_active_mandate(queryset):
-    return queryset.filter(
-        mandate__isnull=False, mandate__revoked_on__isnull=True
-    ).exclude(Q(mandate__signed_document="") | Q(mandate__signed_document__isnull=True))
-
-
 def collections_for_run(collection_date: date):
-    return _with_active_mandate(
+    """Notified collections due by the date whose agreement has an active
+    mandate now. The mandate is taken at build time, so a mandate added or
+    replaced after the collection was created is used."""
+    return (
         Collection.objects.filter(
             status=Collection.Status.NOTIFIED,
             due_date__lte=collection_date,
             kind__in=[Collection.Kind.FEE, Collection.Kind.DEPOSIT],
         )
-    ).select_related("agreement__kind", "agreement__organization", "mandate")
+        .filter(agreement_has_active_mandate())
+        .select_related("agreement__kind", "agreement__organization")
+        .prefetch_related("agreement__mandates_of_agreement")
+    )
 
 
 def _remittance(collection: Collection) -> str:
@@ -337,7 +339,11 @@ def build_collection_run(user, collection_date: date) -> CollectionRun:
         msg = _("No notified collections are due by this date.")
         raise AgreementError(msg)
 
+    for collection in collections:
+        collection.mandate = collection.agreement.active_mandate
+
     with transaction.atomic(), set_actor(user):
+        Collection.objects.bulk_update(collections, ["mandate"])
         run = CollectionRun.objects.create(
             collection_date=collection_date,
             created_by=user,

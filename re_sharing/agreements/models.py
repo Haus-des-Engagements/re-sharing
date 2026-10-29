@@ -34,6 +34,7 @@ from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 from django_extensions.db.fields import AutoSlugField
 from tinymce.models import HTMLField
 
@@ -384,7 +385,7 @@ class Agreement(TimeStampedModel):
     notes = TextField(_("Internal notes"), blank=True)
 
     class Meta:
-        verbose_name = _("Agreement")
+        verbose_name = pgettext_lazy("agreements", "Agreement")
         verbose_name_plural = _("Agreements")
         ordering = ["-created"]
         constraints = [
@@ -443,7 +444,7 @@ class SepaMandate(TimeStampedModel):
     history = AuditlogHistoryField()
     agreement = ForeignKey(
         Agreement,
-        verbose_name=_("Agreement"),
+        verbose_name=pgettext_lazy("agreements", "Agreement"),
         on_delete=PROTECT,
         related_name="mandates_of_agreement",
         related_query_name="mandate_of_agreement",
@@ -571,7 +572,7 @@ class Collection(TimeStampedModel):
     history = AuditlogHistoryField()
     agreement = ForeignKey(
         Agreement,
-        verbose_name=_("Agreement"),
+        verbose_name=pgettext_lazy("agreements", "Agreement"),
         on_delete=PROTECT,
         related_name="collections_of_agreement",
         related_query_name="collection_of_agreement",

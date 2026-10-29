@@ -18,6 +18,7 @@ from re_sharing.agreements.models import Collection
 from re_sharing.agreements.models import CollectionRun
 from re_sharing.agreements.models import SyncState
 from re_sharing.agreements.models import UnmatchedReturn
+from re_sharing.agreements.selectors import manager_attention_collections
 from re_sharing.agreements.services import AgreementError
 from re_sharing.agreements.services_collections import RETURNS_SYNC_KEY
 from re_sharing.agreements.services_collections import build_collection_run
@@ -766,3 +767,91 @@ class ManualSettlementTest(TestCase):
             cancel_collection(
                 make_admin(collection.agreement.organization), collection, "x"
             )
+
+
+@override_settings(**SEPA_SETTINGS)
+class CollectionFollowsActiveMandateTest(TestCase):
+    """Waiting collections use the mandate active when they are notified or
+    put in a run, not the one present when they were created."""
+
+    def setUp(self):
+        self.manager = make_manager()
+        self.agreement = AgreementFactory(status=Agreement.Status.ACTIVE)
+
+    def _collection(self, mandate, **kwargs):
+        return CollectionFactory(
+            agreement=self.agreement,
+            mandate=mandate,
+            status=Collection.Status.NOTIFIED,
+            due_date=date(2027, 3, 5),
+            **kwargs,
+        )
+
+    def test_mandate_added_after_creation_is_used(self):
+        collection = self._collection(None)
+        assert collection in manager_attention_collections(
+            self.manager, today=date(2027, 3, 1)
+        )
+        mandate = SepaMandateFactory(agreement=self.agreement)
+
+        assert collection not in manager_attention_collections(
+            self.manager, today=date(2027, 3, 1)
+        )
+        build_collection_run(self.manager, date(2027, 3, 5))
+
+        collection.refresh_from_db()
+        assert collection.status == Collection.Status.SUBMITTED
+        assert collection.mandate == mandate
+
+    def test_new_mandate_after_revocation_is_used(self):
+        old = SepaMandateFactory(agreement=self.agreement, revoked_on=date(2027, 2, 1))
+        collection = self._collection(old)
+        new = SepaMandateFactory(agreement=self.agreement)
+
+        run = build_collection_run(self.manager, date(2027, 3, 5))
+
+        collection.refresh_from_db()
+        assert collection.mandate == new
+        root = ElementTree.fromstring(run.xml_file.read())  # noqa: S314
+        assert root.find(".//s:MndtId", NS).text == new.reference
+
+    def test_mandate_without_signed_pdf_does_not_count(self):
+        collection = self._collection(None)
+        SepaMandateFactory(agreement=self.agreement, signed_document=None)
+
+        with pytest.raises(AgreementError):
+            build_collection_run(self.manager, date(2027, 3, 5))
+        assert collection in manager_attention_collections(
+            self.manager, today=date(2027, 3, 1)
+        )
+
+    def test_submitted_collection_keeps_its_mandate(self):
+        mandate = SepaMandateFactory(agreement=self.agreement)
+        collection = self._collection(mandate)
+        build_collection_run(self.manager, date(2027, 3, 5))
+        mandate.revoked_on = date(2027, 3, 10)
+        mandate.save()
+        SepaMandateFactory(agreement=self.agreement)
+
+        collection.refresh_from_db()
+        assert collection.mandate == mandate
+
+    @override_settings(PRE_NOTIFICATION_DAYS=14)
+    def test_pre_notification_names_the_active_mandate(self):
+        EmailTemplateFactory(
+            email_type=EmailTemplate.EmailTypeChoices.AGREEMENT_PRE_NOTIFICATION,
+            subject="Pre-notification",
+            body="{{ mandate_reference }}",
+        )
+        make_admin(self.agreement.organization)
+        collection = CollectionFactory(
+            agreement=self.agreement, mandate=None, due_date=date(2027, 3, 5)
+        )
+        mandate = SepaMandateFactory(agreement=self.agreement)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            notify_due_collections(date(2027, 2, 19))
+
+        collection.refresh_from_db()
+        assert collection.mandate == mandate
+        assert mandate.reference in mail.outbox[-1].body

@@ -1968,3 +1968,7 @@ msgid ""
 msgstr ""
 "Le personnel et les gestionnaires doivent utiliser l'authentification à deux "
 "facteurs. Configurez-la pour continuer."
+
+msgctxt "agreements"
+msgid "Agreement"
+msgstr "Convention"
