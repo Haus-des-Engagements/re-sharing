@@ -4,6 +4,7 @@ from datetime import time
 from datetime import timedelta
 from unittest.mock import patch
 
+from django.contrib.sites.models import Site
 from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
@@ -746,6 +747,187 @@ class SendCustomOrganizationEmailTest(TestCase):
         assert result["sent"] is False
         assert result["reason"] == "no_email"
         assert len(mail.outbox) == 0
+
+    def _html_part(self, message):
+        assert len(message.alternatives) == 1
+        content, mimetype = message.alternatives[0]
+        assert mimetype == "text/html"
+        return content
+
+    def test_sends_html_part_with_plain_text_alternative(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="<p>Hello <strong>all</strong></p>",
+        )
+
+        message = mail.outbox[0]
+        assert message.body == "Hello all"
+        assert "<p>Hello <strong>all</strong></p>" in self._html_part(message)
+
+    def test_html_part_is_a_complete_document(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="<p>Hi</p>",
+        )
+
+        html_part = self._html_part(mail.outbox[0])
+        assert html_part.lstrip().lower().startswith("<!doctype html>")
+        assert "</html>" in html_part
+
+    def test_plain_text_keeps_link_urls_and_list_markers(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template=(
+                '<p><a href="https://example.org/x">our page</a></p>'
+                "<ul><li>one</li><li>two</li></ul>"
+                "<ol><li>first</li><li>second</li></ol>"
+            ),
+        )
+
+        lines = mail.outbox[0].body.splitlines()
+        assert "our page (https://example.org/x)" in lines
+        assert "- one" in lines
+        assert "- two" in lines
+        assert "1. first" in lines
+        assert "2. second" in lines
+
+    def test_template_values_are_escaped_in_html_part_only(self):
+        self.org1.name = "A & B <Team>"
+        self.org1.save()
+
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Hi {{ organization.name }}",
+            body_template="<p>Dear {{ organization.name }}</p>",
+        )
+
+        message = mail.outbox[0]
+        assert message.subject == "Hi A & B <Team>"
+        assert message.body == "Dear A & B <Team>"
+        assert "Dear A &amp; B &lt;Team&gt;" in self._html_part(message)
+
+    def test_template_tags_in_link_target_are_resolved(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template=(
+                '<p><a href="https://{{ domain }}/organizations/'
+                '{{ organization.slug }}/">Profile</a></p>'
+            ),
+        )
+
+        domain = Site.objects.get_current().domain
+        url = f"https://{domain}/organizations/{self.org1.slug}/"
+        message = mail.outbox[0]
+        assert f'href="{url}"' in self._html_part(message)
+        assert message.body == f"Profile ({url})"
+
+    def test_editor_encoded_tags_in_link_target_are_resolved(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template=(
+                '<p><a href="https://{{%20domain%20}}/x">One</a> '
+                '<a href="https://%7B%7B%20domain%20%7D%7D/y">Two</a></p>'
+            ),
+        )
+
+        domain = Site.objects.get_current().domain
+        html_part = self._html_part(mail.outbox[0])
+        assert f'href="https://{domain}/x"' in html_part
+        assert f'href="https://{domain}/y"' in html_part
+
+    def test_entity_encoded_quotes_inside_tag_are_resolved(self):
+        self._booking(date(2026, 3, 5), total_amount=10)
+
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="<p>{{ total_amount|floatformat:&quot;1&quot; }}</p>",
+            filter_context={"from_date": "2026-03-01"},
+        )
+
+        assert mail.outbox[0].body == "10.0"
+
+    def test_markup_outside_the_whitelist_is_removed(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template=(
+                "<script>alert(1)</script>"
+                '<p onclick="x()">Hi</p>'
+                '<a href="javascript:alert(2)">x</a>'
+            ),
+        )
+
+        html_part = self._html_part(mail.outbox[0])
+        assert "<p>Hi</p>" in html_part
+        assert "<script" not in html_part
+        assert "alert(1)" not in html_part
+        assert "onclick" not in html_part
+        assert "javascript:" not in html_part
+
+    @override_settings(DEFAULT_BCC_EMAIL="bcc@example.com")
+    def test_regular_send_keeps_bcc(self):
+        send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Test",
+        )
+
+        assert mail.outbox[0].bcc == ["bcc@example.com"]
+
+    @override_settings(DEFAULT_BCC_EMAIL="bcc@example.com")
+    def test_recipient_override_sends_only_to_that_address(self):
+        result = send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Hello {{ organization.name }}",
+            body_template="<p>Dear {{ organization.name }}</p>",
+            recipient_override="me@example.org",
+        )
+
+        assert len(mail.outbox) == 1
+        message = mail.outbox[0]
+        assert message.to == ["me@example.org"]
+        assert message.bcc == []
+        assert message.cc == []
+        assert message.subject == "[Test] Hello Org 1"
+        assert message.body == "Dear Org 1"
+        assert result == {"sent": True, "email": "me@example.org"}
+
+    def test_recipient_override_matches_regular_rendering(self):
+        self._booking(date(2026, 3, 5), total_amount=10)
+        kwargs = {
+            "subject_template": "S",
+            "body_template": "<p>{{ number_of_bookings }} / {{ total_amount }}</p>",
+            "filter_context": {"from_date": "2026-03-01", "to_date": "2026-03-31"},
+        }
+
+        send_custom_organization_email.call(self.org1.id, **kwargs)
+        send_custom_organization_email.call(
+            self.org1.id, recipient_override="me@example.org", **kwargs
+        )
+
+        regular, test = mail.outbox
+        assert test.body == regular.body
+        assert self._html_part(test) == self._html_part(regular)
+
+    def test_recipient_override_works_for_organization_without_email(self):
+        self.org1.email = ""
+        self.org1.save()
+
+        result = send_custom_organization_email.call(
+            self.org1.id,
+            subject_template="Test",
+            body_template="Test",
+            recipient_override="me@example.org",
+        )
+
+        assert result["sent"] is True
+        assert mail.outbox[0].to == ["me@example.org"]
 
 
 class SendPermanentCodeCreatedEmailTest(TestCase):

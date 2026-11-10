@@ -649,6 +649,38 @@ class TestCustomOrganizationEmailView(TestCase):
         assert "<optgroup" in content
         assert "Beamer" not in content
 
+    def test_compose_form_prefills_test_recipient_with_manager_email(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url, {"min_bookings": "0"})
+
+        form = response.context["compose_form"]
+        assert form.initial["test_recipient"] == self.manager_user.email
+
+    def test_compose_section_renders_editor_and_test_send(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url, {"min_bookings": "0"})
+        content = response.content.decode()
+
+        assert "tinymce.min.js" in content
+        assert "data-mce-conf" in content
+        assert 'name="subject"' in content
+        assert 'name="body"' in content
+        assert 'name="test_recipient"' in content
+        test_url = reverse("organizations:send-custom-organization-email-test")
+        assert f'hx-post="{test_url}"' in content
+        assert 'id="testSendResult"' in content
+
+    def test_help_lists_domain_tag_and_link_hint(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url, {"min_bookings": "0"})
+        content = response.content.decode()
+
+        assert "{{ domain }}" in content
+        assert "{{ from_date }}" in content
+        assert "{{ to_date }}" in content
+        assert "https://{{ domain }}/" in content
+        assert "months" not in content
+
 
 class TestSendCustomOrganizationEmailView(TestCase):
     def setUp(self):
@@ -802,3 +834,225 @@ class TestSendCustomOrganizationEmailView(TestCase):
         assert len(mail.outbox) == 0
         messages = list(get_messages(response.wsgi_request))
         assert any("no organizations match" in str(m).lower() for m in messages)
+
+
+class TestSendCustomOrganizationEmailFormatting(TestCase):
+    def setUp(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.send_email_url = reverse("organizations:send-custom-organization-email")
+        self.org = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.client.force_login(self.manager_user)
+
+    def test_body_with_only_empty_markup_is_rejected(self):
+        response = self.client.post(
+            self.send_email_url,
+            {"subject": "S", "body": "<p></p>", "selected_orgs": [self.org.id]},
+        )
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert len(mail.outbox) == 0
+        messages = list(get_messages(response.wsgi_request))
+        assert any("subject and body" in str(m).lower() for m in messages)
+
+    def test_sends_html_and_plain_text(self):
+        self.client.post(
+            self.send_email_url,
+            {
+                "subject": "S",
+                "body": "<p>Hello <strong>{{ organization.name }}</strong></p>",
+                "selected_orgs": [self.org.id],
+            },
+        )
+
+        assert len(mail.outbox) == 1
+        message = mail.outbox[0]
+        assert message.body == f"Hello {self.org.name}"
+        assert "<strong>" in message.alternatives[0][0]
+
+    def test_filled_test_recipient_does_not_affect_real_send(self):
+        for test_recipient in ("me@example.org", "not-an-address"):
+            mail.outbox.clear()
+
+            self.client.post(
+                self.send_email_url,
+                {
+                    "subject": "S",
+                    "body": "<p>B</p>",
+                    "test_recipient": test_recipient,
+                    "selected_orgs": [self.org.id],
+                },
+            )
+
+            assert len(mail.outbox) == 1
+            assert mail.outbox[0].to == [self.org.email]
+            assert mail.outbox[0].subject == "S"
+
+
+class TestSendCustomOrganizationEmailTestView(TestCase):
+    def setUp(self):
+        from re_sharing.providers.tests.factories import ManagerFactory
+
+        self.manager_user = UserFactory()
+        ManagerFactory(user=self.manager_user)
+        self.test_url = reverse("organizations:send-custom-organization-email-test")
+        self.alpha = OrganizationFactory(
+            name="Alpha", status=Organization.Status.CONFIRMED
+        )
+        self.beta = OrganizationFactory(
+            name="Beta", status=Organization.Status.CONFIRMED
+        )
+        self.room = ResourceFactory(
+            name="Room A", type=Resource.ResourceTypeChoices.ROOM
+        )
+
+    def _data(self, **overrides):
+        data = {
+            "subject": "Hello {{ organization.name }}",
+            "body": "<p>Dear <strong>{{ organization.name }}</strong></p>",
+            "test_recipient": "me@example.org",
+            "selected_orgs": [self.alpha.id, self.beta.id],
+        }
+        data.update(overrides)
+        return data
+
+    def _assert_error(self, response, text):
+        assert response.status_code == HTTPStatus.OK
+        assert len(mail.outbox) == 0
+        content = response.content.decode()
+        assert "alert-danger" in content
+        assert text in content.lower()
+
+    def test_requires_authentication(self):
+        response = self.client.post(self.test_url, self._data())
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert len(mail.outbox) == 0
+
+    def test_non_manager_is_denied(self):
+        self.client.force_login(UserFactory())
+        response = self.client.post(self.test_url, self._data())
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert len(mail.outbox) == 0
+
+    def test_requires_post(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.test_url)
+
+        assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+    @override_settings(DEFAULT_BCC_EMAIL="bcc@example.com")
+    def test_sends_one_email_to_entered_address_only(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(self.test_url, self._data())
+
+        assert response.status_code == HTTPStatus.OK
+        assert len(mail.outbox) == 1
+        message = mail.outbox[0]
+        assert message.to == ["me@example.org"]
+        assert message.bcc == []
+        assert message.cc == []
+        assert message.subject == "[Test] Hello Alpha"
+        assert message.body == "Dear Alpha"
+        assert "<strong>Alpha</strong>" in message.alternatives[0][0]
+
+    def test_result_fragment_names_address_and_organization(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(self.test_url, self._data())
+
+        self.assertTemplateUsed(
+            response, "organizations/partials/custom_email_test_result.html"
+        )
+        content = response.content.decode()
+        assert "alert-success" in content
+        assert "me@example.org" in content
+        assert "Alpha" in content
+        assert "<html" not in content
+
+    def test_uses_first_selected_organization_in_preview_order(self):
+        self.client.force_login(self.manager_user)
+        self.client.post(
+            self.test_url, self._data(selected_orgs=[self.beta.id, self.alpha.id])
+        )
+        self.client.post(self.test_url, self._data(selected_orgs=[self.beta.id]))
+
+        assert [m.subject for m in mail.outbox] == [
+            "[Test] Hello Alpha",
+            "[Test] Hello Beta",
+        ]
+
+    def test_uses_first_selected_organization_matching_the_filters(self):
+        _confirmed_booking(self.beta, date(2026, 3, 5), resource=self.room)
+
+        self.client.force_login(self.manager_user)
+        self.client.post(self.test_url, self._data(min_bookings="1"))
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].subject == "[Test] Hello Beta"
+
+    def test_test_email_uses_filter_statistics(self):
+        _confirmed_booking(
+            self.alpha, date(2026, 3, 5), resource=self.room, total_amount=10
+        )
+        _confirmed_booking(
+            self.alpha, date(2026, 5, 1), resource=self.room, total_amount=99
+        )
+
+        self.client.force_login(self.manager_user)
+        self.client.post(
+            self.test_url,
+            self._data(
+                body="<p>{{ number_of_bookings }}|{{ from_date }}</p>",
+                from_date="2026-03-01",
+                to_date="2026-03-31",
+            ),
+        )
+
+        assert mail.outbox[0].body.startswith("1|")
+        assert mail.outbox[0].body != "1|"
+
+    def test_invalid_address_is_rejected(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(
+            self.test_url, self._data(test_recipient="not-an-address")
+        )
+
+        self._assert_error(response, "valid email address")
+
+    def test_missing_address_is_rejected(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(self.test_url, self._data(test_recipient=""))
+
+        self._assert_error(response, "valid email address")
+
+    def test_missing_subject_or_body_is_rejected(self):
+        self.client.force_login(self.manager_user)
+
+        for overrides in ({"subject": ""}, {"body": ""}, {"body": "<p></p>"}):
+            response = self.client.post(self.test_url, self._data(**overrides))
+
+            self._assert_error(response, "subject and body")
+
+    def test_no_selected_organization_is_rejected(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(self.test_url, self._data(selected_orgs=[]))
+
+        self._assert_error(response, "select at least one")
+
+    def test_invalid_filters_are_rejected(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(
+            self.test_url,
+            self._data(from_date="2026-04-01", to_date="2026-03-01"),
+        )
+
+        self._assert_error(response, "from date")
+
+    def test_no_matching_organization_is_rejected(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post(self.test_url, self._data(min_bookings="5"))
+
+        self._assert_error(response, "no organizations match")

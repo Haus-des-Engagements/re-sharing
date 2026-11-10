@@ -137,11 +137,7 @@
                   <thead>
                     <tr>
                       <th class="sorttable_nosort">
-                        <input type="checkbox"
-                               id="selectAll"
-                               checked
-                               class="form-check-input"
-                               title="{% trans "Select/Deselect All" %}" />
+                        <input type="checkbox" id="selectAll" checked class="form-check-input" title="{% trans "Select/Deselect All" %}" />
                       </th>
                       <th>{% trans "Name" %}</th>
                       <th>{% trans "Email" %}</th>
@@ -192,9 +188,10 @@
                 <input type="hidden" name="max_amount" value="{{ max_amount }}" />
                 <input type="hidden" name="from_date" value="{{ from_date }}" />
                 <input type="hidden" name="to_date" value="{{ to_date }}" />
+                {{ compose_form.media }}
                 <div class="mb-3">
-                  <label for="subject" class="form-label">{% trans "Subject" %}</label>
-                  <input type="text" name="subject" id="subject" class="form-control" required />
+                  <label for="{{ compose_form.subject.id_for_label }}" class="form-label">{% trans "Subject" %}</label>
+                  {{ compose_form.subject }}
                   <small class="form-text text-muted">{% trans "You can use template tags like" %}
                     {% verbatim %}
                       {{ organization.name }}
@@ -202,10 +199,14 @@
                   </small>
                 </div>
                 <div class="mb-3">
-                  <label for="body" class="form-label">{% trans "Body" %}</label>
-                  <textarea name="body" id="body" class="form-control" rows="10" required></textarea>
+                  <label for="{{ compose_form.body.id_for_label }}" class="form-label">{% trans "Body" %}</label>
+                  {{ compose_form.body }}
                   <small class="form-text text-muted">
-                    {% trans "Available template tags:" %}
+                    {% trans "Available template tags (also usable inside link targets, e.g." %}
+                    {% verbatim %}
+                      https://{{ domain }}/
+                    {% endverbatim %}
+                    ):
                     <ul>
                       <li>
                         {% verbatim %}
@@ -241,6 +242,12 @@
                         {% endverbatim %}
                         - {% trans "Last day of the period (empty if not set)" %}
                       </li>
+                      <li>
+                        {% verbatim %}
+                          {{ domain }}
+                        {% endverbatim %}
+                        - {% trans "Domain of this site, for links" %}
+                      </li>
                     </ul>
                   </small>
                 </div>
@@ -253,6 +260,22 @@
                 <button type="button"
                         class="btn btn-outline-secondary ms-2"
                         onclick="downloadCSV()">{% trans "Download CSV" %}</button>
+                <hr />
+                <label for="{{ compose_form.test_recipient.id_for_label }}"
+                       class="form-label">{% trans "Send a test email to" %}</label>
+                <div class="input-group">
+                  {{ compose_form.test_recipient }}
+                  <button type="button"
+                          class="btn btn-outline-primary"
+                          hx-post="{% url 'organizations:send-custom-organization-email-test' %}"
+                          hx-target="#testSendResult"
+                          hx-swap="innerHTML"
+                          hx-on::config-request="event.detail.parameters.set('body', emailBodyHtml())">
+                    {% trans "Send test email" %}
+                  </button>
+                </div>
+                <small class="form-text text-muted">{% trans "The test is rendered with the data of the first selected organization. Nothing is sent to organizations." %}</small>
+                <div id="testSendResult"></div>
               </form>
               <script>
                 // Handle select all checkbox
@@ -278,11 +301,31 @@
                   document.getElementById('selectedCount').textContent = selectedCount;
                 }
 
+                // The editor hides the textarea, so read the body from the editor
+                function emailBodyEditor() {
+                  return window.tinymce ? tinymce.get('{{ compose_form.body.id_for_label }}') : null;
+                }
+
+                function emailBodyHtml() {
+                  const editor = emailBodyEditor();
+                  return editor ? editor.getContent() : document.getElementById('{{ compose_form.body.id_for_label }}').value;
+                }
+
                 function validateAndConfirm() {
                   const selectedCount = document.querySelectorAll('.org-checkbox:checked').length;
                   if (selectedCount === 0) {
                     alert('{% trans "Please select at least one organization to send emails to." %}');
                     return false;
+                  }
+                  const editor = emailBodyEditor();
+                  if (editor) {
+                    editor.save();
+                    if (editor.getContent({
+                        format: 'text'
+                      }).trim() === '') {
+                      alert('{% trans "Please enter a body for the email." %}');
+                      return false;
+                    }
                   }
                   return confirm('{% trans "Are you sure you want to send this email to" %} ' + selectedCount + ' {% trans "organizations?" %}');
                 }

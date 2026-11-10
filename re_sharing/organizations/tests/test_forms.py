@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from re_sharing.organizations.forms import CustomEmailComposeForm
 from re_sharing.organizations.forms import OrganizationForm
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
@@ -141,3 +142,57 @@ class TestOrganizationFormGroupsField(TestCase):
         # The groups should remain unchanged in the database
         current_groups = set(organization.organization_groups.all())
         assert initial_groups == current_groups
+
+
+class TestCustomEmailComposeForm(TestCase):
+    def _form(self, **overrides):
+        data = {"subject": "Hello", "body": "<p>Hi</p>", "test_recipient": ""}
+        data.update(overrides)
+        return CustomEmailComposeForm(data)
+
+    def test_valid_without_test_recipient(self):
+        form = self._form()
+
+        assert form.is_valid()
+        assert form.cleaned_data["body"] == "<p>Hi</p>"
+
+    def test_subject_is_required(self):
+        form = self._form(subject="")
+
+        assert "subject" in form.errors
+
+    def test_body_is_required(self):
+        form = self._form(body="")
+
+        assert "body" in form.errors
+
+    def test_body_with_only_empty_markup_is_invalid(self):
+        for body in ("<p></p>", "<p>&nbsp;</p>", "<p><br></p>\n<ul><li></li></ul>"):
+            form = self._form(body=body)
+
+            assert "body" in form.errors, body
+
+    def test_test_recipient_must_be_an_email_address(self):
+        form = self._form(test_recipient="not-an-address")
+
+        assert "test_recipient" in form.errors
+        assert "subject" not in form.errors
+        assert "body" not in form.errors
+
+    def test_valid_test_recipient_is_cleaned(self):
+        form = self._form(test_recipient="me@example.org")
+
+        assert form.is_valid()
+        assert form.cleaned_data["test_recipient"] == "me@example.org"
+
+    def test_body_textarea_has_no_required_attribute(self):
+        rendered = str(CustomEmailComposeForm()["body"])
+
+        assert "required" not in rendered
+        assert "data-mce-conf" in rendered
+
+    def test_editor_does_not_rewrite_link_targets(self):
+        rendered = str(CustomEmailComposeForm()["body"])
+
+        assert "&quot;convert_urls&quot;: false" in rendered
+        assert "&quot;relative_urls&quot;: false" in rendered

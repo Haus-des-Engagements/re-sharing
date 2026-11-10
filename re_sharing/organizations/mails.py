@@ -20,9 +20,11 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.tasks import task
 from django.template import Context
 from django.template import Template
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils import translation
@@ -31,6 +33,9 @@ from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
 from icalendar import Event
 
+from re_sharing.organizations.email_formatting import html_to_text
+from re_sharing.organizations.email_formatting import normalize_template_tags
+from re_sharing.organizations.email_formatting import sanitize_email_html
 from re_sharing.organizations.models import EmailTemplate
 
 logger = logging.getLogger(__name__)
@@ -552,14 +557,19 @@ def send_custom_organization_email(
     subject_template: str,
     body_template: str,
     filter_context: dict | None = None,
+    recipient_override: str | None = None,
 ) -> dict:
     """
     Send a custom email to a single organization as a background task.
 
+    The body is editor HTML. It is rendered with autoescaping, reduced to the
+    allowed formatting and sent as HTML with a plain-text alternative derived
+    from it. The subject is plain text and rendered without escaping.
+
     Args:
         organization_id: ID of the organization to send to
         subject_template: String template for email subject
-        body_template: String template for email body
+        body_template: String template for email body (HTML)
         filter_context: Optional JSON-serialisable dict with the filter used on
             the custom email page: ``min_bookings``, ``max_amount``,
             ``from_date`` / ``to_date`` (ISO date strings or None) and
@@ -567,13 +577,16 @@ def send_custom_organization_email(
             receives ``number_of_bookings`` and ``total_amount`` computed with
             the same rules as the page preview, plus ``from_date`` / ``to_date``
             as localized short dates (empty string for an open bound).
+        recipient_override: Send a test email to this address instead of the
+            organization: same rendering, subject prefixed with ``[Test]``,
+            no BCC.
     """
     from re_sharing.organizations.models import Organization
     from re_sharing.organizations.selectors import get_organization_booking_stats
 
     organization = Organization.objects.get(id=organization_id)
 
-    if not organization.email:
+    if not recipient_override and not organization.email:
         logger.warning("Organization %s has no email address", organization.name)
         return {"sent": False, "reason": "no_email"}
 
@@ -604,15 +617,32 @@ def send_custom_organization_email(
         )
 
     subject = Template(subject_template).render(Context(context, autoescape=False))
-    body = Template(body_template).render(Context(context, autoescape=False))
-
-    email = EmailMessage(
-        subject=subject,
-        body=body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[organization.email],
-        bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    content = sanitize_email_html(
+        Template(normalize_template_tags(body_template)).render(Context(context))
     )
+    html_body = render_to_string(
+        "organizations/email/custom_email.html",
+        {
+            "content": content,
+            "subject": subject,
+            "language_code": settings.LANGUAGE_CODE,
+        },
+    )
+
+    recipient = recipient_override or organization.email
+    bcc = [settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else []
+    if recipient_override:
+        subject = f"[Test] {subject}"
+        bcc = []
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=html_to_text(content),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+        bcc=bcc,
+    )
+    email.attach_alternative(html_body, "text/html")
 
     try:
         email.send(fail_silently=False)
@@ -622,8 +652,8 @@ def send_custom_organization_email(
         )
         return {"sent": False, "reason": "smtp_error"}
     else:
-        logger.info("Sent custom email to %s", organization.email)
-        return {"sent": True, "email": organization.email}
+        logger.info("Sent custom email to %s", recipient)
+        return {"sent": True, "email": recipient}
 
 
 @task(queue_name="email")

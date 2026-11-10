@@ -16,6 +16,7 @@ from .views import manager_list_organizations_view
 from .views import manager_permanent_code_action_view
 from .views import organization_permission_management_view
 from .views import organization_permission_view
+from .views import send_custom_organization_email_test_view
 from .views import send_custom_organization_email_view
 from .views import show_organization_messages_view
 from .views import show_organization_view
@@ -97,6 +98,11 @@ urlpatterns = [
         send_custom_organization_email_view,
         name="send-custom-organization-email",
     ),  # POST send custom email
+    path(
+        "custom-email/send-test/",
+        send_custom_organization_email_test_view,
+        name="send-custom-organization-email-test",
+    ),  # POST send custom email to a test recipient
     path(
         "<slug:organization>/", show_organization_view, name="show-organization"
     ),  # GET organization

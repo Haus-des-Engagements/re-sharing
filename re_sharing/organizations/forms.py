@@ -1,3 +1,5 @@
+import html
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML
 from crispy_forms.layout import Column
@@ -7,8 +9,10 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.forms import ModelMultipleChoiceField
 from django.forms.widgets import CheckboxSelectMultiple
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from tinymce.widgets import TinyMCE
 
 from .models import Organization
 from .models import OrganizationGroup
@@ -308,3 +312,35 @@ class OrganizationForm(forms.ModelForm):
                 _("Please select at least one organization group.")
             )
         return organization_groups
+
+
+class CustomEmailComposeForm(forms.Form):
+    """Subject, body and test recipient of the manager's custom email."""
+
+    subject = forms.CharField(
+        label=_("Subject"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    body = forms.CharField(
+        label=_("Body"),
+        widget=TinyMCE(
+            # Keep template tags in link targets as they were typed
+            mce_attrs={
+                "convert_urls": False,
+                "relative_urls": False,
+                "entity_encoding": "raw",
+            },
+        ),
+    )
+    test_recipient = forms.EmailField(
+        label=_("Test recipient"),
+        required=False,
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+    )
+
+    def clean_body(self):
+        body = self.cleaned_data["body"]
+        # Markup alone (empty paragraphs, list items) is not content
+        if not html.unescape(strip_tags(body)).strip():
+            raise forms.ValidationError(_("The body must not be empty."))
+        return body

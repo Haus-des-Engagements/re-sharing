@@ -24,6 +24,7 @@ from neapolitan.views import CRUDView
 from re_sharing.providers.decorators import ManagerRequiredMixin
 from re_sharing.providers.decorators import manager_required
 
+from .forms import CustomEmailComposeForm
 from .forms import OrganizationForm
 from .forms import OrganizationMessageForm
 from .models import BookingPermission
@@ -628,9 +629,16 @@ def custom_organization_email_view(request: HttpRequest) -> HttpResponse:
         "max_amount": request.GET.get("max_amount", ""),
         "from_date": request.GET.get("from_date", ""),
         "to_date": request.GET.get("to_date", ""),
+        "compose_form": CustomEmailComposeForm(
+            initial={"test_recipient": request.user.email}
+        ),
     }
 
     return render(request, "organizations/custom_organization_email.html", context)
+
+
+def _has_subject_and_body(form: CustomEmailComposeForm) -> bool:
+    return "subject" not in form.errors and "body" not in form.errors
 
 
 @manager_required
@@ -642,13 +650,16 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
     from re_sharing.organizations.mails import send_custom_organization_email
     from re_sharing.organizations.selectors import get_filtered_organizations
 
-    subject_template = request.POST.get("subject", "")
-    body_template = request.POST.get("body", "")
+    form = CustomEmailComposeForm(request.POST)
     selected_org_ids = [int(org_id) for org_id in request.POST.getlist("selected_orgs")]
 
-    if not subject_template or not body_template:
+    # The test recipient is irrelevant here, so only subject and body count
+    if not _has_subject_and_body(form):
         messages.error(request, "Subject and body are required.")
         return redirect("organizations:custom-organization-email")
+
+    subject_template = form.cleaned_data["subject"]
+    body_template = form.cleaned_data["body"]
 
     if not selected_org_ids:
         messages.error(request, "Please select at least one organization.")
@@ -685,3 +696,61 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
     )
 
     return redirect("organizations:custom-organization-email")
+
+
+@manager_required
+@require_http_methods(["POST"])
+def send_custom_organization_email_test_view(request: HttpRequest) -> HttpResponse:
+    """
+    Send the composed custom email to a test recipient instead of organizations.
+
+    The email is rendered for the first selected organization matching the
+    filters. Returns an alert fragment so the compose form stays untouched.
+    """
+    from re_sharing.organizations.mails import send_custom_organization_email
+    from re_sharing.organizations.selectors import get_filtered_organizations
+
+    def result(level: str, message: str) -> HttpResponse:
+        return render(
+            request,
+            "organizations/partials/custom_email_test_result.html",
+            {"level": level, "message": message},
+        )
+
+    form = CustomEmailComposeForm(request.POST)
+    selected_org_ids = [int(org_id) for org_id in request.POST.getlist("selected_orgs")]
+
+    if not _has_subject_and_body(form):
+        return result("danger", "Subject and body are required.")
+
+    recipient = form.cleaned_data.get("test_recipient")
+    if not recipient:
+        return result("danger", "Please enter a valid email address for the test.")
+
+    if not selected_org_ids:
+        return result("danger", "Please select at least one organization.")
+
+    try:
+        filters = _parse_custom_email_filters(request.POST)
+    except CustomEmailFilterError as exc:
+        return result("danger", str(exc))
+
+    organization = (
+        get_filtered_organizations(**filters).filter(id__in=selected_org_ids).first()
+    )
+
+    if organization is None:
+        return result("danger", "No organizations match the selected filters.")
+
+    send_custom_organization_email.enqueue(
+        organization.id,
+        form.cleaned_data["subject"],
+        form.cleaned_data["body"],
+        _custom_email_filter_context(filters),
+        recipient,
+    )
+
+    return result(
+        "success",
+        f"Enqueued test email to {recipient}, rendered for {organization.name}.",
+    )

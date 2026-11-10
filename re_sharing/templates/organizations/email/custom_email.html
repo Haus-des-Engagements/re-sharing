@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="{{ language_code }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ subject }}</title>
+  </head>
+  {# Email clients ignore stylesheets, so the styles have to be inline #}
+  {# djlint:off H021 #}
+  <body style="margin: 0;
+               padding: 16px;
+               font-family: Arial, Helvetica, sans-serif;
+               font-size: 15px;
+               line-height: 1.5;
+               color: #212529">
+    <div style="max-width: 640px">{{ content|safe }}</div>
+  </body>
+  {# djlint:on #}
+</html>
