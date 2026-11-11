@@ -681,6 +681,15 @@ class TestCustomOrganizationEmailView(TestCase):
         assert "https://{{ domain }}/" in content
         assert "months" not in content
 
+    def test_help_lists_quota_tags(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url, {"min_bookings": "0"})
+        content = response.content.decode()
+
+        assert "{{ bookings_above_limit }}" in content
+        assert "{{ cost_above_limit }}" in content
+        assert "{{ bookings_above_limit_without_rate }}" in content
+
 
 class TestSendCustomOrganizationEmailView(TestCase):
     def setUp(self):
@@ -1013,6 +1022,19 @@ class TestSendCustomOrganizationEmailTestView(TestCase):
 
         assert mail.outbox[0].body.startswith("1|")
         assert mail.outbox[0].body != "1|"
+
+    def test_test_email_renders_quota_tags(self):
+        self.client.force_login(self.manager_user)
+        self.client.post(
+            self.test_url,
+            self._data(
+                body="<p>{{ bookings_above_limit }}|{{ cost_above_limit }}|"
+                "{{ bookings_above_limit_without_rate }}</p>"
+            ),
+        )
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].body == "0|0.00|0"
 
     def test_invalid_address_is_rejected(self):
         self.client.force_login(self.manager_user)

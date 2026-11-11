@@ -248,7 +248,26 @@
                         {% endverbatim %}
                         - {% trans "Domain of this site, for links" %}
                       </li>
+                      <li>
+                        {% verbatim %}
+                          {{ bookings_above_limit }}
+                        {% endverbatim %}
+                        - {% trans "Bookings above the free bookings allowance that would be charged" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ cost_above_limit }}
+                        {% endverbatim %}
+                        - {% trans "What those bookings would cost in total" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
+                          {{ bookings_above_limit_without_rate }}
+                        {% endverbatim %}
+                        - {% trans "Bookings above the allowance on rooms without a paid rate, which would be removed" %}
+                      </li>
                     </ul>
+                    {% trans "The three allowance tags cover future bookings in the selected period and resources that were not yet priced against the free bookings allowance." %}
                   </small>
                 </div>
                 <button type="submit"

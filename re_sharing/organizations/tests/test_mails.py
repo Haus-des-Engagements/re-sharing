@@ -9,6 +9,7 @@ from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
 from django.utils import timezone
+from freezegun import freeze_time
 from psycopg.types.range import Range
 
 from re_sharing.bookings.tests.factories import BookingFactory
@@ -928,6 +929,148 @@ class SendCustomOrganizationEmailTest(TestCase):
 
         assert result["sent"] is True
         assert mail.outbox[0].to == ["me@example.org"]
+
+
+@freeze_time("2026-11-01")
+class SendCustomOrganizationEmailQuotaTagsTest(TestCase):
+    """Allowance of 2, five two-hour legacy bookings in 2027, 15 per hour."""
+
+    PREVIEW = "re_sharing.bookings.services_quota_transition.apply_free_bookings_quota"
+
+    def setUp(self):
+        from re_sharing.organizations.models import Organization
+        from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+        from re_sharing.resources.tests.factories import CompensationFactory
+
+        mail.outbox.clear()
+        self.org = OrganizationFactory(
+            name="Limited Org",
+            email="limited@example.com",
+            status=Organization.Status.CONFIRMED,
+        )
+        self.org.organization_groups.add(
+            OrganizationGroupFactory(
+                free_bookings_per_year=2, free_bookings_valid_from=date(2026, 1, 1)
+            )
+        )
+        self.room = ResourceFactory(
+            name="Room A", type=Resource.ResourceTypeChoices.ROOM
+        )
+        self.other_room = ResourceFactory(
+            name="Room B", type=Resource.ResourceTypeChoices.ROOM
+        )
+        self.free_compensation = CompensationFactory(
+            name="Free of charge",
+            hourly_rate=None,
+            counts_against_free_bookings=True,
+            resource=[self.room, self.other_room],
+        )
+        CompensationFactory(name="Paid", hourly_rate=15, resource=[self.room])
+        for month in range(1, 6):
+            self._legacy_booking(date(2027, month, 5))
+
+    def _legacy_booking(self, start_date, **kwargs):
+        defaults = {
+            "organization": self.org,
+            "resource": self.room,
+            "compensation": self.free_compensation,
+            "status": BookingStatus.CONFIRMED,
+            "start_date": start_date,
+            "start_time": time(10),
+            "end_time": time(12),
+            "uses_free_booking": False,
+            "total_amount": None,
+        }
+        defaults.update(kwargs)
+        return BookingFactory(**defaults)
+
+    BODY = (
+        "<p>{{ bookings_above_limit }}|{{ cost_above_limit }}|"
+        "{{ bookings_above_limit_without_rate }}</p>"
+    )
+
+    def _send(self, body=BODY, subject="Test", **kwargs):
+        return send_custom_organization_email.call(
+            self.org.id, subject_template=subject, body_template=body, **kwargs
+        )
+
+    def test_tags_render_for_the_selected_period(self):
+        self._send(filter_context={"from_date": "2027-03-01", "to_date": "2027-12-31"})
+
+        assert mail.outbox[0].body == "3|90.00|0"
+
+    def test_tags_follow_period_and_resource_filter(self):
+        self._legacy_booking(date(2027, 6, 5), resource=self.other_room)
+
+        self._send(
+            filter_context={
+                "from_date": "2027-03-01",
+                "to_date": "2027-03-31",
+                "resource_ids": [self.room.id],
+            }
+        )
+        self._send(filter_context={"resource_ids": [self.other_room.id]})
+
+        assert mail.outbox[0].body == "1|30.00|0"
+        assert mail.outbox[1].body == "0|0.00|1"
+
+    def test_tags_render_without_filter_context(self):
+        self._send()
+
+        assert mail.outbox[0].body == "3|90.00|0"
+
+    def test_tags_render_zero_for_unlimited_organization(self):
+        from re_sharing.organizations.tests.factories import OrganizationGroupFactory
+
+        self.org.organization_groups.add(OrganizationGroupFactory())
+
+        self._send()
+
+        assert mail.outbox[0].body == "0|0.00|0"
+
+    def test_tag_in_subject_only(self):
+        self._send(body="<p>Hi</p>", subject="{{ bookings_above_limit }} bookings")
+
+        assert mail.outbox[0].subject == "3 bookings"
+
+    def test_tags_can_make_text_conditional(self):
+        self._send(
+            body="<p>{% if bookings_above_limit %}pay{% else %}free{% endif %}</p>"
+        )
+
+        assert mail.outbox[0].body == "pay"
+
+    def test_dry_run_is_skipped_when_tags_are_not_used(self):
+        with patch(self.PREVIEW) as mock_transition:
+            self._send(
+                body="<p>{{ number_of_bookings }}</p>",
+                filter_context={"from_date": "2027-01-01"},
+            )
+
+        mock_transition.assert_not_called()
+        assert len(mail.outbox) == 1
+
+    def test_sending_changes_no_booking(self):
+        from re_sharing.bookings.models import Booking
+
+        fields = (
+            "id",
+            "compensation_id",
+            "total_amount",
+            "status",
+            "uses_free_booking",
+        )
+        before = list(Booking.objects.order_by("id").values_list(*fields))
+
+        self._send()
+
+        assert list(Booking.objects.order_by("id").values_list(*fields)) == before
+
+    def test_test_email_shows_the_same_values(self):
+        self._send(recipient_override="me@example.org")
+
+        assert mail.outbox[0].to == ["me@example.org"]
+        assert mail.outbox[0].body == "3|90.00|0"
 
 
 class SendPermanentCodeCreatedEmailTest(TestCase):

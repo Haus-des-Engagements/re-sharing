@@ -1,13 +1,16 @@
 from datetime import date
 from datetime import time
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase
+from freezegun import freeze_time
 
 from re_sharing.bookings.models import Booking
 from re_sharing.bookings.models import BookingSeries
 from re_sharing.bookings.services_quota_transition import apply_free_bookings_quota
 from re_sharing.bookings.services_quota_transition import get_legacy_consuming_bookings
+from re_sharing.bookings.services_quota_transition import get_quota_transition_preview
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.organizations.models import Organization
@@ -252,3 +255,195 @@ class TestApplyFreeBookingsQuota(QuotaTransitionTestMixin, TestCase):
         assert series.is_quota_priced is False
         assert Booking.objects.filter(pk=removed.pk).exists()
         assert BookingSeries.objects.get(pk=series.pk).fallback_compensation is None
+
+
+@freeze_time("2026-11-01")
+class TestGetQuotaTransitionPreview(QuotaTransitionTestMixin, TestCase):
+    """Bookings are two hours long, the cheapest paid rate is 15 per hour."""
+
+    allowance = 2
+
+    def setUp(self):
+        self.set_up_transition()
+
+    def _monthly_bookings(self, months, **kwargs):
+        return [self.booking(date(2027, month, 5), **kwargs) for month in months]
+
+    def test_counts_charged_bookings_with_their_cost_for_the_year(self):
+        self._monthly_bookings(range(1, 6))
+
+        preview = get_quota_transition_preview(
+            self.organization, date(2027, 1, 1), date(2027, 12, 31)
+        )
+
+        assert preview == {
+            "bookings_above_limit": 3,
+            "cost_above_limit": Decimal("90.00"),
+            "bookings_above_limit_without_rate": 0,
+        }
+
+    def test_cost_has_two_decimals(self):
+        self._monthly_bookings(range(1, 4), end_time=time(10, 30))
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert str(preview["cost_above_limit"]) == "7.50"
+
+    def test_earlier_bookings_of_the_year_use_the_allowance_first(self):
+        self._monthly_bookings(range(1, 6))
+
+        preview = get_quota_transition_preview(
+            self.organization, date(2027, 3, 1), date(2027, 3, 31)
+        )
+
+        assert preview["bookings_above_limit"] == 1
+        assert preview["cost_above_limit"] == Decimal("30.00")
+
+    def test_period_before_the_allowance_is_used_up(self):
+        self._monthly_bookings(range(1, 6))
+
+        preview = get_quota_transition_preview(
+            self.organization, date(2027, 1, 1), date(2027, 1, 31)
+        )
+
+        assert preview == {
+            "bookings_above_limit": 0,
+            "cost_above_limit": Decimal("0.00"),
+            "bookings_above_limit_without_rate": 0,
+        }
+        assert str(preview["cost_above_limit"]) == "0.00"
+
+    def test_period_bounds_are_inclusive(self):
+        self._monthly_bookings(range(1, 6))
+
+        preview = get_quota_transition_preview(
+            self.organization, date(2027, 3, 5), date(2027, 4, 5)
+        )
+
+        assert preview["bookings_above_limit"] == 2  # noqa: PLR2004
+
+    def test_open_bounds(self):
+        self._monthly_bookings(range(1, 6))
+
+        from_only = get_quota_transition_preview(self.organization, date(2027, 4, 1))
+        to_only = get_quota_transition_preview(
+            self.organization, to_date=date(2027, 3, 31)
+        )
+        neither = get_quota_transition_preview(self.organization)
+
+        assert from_only["bookings_above_limit"] == 2  # noqa: PLR2004
+        assert to_only["bookings_above_limit"] == 1
+        assert neither["bookings_above_limit"] == 3  # noqa: PLR2004
+
+    def test_already_used_free_bookings_reduce_the_allowance(self):
+        self.flagged_bookings(2027, 2)
+        self._monthly_bookings([3, 4])
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview["bookings_above_limit"] == 2  # noqa: PLR2004
+
+    def test_resource_filter_narrows_the_reported_bookings_only(self):
+        other_room = ResourceFactory(name="Other room with rates")
+        self.free_compensation.resource.add(other_room)
+        self.cheap_compensation.resource.add(other_room)
+        self._monthly_bookings([1, 2])
+        self._monthly_bookings([3, 4], resource=other_room)
+
+        selected = get_quota_transition_preview(
+            self.organization, resource_ids=[other_room.id]
+        )
+        unselected = get_quota_transition_preview(
+            self.organization, resource_ids=[self.resource.id]
+        )
+
+        assert selected["bookings_above_limit"] == 2  # noqa: PLR2004
+        assert unselected["bookings_above_limit"] == 0
+
+    def test_bookings_on_a_room_without_paid_compensation_are_reported_apart(self):
+        series = self.legacy_series(resource=self.quota_only_resource)
+        self.booking(date(2027, 1, 5), resource=self.quota_only_resource)
+        self.booking(
+            date(2027, 2, 5), resource=self.quota_only_resource, booking_series=series
+        )
+        self.booking(  # occurrence, would be deleted
+            date(2027, 3, 5), resource=self.quota_only_resource, booking_series=series
+        )
+        self.booking(  # single booking, would be cancelled
+            date(2027, 4, 5), resource=self.quota_only_resource
+        )
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview == {
+            "bookings_above_limit": 0,
+            "cost_above_limit": Decimal("0.00"),
+            "bookings_above_limit_without_rate": 2,
+        }
+
+    def test_removed_bookings_respect_period_and_resource_filter(self):
+        series = self.legacy_series(resource=self.quota_only_resource)
+        self._monthly_bookings([1, 2])
+        self.booking(
+            date(2027, 3, 5), resource=self.quota_only_resource, booking_series=series
+        )
+        self.booking(date(2027, 4, 5), resource=self.quota_only_resource)
+
+        march = get_quota_transition_preview(
+            self.organization, date(2027, 3, 1), date(2027, 3, 31)
+        )
+        other_room = get_quota_transition_preview(
+            self.organization, resource_ids=[self.resource.id]
+        )
+
+        assert march["bookings_above_limit_without_rate"] == 1
+        assert other_room["bookings_above_limit_without_rate"] == 0
+
+    def test_unlimited_organization_has_nothing_above_the_limit(self):
+        self.organization.organization_groups.add(OrganizationGroupFactory())
+        self._monthly_bookings(range(1, 6))
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview == {
+            "bookings_above_limit": 0,
+            "cost_above_limit": Decimal("0.00"),
+            "bookings_above_limit_without_rate": 0,
+        }
+
+    def test_bookings_already_priced_against_the_quota_do_not_count(self):
+        self.flagged_bookings(2027, 2)
+        self._monthly_bookings(
+            [3, 4], compensation=self.cheap_compensation, total_amount=30
+        )
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview["bookings_above_limit"] == 0
+        assert preview["cost_above_limit"] == Decimal("0.00")
+
+    def test_preview_changes_nothing(self):
+        series = self.legacy_series()
+        quota_only_series = self.legacy_series(resource=self.quota_only_resource)
+        self._monthly_bookings(range(1, 5), booking_series=series)
+        self.booking(
+            date(2027, 6, 5),
+            resource=self.quota_only_resource,
+            booking_series=quota_only_series,
+        )
+        self.booking(date(2027, 7, 5), resource=self.quota_only_resource)
+        fields = (
+            "id",
+            "compensation_id",
+            "total_amount",
+            "status",
+            "uses_free_booking",
+        )
+        before = list(Booking.objects.order_by("id").values_list(*fields))
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview["bookings_above_limit"] == 2  # noqa: PLR2004
+        assert preview["bookings_above_limit_without_rate"] == 2  # noqa: PLR2004
+        assert list(Booking.objects.order_by("id").values_list(*fields)) == before
+        assert not BookingSeries.objects.filter(is_quota_priced=True).exists()

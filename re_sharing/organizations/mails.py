@@ -551,6 +551,10 @@ def _format_short_date(value: date | None) -> str:
 # =============================================================================
 
 
+# Common part of the template tags backed by the quota transition preview
+QUOTA_TAG_MARKER = "above_limit"
+
+
 @task(queue_name="email")
 def send_custom_organization_email(
     organization_id: int,
@@ -577,6 +581,11 @@ def send_custom_organization_email(
             receives ``number_of_bookings`` and ``total_amount`` computed with
             the same rules as the page preview, plus ``from_date`` / ``to_date``
             as localized short dates (empty string for an open bound).
+            When subject or body use them, the context also receives
+            ``bookings_above_limit``, ``cost_above_limit`` and
+            ``bookings_above_limit_without_rate``: what the free bookings
+            transition would charge or remove in that period on those
+            resources (see ``get_quota_transition_preview``).
         recipient_override: Send a test email to this address instead of the
             organization: same rendering, subject prefixed with ``[Test]``,
             no BCC.
@@ -596,14 +605,16 @@ def send_custom_organization_email(
         "domain": domain,
     }
 
+    from_date = to_date = resource_ids = None
     if filter_context:
         from_date = _parse_iso_date(filter_context.get("from_date"))
         to_date = _parse_iso_date(filter_context.get("to_date"))
+        resource_ids = filter_context.get("resource_ids")
         stats = get_organization_booking_stats(
             organization,
             from_date=from_date,
             to_date=to_date,
-            resource_ids=filter_context.get("resource_ids"),
+            resource_ids=resource_ids,
         )
         context.update(
             {
@@ -614,6 +625,22 @@ def send_custom_organization_email(
                 "number_of_bookings": stats["booking_count"],
                 "total_amount": stats["total_amount"],
             }
+        )
+
+    # The quota tags need a dry run of the transition, so only pay for it
+    # when the email uses them
+    if QUOTA_TAG_MARKER in subject_template + body_template:
+        from re_sharing.bookings.services_quota_transition import (
+            get_quota_transition_preview,
+        )
+
+        context.update(
+            get_quota_transition_preview(
+                organization,
+                from_date=from_date,
+                to_date=to_date,
+                resource_ids=resource_ids,
+            )
         )
 
     subject = Template(subject_template).render(Context(context, autoescape=False))

@@ -12,6 +12,7 @@ the nightly extension prices their later occurrences.
 
 from dataclasses import dataclass
 from dataclasses import field
+from datetime import date
 from decimal import Decimal
 
 from django.db import transaction
@@ -36,6 +37,7 @@ class RemovedBooking:
     start_date: object
     resource: str
     title: str
+    resource_id: int | None = None
 
 
 @dataclass
@@ -157,7 +159,10 @@ def apply_free_bookings_quota(
                 if booking.booking_series_id is not None:
                     report.deleted.append(
                         RemovedBooking(
-                            booking.start_date, str(booking.resource), booking.title
+                            booking.start_date,
+                            str(booking.resource),
+                            booking.title,
+                            booking.resource_id,
                         )
                     )
                     booking.delete()
@@ -183,3 +188,48 @@ def apply_free_bookings_quota(
         if dry_run:
             transaction.set_rollback(True)
     return report
+
+
+def get_quota_transition_preview(
+    organization: Organization,
+    from_date: date | None = None,
+    to_date: date | None = None,
+    resource_ids: list[int] | None = None,
+) -> dict:
+    """
+    What the transition would do to the organization's bookings that start
+    within the inclusive day range [from_date, to_date] on the given
+    resources. An omitted bound is open, empty resource_ids means all.
+
+    The free bookings of a year are allocated across all bookings of that
+    year; the range and the resources only narrow what is reported. Nothing
+    is changed (dry run).
+
+    Returns:
+        dict with ``bookings_above_limit`` (bookings that would be charged),
+        ``cost_above_limit`` (their total as Decimal with two decimals) and
+        ``bookings_above_limit_without_rate`` (bookings that would be removed
+        because the room has no paid compensation)
+    """
+    report = apply_free_bookings_quota(organization, dry_run=True)
+
+    def is_reported(booking) -> bool:
+        if from_date is not None and booking.start_date < from_date:
+            return False
+        if to_date is not None and booking.start_date > to_date:
+            return False
+        return not resource_ids or booking.resource_id in resource_ids
+
+    charged = [booking for booking in report.charged if is_reported(booking)]
+    removed = [
+        booking for booking in report.deleted + report.cancelled if is_reported(booking)
+    ]
+    cost = sum(
+        (Decimal(str(booking.total_amount)) for booking in charged),
+        Decimal(0),
+    )
+    return {
+        "bookings_above_limit": len(charged),
+        "cost_above_limit": cost.quantize(Decimal("0.01")),
+        "bookings_above_limit_without_rate": len(removed),
+    }
