@@ -220,6 +220,12 @@
                       </li>
                       <li>
                         {% verbatim %}
+                          {{ organization.slug }}
+                        {% endverbatim %}
+                        - {% trans "Short name used in web addresses, e.g. to build a link to a page of the organization" %}
+                      </li>
+                      <li>
+                        {% verbatim %}
                           {{ number_of_bookings }}
                         {% endverbatim %}
                         - {% trans "Counted bookings (selected period and resources)" %}

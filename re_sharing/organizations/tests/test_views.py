@@ -690,6 +690,12 @@ class TestCustomOrganizationEmailView(TestCase):
         assert "{{ cost_above_limit }}" in content
         assert "{{ bookings_above_limit_without_rate }}" in content
 
+    def test_help_lists_the_organization_slug(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.get(self.custom_email_url, {"min_bookings": "0"})
+
+        assert "{{ organization.slug }}" in response.content.decode()
+
 
 class TestSendCustomOrganizationEmailView(TestCase):
     def setUp(self):
