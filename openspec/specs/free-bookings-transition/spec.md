@@ -3,12 +3,10 @@
 ## Purpose
 
 One-time transition of bookings and series created before the free bookings quota: the management command apply_free_bookings_quota selects the legacy bookings of limited organizations, allocates the remaining free bookings of a year chronologically, charges the rest with the cheapest paid compensation of the room or removes them, marks legacy series as quota-priced with a fallback, supports a dry run and prints a per-organization report. Idempotent and per-organization transactional.
-
 ## Requirements
-
 ### Requirement: Transition selects the legacy bookings of limited organizations
 
-The transition SHALL consider only organizations with status confirmed whose effective allowance is limited. For such an organization it SHALL select bookings that are pending or confirmed, have `uses_free_booking` false, an empty invoice number, a compensation that counts against free bookings, a start in the future and a limited allowance on their start date. Standalone bookings and occurrences of series with `is_quota_priced` false SHALL both be selected; unavailable occurrences SHALL NOT.
+The transition SHALL consider only organizations with status confirmed whose effective allowance is limited. For such an organization it SHALL select bookings that are pending or confirmed, have `uses_free_booking` false, an empty invoice number, a compensation that counts against free bookings, a resource that is not exempt from free bookings, a start in the future and a limited allowance on their start date. Standalone bookings and occurrences of series with `is_quota_priced` false SHALL both be selected; unavailable occurrences SHALL NOT.
 
 #### Scenario: Legacy single booking and series occurrence are selected
 
@@ -24,6 +22,12 @@ The transition SHALL consider only organizations with status confirmed whose eff
 
 - **WHEN** a limited organization has a booking that already started, a booking with an invoice number, a booking with a paid compensation and a booking before the limit's valid-from date
 - **THEN** none of them is touched
+
+#### Scenario: Bookings on an exempt resource are skipped
+
+- **WHEN** a limited organization with an allowance of 2 has 3 future legacy bookings on an exempt resource followed by 3 on a resource that is not exempt, all with the consuming compensation
+- **THEN** the 3 bookings on the exempt resource are not touched
+- **AND** the first 2 bookings on the other resource are kept free and the third is beyond the allowance
 
 ### Requirement: Free bookings are allocated chronologically per year
 
@@ -64,7 +68,7 @@ Where no paid compensation is bookable for the resource, a selected series occur
 
 ### Requirement: Legacy series are marked as quota-priced
 
-Every series of a limited organization with `is_quota_priced` false and a compensation that counts against free bookings SHALL get `is_quota_priced` true and, where one exists, the cheapest paid compensation of its resource as `fallback_compensation`, whether or not it currently has selectable occurrences. Series with another compensation SHALL NOT be changed.
+Every series of a limited organization with `is_quota_priced` false, a compensation that counts against free bookings and a resource that is not exempt from free bookings SHALL get `is_quota_priced` true and, where one exists, the cheapest paid compensation of its resource as `fallback_compensation`, whether or not it currently has selectable occurrences. Series with another compensation or on an exempt resource SHALL NOT be changed.
 
 #### Scenario: Series gets fallback and marker
 
@@ -80,6 +84,11 @@ Every series of a limited organization with `is_quota_priced` false and a compen
 
 - **WHEN** a legacy series uses a compensation with an hourly rate
 - **THEN** its `is_quota_priced` stays false
+
+#### Scenario: Series on an exempt resource untouched
+
+- **WHEN** a legacy series uses the consuming compensation on an exempt resource
+- **THEN** its `is_quota_priced` stays false and it has no fallback
 
 ### Requirement: Dry run performs no change
 

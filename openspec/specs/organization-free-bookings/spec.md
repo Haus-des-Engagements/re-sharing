@@ -3,9 +3,7 @@
 ## Purpose
 
 Yearly free bookings allowance per organization group with a valid-from date, the effective allowance of an organization (most generous group wins, unlimited beats any number), the compensation flag that consumes free bookings, and the counting of used free bookings per calendar year. Changes to the allowance affect only later bookings; users see their used free bookings per organization on the dashboard.
-
 ## Requirements
-
 ### Requirement: Organization group free-bookings allowance
 
 An organization group SHALL have an optional `free_bookings_per_year` (positive integer) and an optional `free_bookings_valid_from` (date). The two fields SHALL be set together: a group with a number but no date, or a date but no number, SHALL be rejected on validation and by a database constraint. A group with no `free_bookings_per_year` grants an unlimited allowance. A group with a value but with `free_bookings_valid_from` after the date in question grants an unlimited allowance for that date. Both fields SHALL be editable in the admin.
@@ -63,7 +61,7 @@ Changing `free_bookings_per_year`, `free_bookings_valid_from` or `counts_against
 
 ### Requirement: Compensation consumes free bookings only when flagged
 
-A compensation SHALL have a boolean `counts_against_free_bookings`, default false, editable in the admin. Only bookings priced with a flagged compensation use free bookings. A compensation with an `hourly_rate` or a `daily_rate` SHALL NOT be flagged; validation and a database constraint SHALL reject it.
+A compensation SHALL have a boolean `counts_against_free_bookings`, default false, editable in the admin. Only bookings priced with a flagged compensation on a resource that is not exempt from free bookings use free bookings. A compensation with an `hourly_rate` or a `daily_rate` SHALL NOT be flagged; validation and a database constraint SHALL reject it.
 
 #### Scenario: Priced compensation cannot be flagged
 
@@ -74,6 +72,11 @@ A compensation SHALL have a boolean `counts_against_free_bookings`, default fals
 
 - **WHEN** a booking is created with a compensation that has no hourly rate and `counts_against_free_bookings` false
 - **THEN** the booking's `uses_free_booking` is false
+
+#### Scenario: Flagged compensation on a resource that is not exempt consumes
+
+- **WHEN** a limited organization with free bookings left books a resource that is not exempt with a flagged compensation
+- **THEN** the booking's `uses_free_booking` is true
 
 ### Requirement: Free bookings used per calendar year
 
@@ -132,3 +135,24 @@ The user dashboard SHALL show, for each of the user's organizations with a limit
 
 - **WHEN** the allowance is valid from 2027-01-01, the current year is 2026 and the user opens the dashboard
 - **THEN** the organization's row shows no information for 2026 and the used free bookings of 2027
+
+### Requirement: Resource can be exempt from free bookings
+
+A resource SHALL have a boolean `exempt_from_free_bookings`, default false, editable in the admin. Bookings on an exempt resource SHALL NOT use free bookings, whatever their compensation. Changing the value SHALL affect only bookings priced afterwards; bookings that already have `uses_free_booking` true SHALL keep it and still count as used.
+
+#### Scenario: New resource is not exempt
+
+- **WHEN** a resource is created without setting the value
+- **THEN** its `exempt_from_free_bookings` is false
+
+#### Scenario: Booking on an exempt resource does not consume
+
+- **WHEN** a limited organization books an exempt resource with a compensation that has `counts_against_free_bookings` true
+- **THEN** the booking's `uses_free_booking` is false
+- **AND** the organization's used free bookings of that year are unchanged
+
+#### Scenario: Earlier free bookings stay counted
+
+- **WHEN** an organization has 2 bookings with `uses_free_booking` true on a resource and the resource is then set exempt
+- **THEN** both bookings keep `uses_free_booking` true
+- **AND** the organization's used free bookings of that year are still 2
