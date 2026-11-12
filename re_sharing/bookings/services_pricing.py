@@ -47,6 +47,18 @@ def _hourly_total(booking, compensation):
     return (end - start).total_seconds() / 3600 * compensation.hourly_rate
 
 
+def consumes_free_booking(compensation, resource) -> bool:
+    """
+    Whether a booking of the resource with this compensation uses one of the
+    organization's free bookings: the compensation counts against them and
+    the resource is not exempt.
+    """
+    return (
+        compensation.counts_against_free_bookings
+        and not resource.exempt_from_free_bookings
+    )
+
+
 def needs_quota_reevaluation(booking, organization, compensation, start_date):
     """
     Whether a booking has to be priced against the free bookings allowance.
@@ -74,9 +86,10 @@ def price_booking(
     """
     Set compensation, total_amount and uses_free_booking on an unsaved booking.
 
-    A compensation that counts against free bookings is kept while the
-    organization has a free booking left in the year of the booking's start
-    date; the booking is then free and marked as using one. Otherwise the
+    A compensation that consumes a free booking (see consumes_free_booking)
+    is kept while the organization has a free booking left in the year of the
+    booking's start date; the booking is then free and marked as using one.
+    Otherwise the
     fallback compensation is charged for the full duration, or, without one,
     FreeBookingsExhaustedError is raised. ``reserved`` free bookings of the
     same year that are not saved yet (earlier occurrences of a series) are
@@ -84,7 +97,7 @@ def price_booking(
     """
     booking.compensation = compensation
     booking.uses_free_booking = False
-    if compensation.counts_against_free_bookings:
+    if consumes_free_booking(compensation, booking.resource):
         quota_date = _as_date(booking.start_date)
         remaining = get_remaining_free_bookings(
             booking.organization, quota_date, exclude_booking=exclude_booking
@@ -135,11 +148,11 @@ def get_usable_fallback_compensation(booking_series):
 
 def series_needs_fallback(organization, resource, compensation, last_date):
     """
-    Whether a series with this compensation must name a fallback: the
-    compensation counts against free bookings, the allowance is limited on
+    Whether a series with this compensation must name a fallback: its
+    bookings consume free bookings, the allowance is limited on
     some occurrence date up to ``last_date`` and a paid compensation exists.
     """
-    if compensation is None or not compensation.counts_against_free_bookings:
+    if compensation is None or not consumes_free_booking(compensation, resource):
         return False
     if not is_free_bookings_allowance_limited_until(organization, last_date):
         return False

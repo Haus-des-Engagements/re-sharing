@@ -62,8 +62,13 @@ def get_bookable_compensations(
     requested. While an existing booking is edited within its organization and
     year, its current compensation stays offered and the booking itself is not
     counted, so edits that are not re-priced remain possible.
+
+    A resource that is exempt from free bookings is outside the allowance:
+    all its compensations are offered and no remaining count is given.
     """
     compensations = get_compensations_for(organization, resource)
+    if resource.exempt_from_free_bookings:
+        return compensations, None
     keeps_current = (
         booking is not None
         and booking.organization_id == organization.pk

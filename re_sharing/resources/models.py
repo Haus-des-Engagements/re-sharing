@@ -152,6 +152,14 @@ class Resource(Model):
         blank=True,
         help_text=_("Number of items in stock. Only applicable for lendable items."),
     )
+    exempt_from_free_bookings = BooleanField(
+        _("Exempt from free bookings"),
+        default=False,
+        help_text=_(
+            "Bookings of this resource never use one of the organization's free "
+            "bookings per year, even with a compensation that counts against them."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Resource")
@@ -375,7 +383,8 @@ class Compensation(TimeStampedModel):
         default=False,
         help_text=_(
             "Bookings with this compensation use one of the organization's free "
-            "bookings per year. Only possible for compensations without a rate."
+            "bookings per year. Only possible for compensations without a rate. "
+            "Resources that are exempt from free bookings are not affected."
         ),
     )
 

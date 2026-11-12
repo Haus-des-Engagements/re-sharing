@@ -54,8 +54,15 @@ class ResourceImageInline(admin.TabularInline):
 
 @admin.register(Resource)
 class ResourceAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ["id", "name", "max_persons", "type", "location"]
-    list_filter = ["type", "access", "location"]
+    list_display = [
+        "id",
+        "name",
+        "max_persons",
+        "type",
+        "location",
+        "exempt_from_free_bookings",
+    ]
+    list_filter = ["type", "access", "location", "exempt_from_free_bookings"]
     search_fields = ["id", "name"]
     ordering = ["id"]
     inlines = [ResourceImageInline, CompensationInline]

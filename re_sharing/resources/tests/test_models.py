@@ -210,3 +210,10 @@ class CompensationFreeBookingsFlagTest(TestCase):
                 daily_rate=Decimal("10.00"),
                 counts_against_free_bookings=True,
             )
+
+
+class ResourceFreeBookingsExemptionTest(TestCase):
+    def test_default_is_not_exempt(self):
+        resource = ResourceFactory()
+
+        assert resource.exempt_from_free_bookings is False

@@ -1187,3 +1187,34 @@ class GetCompensationsFreeBookingsViewTest(TestCase):
         content = self.get_choices(rrule_repetitions="NO_REPETITIONS")
 
         assert "Free of charge" not in content
+
+    def test_exempt_resource_ignores_the_allowance(self):
+        self.use_free_bookings(2)
+        self.resource.exempt_from_free_bookings = True
+        self.resource.save()
+
+        content = self.get_choices()
+
+        assert "Free of charge" in content
+        assert "free booking" not in content
+
+    def test_exempt_resource_without_paid_compensation_stays_bookable(self):
+        self.paid_compensation.is_active = False
+        self.paid_compensation.save()
+        self.use_free_bookings(2)
+        self.resource.exempt_from_free_bookings = True
+        self.resource.save()
+
+        content = self.get_choices()
+
+        assert "Free of charge" in content
+        assert "no free booking left" not in content
+
+    def test_series_on_exempt_resource_offers_no_fallback_choices(self):
+        self.resource.exempt_from_free_bookings = True
+        self.resource.save()
+
+        content = self.get_choices(rrule_repetitions="WEEKLY")
+
+        assert "Free of charge" in content
+        assert 'name="fallback_compensation"' not in content

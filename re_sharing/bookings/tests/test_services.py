@@ -55,12 +55,15 @@ from re_sharing.bookings.services_booking_series import extend_booking_series
 from re_sharing.bookings.services_booking_series import generate_bookings
 from re_sharing.bookings.services_booking_series import manager_cancel_booking_series
 from re_sharing.bookings.services_booking_series import save_booking_series
+from re_sharing.bookings.services_pricing import consumes_free_booking
 from re_sharing.bookings.services_pricing import get_free_bookings_remaining_after
+from re_sharing.bookings.services_pricing import series_needs_fallback
 from re_sharing.bookings.tests.factories import BookingFactory
 from re_sharing.bookings.tests.factories import BookingSeriesFactory
 from re_sharing.bookings.tests.helpers import patch_thread_pool
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
+from re_sharing.organizations.selectors import get_remaining_free_bookings
 from re_sharing.organizations.tests.factories import BookingPermissionFactory
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
@@ -4588,3 +4591,125 @@ class TestFreeBookingsRemainingAfter(FreeBookingsQuotaTestMixin, TestCase):
 
         assert booking_data["fallback_compensation"] == self.paid_compensation.id
         assert rrule is None
+
+
+class TestExemptResource(FreeBookingsSeriesTestMixin, TestCase):
+    """Bookings on a resource that is exempt from free bookings."""
+
+    def setUp(self):
+        self.set_up_quota()
+        self.resource.exempt_from_free_bookings = True
+        self.resource.save()
+        self.other_resource = ResourceFactory()
+        self.free_compensation.resource.add(self.other_resource)
+
+    def test_flagged_compensation_does_not_consume_on_an_exempt_resource(self):
+        assert not consumes_free_booking(self.free_compensation, self.resource)
+        assert consumes_free_booking(self.free_compensation, self.other_resource)
+        assert not consumes_free_booking(self.paid_compensation, self.other_resource)
+
+    def test_booking_is_free_and_unmarked_while_free_bookings_remain(self):
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+        assert booking.compensation == self.free_compensation
+
+    def test_booking_is_free_when_the_allowance_is_used_up(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(booking, self.free_compensation)
+
+        assert booking.uses_free_booking is False
+        assert booking.total_amount is None
+
+    def test_fallback_is_not_charged(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+
+        price_booking(
+            booking,
+            self.free_compensation,
+            fallback_compensation=self.paid_compensation,
+        )
+
+        assert booking.compensation == self.free_compensation
+        assert booking.total_amount is None
+
+    def test_other_resource_is_still_limited(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(
+            datetime.date(2027, 3, 1), resource=self.other_resource
+        )
+
+        with pytest.raises(FreeBookingsExhaustedError):
+            price_booking(booking, self.free_compensation)
+
+    def test_bookable_when_the_allowance_is_used_up(self):
+        self.use_free_bookings(2)
+
+        assert is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+        assert not is_bookable_by_organization(
+            self.user,
+            self.organization,
+            self.other_resource,
+            self.free_compensation,
+            start_date=datetime.date(2027, 3, 1),
+        )
+
+    def test_saved_when_the_allowance_is_used_up(self):
+        self.use_free_bookings(2)
+        booking = self.unsaved_booking(datetime.date(2027, 3, 1))
+        booking.compensation = self.free_compensation
+
+        saved = save_booking(self.user, booking)
+        saved.refresh_from_db()
+
+        assert saved.uses_free_booking is False
+        assert saved.total_amount is None
+        assert saved.compensation == self.free_compensation
+
+    def test_earlier_free_bookings_stay_counted(self):
+        used = self.use_free_bookings(2)
+
+        for booking in used:
+            booking.refresh_from_db()
+            assert booking.uses_free_booking is True
+        assert (
+            get_remaining_free_bookings(self.organization, datetime.date(2027, 3, 1))
+            == 0
+        )
+
+    def test_series_needs_no_fallback(self):
+        last_date = datetime.date(2027, 12, 31)
+
+        assert not series_needs_fallback(
+            self.organization, self.resource, self.free_compensation, last_date
+        )
+        self.paid_compensation.resource.add(self.other_resource)
+        assert series_needs_fallback(
+            self.organization, self.other_resource, self.free_compensation, last_date
+        )
+
+    def test_series_occurrences_are_neither_marked_charged_nor_dropped(self):
+        bookings = self.generate(self.quota_series(WEEKLY_2027))
+
+        assert len(bookings) == 4  # noqa: PLR2004
+        for booking in bookings:
+            assert booking.uses_free_booking is False
+            assert booking.compensation == self.free_compensation
+            assert booking.total_amount is None
+
+    def test_series_without_fallback_keeps_all_occurrences(self):
+        bookings = self.generate(self.quota_series(WEEKLY_2027, with_fallback=False))
+
+        assert len(bookings) == 4  # noqa: PLR2004

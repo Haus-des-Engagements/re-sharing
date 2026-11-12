@@ -74,7 +74,8 @@ def get_legacy_consuming_bookings(organization: Organization) -> list[Booking]:
     Future, not yet invoiced bookings of the organization that use a consuming
     compensation but were never priced against the quota: standalone bookings
     and occurrences of series created before the quota, on dates where the
-    organization's allowance is limited. Ordered by start.
+    organization's allowance is limited. Resources that are exempt from free
+    bookings are left out. Ordered by start.
     """
     bookings = (
         Booking.objects.filter(
@@ -83,6 +84,7 @@ def get_legacy_consuming_bookings(organization: Organization) -> list[Booking]:
             uses_free_booking=False,
             invoice_number="",
             compensation__counts_against_free_bookings=True,
+            resource__exempt_from_free_bookings=False,
             timespan__startswith__gt=timezone.now(),
         )
         .filter(
@@ -99,12 +101,16 @@ def get_legacy_consuming_bookings(organization: Organization) -> list[Booking]:
 
 
 def get_legacy_consuming_series(organization: Organization):
-    """Series created before the quota whose compensation consumes free bookings."""
+    """
+    Series created before the quota whose compensation consumes free bookings,
+    without those on resources that are exempt from free bookings.
+    """
     return (
         BookingSeries.objects.filter(
             organization=organization,
             is_quota_priced=False,
             compensation__counts_against_free_bookings=True,
+            resource__exempt_from_free_bookings=False,
         )
         .select_related("resource")
         .order_by("created")

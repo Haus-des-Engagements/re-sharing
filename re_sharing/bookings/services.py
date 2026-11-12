@@ -25,6 +25,7 @@ from re_sharing.bookings.services_booking_series import create_rrule
 from re_sharing.bookings.services_pricing import FreeBookingsExhaustedError
 from re_sharing.bookings.services_pricing import _as_date
 from re_sharing.bookings.services_pricing import _hourly_total
+from re_sharing.bookings.services_pricing import consumes_free_booking
 from re_sharing.bookings.services_pricing import get_usable_fallback_compensation
 from re_sharing.bookings.services_pricing import needs_quota_reevaluation
 from re_sharing.bookings.services_pricing import price_booking
@@ -100,7 +101,7 @@ class InvalidBookingOperationError(Exception):
 def _exceeds_free_bookings(  # noqa: PLR0913
     organization, resource, compensation, start_date, booking, *, is_series
 ):
-    if not compensation.counts_against_free_bookings:
+    if not consumes_free_booking(compensation, resource):
         return False
     if not needs_quota_reevaluation(booking, organization, compensation, start_date):
         return False
@@ -299,7 +300,7 @@ def save_booking(user, booking):
         # simultaneous requests cannot both take the last free booking.
         Organization.objects.select_for_update().get(pk=booking.organization_id)
         original = Booking.objects.get(pk=booking.pk) if booking.pk else None
-        if booking.compensation.counts_against_free_bookings and (
+        if consumes_free_booking(booking.compensation, booking.resource) and (
             needs_quota_reevaluation(
                 original, booking.organization, booking.compensation, booking.start_date
             )

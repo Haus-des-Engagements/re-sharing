@@ -132,6 +132,14 @@ class TestGetLegacyConsumingBookings(QuotaTransitionTestMixin, TestCase):
 
         assert get_legacy_consuming_bookings(self.organization) == [limited]
 
+    def test_booking_on_an_exempt_resource_is_excluded(self):
+        exempt = ResourceFactory(name="Exempt room", exempt_from_free_bookings=True)
+        self.free_compensation.resource.add(exempt)
+        self.booking(date(2027, 3, 1), resource=exempt)
+        counted = self.booking(date(2027, 3, 2))
+
+        assert get_legacy_consuming_bookings(self.organization) == [counted]
+
 
 class TestApplyFreeBookingsQuota(QuotaTransitionTestMixin, TestCase):
     def setUp(self):
@@ -447,3 +455,55 @@ class TestGetQuotaTransitionPreview(QuotaTransitionTestMixin, TestCase):
         assert preview["bookings_above_limit_without_rate"] == 2  # noqa: PLR2004
         assert list(Booking.objects.order_by("id").values_list(*fields)) == before
         assert not BookingSeries.objects.filter(is_quota_priced=True).exists()
+
+    def test_bookings_on_an_exempt_resource_are_not_counted(self):
+        exempt = ResourceFactory(name="Exempt room", exempt_from_free_bookings=True)
+        self.free_compensation.resource.add(exempt)
+        self._monthly_bookings(range(1, 4), resource=exempt)
+        self._monthly_bookings(range(4, 7))
+
+        preview = get_quota_transition_preview(self.organization)
+
+        assert preview == {
+            "bookings_above_limit": 1,
+            "cost_above_limit": Decimal("30.00"),
+            "bookings_above_limit_without_rate": 0,
+        }
+
+
+@freeze_time("2026-11-01")
+class TestApplyFreeBookingsQuotaWithExemptResource(QuotaTransitionTestMixin, TestCase):
+    allowance = 2
+
+    def setUp(self):
+        self.set_up_transition()
+        self.exempt = ResourceFactory(
+            name="Exempt room", exempt_from_free_bookings=True
+        )
+        self.free_compensation.resource.add(self.exempt)
+
+    def test_exempt_bookings_are_untouched_and_take_no_allowance(self):
+        exempt_bookings = [
+            self.booking(date(2027, 1, day), resource=self.exempt) for day in (4, 5, 6)
+        ]
+        counted = [self.booking(date(2027, 2, day)) for day in (1, 2, 3)]
+
+        report = apply_free_bookings_quota(self.organization)
+
+        assert report.kept_free == counted[:2]
+        assert report.charged == counted[2:]
+        for booking in exempt_bookings:
+            booking.refresh_from_db()
+            assert booking.uses_free_booking is False
+            assert booking.compensation == self.free_compensation
+            assert booking.total_amount is None
+
+    def test_series_on_an_exempt_resource_stays_legacy(self):
+        series = self.legacy_series(resource=self.exempt)
+
+        report = apply_free_bookings_quota(self.organization)
+
+        series.refresh_from_db()
+        assert report.updated_series == []
+        assert series.is_quota_priced is False
+        assert series.fallback_compensation is None

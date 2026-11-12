@@ -277,6 +277,7 @@ def get_compensations(request, selected_compensation=None):
     fallback_compensations = Compensation.objects.none()
     if (
         is_series
+        and not resource.exempt_from_free_bookings
         and compensations.filter(counts_against_free_bookings=True).exists()
         and is_free_bookings_allowance_limited_until(
             organization, timezone.now().date() + timedelta(days=730)

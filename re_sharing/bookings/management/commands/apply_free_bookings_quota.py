@@ -10,7 +10,9 @@ from re_sharing.organizations.selectors import get_limited_organizations
 class Command(BaseCommand):
     help = (
         "Bring bookings created before the free bookings quota under the quota "
-        "for every organization with a limited allowance."
+        "for every organization with a limited allowance. Resources that are "
+        "exempt from free bookings are skipped; run the command again after "
+        "removing an exemption."
     )
 
     def add_arguments(self, parser):
