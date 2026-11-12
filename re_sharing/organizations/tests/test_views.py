@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import time
 from datetime import timedelta
 from http import HTTPStatus
+from unittest.mock import patch
 
 import pytest
 from django.contrib.messages import get_messages
@@ -14,6 +15,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from re_sharing.bookings.tests.factories import BookingFactory
+from re_sharing.emails.models import EmailLog
+from re_sharing.emails.tests.helpers import with_email_log
 from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.models import OrganizationMessage
@@ -775,7 +778,59 @@ class TestSendCustomOrganizationEmailView(TestCase):
         assert mail.outbox[0].subject == f"Hi {self.org.name}"
         assert mail.outbox[0].body == "2|30,00|01.03.2026|31.03.2026|0|250,5"
         messages = list(get_messages(response.wsgi_request))
-        assert any("enqueued 1" in str(m).lower() for m in messages)
+        assert any("scheduled 1" in str(m).lower() for m in messages)
+
+    def test_confirmation_links_to_the_email_log(self):
+        other = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.client.force_login(self.manager_user)
+
+        response = self.client.post(
+            self.send_email_url,
+            {"subject": "S", "body": "B", "selected_orgs": [self.org.id, other.id]},
+            follow=True,
+        )
+
+        content = response.content.decode()
+        assert "Scheduled 2 email(s) to organizations." in content
+        assert '<a href="/emails/?email_type=custom">Email log</a>' in content
+
+    def test_emails_are_scheduled_with_the_send_interval(self):
+        other = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        self.client.force_login(self.manager_user)
+
+        with patch("re_sharing.emails.services.enqueue_spaced") as enqueue_spaced:
+            enqueue_spaced.return_value = 2
+            self.client.post(
+                self.send_email_url,
+                {
+                    "subject": "S",
+                    "body": "B",
+                    "selected_orgs": [self.org.id, other.id],
+                },
+            )
+
+        task, argument_lists = enqueue_spaced.call_args.args
+        assert task.name == "send_custom_organization_email"
+        assert sorted(arguments[0] for arguments in argument_lists) == sorted(
+            [self.org.id, other.id]
+        )
+        assert all(arguments[1:3] == ("S", "B") for arguments in argument_lists)
+
+    @with_email_log
+    def test_custom_email_is_logged_for_its_organization(self):
+        self.client.force_login(self.manager_user)
+
+        self.client.post(
+            self.send_email_url,
+            {"subject": "S", "body": "<p>B</p>", "selected_orgs": [self.org.id]},
+        )
+
+        entry = EmailLog.objects.get()
+        assert entry.email_type == "custom"
+        assert entry.organization == self.org
+        assert entry.status == EmailLog.Status.SENT
+        assert entry.body_text == "B"
+        assert "<p>B</p>" in entry.body_html
 
     def test_email_without_dates_uses_all_time_statistics(self):
         _confirmed_booking(self.org, date(2020, 1, 1))

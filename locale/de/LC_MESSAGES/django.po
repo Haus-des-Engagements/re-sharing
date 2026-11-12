@@ -3882,3 +3882,109 @@ msgstr ""
 msgctxt "agreements"
 msgid "Agreement"
 msgstr "Vereinbarung"
+
+msgid "Emails"
+msgstr "E-Mails"
+
+msgid "Email log"
+msgstr "E-Mail-Protokoll"
+
+msgid "Sent"
+msgstr "Gesendet"
+
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+msgid "Sent at"
+msgstr "Gesendet am"
+
+msgid "From"
+msgstr "Von"
+
+msgid "To"
+msgstr "An"
+
+msgid "Cc"
+msgstr "Cc"
+
+msgid "Bcc"
+msgstr "Bcc"
+
+msgid "Text content"
+msgstr "Textinhalt"
+
+msgid "HTML content"
+msgstr "HTML-Inhalt"
+
+msgid "Attachments"
+msgstr "Anhänge"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Attempts"
+msgstr "Versuche"
+
+msgid "Recipient or subject"
+msgstr "Empfänger*in oder Betreff"
+
+msgid "all types"
+msgstr "alle Typen"
+
+msgid "Every email the platform sent. Sent means the mail server accepted the email, not that it reached the recipient."
+msgstr "Alle E-Mails, die die Plattform verschickt hat. Gesendet heißt, dass der Mailserver die E-Mail angenommen hat, nicht dass sie angekommen ist."
+
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+msgid "Select"
+msgstr "Auswählen"
+
+msgid "Recipients"
+msgstr "Empfänger*innen"
+
+msgid "Select this email"
+msgstr "Diese E-Mail auswählen"
+
+msgid "(no subject)"
+msgstr "(kein Betreff)"
+
+msgid "No emails found."
+msgstr "Keine E-Mails gefunden."
+
+msgid "Send selected again"
+msgstr "Ausgewählte erneut senden"
+
+msgid "Failed emails are retried. Sent emails go out a second time. Attachments are not sent again."
+msgstr "Fehlgeschlagene E-Mails werden erneut versucht. Gesendete E-Mails gehen ein zweites Mal raus. Anhänge werden nicht erneut gesendet."
+
+msgid "Pages of the email log"
+msgstr "Seiten des E-Mail-Protokolls"
+
+#, python-format
+msgid "Page %(number)s of %(total)s"
+msgstr "Seite %(number)s von %(total)s"
+
+msgid "The mail server did not accept this email."
+msgstr "Der Mailserver hat diese E-Mail nicht angenommen."
+
+msgid "Send again"
+msgstr "Erneut senden"
+
+msgid "The email is sent with the content shown here."
+msgstr "Die E-Mail wird mit dem hier gezeigten Inhalt gesendet."
+
+msgid "This email was already sent. The recipients get it a second time."
+msgstr "Diese E-Mail wurde bereits gesendet. Die Empfänger*innen erhalten sie ein zweites Mal."
+
+msgid "It is sent again without its attachments."
+msgstr "Sie wird ohne ihre Anhänge erneut gesendet."
+
+msgid "Please select at least one email."
+msgstr "Bitte wähle mindestens eine E-Mail aus."
+
+#, python-format
+msgid "%(count)d email is scheduled to be sent again."
+msgid_plural "%(count)d emails are scheduled to be sent again."
+msgstr[0] "%(count)d E-Mail wird erneut gesendet."
+msgstr[1] "%(count)d E-Mails werden erneut gesendet."

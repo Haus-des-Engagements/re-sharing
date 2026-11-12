@@ -24,7 +24,10 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
+# The test runner replaces EMAIL_BACKEND with the in-memory backend, so the
+# email log is only written in tests that switch it on (emails/tests/helpers.py)
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+EMAIL_LOG_DELIVERY_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # DEBUGGING FOR TEMPLATES
 # ------------------------------------------------------------------------------

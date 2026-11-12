@@ -104,6 +104,7 @@ LOCAL_APPS = [
     "re_sharing.dashboards",
     "re_sharing.providers",
     "re_sharing.agreements",
+    "re_sharing.emails",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -257,10 +258,17 @@ X_FRAME_OPTIONS = "DENY"
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = env(
+# Every email is recorded in the email log (ADR 0028). The logging backend
+# hands the messages to the backend that actually delivers them.
+EMAIL_BACKEND = "re_sharing.emails.backends.LoggingEmailBackend"
+EMAIL_LOG_DELIVERY_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
     default="django.core.mail.backends.smtp.EmailBackend",
 )
+# Entries of the email log older than this are deleted by delete_old_email_logs
+EMAIL_LOG_RETENTION_MONTHS = env.int("EMAIL_LOG_RETENTION_MONTHS", default=12)
+# Seconds between two emails of a bulk send (custom emails, emails sent again)
+BULK_EMAIL_SEND_INTERVAL = env.int("BULK_EMAIL_SEND_INTERVAL", default=5)
 NEWSLETTER_API_URL = env("NEWSLETTER_API_URL", default="none")
 NUKI_API_TOKEN = env("NUKI_API_TOKEN", default="")
 

@@ -100,6 +100,23 @@ For information about settings configuration, see: https://cookiecutter-django.r
 | `COLLECTION_LOOKAHEAD_DAYS` | `45` | How far ahead collections are created |
 | `COLLECTION_RETURN_WINDOW_DAYS` | `7` | Days after the collection date until a debit counts as collected |
 
+#### Email log
+
+Every email the platform sends is recorded with its content and whether the mail server accepted it. Managers find the log under "Email log" and can send emails again from there.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DJANGO_EMAIL_BACKEND` | SMTP backend | Backend that delivers the emails; the log is written around it |
+| `EMAIL_LOG_RETENTION_MONTHS` | `12` | Entries older than this are deleted by `delete_old_email_logs` |
+| `BULK_EMAIL_SEND_INTERVAL` | `5` | Seconds between two emails of a custom email to many organizations or of emails sent again together; `0` sends them at once |
+| `DJANGO_DEFAULT_BCC_EMAIL` | none | Optional blind copy of every email; can be left out once the log is trusted |
+
+Run the cleanup once a day, for example from cron:
+
+```bash
+30 3 * * * python manage.py delete_old_email_logs
+```
+
 ## Basic Commands
 
 ### Setting Up Your Users

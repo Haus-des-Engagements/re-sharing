@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Email log" %}
+{% endblock title %}
+{% block content %}
+  <h1 class="mt-4">{% trans "Email log" %}</h1>
+  <p class="text-muted">
+    {% trans "Every email the platform sent. Sent means the mail server accepted the email, not that it reached the recipient." %}
+  </p>
+  <form class="row gx-3 gy-2 align-items-end mt-3" method="get">
+    {% for field in form %}
+      <div class="col-auto">
+        <label for="{{ field.id_for_label }}" class="form-label small mb-1">{{ field.label }}</label>
+        {{ field }}
+      </div>
+    {% endfor %}
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">{% trans "Filter" %}</button>
+      <a class="btn btn-link" href="{% url 'emails:list-emails' %}">{% trans "Reset" %}</a>
+    </div>
+  </form>
+  <form method="post" action="{% url 'emails:resend-selected-emails' %}">
+    {% csrf_token %}
+    <div class="table-responsive mt-4">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">
+              <span class="visually-hidden">{% trans "Select" %}</span>
+            </th>
+            <th scope="col">{% trans "Date" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col">{% trans "Type" %}</th>
+            <th scope="col">{% trans "Organization" %}</th>
+            <th scope="col">{% trans "Recipients" %}</th>
+            <th scope="col">{% trans "Subject" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in page %}
+            <tr>
+              <td>
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="selected"
+                       value="{{ entry.pk }}"
+                       aria-label="{% trans "Select this email" %}" />
+              </td>
+              <td class="text-nowrap">{{ entry.created|date:"SHORT_DATETIME_FORMAT" }}</td>
+              <td>{% include "emails/_status_badge.html" %}</td>
+              <td>{{ entry.email_type|default:"–" }}</td>
+              <td>
+                {% if entry.organization %}
+                  <a href="{{ entry.organization.get_absolute_url }}">{{ entry.organization.name }}</a>
+                {% else %}
+                  –
+                {% endif %}
+              </td>
+              <td>{{ entry.recipients_display }}</td>
+              <td>
+                <a href="{{ entry.get_absolute_url }}">{{ entry.subject|default:_("(no subject)") }}</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7">{% trans "No emails found." %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if page.object_list %}
+      <button type="submit" class="btn btn-outline-primary">{% trans "Send selected again" %}</button>
+      <span class="form-text ms-2">{% trans "Failed emails are retried. Sent emails go out a second time. Attachments are not sent again." %}</span>
+    {% endif %}
+  </form>
+  {% if page.paginator.num_pages > 1 %}
+    <nav class="mt-4" aria-label="{% trans "Pages of the email log" %}">
+      <ul class="pagination">
+        {% if page.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page.previous_page_number }}">{% trans "Previous" %}</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">{% trans "Previous" %}</span>
+          </li>
+        {% endif %}
+        <li class="page-item disabled">
+          <span class="page-link">
+            {% blocktranslate with number=page.number total=page.paginator.num_pages trimmed %}
+              Page {{ number }} of {{ total }}
+            {% endblocktranslate %}
+          </span>
+        </li>
+        {% if page.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page.next_page_number }}">{% trans "Next" %}</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">{% trans "Next" %}</span>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock content %}

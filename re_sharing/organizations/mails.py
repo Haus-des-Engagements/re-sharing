@@ -33,12 +33,16 @@ from django.utils.translation import gettext_lazy as _
 from icalendar import Calendar
 from icalendar import Event
 
+from re_sharing.emails.services import set_email_log_context
 from re_sharing.organizations.email_formatting import html_to_text
 from re_sharing.organizations.email_formatting import normalize_template_tags
 from re_sharing.organizations.email_formatting import sanitize_email_html
 from re_sharing.organizations.models import EmailTemplate
 
 logger = logging.getLogger(__name__)
+
+# Type of custom organization emails in the email log
+CUSTOM_EMAIL_TYPE = "custom"
 
 
 # =============================================================================
@@ -93,6 +97,19 @@ def booking_ics(booking):
     return cal.to_ical()
 
 
+def _log_links(context) -> dict:
+    """
+    The booking and organization an email is about, taken from its template
+    context, for the email log.
+    """
+    booking = context.get("booking")
+    organization = context.get("organization")
+    if organization is None:
+        source = booking or context.get("booking_series")
+        organization = getattr(source, "organization", None)
+    return {"booking": booking, "organization": organization}
+
+
 def send_email_with_template(email_type, context, recipient_list, ical_content=None):
     email_template = get_email_template(email_type)
     if not email_template:
@@ -110,8 +127,9 @@ def send_email_with_template(email_type, context, recipient_list, ical_content=N
         body=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipient_list,
-        bcc=[settings.DEFAULT_BCC_EMAIL],
+        bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
     )
+    set_email_log_context(email, email_type=email_type, **_log_links(context))
 
     if ical_content:
         ical_filename = f"booking_{context['booking'].slug}.ics"
@@ -670,6 +688,9 @@ def send_custom_organization_email(
         bcc=bcc,
     )
     email.attach_alternative(html_body, "text/html")
+    set_email_log_context(
+        email, email_type=CUSTOM_EMAIL_TYPE, organization=organization
+    )
 
     try:
         email.send(fail_silently=False)
@@ -730,6 +751,12 @@ def send_permanent_code_created_email(permanent_code_id: int) -> dict:
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[organization.email],
         bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    )
+
+    set_email_log_context(
+        email,
+        email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_CREATED,
+        organization=organization,
     )
 
     try:
@@ -801,6 +828,12 @@ def send_permanent_code_renewed_email(new_code_id: int, old_code_id: int) -> dic
         bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
     )
 
+    set_email_log_context(
+        email,
+        email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_RENEWED,
+        organization=organization,
+    )
+
     try:
         email.send(fail_silently=False)
     except Exception:
@@ -866,6 +899,12 @@ def send_permanent_code_invalidated_email(permanent_code_id: int) -> dict:
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[organization.email],
         bcc=[settings.DEFAULT_BCC_EMAIL] if settings.DEFAULT_BCC_EMAIL else [],
+    )
+
+    set_email_log_context(
+        email,
+        email_type=EmailTemplate.EmailTypeChoices.PERMANENT_CODE_INVALIDATED,
+        organization=organization,
     )
 
     try:

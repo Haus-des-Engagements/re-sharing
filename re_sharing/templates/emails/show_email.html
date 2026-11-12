@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {{ entry.subject }}
+{% endblock title %}
+{% block content %}
+  <p class="mt-4">
+    <a href="{% url 'emails:list-emails' %}">{% trans "Email log" %}</a>
+  </p>
+  <h1>
+    {{ entry.subject|default:_("(no subject)") }}
+    {% include "emails/_status_badge.html" %}
+  </h1>
+  {% if entry.is_failed %}
+    <div class="alert alert-danger">
+      <strong>{% trans "The mail server did not accept this email." %}</strong>
+      <div>{{ entry.error }}</div>
+    </div>
+  {% endif %}
+  <dl class="row">
+    <dt class="col-sm-3">{% trans "Created" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.created|date:"SHORT_DATETIME_FORMAT" }}
+    </dd>
+    <dt class="col-sm-3">{% trans "Sent at" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.sent_at|date:"SHORT_DATETIME_FORMAT"|default:"–" }}
+    </dd>
+    <dt class="col-sm-3">{% trans "Attempts" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.attempts }}
+    </dd>
+    <dt class="col-sm-3">{% trans "Type" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.email_type|default:"–" }}
+    </dd>
+    <dt class="col-sm-3">{% trans "From" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.from_email|default:"–" }}
+    </dd>
+    <dt class="col-sm-3">{% trans "To" %}</dt>
+    <dd class="col-sm-9">
+      {{ entry.to|join:", "|default:"–" }}
+    </dd>
+    {% if entry.cc %}
+      <dt class="col-sm-3">{% trans "Cc" %}</dt>
+      <dd class="col-sm-9">
+        {{ entry.cc|join:", " }}
+      </dd>
+    {% endif %}
+    {% if entry.bcc %}
+      <dt class="col-sm-3">{% trans "Bcc" %}</dt>
+      <dd class="col-sm-9">
+        {{ entry.bcc|join:", " }}
+      </dd>
+    {% endif %}
+    {% if entry.organization %}
+      <dt class="col-sm-3">{% trans "Organization" %}</dt>
+      <dd class="col-sm-9">
+        <a href="{{ entry.organization.get_absolute_url }}">{{ entry.organization.name }}</a>
+      </dd>
+    {% endif %}
+    {% if entry.booking %}
+      <dt class="col-sm-3">{% trans "Booking" %}</dt>
+      <dd class="col-sm-9">
+        <a href="{{ entry.booking.get_absolute_url }}">{{ entry.booking.title }}</a>
+      </dd>
+    {% endif %}
+    {% if entry.user %}
+      <dt class="col-sm-3">{% trans "User" %}</dt>
+      <dd class="col-sm-9">
+        {{ entry.user }}
+      </dd>
+    {% endif %}
+    {% if entry.attachment_names %}
+      <dt class="col-sm-3">{% trans "Attachments" %}</dt>
+      <dd class="col-sm-9">
+        {{ entry.attachment_names|join:", " }}
+      </dd>
+    {% endif %}
+  </dl>
+  <form method="post"
+        action="{% url 'emails:resend-email' pk=entry.pk %}"
+        class="mb-4">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">{% trans "Send again" %}</button>
+    <span class="form-text ms-2">
+      {% if entry.is_failed %}
+        {% trans "The email is sent with the content shown here." %}
+      {% else %}
+        {% trans "This email was already sent. The recipients get it a second time." %}
+      {% endif %}
+      {% if entry.attachment_names %}
+        {% trans "It is sent again without its attachments." %}
+      {% endif %}
+    </span>
+  </form>
+  {% if entry.body_html %}
+    <h2 class="h5">{% trans "HTML content" %}</h2>
+    {# sandbox: the stored HTML cannot run scripts or reach this page #}
+    <iframe class="w-100 border rounded mb-4"
+            height="480"
+            sandbox=""
+            title="{% trans "HTML content" %}"
+            srcdoc="{{ entry.body_html }}"></iframe>
+  {% endif %}
+  {% if entry.body_text %}
+    <h2 class="h5">{% trans "Text content" %}</h2>
+    <pre class="border rounded p-3 bg-light text-wrap">{{ entry.body_text }}</pre>
+  {% endif %}
+{% endblock content %}

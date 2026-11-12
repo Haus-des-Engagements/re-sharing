@@ -15,8 +15,10 @@ from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 from neapolitan.views import CRUDView
@@ -647,6 +649,8 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
     """
     View for sending custom emails to filtered organizations.
     """
+    from re_sharing.emails.services import enqueue_spaced
+    from re_sharing.organizations.mails import CUSTOM_EMAIL_TYPE
     from re_sharing.organizations.mails import send_custom_organization_email
     from re_sharing.organizations.selectors import get_filtered_organizations
 
@@ -680,19 +684,22 @@ def send_custom_organization_email_view(request: HttpRequest) -> HttpResponse:
         return redirect("organizations:custom-organization-email")
 
     filter_context = _custom_email_filter_context(filters)
-    enqueued_count = 0
-    for organization in organizations:
-        send_custom_organization_email.enqueue(
-            organization.id,
-            subject_template,
-            body_template,
-            filter_context,
-        )
-        enqueued_count += 1
+    scheduled_count = enqueue_spaced(
+        send_custom_organization_email,
+        [
+            (organization.id, subject_template, body_template, filter_context)
+            for organization in organizations
+        ],
+    )
 
+    log_url = f"{reverse('emails:list-emails')}?email_type={CUSTOM_EMAIL_TYPE}"
     messages.success(
         request,
-        f"Enqueued {enqueued_count} email(s) to organizations.",
+        format_html(
+            'Scheduled {} email(s) to organizations. <a href="{}">Email log</a>',
+            scheduled_count,
+            log_url,
+        ),
     )
 
     return redirect("organizations:custom-organization-email")
