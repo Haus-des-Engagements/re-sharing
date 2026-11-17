@@ -1,49 +1,42 @@
-> **Note (agreement-documents):** the change `agreement-documents` already generates the SEPA mandate from creditor data, reference and bank details, and fills a fillable contract template per kind with the agreement's data. This change should sign those documents instead of rendering its own mandate and taking the contract from a terms document; revise it before implementing.
-
 ## Why
 
-Signed documents reach re-sharing as uploads: users download a PDF, print it, sign, scan and upload it, or paste a picture of their signature onto it. A scan is a copy, so legally it is a simple electronic signature already, only without any record of who signed what and when. Signing inside re-sharing keeps the moral weight of a signature, removes the printer, and leaves better evidence than a scan. No third-party service is needed, because none of the documents requires a qualified signature. With `organization-agreements`, contracts and SEPA mandates add two more signed uploads; they should be signed the same way from the start.
+Signed documents reach re-sharing as uploads: users download a PDF, print it, sign, scan and upload it, or paste a picture of their signature onto it. Signing inside re-sharing keeps the moral weight of a signature and removes the printer. A scan is legally a simple electronic signature already, so a signature drawn in the browser is worth the same, and none of the documents requires more.
+
+Since `agreement-documents`, the system produces the documents to sign itself: the contract prefilled from the kind's template and the generated SEPA mandate. This change lets users sign those in place instead of printing them.
 
 ## What Changes
 
-- A new `signing` app with a generic signing flow: the user reads the document, types their name, draws their signature and confirms that they sign on behalf of their organization. The function is taken from the form that already asks for it.
-- The server appends a signature page to the source PDF: the key facts of the document, one slot per expected signer with signature image, typed name, function and time, and the SHA-256 of the source. When the last expected signature is made, the result is sealed with the operator's own certificate so later changes are detectable. Each signature is stored with user, time, IP address, user agent and the hashes before and after signing.
-- A document can expect more than one signature. Later signatures fill the next slot on the same page; the file is sealed once, when complete.
-- Signed documents are never emailed, whatever their type. They stay in private storage and are downloaded from the page they belong to. No extra notification: the existing emails of each flow (manager notification at registration, application received, decision) already point to those pages.
-- Source PDFs are terms documents (`organization-terms`): the signed registration document's current version, and per agreement kind a contract document. No separate template model; versions and the record of which version was signed come from the terms app.
-- **Registration document:** the creation form offers "sign online" next to the upload and fills the same fields.
-- **Agreement contracts:** an agreement kind can point at a contract document. The applicant signs its current version online when applying or afterwards; the signature page lists kind, amount, interval, start date, deposit and the kind-specific details.
-- **Countersignature:** an agreement kind can require a countersignature (coworking, office lease, cellar lease; not membership). A manager flagged as authorized signatory, with a title such as managing director, countersigns the same file alone. Countersigning is the decision: it completes the contract and approves the agreement with the signing date as decision date.
-- **SEPA mandates:** the mandate is generated from the standard mandate text, creditor data, generated reference and bank details, and signed online by the account holder's representative. The same rendering without signature page replaces the blank form offered for download, so a mandate signed by hand carries its reference and bank data.
-- Downloading, signing by hand and uploading stays possible everywhere, for existing paper documents and for users who prefer it: every form that offers online signing links the document for download, and an upload replaces an online signature in progress.
-- ADR on the signature level: simple electronic signature with an audit trail, why it meets or exceeds the status quo, and when a qualified signature would be needed.
+- Wherever a signed PDF is uploaded today, the form also offers signing online: the user types their name and draws their signature. The upload stays as the alternative.
+- The server appends one signature page to the document, showing the drawn signature, typed name, function, organization, time and the account that signed, and stores the result in the same file field an upload would fill. Nothing else is stored: no signature records, no hashes, no seal.
+- **Agreement contracts:** for kinds with a contract template, the applicant signs the prefilled contract when applying or afterwards.
+- **SEPA mandates:** the generated mandate is signed when the bank data is saved or afterwards from the mandate page.
+- **Countersignature:** an agreement kind can require a countersignature. Approving such an agreement is then reserved to managers with a signatory title, who sign in the approval form; their signature page is appended to the stored contract, whether it was signed online or uploaded.
+- **Registration document:** after `organization-terms`, the creation form offers signing the registration document's current version online.
+- ADR on the signature level: simple electronic signature, why the document itself is enough evidence, and when a qualified signature would be needed.
 
 ### Non-goals
 
 - Advanced or qualified electronic signatures, identity verification, third-party signing services.
+- Tamper detection and separate evidence: no sealing certificate, no hashes, no record of IP address or user agent. A signed PDF is protected the way an uploaded scan is, by private storage and the audit log.
+- Placing the signature inside the document. Signature lines printed in a contract template or on the mandate stay empty; the signature page follows them.
 - Removing the upload.
-- Generating the contract text from data. Contracts are fixed documents per kind; the agreement's data appears on the signature page.
 - Countersigning the registration document or mandates.
-- Several authorized signatories having to sign together. One authorized manager signs alone.
-- Sealing before a document is complete. An incomplete document is protected by its recorded hash and private storage.
+- Several signatories having to sign together.
 
 ## Capabilities
 
 ### New Capabilities
-- `document-signing`: the signing flow, signature page and seal, signature records, multiple signatures per document, signed copies, and online signing of the registration document, agreement contracts with optional countersignature, and SEPA mandates.
+- `document-signing`: signing input, the signature page, online signing of agreement contracts, SEPA mandates and the registration document, and the countersignature on approval.
 
 ### Modified Capabilities
 
-None. The registration form requirements live in the unarchived change `organization-terms`, the agreement and mandate requirements in `organization-agreements`. Both are worded so that this change adds an alternative way to provide the same signed document: `organization-terms` requires a signed registration document without saying how it is provided, and `organization-agreements` requires a complete signed document, where an upload is always complete and this change defines when an online signature is. The signing core depends on neither; the registration part needs `organization-terms`, contracts need both, mandates only `organization-agreements`.
+None. `organization-agreements` and `sepa-mandates` require a signed document without saying how it is provided; a document signed online is one. For kinds that require a countersignature this change adds a condition to approval and leaves the existing ones in place.
 
 ## Impact
 
-- New app `signing`: models, services, admin, form mixin, a JS signature pad, tests. Leaf app: references only `User`.
-- `terms`: no model change; a kind's contract document is a terms document without scopes, and the signed registration document is the one with the signature flag.
-- `organizations`: nullable relation `registration_document_record` from `Organization` to the signature record, creation form and template, `create_organization`, show page and manager list.
-- `agreements`: `AgreementKind.contract_document` and `requires_countersignature`; `signed_document_record` on `Agreement` and `SepaMandate`; sign-online options in the application, upload and mandate forms; a countersign-and-approve action; the decision email names the contract on the agreement page.
-- `providers`: `Manager.may_countersign` and `signatory_title`.
-- New dependencies: `pyhanko` (sealing), `pypdf` (appending and overlaying pages), `reportlab` (rendering pages), `signature_pad` (vendored JS).
-- New settings: path to the sealing certificate and key, key passphrase. Sealing is skipped with a warning when no certificate is configured (development, tests by default).
-- Personal data: IP address and user agent are stored with each signature; the privacy policy needs a sentence about it. Signed documents, including mandates with the IBAN, stay in private storage and never leave the system by email.
+- `utils`: a module `signing` with the two form fields and the function that appends the signature page; one template partial; `signature_pad` vendored as a static file; tests.
+- `agreements`: `AgreementKind.requires_countersignature`; the signature fields in the application, signed document, mandate and approval forms; `create_agreement`, `upload_signed_document`, `create_mandate`, `upload_signed_mandate` and `approve_agreement` accept a signature.
+- `providers`: `Manager.signatory_title`.
+- `organizations`, after `organization-terms`: the creation form and `create_organization`.
+- No new Python dependencies (`pypdf`, `reportlab` and `Pillow` are in use), no new settings, no new models, no new personal data.
 - Legal checks before rollout, listed in the ADR: statutes on membership form, commercial lease text form, the bank's creditor agreement on mandate form.

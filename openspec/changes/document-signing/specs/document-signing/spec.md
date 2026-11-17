@@ -1,292 +1,158 @@
 ## ADDED Requirements
 
-### Requirement: Signing captures a deliberate act
+### Requirement: Signing input
 
-The signing form SHALL require the typed full name, a drawn signature and a checked confirmation stating that the signer has read the document and is authorized to sign on behalf of the named organization. The signer's function SHALL be recorded from the form that already collects it and SHALL NOT be asked twice. The document SHALL be viewable from the form before signing. An empty or missing drawing SHALL be refused.
+Forms that offer online signing SHALL ask for the typed name and a drawn signature, and SHALL show a sentence stating that the signer has read the document and may sign on behalf of the named party. Name and drawing SHALL be required together. A drawing that is not a PNG image or exceeds 200 KB SHALL be refused. A form SHALL refuse a drawn signature together with an uploaded PDF. The signer's function SHALL be taken from the data the form or the agreement already holds.
 
-#### Scenario: Complete signature accepted
+#### Scenario: Name and drawing accepted
 
-- **WHEN** a logged-in user submits name, a drawn signature and the confirmation
-- **THEN** the signature is accepted
+- **WHEN** a user submits a typed name and a drawn signature
+- **THEN** the form is valid
 
-#### Scenario: Missing drawing refused
+#### Scenario: Drawing without name
 
-- **WHEN** a user submits the form without drawing a signature
+- **WHEN** a user submits a drawn signature without a name
 - **THEN** the form is invalid and nothing is signed
 
-#### Scenario: Missing confirmation refused
+#### Scenario: Not an image
 
-- **WHEN** a user submits the form without checking the confirmation
+- **WHEN** the submitted drawing is not a PNG image
 - **THEN** the form is invalid and nothing is signed
 
-### Requirement: Signed PDF carries a signature page
+#### Scenario: Upload and signature
 
-Signing SHALL produce a PDF consisting of the unchanged source pages followed by one signature page. The signature page SHALL show the document name, the organization, the key facts passed by the caller as label and value pairs, the SHA-256 of the source PDF, and per signature slot a role label, the drawn signature, typed name, function and date and time in Europe/Berlin. The page SHALL reserve one slot per expected signer.
+- **WHEN** a user submits an uploaded PDF and a drawn signature
+- **THEN** the form is invalid with a message to choose one
 
-#### Scenario: Signature page appended
+### Requirement: Signature page
 
-- **WHEN** a user signs a three-page source
-- **THEN** the resulting PDF has four pages, the first three identical to the source
-- **AND** the fourth page shows the signer's name, function, organization, signing time and the source's SHA-256
+Signing SHALL produce a PDF consisting of the unchanged source pages followed by one signature page. The page SHALL show the document name, the party signed for, the drawn signature, the typed name, the function, date and time in Europe/Berlin, and the email address of the account that signed. The result SHALL be stored in the file field an upload would fill, with the day of signing as signing date. Signing a PDF that already ends with a signature page SHALL append a further page.
 
-#### Scenario: Source version replaced after signing
+#### Scenario: Page appended
 
-- **WHEN** the terms version a document was signed from is superseded by a new version
-- **THEN** the signature record still holds the hash of the file it was signed on
+- **WHEN** a user signs a three-page document
+- **THEN** the stored PDF has four pages, the first three those of the source
+- **AND** the fourth shows the signer's name, function, party, account and signing time
 
-### Requirement: Complete documents are sealed
+#### Scenario: Second signature
 
-When the last expected signature is made and a sealing certificate is configured, the PDF SHALL be sealed with it so that later modification is detectable. Without a certificate the PDF SHALL be stored unsealed and a warning logged. Documents awaiting further signatures SHALL be stored unsealed.
+- **WHEN** a PDF that ends with a signature page is signed again
+- **THEN** the stored PDF has one more page and the earlier pages are unchanged
 
-#### Scenario: Sealed when complete
+### Requirement: Agreement contract signed online
 
-- **WHEN** the only expected signer signs while a sealing certificate is configured
-- **THEN** the resulting PDF carries a valid seal covering the whole document
+For kinds with a contract template, the application form and the signed document form SHALL offer online signing next to the upload. Signing SHALL use the contract prefilled with the agreement's data and the signer as representative, as described in `agreement-documents`, on behalf of the organization and with the agreement's contact person function. The result SHALL be the agreement's signed document. Signing after applying SHALL be offered while the agreement is submitted. Kinds without a template SHALL offer only the upload, and the manager forms for entering agreements SHALL NOT offer signing.
 
-#### Scenario: Unsealed without certificate
+#### Scenario: Signed with the application
 
-- **WHEN** a user signs while no sealing certificate is configured
-- **THEN** the resulting PDF is stored without seal
-- **AND** a warning is logged
+- **WHEN** a confirmed member applies for a membership with 80 € and the function "Board" and signs online
+- **THEN** the agreement's signed document is the prefilled contract with the amount `80,00` followed by a signature page naming the member, "Board" and the organization
+- **AND** its signing date is today
 
-#### Scenario: Awaiting countersignature
+#### Scenario: Signed later
 
-- **WHEN** the first of two expected signers signs
-- **THEN** the resulting PDF is stored without seal
+- **WHEN** a member signs the contract of a submitted agreement without signed document online
+- **THEN** the agreement has a signed document and signing date as with the application
 
-#### Scenario: Tampering detectable
+#### Scenario: Active agreement
 
-- **WHEN** a sealed PDF is modified outside re-sharing
-- **THEN** seal validation reports the modification
+- **WHEN** a member opens the signed document form of an active agreement
+- **THEN** it offers only the upload
 
-### Requirement: Signature record
+#### Scenario: Applied without signing
 
-Every signature SHALL be recorded with the signed document it belongs to, its role, the signing user, typed name, function, organization name as shown, the confirmation text, time, IP address, user agent, the SHA-256 of the PDF before signing and of the PDF after signing. A signed document SHALL record the SHA-256 of the source, the number of expected signatures and whether it is complete. Signature records SHALL be read-only in the admin.
+- **WHEN** a member applies with neither upload nor signature
+- **THEN** the agreement is created without signed document, as before
 
-#### Scenario: Record created on signing
+#### Scenario: Kind without template
 
-- **WHEN** a user signs a document
-- **THEN** one signature record with all listed fields exists for it
-- **AND** the after-hash equals the SHA-256 of the stored PDF
+- **WHEN** a kind has no contract template
+- **THEN** its application form offers only the upload
 
-#### Scenario: One-signer document complete
+### Requirement: SEPA mandate signed online
 
-- **WHEN** the only expected signer signs
-- **THEN** the signed document is complete
+The mandate form and the signed mandate form SHALL offer online signing next to the upload. Signing SHALL use the generated mandate with its reference and bank data, on behalf of the organization and with the agreement's contact person function. The result SHALL be the mandate's signed document, which makes the mandate active.
 
-#### Scenario: Record not editable
+#### Scenario: Signed when saving
 
-- **WHEN** staff open a signature record in the admin
-- **THEN** all fields are read-only and the record cannot be deleted
+- **WHEN** a member saves valid bank data and signs online
+- **THEN** an active mandate exists whose signed document shows the mandate reference, the creditor identifier and the full IBAN, followed by a signature page
 
-### Requirement: Signed documents stay in the system
+#### Scenario: Signed later
 
-The system SHALL NOT attach signed documents to emails, regardless of their type, and SHALL NOT send a separate notification for a signature. A signed document SHALL be downloadable from the page it belongs to by the users allowed to see that page: the organization page for the registration document, the agreement page for contracts, the mandate page for mandates. The decision email of a countersigned agreement SHALL name the countersigned contract on the agreement page.
+- **WHEN** a member signs a mandate saved without signed PDF online from its page
+- **THEN** the mandate is active with the signed PDF and today's signing date
 
-#### Scenario: No email on signing
+#### Scenario: Invalid IBAN
 
-- **WHEN** a user signs a document
-- **THEN** no email beyond those of the surrounding flow is enqueued
+- **WHEN** a mandate is submitted with a signature and an invalid IBAN
+- **THEN** the form is invalid and no mandate exists
 
-#### Scenario: Decision email after countersignature
+### Requirement: Countersignature on approval
 
-- **WHEN** a countersigner signs a document an applicant signed before
-- **THEN** the decision email names the countersigned contract and links the agreement page
-- **AND** it has no attachment
+An agreement kind SHALL optionally require a countersignature, and a manager SHALL optionally carry a signatory title. Approving an agreement of such a kind SHALL require a manager with a signatory title and that manager's online signature, in addition to the existing conditions. Approval SHALL then append a signature page on behalf of the operator with the manager's name and title to the agreement's signed document, whether that document was signed online or uploaded. Rejection SHALL remain open to every manager within scope. Kinds without the requirement SHALL be approved as before.
 
-#### Scenario: Download restricted to the page's viewers
+#### Scenario: Approve and countersign
 
-- **WHEN** a user who may not view an agreement requests its signed document
-- **THEN** access is denied
+- **WHEN** a manager with the title "Managing director" approves a submitted coworking agreement with signed contract and active mandate, signing in the approval form
+- **THEN** the agreement is active with all effects of approval
+- **AND** its signed document ends with a page showing the manager's name, "Managing director" and the operator
 
-### Requirement: Later signatures fill the next slot
+#### Scenario: Manager without title
 
-A document expecting more than one signature SHALL accept further signatures in the next free slot of the same signature page. Signing a complete document SHALL be refused. A document SHALL become complete when its signature count reaches the expected number, and SHALL then be sealed as a complete document.
+- **WHEN** a manager without signatory title approves a coworking agreement
+- **THEN** the approval is refused and the signed document is unchanged
 
-#### Scenario: Second signature added
+#### Scenario: Approval without signature
 
-- **WHEN** a second signer signs a document expecting two signatures
-- **THEN** slot 2 shows the second signer's signature, name, function and time
-- **AND** the source pages and slot 1 are unchanged
-- **AND** the document is complete and sealed
+- **WHEN** a manager with a title approves a coworking agreement without signing
+- **THEN** the approval is refused and the signed document is unchanged
 
-#### Scenario: Signing a complete document
+#### Scenario: Uploaded contract
 
-- **WHEN** a user tries to sign a document that is complete
-- **THEN** the action is refused and the PDF is unchanged
+- **WHEN** a manager with a title approves and signs a coworking agreement whose contract was uploaded
+- **THEN** the uploaded PDF is followed by the manager's signature page and the agreement is active
 
-#### Scenario: Stored PDF does not match record
+#### Scenario: Kind without countersignature
 
-- **WHEN** a further signature is requested and the stored PDF's SHA-256 differs from the after-hash of the latest signature
-- **THEN** the action is refused and the mismatch is logged
+- **WHEN** a manager approves a membership agreement
+- **THEN** it is approved as before and its signed document is unchanged
 
-### Requirement: Signing by hand stays possible
+#### Scenario: Rejection
 
-Every form that offers online signing SHALL link the document to be signed for download and SHALL accept an uploaded hand-signed PDF instead. An upload SHALL replace the stored file and its date and SHALL clear the link to an online signature record, while the record is kept. A mandate saved without signed PDF SHALL offer for download its mandate rendered with reference and bank data and without signature page, and SHALL offer signing it online.
+- **WHEN** a manager without signatory title rejects a coworking agreement
+- **THEN** the agreement is rejected
 
-#### Scenario: Contract linked for download
+### Requirement: Registration document signed online
 
-- **WHEN** an admin opens the application form of a kind whose contract document has a current version with a file
-- **THEN** that version is linked for download whether the admin chooses upload or online signing
-
-#### Scenario: Countersigned on paper
-
-- **WHEN** a manager uploads a coworking contract signed by both parties for an agreement the applicant signed online
-- **THEN** the agreement's signed document is the uploaded file and no longer linked to the record
-- **AND** the record with the applicant's signature still exists
-- **AND** a plain approval by a manager approves the agreement
-
-#### Scenario: Uploaded contract countersigned by hand
-
-- **WHEN** an applicant uploaded the signed coworking contract
-- **THEN** no countersign action is offered
-- **AND** a manager can upload the version signed by both and approve
-
-#### Scenario: Pre-filled mandate for signing by hand
-
-- **WHEN** an admin opens a mandate saved without signed PDF
-- **THEN** a PDF with the mandate text, creditor identifier, mandate reference, account holder and IBAN and without signature page is offered for download
-
-#### Scenario: Mandate signed online after saving
-
-- **WHEN** an admin signs a mandate saved without signed PDF online from its page
-- **THEN** the mandate is active with the signed PDF as signed document, the signing date and a linked record
-
-### Requirement: Registration document can be signed online
-
-The organization creation form SHALL offer signing the registration document online as an alternative to uploading it, when the registration document with the signature flag has a current version with a file. Exactly one of upload or online signature SHALL be provided. On creation with an online signature, the system SHALL sign that version on behalf of the new organization, store the signed PDF as the organization's registration document, set the registration document date to the signing date, and link the organization to the signed document. The organization page SHALL show who signed online and when; an uploaded document SHALL be shown as uploaded.
+When the registration document has a current version with a file, the organization creation form SHALL offer online signing next to the upload, together with a field for the signer's function. Exactly one of the two SHALL be provided. With a signature, the system SHALL sign that file on behalf of the new organization, named with its address, and store the result as the organization's registration document with today's date. Without such a file the form SHALL offer only the upload.
 
 #### Scenario: Registration signed online
 
-- **WHEN** a user creates an organization choosing online signing with name, function, drawing and confirmation
-- **THEN** the organization's registration document is the signed PDF
-- **AND** its registration document date is the signing date
-- **AND** the organization is linked to a complete signed document whose signer is the user
+- **WHEN** a user creates an organization signing online with name, function and drawing
+- **THEN** the organization's registration document is the current version's PDF followed by a signature page naming the user, the function and the organization with its address
+- **AND** its registration document date is today
 
 #### Scenario: Registration uploaded
 
 - **WHEN** a user creates an organization with an uploaded PDF and signing date
-- **THEN** the organization is created as before, with no signed document linked
+- **THEN** the organization is created as before
 
 #### Scenario: Neither upload nor signature
 
-- **WHEN** a user submits the creation form with neither an upload nor an online signature
+- **WHEN** a user submits the creation form with neither an upload nor a signature
 - **THEN** the form is invalid
 
-#### Scenario: Both upload and signature
+#### Scenario: No file to sign
 
-- **WHEN** a user submits the creation form with an upload and an online signature
-- **THEN** the form is invalid with a message to choose one
-
-#### Scenario: No signable version configured
-
-- **WHEN** no active registration document with the signature flag has a current version with a file
+- **WHEN** the registration document has no current version with a file
 - **THEN** the creation form offers only the upload
 
-#### Scenario: Failed form keeps nothing signed
+### Requirement: Signing by hand stays possible
 
-- **WHEN** the creation form is invalid for another field while a signature was drawn
-- **THEN** no signed document is created
-- **AND** the user must draw again after correcting the form
+Every form that offers online signing SHALL keep its upload of a hand-signed PDF. An upload SHALL replace a stored document, including one signed online.
 
-#### Scenario: Organization page shows online signature
+#### Scenario: Upload after online signature
 
-- **WHEN** a user views an organization whose registration document was signed online
-- **THEN** the page shows the signer's name and the signing time
-
-### Requirement: Agreement contract can be signed online
-
-An agreement kind SHALL optionally point at a contract document in the terms app. For kinds whose contract document has a current version with a file, the application form and the signed document upload SHALL offer signing online as an alternative to uploading, with exactly one of the two. Signing SHALL use that version as source, the document name with the version label, the organization as party, and the agreement's kind, amount, billing interval, start date, deposit amount, contact person function and kind-specific details as key facts. The signed PDF SHALL be stored as the agreement's signed document with the signing date, and the agreement SHALL be linked to the signed document. A signed document SHALL expect two signatures when the kind requires a countersignature, otherwise one. An agreement's signed document SHALL count as complete when it was uploaded or when its linked signed document is complete. Kinds without a contract document SHALL offer only the upload.
-
-#### Scenario: Membership contract signed with the application
-
-- **WHEN** a confirmed admin applies for membership and signs online
-- **THEN** the agreement has the signed PDF as signed document and the signing date
-- **AND** its signed document is complete with one signature
-- **AND** the signature page lists kind, amount, interval and start date
-
-#### Scenario: Coworking contract awaits countersignature
-
-- **WHEN** a confirmed admin applies for coworking and signs online
-- **THEN** the agreement's signed document expects two signatures and has one
-- **AND** the agreement is shown to managers as awaiting countersignature
-
-#### Scenario: Signed later
-
-- **WHEN** an admin signs the contract of their submitted agreement online after applying
-- **THEN** the agreement's signed document and date are set as with the application
-
-#### Scenario: Kind without contract document
-
-- **WHEN** a kind has no contract document with a current version
-- **THEN** the application form offers only the upload
-
-### Requirement: Authorized signatories
-
-A manager SHALL be marked as authorized to countersign, with a signatory title. Only managers with the flag SHALL see the countersign action. The title SHALL be printed as function in the countersignature slot.
-
-#### Scenario: Authorized manager
-
-- **WHEN** a manager with the flag and the title "Managing director" countersigns
-- **THEN** slot 2 shows the manager's name and "Managing director"
-
-#### Scenario: Manager without flag
-
-- **WHEN** a manager without the flag opens an agreement awaiting countersignature
-- **THEN** no countersign action is offered and a direct request is denied
-
-### Requirement: Countersignature approves the agreement
-
-For kinds requiring a countersignature, an authorized manager within scope SHALL countersign a submitted agreement whose contract was signed online by the applicant and that has an active mandate. Countersigning SHALL add the second signature to the agreement's signed document, which completes and seals it, and approve the agreement with the signing date as decision date and the countersigning manager as deciding manager, with all effects of approval. Countersigning SHALL be refused when the applicant's signature is missing, the mandate is missing, the agreement is not submitted, or the manager is out of scope. A plain approval of an agreement whose signed document is not complete SHALL be refused with a pointer to the countersignature; an uploaded document SHALL be approved as before. Rejection SHALL remain available to any manager within scope. Kinds without countersignature SHALL keep the manager's recorded decision.
-
-#### Scenario: Countersign and approve
-
-- **WHEN** an authorized manager countersigns a submitted coworking agreement signed by the applicant and with an active mandate
-- **THEN** the signed document is complete and sealed
-- **AND** the agreement is active with the signing date as decision date and the manager as deciding manager
-- **AND** the group is added, the code created because coworking grants one, and the decision email sent as on approval
-
-#### Scenario: Countersign without mandate
-
-- **WHEN** an authorized manager countersigns an agreement without an active mandate
-- **THEN** the action is refused and nothing is signed
-
-#### Scenario: Plain approval while awaiting countersignature
-
-- **WHEN** a manager approves a coworking agreement whose signed document awaits a countersignature
-- **THEN** the action is refused with a pointer to the countersignature
-
-#### Scenario: Uploaded contract approved as before
-
-- **WHEN** a manager approves a coworking agreement whose signed document was uploaded
-- **THEN** the agreement is approved as before
-
-#### Scenario: Membership approved by decision
-
-- **WHEN** a manager approves a membership agreement signed online
-- **THEN** the agreement is approved with the entered decision date and no countersignature is added
-
-#### Scenario: Reject while awaiting countersignature
-
-- **WHEN** a manager rejects an agreement awaiting countersignature
-- **THEN** the agreement is rejected and its signed document stays with one signature
-
-### Requirement: SEPA mandate can be signed online
-
-The mandate form SHALL offer signing online as an alternative to uploading a signed mandate, with at most one of the two; without either the mandate is saved without signed PDF. Signing online SHALL generate the mandate from the standard SEPA core mandate text with creditor name, creditor identifier, generated mandate reference, account holder, IBAN, BIC and bank name, and sign it with one signature using the agreement's contact person function. The signed PDF SHALL be stored as the mandate's signed document with the signing date, and the mandate SHALL be linked to the signed document. The mandate reference SHALL be generated before the PDF is rendered and SHALL appear on it.
-
-#### Scenario: Mandate signed online
-
-- **WHEN** a confirmed admin adds a mandate with valid bank data and signs online
-- **THEN** an active mandate exists with the signed PDF as signed document and the signing date
-- **AND** the PDF shows the mandate text, creditor identifier, mandate reference, account holder and IBAN
-
-#### Scenario: Invalid IBAN signs nothing
-
-- **WHEN** a mandate is submitted for online signing with an invalid IBAN
-- **THEN** the form is invalid and no signed document is created
-
-#### Scenario: Mandate uploaded
-
-- **WHEN** a confirmed admin adds a mandate with an uploaded signed PDF
-- **THEN** the mandate is created as before, with no signed document linked
+- **WHEN** a member uploads a hand-signed contract for an agreement whose contract was signed online
+- **THEN** the agreement's signed document is the uploaded file with the entered signing date
