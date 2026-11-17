@@ -23,6 +23,7 @@ from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.agreements.tests.helpers import make_admin
 from re_sharing.agreements.tests.helpers import make_booker
 from re_sharing.agreements.tests.helpers import make_manager
+from re_sharing.agreements.tests.helpers import make_pending_booker
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.users.tests.factories import UserFactory
 
@@ -201,8 +202,16 @@ class ContractDownloadViewTest(TestCase):
 
         assert values["representative_name"] == contact.get_full_name()
 
+    def test_downloading_booker_is_representative_without_contact_person(self):
+        booker = make_booker(self.agreement.organization)
+        self.client.force_login(booker)
+
+        values = _values(self.client.get(self.url).content)
+
+        assert values["representative_name"] == booker.get_full_name()
+
     def test_denied_for_others(self):
-        self.client.force_login(make_booker(self.agreement.organization))
+        self.client.force_login(make_pending_booker(self.agreement.organization))
         assert self.client.get(self.url).status_code == HTTPStatus.FORBIDDEN
 
         self.client.force_login(make_manager(OrganizationGroupFactory()))
@@ -239,8 +248,13 @@ class MandateDownloadViewTest(TestCase):
         assert response["Cache-Control"] == "no-store"
         assert self.mandate.reference in response["Content-Disposition"]
 
-    def test_booker_denied(self):
+    def test_booker_downloads(self):
         self.client.force_login(make_booker(self.organization))
+
+        assert self.client.get(self.url).status_code == HTTPStatus.OK
+
+    def test_pending_member_denied(self):
+        self.client.force_login(make_pending_booker(self.organization))
 
         assert self.client.get(self.url).status_code == HTTPStatus.FORBIDDEN
 

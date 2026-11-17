@@ -8,7 +8,6 @@ from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import QuerySet
 
-from re_sharing.organizations.models import BookingPermission
 from re_sharing.organizations.models import Organization
 
 from .models import RETURN_INVOICE_DUE_DAYS
@@ -66,15 +65,9 @@ def manager_creatable_kinds(user) -> QuerySet[AgreementKind]:
     return manager_kinds(user).filter(is_active=True)
 
 
-def is_confirmed_admin(user, organization: Organization) -> bool:
-    if not user.is_authenticated:
-        return False
-    return BookingPermission.objects.filter(
-        user=user,
-        organization=organization,
-        role=BookingPermission.Role.ADMIN,
-        status=BookingPermission.Status.CONFIRMED,
-    ).exists()
+def is_confirmed_member(user, organization: Organization) -> bool:
+    """A confirmed booking permission on the organization, whatever its role."""
+    return user.is_authenticated and organization.has_confirmed_user(user)
 
 
 def user_can_view_organization_agreements(user, organization: Organization) -> bool:
@@ -95,8 +88,8 @@ def user_can_view_agreement(user, agreement: Agreement) -> bool:
 
 
 def user_can_administer_agreement(user, agreement: Agreement) -> bool:
-    """Confirmed admins of the organization and managers in scope."""
-    return is_confirmed_admin(
+    """Confirmed members of the organization and managers in scope."""
+    return is_confirmed_member(
         user, agreement.organization
     ) or manager_can_manage_agreement(user, agreement)
 

@@ -56,7 +56,7 @@
         </li>
       {% endfor %}
     </ul>
-  {% elif is_admin and organization.status != 2 %}
+  {% elif is_member and organization.status != 2 %}
     <p class="mt-5">{% trans "Your organization must be confirmed before it can apply for an agreement." %}</p>
   {% endif %}
 {% endblock content %}

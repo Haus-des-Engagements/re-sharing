@@ -76,14 +76,14 @@ def show_organization_view(request, organization):
         organization=organization
     ).order_by("-created")
 
-    from re_sharing.agreements.selectors import is_confirmed_admin
+    from re_sharing.agreements.selectors import is_confirmed_member
     from re_sharing.agreements.selectors import open_kinds_for_organization
     from re_sharing.agreements.selectors import user_can_view_organization_agreements
 
     show_agreements = user_can_view_organization_agreements(request.user, organization)
     can_apply = (
         organization.status == Organization.Status.CONFIRMED
-        and is_confirmed_admin(request.user, organization)
+        and is_confirmed_member(request.user, organization)
     )
     context = {
         "organization": organization,

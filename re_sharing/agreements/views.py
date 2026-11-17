@@ -54,15 +54,15 @@ def organization_agreements_view(request, organization):
     if not selectors.user_can_view_organization_agreements(request.user, organization):
         raise PermissionDenied
 
-    is_admin = selectors.is_confirmed_admin(request.user, organization)
-    can_apply = is_admin and organization.status == Organization.Status.CONFIRMED
+    is_member = selectors.is_confirmed_member(request.user, organization)
+    can_apply = is_member and organization.status == Organization.Status.CONFIRMED
     context = {
         "organization": organization,
         "agreements": selectors.organization_agreements(organization),
         "open_kinds": (
             selectors.open_kinds_for_organization(organization) if can_apply else []
         ),
-        "is_admin": is_admin,
+        "is_member": is_member,
     }
     return render(request, "agreements/organization_agreements.html", context)
 
@@ -71,7 +71,7 @@ def organization_agreements_view(request, organization):
 def apply_view(request, organization, kind):
     organization = get_object_or_404(Organization, slug=organization)
     kind = get_object_or_404(AgreementKind, slug=kind)
-    if not selectors.is_confirmed_admin(request.user, organization):
+    if not selectors.is_confirmed_member(request.user, organization):
         raise PermissionDenied
     if organization.status != Organization.Status.CONFIRMED:
         messages.error(
@@ -207,7 +207,7 @@ def contract_document_view(request, agreement):
     if not selectors.contract_document_available(agreement):
         raise Http404
     person = agreement.contact_person
-    if person is None and selectors.is_confirmed_admin(
+    if person is None and selectors.is_confirmed_member(
         request.user, agreement.organization
     ):
         person = request.user

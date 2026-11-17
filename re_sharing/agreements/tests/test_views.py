@@ -23,6 +23,7 @@ from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.agreements.tests.helpers import make_admin
 from re_sharing.agreements.tests.helpers import make_booker
 from re_sharing.agreements.tests.helpers import make_manager
+from re_sharing.agreements.tests.helpers import make_pending_booker
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import OrganizationFactory
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
@@ -63,7 +64,7 @@ class OrganizationPageTest(TestCase):
 
         assert "/apply/" not in response.content.decode()
 
-    def test_booker_sees_agreements_link_but_no_apply(self):
+    def test_booker_sees_agreements_link_and_open_kinds(self):
         self.client.force_login(make_booker(self.organization))
 
         response = self.client.get(self.organization.get_absolute_url())
@@ -76,7 +77,14 @@ class OrganizationPageTest(TestCase):
             )
             in content
         )
-        assert "/apply/" not in content
+        assert "/apply/" in content
+
+    def test_pending_member_sees_no_apply(self):
+        self.client.force_login(make_pending_booker(self.organization))
+
+        response = self.client.get(self.organization.get_absolute_url())
+
+        assert "/apply/" not in response.content.decode()
 
     def test_manager_organization_list_links_agreements(self):
         AgreementFactory()
@@ -105,7 +113,7 @@ class OrganizationAgreementsViewTest(TestCase):
 
         assert response.status_code == HTTPStatus.OK
         assert self.agreement in response.context["agreements"]
-        assert response.context["open_kinds"] == []
+        assert self.agreement.kind not in response.context["open_kinds"]
 
     def test_admin_of_pending_organization_gets_hint(self):
         self.organization.status = Organization.Status.PENDING
@@ -198,8 +206,15 @@ class ApplyViewTest(TestCase):
 
         self.assertRedirects(response, self.organization.get_absolute_url())
 
-    def test_booker_and_closed_kind_denied(self):
+    def test_booker_opens_application(self):
         self.client.force_login(make_booker(self.organization))
+
+        assert self.client.get(self.url).status_code == HTTPStatus.OK
+
+    def test_non_member_and_closed_kind_denied(self):
+        self.client.force_login(make_pending_booker(self.organization))
+        assert self.client.get(self.url).status_code == HTTPStatus.FORBIDDEN
+        self.client.force_login(UserFactory())
         assert self.client.get(self.url).status_code == HTTPStatus.FORBIDDEN
 
         self.kind.accepting_applications = False
@@ -282,8 +297,42 @@ class AgreementPageTest(TestCase):
         self.agreement.refresh_from_db()
         assert not self.agreement.has_complete_signed_document
 
-    def test_upload_by_booker_denied(self):
+    def test_booker_sees_upload_and_mandate_link(self):
         self.client.force_login(make_booker(self.agreement.organization))
+
+        content = self.client.get(self.url).content.decode()
+
+        assert (
+            reverse(
+                "agreements:create-mandate", kwargs={"agreement": self.agreement.uuid}
+            )
+            in content
+        )
+        assert (
+            reverse(
+                "agreements:upload-signed-document",
+                kwargs={"agreement": self.agreement.uuid},
+            )
+            in content
+        )
+
+    def test_upload_by_booker(self):
+        self.client.force_login(make_booker(self.agreement.organization))
+
+        response = self.client.post(
+            reverse(
+                "agreements:upload-signed-document",
+                kwargs={"agreement": self.agreement.uuid},
+            ),
+            {"signed_on": "2027-02-01", "signed_document": pdf_file()},
+        )
+
+        self.assertRedirects(response, self.url)
+        self.agreement.refresh_from_db()
+        assert self.agreement.has_complete_signed_document
+
+    def test_upload_by_pending_member_denied(self):
+        self.client.force_login(make_pending_booker(self.agreement.organization))
 
         response = self.client.post(
             reverse(
@@ -415,6 +464,12 @@ class MandateViewsTest(TestCase):
         )
 
         self.client.force_login(make_booker(self.agreement.organization))
+        assert (
+            mandate.signed_document.url
+            in self.client.get(mandate.get_absolute_url()).content.decode()
+        )
+
+        self.client.force_login(make_pending_booker(self.agreement.organization))
         assert (
             self.client.get(mandate.get_absolute_url()).status_code
             == HTTPStatus.FORBIDDEN

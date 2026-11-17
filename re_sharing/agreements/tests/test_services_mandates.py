@@ -24,6 +24,7 @@ from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.agreements.tests.helpers import make_admin
 from re_sharing.agreements.tests.helpers import make_booker
 from re_sharing.agreements.tests.helpers import make_manager
+from re_sharing.agreements.tests.helpers import make_pending_booker
 from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 
 
@@ -109,11 +110,18 @@ class CreateMandateTest(TestCase):
         with pytest.raises(AgreementError, match="revoke"):
             create_mandate(self.admin, self.agreement, _mandate_form())
 
-    def test_booker_denied(self):
+    def test_booker_saves_mandate(self):
         booker = make_booker(self.agreement.organization)
 
+        mandate = create_mandate(booker, self.agreement, _mandate_form())
+
+        assert mandate.agreement == self.agreement
+
+    def test_pending_member_denied(self):
+        member = make_pending_booker(self.agreement.organization)
+
         with pytest.raises(PermissionDenied):
-            create_mandate(booker, self.agreement, _mandate_form())
+            create_mandate(member, self.agreement, _mandate_form())
 
     def test_manager_in_scope_allowed(self):
         manager = make_manager(self.agreement.kind.organization_group)

@@ -15,15 +15,19 @@ def make_admin(organization, **kwargs):
     return user
 
 
-def make_booker(organization):
+def make_booker(organization, status=BookingPermission.Status.CONFIRMED):
     user = UserFactory()
     BookingPermissionFactory(
         user=user,
         organization=organization,
         role=BookingPermission.Role.BOOKER,
-        status=BookingPermission.Status.CONFIRMED,
+        status=status,
     )
     return user
+
+
+def make_pending_booker(organization):
+    return make_booker(organization, status=BookingPermission.Status.PENDING)
 
 
 def make_manager(*groups):

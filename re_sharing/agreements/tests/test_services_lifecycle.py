@@ -33,6 +33,7 @@ from re_sharing.agreements.tests.factories import pdf_file
 from re_sharing.agreements.tests.helpers import make_admin
 from re_sharing.agreements.tests.helpers import make_booker
 from re_sharing.agreements.tests.helpers import make_manager
+from re_sharing.agreements.tests.helpers import make_pending_booker
 from re_sharing.organizations.models import EmailTemplate
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.tests.factories import EmailTemplateFactory
@@ -41,6 +42,7 @@ from re_sharing.organizations.tests.factories import OrganizationGroupFactory
 from re_sharing.resources.models import PermanentCode
 from re_sharing.resources.tests.factories import AccessFactory
 from re_sharing.resources.tests.factories import PermanentCodeFactory
+from re_sharing.users.tests.factories import UserFactory
 
 EmailType = EmailTemplate.EmailTypeChoices
 
@@ -130,13 +132,22 @@ class CreateAgreementTest(TestCase):
         assert agreement.has_complete_signed_document
         assert agreement.signed_on == date(2027, 10, 1)
 
-    def test_booker_denied(self):
+    def test_confirmed_booker_applies(self):
         booker = make_booker(self.organization)
 
-        with pytest.raises(PermissionDenied):
-            create_agreement(
-                booker, self.organization, self.kind, _membership_form(self.kind)
-            )
+        agreement = create_agreement(
+            booker, self.organization, self.kind, _membership_form(self.kind)
+        )
+
+        assert agreement.status == Agreement.Status.SUBMITTED
+        assert agreement.contact_person == booker
+
+    def test_pending_member_and_foreign_user_denied(self):
+        for user in [make_pending_booker(self.organization), UserFactory()]:
+            with pytest.raises(PermissionDenied):
+                create_agreement(
+                    user, self.organization, self.kind, _membership_form(self.kind)
+                )
 
     def test_unconfirmed_organizations_refused(self):
         for status in [
@@ -199,13 +210,21 @@ class UploadSignedDocumentTest(TestCase):
 
         assert agreement.has_complete_signed_document
 
-    def test_foreign_user_denied(self):
+    def test_booker_uploads(self):
         agreement = AgreementFactory()
 
-        with pytest.raises(PermissionDenied):
-            upload_signed_document(
-                make_booker(agreement.organization), agreement, self._form()
-            )
+        upload_signed_document(
+            make_booker(agreement.organization), agreement, self._form()
+        )
+
+        assert agreement.has_complete_signed_document
+
+    def test_pending_member_and_foreign_user_denied(self):
+        agreement = AgreementFactory()
+
+        for user in [make_pending_booker(agreement.organization), UserFactory()]:
+            with pytest.raises(PermissionDenied):
+                upload_signed_document(user, agreement, self._form())
 
     def test_closed_agreement_refused(self):
         agreement = AgreementFactory(status=Agreement.Status.REJECTED)

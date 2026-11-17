@@ -178,11 +178,11 @@ def agreement_from_application(organization, kind, form, user) -> Agreement:
 
 
 def create_agreement(user, organization, kind, form) -> Agreement:
-    """An organization's admin applies for a kind."""
+    """A confirmed member of an organization applies for a kind."""
     from .mails import send_agreement_application_emails
-    from .selectors import is_confirmed_admin
+    from .selectors import is_confirmed_member
 
-    if not is_confirmed_admin(user, organization):
+    if not is_confirmed_member(user, organization):
         raise PermissionDenied
     if organization.status != Organization.Status.CONFIRMED:
         msg = _(

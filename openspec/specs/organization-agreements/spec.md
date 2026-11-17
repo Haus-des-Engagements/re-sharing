@@ -23,9 +23,9 @@ The system SHALL provide an agreement kind model edited by staff in the admin. A
 - **WHEN** staff try to delete a kind that has agreements in the admin
 - **THEN** the deletion is not offered
 
-### Requirement: Organization admins can apply
+### Requirement: Organization members can apply
 
-The system SHALL allow a user with a confirmed admin booking permission on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, an amount not below the kind's minimum amount where one is set, the answers to the kind's active application fields and SHALL have status `Submitted`. The system SHALL reject applications from users without an admin permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
+The system SHALL allow a user with a confirmed booking permission of any role on an organization with status `Confirmed` to submit an application for a kind that is active and accepting applications. An application SHALL record start date, an amount not below the kind's minimum amount where one is set, the answers to the kind's active application fields and SHALL have status `Submitted`. The system SHALL reject applications from users without a confirmed booking permission, for organizations that are not confirmed, and for kinds for which the organization already has a submitted or active agreement. The organization page SHALL show the open kinds as available actions.
 
 #### Scenario: Confirmed organization applies
 
@@ -43,9 +43,14 @@ The system SHALL allow a user with a confirmed admin booking permission on an or
 - **WHEN** an admin of a deactivated organization opens the application page
 - **THEN** the action is denied
 
-#### Scenario: Booker without admin role
+#### Scenario: Booker applies
 
-- **WHEN** a user with a booker permission submits an application
+- **WHEN** a user with a confirmed booker permission submits a valid application
+- **THEN** an agreement with status `Submitted` is created with that user as contact person
+
+#### Scenario: Unconfirmed permission
+
+- **WHEN** a user whose booking permission is still pending submits an application
 - **THEN** the action is denied
 
 #### Scenario: Duplicate application for the same kind
@@ -262,4 +267,3 @@ Staff SHALL be able to create an active agreement with its mandate in the admin 
 
 - **WHEN** two rows describe an open agreement of the same kind for the same organization
 - **THEN** the preview shows the error and nothing is imported
-

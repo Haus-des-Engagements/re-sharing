@@ -19,7 +19,7 @@ An agreement kind SHALL optionally carry a contract template, a fillable PDF upl
 
 ### Requirement: Prefilled contract
 
-The system SHALL offer the organization's confirmed admins and managers in scope a download of the kind's contract template filled with the agreement's data while the agreement is submitted or active. Form fields SHALL be filled by name: organization name, address, phone, email and website; a ticked representation checkbox; representative name, function and email; amount, start date, end date and deposit formatted in German; the kind's name; and the answers of the kind's application fields under `detail_<key>`. Other fields SHALL stay empty, and all fields SHALL stay editable. The representative SHALL be the agreement's contact person, or without one the downloading organization admin. The document SHALL be generated on request and not stored.
+The system SHALL offer the organization's confirmed members and managers in scope a download of the kind's contract template filled with the agreement's data while the agreement is submitted or active. Form fields SHALL be filled by name: organization name, address, phone, email and website; a ticked representation checkbox; representative name, function and email; amount, start date, end date and deposit formatted in German; the kind's name; and the answers of the kind's application fields under `detail_<key>`. Other fields SHALL stay empty, and all fields SHALL stay editable. The representative SHALL be the agreement's contact person, or without one the downloading organization member. The document SHALL be generated on request and not stored.
 
 #### Scenario: Applicant downloads the prefilled contract
 
@@ -62,7 +62,7 @@ The system SHALL generate the SEPA mandate as a separate PDF containing the cred
 
 ### Requirement: Prefilled contract before applying
 
-The application page of a kind with a contract template SHALL offer a download of the contract prefilled with the values entered in the application form, the organization's data and the applying admin as representative. The system SHALL validate the entered values like a submission and show the form's errors instead of a document when they are invalid. The download SHALL NOT create an agreement or send emails, and SHALL leave the entered values in the form.
+The application page of a kind with a contract template SHALL offer a download of the contract prefilled with the values entered in the application form, the organization's data and the applying member as representative. The system SHALL validate the entered values like a submission and show the form's errors instead of a document when they are invalid. The download SHALL NOT create an agreement or send emails, and SHALL leave the entered values in the form.
 
 #### Scenario: Download before submitting
 
@@ -97,4 +97,3 @@ The mandate form SHALL offer a download of the generated mandate filled with the
 
 - **WHEN** the agreement is ended or rejected
 - **THEN** the prefilled mandate is refused like saving a mandate
-
