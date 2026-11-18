@@ -100,7 +100,7 @@ class ListEmailsViewTest(ManagerViewTestCase):
         response = self.client.get(self.list_url, {"organization": organization.pk})
 
         assert self._subjects(response) == ["Theirs"]
-        assert organization.name in response.content.decode()
+        assert escape(organization.name) in response.content.decode()
 
     def test_filter_by_type(self):
         EmailLogFactory(subject="Custom", email_type="custom")
