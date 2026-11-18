@@ -365,14 +365,20 @@ def upload_signed_mandate_view(request, mandate):
 def manager_list_agreements_view(request):
     status = request.GET.get("status") or None
     kind = request.GET.get("kind") or None
+    mandate = request.GET.get("mandate") or None
     context = {
         "agreements": selectors.manager_agreements(
-            request.user, status=status, kind=kind
+            request.user, status=status, kind=kind, mandate=mandate
         ),
         "kinds": selectors.manager_kinds(request.user),
         "statuses": Agreement.Status.choices,
+        "mandate_choices": [
+            (selectors.WITH_MANDATE, _("with SEPA mandate")),
+            (selectors.WITHOUT_MANDATE, _("without SEPA mandate")),
+        ],
         "selected_status": status,
         "selected_kind": kind,
+        "selected_mandate": mandate,
         "submitted_count": selectors.manager_submitted_agreements_count(request.user),
     }
     return render(request, "agreements/manager_list_agreements.html", context)

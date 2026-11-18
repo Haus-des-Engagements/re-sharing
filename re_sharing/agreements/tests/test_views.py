@@ -3,8 +3,10 @@ from decimal import Decimal
 from http import HTTPStatus
 from unittest.mock import patch
 
+from django.db import connection
 from django.test import TestCase
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -557,6 +559,61 @@ class ManagerAgreementViewsTest(TestCase):
             reverse("agreements:manager-list-agreements"), {"kind": self.kind.slug}
         )
         assert set(response.context["agreements"]) == {self.agreement, other}
+
+    def test_list_shows_open_mandate_reference(self, mock_code_email):
+        mandate = self.agreement.open_mandate
+        revoked = SepaMandateFactory(
+            agreement=AgreementFactory(kind=self.kind), revoked_on=date(2027, 5, 1)
+        )
+        unsigned = SepaMandateFactory(
+            agreement=AgreementFactory(kind=self.kind),
+            signed_document=None,
+            signed_on=None,
+        )
+
+        response = self.client.get(reverse("agreements:manager-list-agreements"))
+
+        content = response.content.decode()
+        assert f'<a href="{mandate.get_absolute_url()}">{mandate.reference}</a>' in (
+            content
+        )
+        assert unsigned.reference in content
+        assert content.count("awaiting the signed mandate") == 1
+        assert revoked.reference not in content
+
+    def test_list_filters_by_mandate(self, mock_code_email):
+        without = AgreementFactory(kind=self.kind)
+        revoked = AgreementFactory(kind=self.kind)
+        SepaMandateFactory(agreement=revoked, revoked_on=date(2027, 5, 1))
+        unsigned = AgreementFactory(kind=self.kind)
+        SepaMandateFactory(agreement=unsigned, signed_document=None, signed_on=None)
+        url = reverse("agreements:manager-list-agreements")
+
+        response = self.client.get(url, {"mandate": "with"})
+        assert set(response.context["agreements"]) == {self.agreement, unsigned}
+        assert response.context["selected_mandate"] == "with"
+
+        response = self.client.get(url, {"mandate": "without"})
+        assert set(response.context["agreements"]) == {without, revoked}
+
+        response = self.client.get(url, {"mandate": "without", "status": "2"})
+        assert list(response.context["agreements"]) == []
+
+        response = self.client.get(url, {"mandate": "unknown"})
+        assert len(response.context["agreements"]) == 4  # noqa: PLR2004
+
+    def test_list_reads_mandates_in_one_query(self, mock_code_email):
+        url = reverse("agreements:manager-list-agreements")
+        self.client.get(url)  # warm caches that are filled once per process
+
+        with CaptureQueriesContext(connection) as one:
+            self.client.get(url)
+        for _ in range(3):
+            SepaMandateFactory(agreement=AgreementFactory(kind=self.kind))
+        with CaptureQueriesContext(connection) as four:
+            self.client.get(url)
+
+        assert len(four) == len(one)
 
     def test_detail_shows_decision_form(self, mock_code_email):
         response = self.client.get(self.agreement.get_absolute_url())

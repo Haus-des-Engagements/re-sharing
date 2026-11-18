@@ -17,7 +17,7 @@ Mitgliedschaften (und später Coworking) laufen jetzt komplett über re-sharing:
 
 1. **Die Organisation beantragt.** Nur bestätigte Organisationen können beantragen, und nur ihre Admins. Sie geben Beginn, Betrag und ihre Funktion ein und unterschreiben den vorausgefüllten Vertrag – vor oder nach dem Absenden. Das geht online (Name eintippen, Unterschrift zeichnen) oder wie bisher: herunterladen, unterschreiben, hochladen.
 2. **Mandat.** Danach geben sie ihre Bankdaten ein und unterschreiben das vorausgefüllte Mandat, ebenfalls online oder per Upload.
-3. **Du bekommst eine E-Mail** über den neuen Antrag. Die Vereinbarung steht unter **Vereinbarungen verwalten** mit Status *Eingereicht*.
+3. **Du bekommst eine E-Mail** über den neuen Antrag. Die Vereinbarung steht unter **Vereinbarungen verwalten** mit Status *Eingereicht*. Die Liste zeigt zu jeder Vereinbarung die Mandatsreferenz, solange das Mandat nicht widerrufen ist, und lässt sich nach *mit* und *ohne SEPA-Lastschriftmandat* filtern.
 4. **Du prüfst** den unterschriebenen Vertrag und das unterschriebene Mandat (Betrag, Unterschrift, Mandatsreferenz).
 5. **Zusagen** mit dem Datum der Vorstandsentscheidung. Das geht erst, wenn Vertrag *und* Mandat unterschrieben vorliegen. Bei der Zusage:
    - kommt die Organisation automatisch in die passende Gruppe (z. B. Vereinsmitglieder),
@@ -133,7 +133,7 @@ Auch hier gibt es erst eine Vorschau; falsche IBANs oder doppelte Referenzen wer
 
 ### Schritt 3: Scans hochladen
 
-Ein importiertes Mandat ist erst **aktiv, wenn der Scan hochgeladen ist** – vorher wird nichts eingezogen. Öffne dazu die Vereinbarung, dann das Mandat, und lade das unterschriebene Mandat hoch. Den Scan des alten Beitrittsformulars lädst du auf der Seite der Vereinbarung hoch, falls vorhanden.
+Ein importiertes Mandat ist erst **aktiv, wenn der Scan hochgeladen ist** – vorher wird nichts eingezogen. Öffne dazu die Vereinbarung, dann das Mandat, und lade das unterschriebene Mandat hoch. Mandate ohne Scan erkennst du unter **Vereinbarungen verwalten** am Hinweis *wartet auf das unterschriebene Mandat* neben der Referenz. Den Scan des alten Beitrittsformulars lädst du auf der Seite der Vereinbarung hoch, falls vorhanden.
 
 Der Scan wird automatisch so abgelegt, wie wir es bisher gemacht haben: `HDE-VM-008_SEPA-Lastschriftmandat_<Organisation>_<Unterschriftsdatum>.pdf`.
 

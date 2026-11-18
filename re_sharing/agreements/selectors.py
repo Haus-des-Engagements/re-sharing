@@ -152,14 +152,35 @@ def manager_kinds(user) -> QuerySet[AgreementKind]:
     return kinds
 
 
-def manager_agreements(user, *, status=None, kind=None) -> QuerySet[Agreement]:
+WITH_MANDATE = "with"
+WITHOUT_MANDATE = "without"
+
+
+def has_open_mandate() -> Exists:
+    """For agreement querysets: a mandate that is not revoked, with or
+    without signed PDF."""
+    return Exists(
+        SepaMandate.objects.filter(agreement=OuterRef("pk"), revoked_on__isnull=True)
+    )
+
+
+def manager_agreements(
+    user, *, status=None, kind=None, mandate=None
+) -> QuerySet[Agreement]:
+    """``mandate`` narrows to agreements with or without an open mandate."""
     agreements = Agreement.objects.filter(kind__in=manager_kinds(user))
     if status:
         agreements = agreements.filter(status=status)
     if kind:
         agreements = agreements.filter(kind__slug=kind)
-    return agreements.select_related("organization", "kind").order_by(
-        "status", "-created"
+    if mandate == WITH_MANDATE:
+        agreements = agreements.filter(has_open_mandate())
+    elif mandate == WITHOUT_MANDATE:
+        agreements = agreements.filter(~has_open_mandate())
+    return (
+        agreements.select_related("organization", "kind")
+        .prefetch_related("mandates_of_agreement")
+        .order_by("status", "-created")
     )
 
 

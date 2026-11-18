@@ -4073,3 +4073,12 @@ msgstr "Das unterschriebene Mandat einer entschiedenen Vereinbarung können nur 
 
 msgid "The amount must not be negative."
 msgstr "Der Betrag darf nicht negativ sein."
+
+msgid "with SEPA mandate"
+msgstr "mit SEPA-Lastschriftmandat"
+
+msgid "without SEPA mandate"
+msgstr "ohne SEPA-Lastschriftmandat"
+
+msgid "with and without SEPA mandate"
+msgstr "mit und ohne SEPA-Lastschriftmandat"

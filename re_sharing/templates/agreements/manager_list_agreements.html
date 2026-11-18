@@ -38,6 +38,17 @@
       </select>
     </div>
     <div class="col-auto">
+      <select name="mandate"
+              class="form-select"
+              aria-label="{% trans "SEPA mandate" %}">
+        <option value="">{% trans "with and without SEPA mandate" %}</option>
+        {% for value, label in mandate_choices %}
+          <option value="{{ value }}"
+                  {% if selected_mandate == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
       <button type="submit" class="btn btn-outline-primary">{% trans "Filter" %}</button>
     </div>
   </form>
@@ -51,6 +62,7 @@
           <th scope="col">{% trans "Status" %}</th>
           <th scope="col">{% trans "Amount" %}</th>
           <th scope="col">{% trans "Start date" %}</th>
+          <th scope="col">{% trans "SEPA mandate" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -64,10 +76,22 @@
             <td>{% include "agreements/_status_badge.html" with status=agreement.status label=agreement.get_status_display %}</td>
             <td>{{ agreement.amount }} €</td>
             <td>{{ agreement.start_date }}</td>
+            <td>
+              {% with mandate=agreement.open_mandate %}
+                {% if mandate %}
+                  <a href="{{ mandate.get_absolute_url }}">{{ mandate.reference }}</a>
+                  {% if not mandate.is_active %}
+                    ({% trans "awaiting the signed mandate" %})
+                  {% endif %}
+                {% else %}
+                  –
+                {% endif %}
+              {% endwith %}
+            </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="6">{% trans "No agreements found." %}</td>
+            <td colspan="7">{% trans "No agreements found." %}</td>
           </tr>
         {% endfor %}
       </tbody>
