@@ -1,0 +1,13 @@
+{% load static i18n %}
+
+<div class="signature-pad" data-signature-pad>
+  <canvas class="border rounded bg-white d-block w-100"></canvas>
+  <input type="hidden"
+         name="{{ widget.name }}"
+         {% if widget.attrs.id %}id="{{ widget.attrs.id }}"{% endif %} />
+  <button type="button"
+          class="btn btn-sm btn-outline-secondary mt-2"
+          data-signature-clear>{% trans "Clear signature" %}</button>
+</div>
+<script src="{% static 'js/vendors/signature_pad/signature_pad_5.1.4.umd.min.js' %}"></script>
+<script src="{% static 'js/signature.js' %}"></script>

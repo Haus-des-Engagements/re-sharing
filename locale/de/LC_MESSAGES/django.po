@@ -3805,8 +3805,8 @@ msgstr "Ansprechperson"
 msgid "Applied for the agreement and is named in the contract."
 msgstr "Hat die Vereinbarung beantragt und wird im Vertrag genannt."
 
-msgid "Your application was submitted. Download the prefilled contract below, sign it and upload it."
-msgstr "Dein Antrag wurde eingereicht. Lade unten den vorausgefüllten Vertrag herunter, unterschreibe ihn und lade ihn hoch."
+msgid "Your application was submitted. Sign the contract below, or download the prefilled contract, sign it and upload it."
+msgstr "Dein Antrag wurde eingereicht. Unterschreibe den Vertrag unten, oder lade den vorausgefüllten Vertrag herunter, unterschreibe ihn und lade ihn hoch."
 
 msgid "Fields of the contract template"
 msgstr "Felder der Vertragsvorlage"
@@ -3838,29 +3838,14 @@ msgstr "Vorausgefüllten Vertrag herunterladen"
 msgid "Shown on the application page, for example what applicants should know before applying. The contract itself is uploaded as contract template."
 msgstr "Wird auf der Antragsseite angezeigt, zum Beispiel was Antragstellende vorher wissen sollten. Der Vertrag selbst wird als Vertragsvorlage hochgeladen."
 
-msgid ""
-"Fill in the form and download the prefilled contract. Sign it and upload it "
-"here before submitting, or later from the agreement page."
-msgstr ""
-"Fülle das Formular aus und lade den vorausgefüllten Vertrag herunter. "
-"Unterschreibe ihn und lade ihn vor dem Absenden hier hoch oder später auf der "
-"Seite der Vereinbarung."
+msgid "Fill in the form and download the prefilled contract to read it. Sign it online at the end of the form, or print it, sign it and upload it. Both are also possible later from the agreement page."
+msgstr "Fülle das Formular aus und lade den vorausgefüllten Vertrag herunter, um ihn zu lesen. Unterschreibe ihn online am Ende des Formulars, oder drucke ihn aus, unterschreibe ihn und lade ihn hoch. Beides geht auch später auf der Seite der Vereinbarung."
 
-msgid ""
-"If you change any values after downloading, download the contract again "
-"before signing."
-msgstr ""
-"Wenn du nach dem Herunterladen Angaben änderst, lade den Vertrag vor dem "
-"Unterschreiben erneut herunter."
+msgid "If you change any values after downloading, download the contract again before signing. An online signature is made on the contract with the values you submit."
+msgstr "Wenn du nach dem Herunterladen Angaben änderst, lade den Vertrag vor dem Unterschreiben erneut herunter. Eine Online-Unterschrift gilt für den Vertrag mit den Angaben, die du absendest."
 
-msgid ""
-"Enter the bank details and download the prefilled mandate. Sign it and "
-"upload it here before saving, or save first and upload it later from the "
-"mandate page."
-msgstr ""
-"Gib die Bankdaten ein und lade das vorausgefüllte Mandat herunter. "
-"Unterschreibe es und lade es vor dem Speichern hier hoch, oder speichere "
-"zuerst und lade es später auf der Seite des Mandats hoch."
+msgid "Enter the bank details and download the prefilled mandate. Sign it and upload it here before saving, or save first and sign later from the mandate page."
+msgstr "Gib die Bankdaten ein und lade das vorausgefüllte Mandat herunter. Unterschreibe es und lade es vor dem Speichern hier hoch, oder speichere zuerst und unterschreibe später auf der Seite des Mandats."
 
 msgid "Download prefilled mandate"
 msgstr "Vorausgefülltes Mandat herunterladen"
@@ -3988,3 +3973,85 @@ msgid "%(count)d email is scheduled to be sent again."
 msgid_plural "%(count)d emails are scheduled to be sent again."
 msgstr[0] "%(count)d E-Mail wird erneut gesendet."
 msgstr[1] "%(count)d E-Mails werden erneut gesendet."
+
+msgid "The signature could not be read. Please draw it again."
+msgstr "Die Unterschrift konnte nicht gelesen werden. Bitte zeichne sie erneut."
+
+msgid "The signature is too large. Please draw it again."
+msgstr "Die Unterschrift ist zu groß. Bitte zeichne sie erneut."
+
+msgid "Sign online: your full name"
+msgstr "Online unterschreiben: dein vollständiger Name"
+
+msgid "Your signature"
+msgstr "Deine Unterschrift"
+
+#, python-format
+msgid "Draw with the mouse or your finger. By signing I confirm that I have read the document and may sign it on behalf of %(party)s."
+msgstr "Zeichne mit der Maus oder dem Finger. Mit meiner Unterschrift bestätige ich, dass ich das Dokument gelesen habe und es für %(party)s unterzeichnen darf."
+
+msgid "Type your name to sign."
+msgstr "Tippe deinen Namen ein, um zu unterschreiben."
+
+msgid "Draw your signature."
+msgstr "Zeichne deine Unterschrift."
+
+msgid "Either upload a signed PDF or sign online, not both."
+msgstr "Lade entweder ein unterschriebenes PDF hoch oder unterschreibe online, nicht beides."
+
+msgid "Clear signature"
+msgstr "Unterschrift löschen"
+
+msgid "Upload the signed PDF or sign online."
+msgstr "Lade das unterschriebene PDF hoch oder unterschreibe online."
+
+msgid "Requires a countersignature"
+msgstr "Gegenzeichnung erforderlich"
+
+msgid "Approving is then reserved to managers with a signatory title, who sign in the approval form. Their signature page is appended to the signed contract."
+msgstr "Zusagen können dann nur Manager*innen mit einem Titel für die Unterschrift, die im Formular für die Zusage unterschreiben. Ihre Unterschriftsseite wird an den unterschriebenen Vertrag angehängt."
+
+msgid "Signatory title"
+msgstr "Titel für die Unterschrift"
+
+msgid "For example \"Managing director\". A manager with a title may countersign contracts when approving agreements."
+msgstr "Zum Beispiel „Geschäftsführung“. Manager*innen mit Titel dürfen Verträge bei der Zusage gegenzeichnen."
+
+msgid "the operator"
+msgstr "den Betreiber"
+
+msgid "Only an authorized signatory can approve this kind of agreement."
+msgstr "Diese Art von Vereinbarung können nur Zeichnungsberechtigte zusagen."
+
+msgid "Sign the contract to approve this agreement."
+msgstr "Unterschreibe den Vertrag, um diese Vereinbarung zuzusagen."
+
+msgid "The signed contract cannot be read. Upload it again as PDF."
+msgstr "Der unterschriebene Vertrag kann nicht gelesen werden. Lade ihn erneut als PDF hoch."
+
+msgid "The contract was signed."
+msgstr "Der Vertrag wurde unterschrieben."
+
+msgid "The mandate was signed."
+msgstr "Das Mandat wurde unterschrieben."
+
+msgid "You can also sign the mandate online at the end of the form."
+msgstr "Du kannst das Mandat auch online am Ende des Formulars unterschreiben."
+
+msgid "Or sign it online below."
+msgstr "Oder unterschreibe es unten online."
+
+msgid "Sign or upload mandate"
+msgstr "Mandat unterschreiben oder hochladen"
+
+msgid "Sign or upload the contract"
+msgstr "Vertrag unterschreiben oder hochladen"
+
+msgid "Sign or upload"
+msgstr "Unterschreiben oder hochladen"
+
+msgid "This kind of agreement is countersigned. To approve it, sign below; your signature page is added to the signed contract. A rejection needs no signature."
+msgstr "Diese Art von Vereinbarung wird gegengezeichnet. Um zuzusagen, unterschreibe unten; deine Unterschriftsseite wird an den unterschriebenen Vertrag angehängt. Eine Ablehnung braucht keine Unterschrift."
+
+msgid "This kind of agreement is countersigned. Only managers with a signatory title can approve it; you can reject it."
+msgstr "Diese Art von Vereinbarung wird gegengezeichnet. Zusagen können nur Manager*innen mit einem Titel für die Unterschrift; ablehnen kannst du sie."

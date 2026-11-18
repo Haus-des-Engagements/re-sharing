@@ -116,14 +116,26 @@
     </tbody>
   </table>
   {% if can_administer and is_open %}
-    <h2 class="mt-5">{% trans "Upload signed contract" %}</h2>
+    <h2 class="mt-5">
+      {% if upload_form.signature_image %}
+        {% trans "Sign or upload the contract" %}
+      {% else %}
+        {% trans "Upload signed contract" %}
+      {% endif %}
+    </h2>
     {% if agreement.kind.intro_text %}<div class="mb-3">{{ agreement.kind.intro_text|safe }}</div>{% endif %}
     <form method="post"
           enctype="multipart/form-data"
           action="{% url 'agreements:upload-signed-document' agreement=agreement.uuid %}">
       {% csrf_token %}
       {{ upload_form|crispy }}
-      <button type="submit" class="btn btn-primary">{% trans "Upload" %}</button>
+      <button type="submit" class="btn btn-primary">
+        {% if upload_form.signature_image %}
+          {% trans "Sign or upload" %}
+        {% else %}
+          {% trans "Upload" %}
+        {% endif %}
+      </button>
     </form>
   {% endif %}
   <h2 class="mt-5">{% trans "Collections" %}</h2>
@@ -172,9 +184,25 @@
             class="row g-2 align-items-end"
             action="{% url 'agreements:manager-approve-agreement' agreement=agreement.uuid %}">
         {% csrf_token %}
+        {% if signatory_missing %}
+          <p class="col-12 mb-0">
+            {% trans "This kind of agreement is countersigned. Only managers with a signatory title can approve it; you can reject it." %}
+          </p>
+        {% elif decision_form.signature_image %}
+          <div class="col-12 col-lg-8">
+            <p class="mb-2">
+              {% trans "This kind of agreement is countersigned. To approve it, sign below; your signature page is added to the signed contract. A rejection needs no signature." %}
+            </p>
+            {{ decision_form.signature_name|as_crispy_field }}
+            {{ decision_form.signature_image|as_crispy_field }}
+          </div>
+          <div class="w-100"></div>
+        {% endif %}
         <div class="col-auto">{{ decision_form.decided_at|as_crispy_field }}</div>
         <div class="col-auto">
-          <button type="submit" class="btn btn-success">{% trans "Approve" %}</button>
+          {% if not signatory_missing %}
+            <button type="submit" class="btn btn-success">{% trans "Approve" %}</button>
+          {% endif %}
           <button type="submit"
                   class="btn btn-outline-danger"
                   formaction="{% url 'agreements:manager-reject-agreement' agreement=agreement.uuid %}"

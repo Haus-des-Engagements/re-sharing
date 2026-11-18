@@ -8,21 +8,34 @@ Mitgliedschaften (und später Coworking) laufen jetzt komplett über re-sharing:
 |---|---|
 | Beitrittsformular als PDF von der Website, von Hand ausgefüllt | Die Organisation beantragt online und lädt den **vorausgefüllten** Vertrag herunter |
 | Lastschriftmandat als Teil des Papierformulars | Eigenes Mandat, vorausgefüllt mit Bankdaten und Mandatsreferenz |
+| Ausdrucken, unterschreiben, einscannen | Vertrag und Mandat können direkt **online unterschrieben** werden; der Upload bleibt möglich |
 | Mitgliedergruppe von Hand zuweisen | Passiert automatisch bei der Zusage |
 | Lastschriften von Hand zusammenstellen | re-sharing erstellt die Einzüge und die SEPA-Datei für die Bank |
 | Rücklastschriften selbst finden | re-sharing erkennt sie nachts und zeigt sie dir an |
 
 ## 1. Vom Antrag zur Zusage
 
-1. **Die Organisation beantragt.** Nur bestätigte Organisationen können beantragen, und nur ihre Admins. Sie geben Beginn, Betrag und ihre Funktion ein, laden den vorausgefüllten Vertrag herunter, unterschreiben ihn und laden ihn hoch – vor oder nach dem Absenden.
-2. **Mandat.** Danach geben sie ihre Bankdaten ein und laden das vorausgefüllte Mandat herunter, unterschreiben es und laden es hoch.
+1. **Die Organisation beantragt.** Nur bestätigte Organisationen können beantragen, und nur ihre Admins. Sie geben Beginn, Betrag und ihre Funktion ein und unterschreiben den vorausgefüllten Vertrag – vor oder nach dem Absenden. Das geht online (Name eintippen, Unterschrift zeichnen) oder wie bisher: herunterladen, unterschreiben, hochladen.
+2. **Mandat.** Danach geben sie ihre Bankdaten ein und unterschreiben das vorausgefüllte Mandat, ebenfalls online oder per Upload.
 3. **Du bekommst eine E-Mail** über den neuen Antrag. Die Vereinbarung steht unter **Vereinbarungen verwalten** mit Status *Eingereicht*.
 4. **Du prüfst** den unterschriebenen Vertrag und das unterschriebene Mandat (Betrag, Unterschrift, Mandatsreferenz).
-5. **Zusagen** mit dem Datum der Vorstandsentscheidung. Das geht erst, wenn Vertrag *und* Mandat unterschrieben hochgeladen sind. Bei der Zusage:
+5. **Zusagen** mit dem Datum der Vorstandsentscheidung. Das geht erst, wenn Vertrag *und* Mandat unterschrieben vorliegen. Bei der Zusage:
    - kommt die Organisation automatisch in die passende Gruppe (z. B. Vereinsmitglieder),
    - bekommt sie eine E-Mail mit der Zusage,
    - wird – wenn sie mitten im Jahr beginnt – ein anteiliger Beitrag für den Rest des Jahres angelegt (pro vollem Monat nach dem Beginn ein Zwölftel). Betrag und Datum stehen in der Zusage-E-Mail.
 6. **Ablehnen** geht genauso, die Organisation wird per E-Mail informiert.
+
+### Online unterschriebene Dokumente
+
+Ein online unterschriebenes Dokument ist ein normales PDF: der vorausgefüllte Vertrag bzw. das Mandat, gefolgt von einer **Unterschriftsseite** mit der gezeichneten Unterschrift, dem Namen, der Funktion, der Organisation, Datum und Uhrzeit und dem Benutzerkonto. Die Unterschriftszeilen im Dokument selbst bleiben leer. Online unterschreiben können nur Mitglieder der Organisation – du als Manager*in kannst für eine Organisation weiterhin nur einen Scan hochladen. Solange die Vereinbarung *Eingereicht* ist, kann die Organisation den Vertrag neu unterschreiben oder durch einen Upload ersetzen; danach nur noch per Upload.
+
+### Verträge mit Gegenzeichnung
+
+Bei manchen Arten von Vereinbarungen (z. B. Coworking oder Mietverträge) unterschreiben beide Seiten. Dafür ist in der Art der Vereinbarung **Gegenzeichnung erforderlich** gesetzt.
+
+- **Zusagen heißt hier gegenzeichnen.** Im Formular für die Zusage tippst du deinen Namen ein und zeichnest deine Unterschrift. Deine Unterschriftsseite wird an den gespeicherten Vertrag angehängt – egal, ob die Organisation online unterschrieben oder einen Scan hochgeladen hat.
+- **Nur Zeichnungsberechtigte können zusagen.** Das sind Manager*innen, bei denen im Admin ein **Titel für die Unterschrift** eingetragen ist (z. B. „Geschäftsführung“). Der Titel steht auf der Unterschriftsseite. Alle anderen Manager*innen können solche Vereinbarungen prüfen und ablehnen, aber nicht zusagen.
+- Lässt sich ein hochgeladener Scan nicht als PDF lesen, wird die Zusage abgelehnt; die Organisation oder du lädt den Vertrag dann erneut hoch.
 
 Weitere Möglichkeiten in der Vereinbarung:
 

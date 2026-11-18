@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from re_sharing.organizations.models import Organization
 from re_sharing.organizations.models import validate_is_pdf
+from re_sharing.utils.signing import SignatureFields
 
 from .fields import add_detail_fields
 from .fields import details_from
@@ -18,10 +19,15 @@ BIC_PATTERN = re.compile(r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
 DATE_INPUT = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
 
 
-class SignedDocumentFields(forms.Form):
-    """A signed PDF and its signing date, given together or not at all."""
+class SignedDocumentFields(SignatureFields):
+    """A signed PDF and its signing date, given together or not at all.
+
+    Created with ``signing_for``, the form also takes a signature drawn
+    online instead of the PDF; the signing date is then the day of signing.
+    """
 
     document_required = False
+    upload_field = "signed_document"
 
     signed_document = forms.FileField(
         label=_("Signed PDF"), required=False, validators=[validate_is_pdf]
@@ -32,12 +38,15 @@ class SignedDocumentFields(forms.Form):
         cleaned = super().clean()
         document = cleaned.get("signed_document")
         signed_on = cleaned.get("signed_on")
+        signing = bool(cleaned.get("signature_name") or cleaned.get("signature_image"))
         if document and not signed_on:
             self.add_error("signed_on", _("Enter the date of the signature."))
-        if signed_on and not document:
-            self.add_error("signed_document", _("Upload the signed PDF."))
-        if self.document_required and not document:
-            self.add_error("signed_document", _("Upload the signed PDF."))
+        if not document and not signing and (signed_on or self.document_required):
+            if "signature_image" in self.fields:
+                message = _("Upload the signed PDF or sign online.")
+            else:
+                message = _("Upload the signed PDF.")
+            self.add_error("signed_document", message)
         return cleaned
 
 
@@ -101,10 +110,14 @@ class ApplicationForm(SignedDocumentFields):
 
     leading_fields: tuple[str, ...] = ()
     enforce_minimum = True
+    offers_signing = True
     trailing_fields: tuple[str, ...] = ("signed_document", "signed_on")
 
-    def __init__(self, *args, kind, details=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, kind, details=None, signing_for=None, **kwargs):
+        if not (self.offers_signing and kind.contract_template):
+            # Only the kind's prefilled contract can be signed online.
+            signing_for = None
+        super().__init__(*args, signing_for=signing_for, **kwargs)
         self.kind = kind
         if kind.requires_deposit:
             self.fields["deposit_amount"].required = True
@@ -165,6 +178,7 @@ class ManagerAgreementForm(ApplicationForm):
     """A manager enters an agreement: a paper application or an existing one."""
 
     enforce_minimum = False
+    offers_signing = False
 
     STATUS_CHOICES = [
         (Agreement.Status.SUBMITTED, _("Submitted, decision pending")),
@@ -206,6 +220,7 @@ class ManagerAgreementEditForm(ApplicationForm):
     """Edits the data of an agreement; status, kind and organization stay."""
 
     enforce_minimum = False
+    offers_signing = False
 
     notes = forms.CharField(
         label=_("Internal notes"),
@@ -237,7 +252,10 @@ class ManagerAgreementEditForm(ApplicationForm):
         field.required = False
 
 
-class DecisionForm(forms.Form):
+class DecisionForm(SignatureFields):
+    """The decision date; created with ``signing_for``, also the
+    countersignature of the approving manager."""
+
     decided_at = forms.DateField(
         label=_("Date of the board decision"), widget=DATE_INPUT
     )

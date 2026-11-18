@@ -10,19 +10,27 @@ from datetime import time
 from auditlog.context import set_actor
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.db import transaction
 from django.utils import formats
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from pypdf.errors import PyPdfError
 
 from re_sharing.organizations.models import Organization
+from re_sharing.utils.signing import Signature
+from re_sharing.utils.signing import append_signature_page
 
+from . import documents
 from .models import Agreement
 from .models import Collection
 from .models import SepaMandate
+from .selectors import contract_can_be_signed_online
+from .selectors import is_confirmed_member
 from .selectors import manager_can_manage_agreement
 from .selectors import manager_can_manage_kind
+from .selectors import signatory_title
 from .selectors import user_can_administer_agreement
 
 MANDATE_SAVE_ATTEMPTS = 3
@@ -95,19 +103,42 @@ def mandate_from_form(user, agreement: Agreement, form) -> SepaMandate:
     )
 
 
+def _sign_mandate(user, mandate: SepaMandate, signature: Signature) -> None:
+    """Make the generated mandate, signed for the organization, the mandate's
+    signed document."""
+    agreement = mandate.agreement
+    if not is_confirmed_member(user, agreement.organization):
+        raise PermissionDenied
+    content = append_signature_page(
+        documents.render_mandate(mandate),
+        signature,
+        document_name=f"SEPA-Lastschriftmandat {mandate.reference}",
+        on_behalf_of=agreement.organization.name,
+        function=agreement.contact_person_function,
+        user=user,
+    )
+    mandate.signed_on = timezone.localdate()
+    mandate.signed_document = ContentFile(content, name="mandate.pdf")
+
+
 def create_mandate(user, agreement: Agreement, form) -> SepaMandate:
-    """Save bank data, with or without the signed mandate PDF."""
+    """Save bank data: with an uploaded signed mandate, signed online, or
+    without a signed mandate yet."""
     mandate = mandate_from_form(user, agreement, form)
+    signature = form.signature
     for _attempt in range(MANDATE_SAVE_ATTEMPTS - 1):
         try:
-            return _save_mandate(user, mandate)
+            return _save_mandate(user, mandate, signature)
         except IntegrityError:
             # Another mandate took the number in the meantime.
             mandate.reference = generate_mandate_reference()
-    return _save_mandate(user, mandate)
+    return _save_mandate(user, mandate, signature)
 
 
-def _save_mandate(user, mandate: SepaMandate) -> SepaMandate:
+def _save_mandate(user, mandate: SepaMandate, signature=None) -> SepaMandate:
+    if signature:
+        # Signed on every attempt, since the PDF shows the reference.
+        _sign_mandate(user, mandate, signature)
     with transaction.atomic(), set_actor(user):
         mandate.save()
     return mandate
@@ -121,8 +152,11 @@ def upload_signed_mandate(user, mandate: SepaMandate, form) -> SepaMandate:
         raise AgreementError(msg)
 
     with set_actor(user):
-        mandate.signed_document = form.cleaned_data["signed_document"]
-        mandate.signed_on = form.cleaned_data["signed_on"]
+        if form.signature:
+            _sign_mandate(user, mandate, form.signature)
+        else:
+            mandate.signed_document = form.cleaned_data["signed_document"]
+            mandate.signed_on = form.cleaned_data["signed_on"]
         mandate.save()
     return mandate
 
@@ -177,10 +211,26 @@ def agreement_from_application(organization, kind, form, user) -> Agreement:
     )
 
 
+def _sign_contract(user, agreement: Agreement, signature: Signature) -> None:
+    """Make the prefilled contract, signed for the organization, the
+    agreement's signed document."""
+    if not contract_can_be_signed_online(user, agreement):
+        raise PermissionDenied
+    content = append_signature_page(
+        documents.prefilled_contract(agreement, user),
+        signature,
+        document_name=agreement.kind.name,
+        on_behalf_of=agreement.organization.name,
+        function=agreement.contact_person_function,
+        user=user,
+    )
+    agreement.signed_on = timezone.localdate()
+    agreement.signed_document = ContentFile(content, name="contract.pdf")
+
+
 def create_agreement(user, organization, kind, form) -> Agreement:
     """A confirmed member of an organization applies for a kind."""
     from .mails import send_agreement_application_emails
-    from .selectors import is_confirmed_member
 
     if not is_confirmed_member(user, organization):
         raise PermissionDenied
@@ -195,6 +245,8 @@ def create_agreement(user, organization, kind, form) -> Agreement:
     _refuse_duplicate(organization, kind)
 
     agreement = agreement_from_application(organization, kind, form, user)
+    if form.signature:
+        _sign_contract(user, agreement, form.signature)
     with transaction.atomic(), set_actor(user):
         agreement.save()
         transaction.on_commit(
@@ -211,8 +263,11 @@ def upload_signed_document(user, agreement: Agreement, form) -> Agreement:
         raise AgreementError(msg)
 
     with set_actor(user):
-        agreement.signed_document = form.cleaned_data["signed_document"]
-        agreement.signed_on = form.cleaned_data["signed_on"]
+        if form.signature:
+            _sign_contract(user, agreement, form.signature)
+        else:
+            agreement.signed_document = form.cleaned_data["signed_document"]
+            agreement.signed_on = form.cleaned_data["signed_on"]
         agreement.save()
     return agreement
 
@@ -225,8 +280,42 @@ def _require_decision_rights(user, agreement):
         raise AgreementError(msg)
 
 
-def approve_agreement(user, agreement: Agreement, decided_at) -> Agreement:
-    """Record the board's approval: group, code, deposit, first period, email."""
+def operator_name() -> str:
+    """The party a countersignature is made for."""
+    return settings.SEPA_CREDITOR_NAME or _("the operator")
+
+
+def _countersigned_contract(user, agreement: Agreement, signature) -> ContentFile:
+    """The stored contract, signed online or uploaded, followed by the
+    signature page of the approving manager."""
+    title = signatory_title(user)
+    if not title:
+        msg = _("Only an authorized signatory can approve this kind of agreement.")
+        raise AgreementError(msg)
+    if signature is None:
+        msg = _("Sign the contract to approve this agreement.")
+        raise AgreementError(msg)
+    try:
+        with agreement.signed_document.open("rb") as stored:
+            content = append_signature_page(
+                stored.read(),
+                signature,
+                document_name=agreement.kind.name,
+                on_behalf_of=operator_name(),
+                function=title,
+                user=user,
+            )
+    except PyPdfError as error:
+        msg = _("The signed contract cannot be read. Upload it again as PDF.")
+        raise AgreementError(msg) from error
+    return ContentFile(content, name="contract.pdf")
+
+
+def approve_agreement(
+    user, agreement: Agreement, decided_at, signature: Signature | None = None
+) -> Agreement:
+    """Record the board's approval: group, code, deposit, first period, email.
+    Kinds that require a countersignature get the manager's signature page."""
     from re_sharing.resources.services_permanent_code import (
         create_permanent_code_for_organization,
     )
@@ -248,7 +337,12 @@ def approve_agreement(user, agreement: Agreement, decided_at) -> Agreement:
 
     organization = agreement.organization
     kind = agreement.kind
+    countersigned = None
+    if kind.requires_countersignature:
+        countersigned = _countersigned_contract(user, agreement, signature)
     with transaction.atomic(), set_actor(user):
+        if countersigned:
+            agreement.signed_document = countersigned
         agreement.status = Agreement.Status.ACTIVE
         agreement.decided_at = decided_at
         agreement.decided_by = user

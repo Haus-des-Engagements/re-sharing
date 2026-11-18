@@ -23,7 +23,7 @@
   {% if kind.intro_text %}<div class="mt-3" id="kind-intro">{{ kind.intro_text|safe }}</div>{% endif %}
   <p class="mt-3">
     {% if kind.contract_template %}
-      {% trans "Fill in the form and download the prefilled contract. Sign it and upload it here before submitting, or later from the agreement page." %}
+      {% trans "Fill in the form and download the prefilled contract to read it. Sign it online at the end of the form, or print it, sign it and upload it. Both are also possible later from the agreement page." %}
     {% else %}
       {% trans "Download the contract, sign it and upload it here. You can also upload it later from the agreement page." %}
     {% endif %}
@@ -39,7 +39,7 @@
               class="btn btn-outline-primary"
               id="download-prefilled-contract">{% trans "Download prefilled contract" %}</button>
       <p class="form-text mt-2">
-        {% trans "If you change any values after downloading, download the contract again before signing." %}
+        {% trans "If you change any values after downloading, download the contract again before signing. An online signature is made on the contract with the values you submit." %}
       </p>
     {% endif %}
   </form>

@@ -290,7 +290,7 @@ class ApplicationMessageTest(TestCase):
             follow=True,
         )
 
-        assert "Download the prefilled contract below" in response.content.decode()
+        assert "download the prefilled contract" in response.content.decode()
 
 
 class ContractPreviewOnApplyTest(TestCase):

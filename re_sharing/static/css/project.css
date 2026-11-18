@@ -115,3 +115,9 @@ violet: #AA3377, grey: #BBBBBB
 .text-ci-teal { color: #5b9da4; }
 .text-ci-red { color: #eb698c; }
 .text-ci-green { color: #70cb7b; }
+
+/* Signature pad */
+.signature-pad canvas {
+    height: 11rem;
+    touch-action: none;
+}

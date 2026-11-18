@@ -86,9 +86,14 @@ def apply_view(request, organization, kind):
         raise PermissionDenied
 
     if request.method != "POST":
-        form = ApplicationForm(kind=kind)
+        form = ApplicationForm(kind=kind, signing_for=organization.name)
     else:
-        form = ApplicationForm(data=request.POST, files=request.FILES, kind=kind)
+        form = ApplicationForm(
+            data=request.POST,
+            files=request.FILES,
+            kind=kind,
+            signing_for=organization.name,
+        )
         if "preview" in request.POST:
             response = _contract_preview(request, organization, kind, form)
         else:
@@ -121,12 +126,14 @@ def _submit_application(request, organization, kind, form):
     except AgreementError as error:
         form.add_error(None, error.message)
         return None
-    if kind.contract_template:
+    if agreement.signed_document:
+        messages.success(request, _("Your application was submitted."))
+    elif kind.contract_template:
         messages.success(
             request,
             _(
-                "Your application was submitted. Download the prefilled contract "
-                "below, sign it and upload it."
+                "Your application was submitted. Sign the contract below, or "
+                "download the prefilled contract, sign it and upload it."
             ),
         )
     else:
@@ -157,8 +164,12 @@ def show_agreement_view(request, agreement):
         "is_manager": is_manager,
         "can_delete": is_manager and selectors.agreement_can_be_deleted(agreement),
         "can_administer": can_administer,
-        "upload_form": SignedDocumentForm(),
-        "decision_form": DecisionForm(initial={"decided_at": timezone.localdate()}),
+        "upload_form": _contract_form(request, agreement),
+        "decision_form": _decision_form(
+            agreement, initial={"decided_at": timezone.localdate()}
+        ),
+        "signatory_missing": agreement.kind.requires_countersignature
+        and not selectors.signatory_title(request.user),
         "end_form": EndAgreementForm(initial={"end_date": agreement.end_date}),
         "end_scheduled": agreement.status == Agreement.Status.ACTIVE
         and agreement.end_date is not None,
@@ -170,22 +181,50 @@ def show_agreement_view(request, agreement):
     return render(request, "agreements/show_agreement.html", context)
 
 
+def _contract_form(request, agreement, **kwargs) -> SignedDocumentForm:
+    """Upload of the signed contract; members can sign it online instead."""
+    can_sign = selectors.contract_can_be_signed_online(request.user, agreement)
+    signing_for = agreement.organization.name if can_sign else None
+    return SignedDocumentForm(signing_for=signing_for, **kwargs)
+
+
+def _mandate_form(request, agreement, form_class, **kwargs):
+    """Upload of the signed mandate; members can sign it online instead."""
+    organization = agreement.organization
+    can_sign = selectors.is_confirmed_member(request.user, organization)
+    return form_class(signing_for=organization.name if can_sign else None, **kwargs)
+
+
+def _decision_form(agreement, **kwargs) -> DecisionForm:
+    """Kinds that require a countersignature are approved with a signature."""
+    countersigned = agreement.kind.requires_countersignature
+    signing_for = services.operator_name() if countersigned else None
+    return DecisionForm(signing_for=signing_for, **kwargs)
+
+
+def _show_form_errors(request, form):
+    for errors in form.errors.values():
+        for error in errors:
+            messages.error(request, error)
+
+
 @login_required
 @require_POST
 def upload_signed_document_view(request, agreement):
     agreement = _agreement_for(request, agreement)
-    form = SignedDocumentForm(data=request.POST, files=request.FILES)
+    form = _contract_form(request, agreement, data=request.POST, files=request.FILES)
     if not form.is_valid():
-        for errors in form.errors.values():
-            for error in errors:
-                messages.error(request, error)
+        _show_form_errors(request, form)
         return redirect(agreement.get_absolute_url())
     try:
         services.upload_signed_document(request.user, agreement, form)
     except AgreementError as error:
         _refused(request, error)
     else:
-        messages.success(request, _("The signed contract was uploaded."))
+        if form.signature:
+            messages.success(request, _("The contract was signed."))
+        else:
+            messages.success(request, _("The signed contract was uploaded."))
     return redirect(agreement.get_absolute_url())
 
 
@@ -234,9 +273,11 @@ def create_mandate_view(request, agreement):
     if agreement.open_mandate is not None:
         return redirect(agreement.open_mandate.get_absolute_url())
 
-    form = MandateForm()
+    form = _mandate_form(request, agreement, MandateForm)
     if request.method == "POST":
-        form = MandateForm(data=request.POST, files=request.FILES)
+        form = _mandate_form(
+            request, agreement, MandateForm, data=request.POST, files=request.FILES
+        )
         preview = "preview" in request.POST
         if form.is_valid():
             try:
@@ -280,7 +321,7 @@ def show_mandate_view(request, mandate):
         "agreement": mandate.agreement,
         "iban": mandate.iban if is_manager else mandate.masked_iban,
         "is_manager": is_manager,
-        "upload_form": SignedDocumentForm(),
+        "upload_form": _mandate_form(request, mandate.agreement, SignedDocumentForm),
         "revoke_form": RevokeMandateForm(initial={"revoked_on": timezone.localdate()}),
     }
     return render(request, "agreements/show_mandate.html", context)
@@ -290,18 +331,25 @@ def show_mandate_view(request, mandate):
 @require_POST
 def upload_signed_mandate_view(request, mandate):
     mandate = _mandate_for(request, mandate)
-    form = SignedDocumentForm(data=request.POST, files=request.FILES)
+    form = _mandate_form(
+        request,
+        mandate.agreement,
+        SignedDocumentForm,
+        data=request.POST,
+        files=request.FILES,
+    )
     if not form.is_valid():
-        for errors in form.errors.values():
-            for error in errors:
-                messages.error(request, error)
+        _show_form_errors(request, form)
         return redirect(mandate.get_absolute_url())
     try:
         services.upload_signed_mandate(request.user, mandate, form)
     except AgreementError as error:
         _refused(request, error)
     else:
-        messages.success(request, _("The signed mandate was uploaded."))
+        if form.signature:
+            messages.success(request, _("The mandate was signed."))
+        else:
+            messages.success(request, _("The signed mandate was uploaded."))
     return redirect(mandate.get_absolute_url())
 
 
@@ -437,17 +485,27 @@ def _manager_action(request, agreement_uuid, action):
 @manager_required
 @require_POST
 def manager_decide_agreement_view(request, agreement, decision):
-    form = DecisionForm(data=request.POST)
+    approving = decision == "approve"
+    item = get_object_or_404(Agreement.objects.select_related("kind"), uuid=agreement)
+    # Only an approval is countersigned; a rejection needs the date alone.
+    form = (
+        _decision_form(item, data=request.POST)
+        if approving
+        else DecisionForm(data=request.POST)
+    )
     if not form.is_valid():
-        messages.error(request, _("Enter the date of the board decision."))
+        if "decided_at" in form.errors:
+            messages.error(request, _("Enter the date of the board decision."))
+        else:
+            _show_form_errors(request, form)
         return redirect("agreements:show-agreement", agreement)
-    service = {
-        "approve": services.approve_agreement,
-        "reject": services.reject_agreement,
-    }[decision]
+    decided_at = form.cleaned_data["decided_at"]
 
     def decide(item):
-        service(request.user, item, form.cleaned_data["decided_at"])
+        if approving:
+            services.approve_agreement(request.user, item, decided_at, form.signature)
+        else:
+            services.reject_agreement(request.user, item, decided_at)
         messages.success(request, _("The decision was recorded."))
 
     return _manager_action(request, agreement, decide)

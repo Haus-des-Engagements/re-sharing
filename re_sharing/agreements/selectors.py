@@ -55,6 +55,22 @@ def contract_document_available(agreement: Agreement) -> bool:
     )
 
 
+def contract_can_be_signed_online(user, agreement: Agreement) -> bool:
+    """By a confirmed member of the organization, on the kind's prefilled
+    contract, until the agreement is decided."""
+    return (
+        agreement.status == Agreement.Status.SUBMITTED
+        and bool(agreement.kind.contract_template)
+        and is_confirmed_member(user, agreement.organization)
+    )
+
+
+def signatory_title(user) -> str:
+    """The title of a manager who may countersign, otherwise empty."""
+    manager = _manager_of(user)
+    return manager.signatory_title if manager else ""
+
+
 def field_has_answers(field) -> bool:
     return Agreement.objects.filter(
         kind=field.kind_id, details__has_key=field.key

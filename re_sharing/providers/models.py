@@ -104,6 +104,15 @@ class Manager(TimeStampedModel):
             " all bookings and organizations."
         ),
     )
+    signatory_title = CharField(
+        _("Signatory title"),
+        max_length=100,
+        blank=True,
+        help_text=_(
+            'For example "Managing director". A manager with a title may '
+            "countersign contracts when approving agreements."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Manager")

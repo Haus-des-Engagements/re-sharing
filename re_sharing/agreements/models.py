@@ -178,6 +178,15 @@ class AgreementKind(TimeStampedModel):
             "agreement's data when an applicant downloads the contract."
         ),
     )
+    requires_countersignature = BooleanField(
+        _("Requires a countersignature"),
+        default=False,
+        help_text=_(
+            "Approving is then reserved to managers with a signatory title, who "
+            "sign in the approval form. Their signature page is appended to the "
+            "signed contract."
+        ),
+    )
     is_active = BooleanField(_("Active"), default=True)
     accepting_applications = BooleanField(_("Accepting applications"), default=True)
 

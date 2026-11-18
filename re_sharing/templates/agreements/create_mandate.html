@@ -18,7 +18,10 @@
   </div>
   <h1 class="mt-4">{% trans "SEPA direct debit mandate" %}</h1>
   <p class="mt-3">
-    {% trans "Enter the bank details and download the prefilled mandate. Sign it and upload it here before saving, or save first and upload it later from the mandate page." %}
+    {% trans "Enter the bank details and download the prefilled mandate. Sign it and upload it here before saving, or save first and sign later from the mandate page." %}
+    {% if form.signature_image %}
+      {% trans "You can also sign the mandate online at the end of the form." %}
+    {% endif %}
   </p>
   <form method="post" enctype="multipart/form-data" class="mt-3">
     {% csrf_token %}

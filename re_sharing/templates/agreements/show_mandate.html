@@ -70,6 +70,9 @@
     <h2 class="mt-5">{% trans "Sign the mandate" %}</h2>
     <p>
       {% trans "Download the mandate, which already contains the mandate reference and the bank details, sign it and upload the scan below." %}
+      {% if upload_form.signature_image %}
+        {% trans "Or sign it online below." %}
+      {% endif %}
     </p>
     <p>
       <a class="btn btn-outline-primary"
@@ -80,7 +83,13 @@
           action="{% url 'agreements:upload-signed-mandate' mandate=mandate.uuid %}">
       {% csrf_token %}
       {{ upload_form|crispy }}
-      <button type="submit" class="btn btn-primary">{% trans "Upload signed mandate" %}</button>
+      <button type="submit" class="btn btn-primary">
+        {% if upload_form.signature_image %}
+          {% trans "Sign or upload mandate" %}
+        {% else %}
+          {% trans "Upload signed mandate" %}
+        {% endif %}
+      </button>
     </form>
   {% endif %}
   {% if is_manager and not mandate.revoked_on %}

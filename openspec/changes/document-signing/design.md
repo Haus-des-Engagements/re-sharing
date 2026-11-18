@@ -35,9 +35,11 @@ Alternatives: a third-party or self-hosted signing service (cost and another sys
 A module `re_sharing/utils/signing.py` holds two things: the form fields (D4) and
 
 ```
-append_signature_page(pdf, *, document_name, on_behalf_of, name, function,
-                      image, user, signed_at) -> bytes
+append_signature_page(pdf, signature, *, document_name, on_behalf_of, function,
+                      user, signed_at=None) -> bytes
 ```
+
+`signature` is the typed name and the drawing as PNG bytes, taken from the form.
 
 Callers pass the PDF to sign as bytes and save the result in their existing file field with today's date as signing date. Whether a stored PDF was signed online or uploaded is not recorded; the file shows it. The module knows nothing about organizations, agreements or mandates.
 
@@ -51,9 +53,9 @@ Signature lines printed in a contract template or on the mandate stay empty. For
 
 ### D4: Input
 
-`signature_pad` is vendored into `static/js/vendors/` and writes a PNG data URL into a hidden input. One template partial renders the name field, the pad, a clear button and the sentence "By signing I confirm that I have read the document and may sign it on behalf of <party>." There is no checkbox; drawing is the confirmation.
+`signature_pad` is vendored into `static/js/vendors/` and writes a PNG data URL into a hidden input when the form is submitted. The drawing is a form field whose widget template renders the pad and a clear button and loads the scripts, so forms need no template of their own. The sentence "By signing I confirm that I have read the document and may sign it on behalf of <party>." is the field's help text. There is no checkbox; drawing is the confirmation.
 
-Two form fields in a mixin: `signature_name` (at most 100 characters) and `signature_image`. The image field decodes the data URL and refuses anything Pillow does not open as a PNG or that exceeds 200 KB. An empty pad is caught in the browser; the server does not inspect pixels. `clean()` requires name and drawing together, and refuses a drawing together with an upload. A drawing is not rendered again after a failed submit; the user draws again.
+Two form fields in a mixin: `signature_name` (at most 100 characters) and `signature_image`. They exist only when the form is created with `signing_for`, the party signed for, so a form that does not offer signing ignores a posted signature. The image field decodes the data URL and refuses anything Pillow does not open as a PNG, that exceeds 200 KB or is larger than 4000 pixels on a side. An empty pad posts nothing and counts as not signed; the server does not inspect pixels. `clean()` requires name and drawing together, and refuses a drawing together with an upload. A drawing is not rendered again after a failed submit; the user draws again.
 
 The function is never typed for signing: contracts and mandates use the agreement's `contact_person_function`, the countersignature the manager's signatory title, and the registration form asks for it as part of the form.
 
@@ -61,11 +63,11 @@ The function is never typed for signing: contracts and mandates use the agreemen
 
 The application form and the signed document form show the signature fields when the kind has a contract template. With a signature, `create_agreement` and `upload_signed_document` call `prefilled_contract(agreement, user)`, append the signature page for the organization and store the result in `signed_document` with `signed_on` set to today. `has_complete_signed_document` stays as it is: a stored file is complete.
 
-Signing afterwards is offered while the agreement is submitted. An active agreement keeps only the upload, so signing again cannot drop a countersignature page. Kinds without a template offer only the upload. The manager forms for entering paper applications do not offer signing, because the manager is not the organization's signer.
+Only confirmed members of the organization sign for it; a manager in scope sees the upload alone. Signing afterwards is offered while the agreement is submitted. An active agreement keeps only the upload, so signing again cannot drop a countersignature page. Kinds without a template offer only the upload. The manager forms for entering paper applications do not offer signing, because the manager is not the organization's signer.
 
 ### D6: SEPA mandates
 
-The mandate form and the signed mandate form show the signature fields. With a signature, `create_mandate` and `upload_signed_mandate` call `render_mandate(mandate)`, append the signature page for the organization and store the result in `signed_document` with `signed_on`. The mandate is then active by the existing rule. The reference is generated before rendering, as it is today for the download.
+The mandate form and the signed mandate form show the signature fields. With a signature, `create_mandate` and `upload_signed_mandate` call `render_mandate(mandate)`, append the signature page for the organization and store the result in `signed_document` with `signed_on`. The mandate is then active by the existing rule. The reference is generated before rendering, as it is today for the download, and the mandate is signed again when saving has to retry with a new reference. As for contracts, only confirmed members sign.
 
 ### D7: Countersignature on approval
 
@@ -73,7 +75,7 @@ The mandate form and the signed mandate form show the signature fields. With a s
 
 For a kind with the flag, the approval form on the agreement page shows the signature fields, and `approve_agreement` additionally requires that the approving manager has a signatory title and signs. It appends a signature page on behalf of the operator (`SEPA_CREDITOR_NAME`) with the manager's typed name and title to the stored contract, then approves as today, in the same transaction. The decision date is the one entered in the form.
 
-This works on whatever is stored, a contract signed online or an uploaded scan, so there is one path. A contract already signed by both on paper gets the page as well. Rejection is unchanged and open to every manager in scope. Kinds without the flag are approved as today.
+This works on whatever is stored, a contract signed online or an uploaded scan, so there is one path. A contract already signed by both on paper gets the page as well. An uploaded file that cannot be read as PDF refuses the approval with a request to upload it again. Rejection is unchanged and open to every manager in scope. Kinds without the flag are approved as today.
 
 Alternatives: a separate countersign action before approval (a second state "countersigned but not active" nobody wants, plus a filter and messages pointing from one action to the other); a second slot on the applicant's signature page (requires knowing that the stored file is ours and where to draw); a flag next to the title (a title without the flag means nothing).
 
