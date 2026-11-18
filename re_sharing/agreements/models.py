@@ -414,8 +414,9 @@ class Agreement(TimeStampedModel):
 
     def clean(self):
         super().clean()
-        if self.amount is not None and self.amount <= Decimal(0):
-            raise ValidationError({"amount": _("The amount must be above zero.")})
+        # Zero is allowed: such an agreement is never collected.
+        if self.amount is not None and self.amount < Decimal(0):
+            raise ValidationError({"amount": _("The amount must not be negative.")})
         if (
             self.kind_id
             and not self.kind.requires_deposit

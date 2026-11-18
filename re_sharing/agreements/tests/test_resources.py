@@ -83,6 +83,41 @@ class AgreementImportTest(TestCase):
             id=self.kind.organization_group_id
         ).exists()
 
+    def test_zero_amount_is_imported(self):
+        result = _import(AgreementResource, AGREEMENT_HEADERS, [self._row(amount="0")])
+
+        assert not result.has_errors()
+        assert not result.has_validation_errors()
+        assert Agreement.objects.get().amount == Decimal(0)
+
+    def test_empty_amount_is_imported_as_zero(self):
+        for empty in ("", None):
+            Agreement.objects.all().delete()
+
+            result = _import(
+                AgreementResource, AGREEMENT_HEADERS, [self._row(amount=empty)]
+            )
+
+            assert not result.has_errors()
+            assert not result.has_validation_errors()
+            assert Agreement.objects.get().amount == Decimal(0)
+
+    def test_minimum_amount_of_the_kind_does_not_bind_the_import(self):
+        self.kind.minimum_amount = Decimal(60)
+        self.kind.save()
+
+        result = _import(AgreementResource, AGREEMENT_HEADERS, [self._row(amount="0")])
+
+        assert not result.has_validation_errors()
+        assert Agreement.objects.get().amount == Decimal(0)
+
+    def test_negative_amount_is_refused(self):
+        result = _import(
+            AgreementResource, AGREEMENT_HEADERS, [self._row(amount="-5")], dry_run=True
+        )
+
+        assert result.has_validation_errors()
+
     def test_dry_run_saves_nothing(self):
         _import(AgreementResource, AGREEMENT_HEADERS, [self._row()], dry_run=True)
 

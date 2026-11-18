@@ -122,6 +122,14 @@ class FirstPeriodTest(TestCase):
         agreement = _active(kind, start_date=start, amount=Decimal(amount))
         return create_first_period_collection(agreement, decided)
 
+    def test_no_first_period_without_amount(self):
+        collection = self._first(
+            MembershipKindFactory(), date(2027, 10, 10), date(2027, 10, 12), 0
+        )
+
+        assert collection is None
+        assert not Collection.objects.exists()
+
     def test_yearly_october_start_two_twelfths(self):
         collection = self._first(
             MembershipKindFactory(), date(2027, 10, 10), date(2027, 10, 12), 60
@@ -196,6 +204,14 @@ class FirstPeriodTest(TestCase):
 class CreateDueCollectionsTest(TestCase):
     def setUp(self):
         self.kind = AgreementKindFactory()
+
+    def test_agreement_without_amount_is_not_collected(self):
+        agreement = _active(self.kind, start_date=date(2027, 1, 1), amount=Decimal(0))
+
+        created = create_due_collections(date(2027, 2, 20))
+
+        assert created == []
+        assert not agreement.collections_of_agreement.exists()
 
     def test_monthly_collection_within_lookahead(self):
         agreement = _active(self.kind, start_date=date(2027, 1, 1))

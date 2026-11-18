@@ -104,7 +104,7 @@ Mandatsreferenzen werden fortlaufend vergeben (`HDE-VM-001`, `HDE-VM-002`, …).
    | `organization` | Nummer der Organisation | `42` |
    | `kind` | Kurzname der Art | `mitglied` |
    | `status` | `2` für Aktiv | `2` |
-   | `amount` | Jahresbeitrag heute (ein Betrag, auch wenn früher Beitrag und Solibeitrag getrennt waren) | `60.00` |
+   | `amount` | Jahresbeitrag heute (ein Betrag, auch wenn früher Beitrag und Solibeitrag getrennt waren). `0` oder leer für beitragsfreie Vereinbarungen – für sie wird nie etwas eingezogen | `60.00` |
    | `start_date` | ursprüngliches Beitrittsdatum | `2019-04-01` |
    | `decided_at` | Datum der Aufnahme, falls bekannt | `2019-04-15` |
    | `signed_on` | Datum der Unterschrift auf dem Beitrittsformular, falls bekannt | `2019-03-28` |

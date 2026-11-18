@@ -145,7 +145,44 @@ class MinimumAmountTest(TestCase):
         assert create.is_valid(), create.errors
         assert edit.is_valid(), edit.errors
         assert "60" in str(create.fields["amount"].help_text)
-        assert create.fields["amount"].widget.attrs["min"] == Decimal("0.01")
+        assert create.fields["amount"].widget.attrs["min"] == Decimal(0)
+
+    def test_managers_may_enter_zero(self):
+        organization = OrganizationFactory(status=Organization.Status.CONFIRMED)
+        create = ManagerAgreementForm(
+            data={
+                "organization": organization.id,
+                "status": Agreement.Status.ACTIVE,
+                "start_date": "2026-01-01",
+                "amount": "0",
+            },
+            kind=self.kind,
+        )
+        edit = ManagerAgreementEditForm(
+            data={**BASE, "amount": "0"},
+            agreement=AgreementFactory(kind=self.kind, amount=Decimal(0)),
+        )
+
+        assert create.is_valid(), create.errors
+        assert edit.is_valid(), edit.errors
+
+    def test_managers_may_not_enter_a_negative_amount(self):
+        edit = ManagerAgreementEditForm(
+            data={**BASE, "amount": "-1"},
+            agreement=AgreementFactory(kind=self.kind, amount=Decimal(40)),
+        )
+
+        assert not edit.is_valid()
+        assert "amount" in edit.errors
+
+    def test_applicants_may_not_enter_zero(self):
+        form = ApplicationForm(
+            data={**BASE, "amount": "0"}, kind=MembershipKindFactory()
+        )
+
+        assert not form.is_valid()
+        assert form.errors["amount"] == ["The amount must be above zero."]
+        assert form.fields["amount"].widget.attrs["min"] == Decimal("0.01")
 
 
 class ManagerAgreementFormTest(TestCase):

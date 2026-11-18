@@ -63,9 +63,16 @@ class AgreementModelTest(TestCase):
         assert str(agreement) == f"{agreement.kind} - {agreement.organization}"
         assert str(agreement.uuid) in agreement.get_absolute_url()
 
-    def test_amount_must_be_above_zero(self):
+    def test_amount_may_be_zero(self):
         agreement = AgreementFactory.build(
-            kind=AgreementKindFactory(), amount=Decimal(0)
+            kind=AgreementKindFactory(minimum_amount=Decimal(60)), amount=Decimal(0)
+        )
+
+        agreement.clean()
+
+    def test_amount_must_not_be_negative(self):
+        agreement = AgreementFactory.build(
+            kind=AgreementKindFactory(), amount=Decimal(-1)
         )
 
         with pytest.raises(ValidationError) as error:

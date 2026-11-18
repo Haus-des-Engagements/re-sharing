@@ -17,6 +17,7 @@ from .models import Agreement
 
 BIC_PATTERN = re.compile(r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
 DATE_INPUT = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+SMALLEST_AMOUNT = Decimal("0.01")
 
 
 class SignedDocumentFields(SignatureFields):
@@ -95,7 +96,7 @@ class ApplicationForm(SignedDocumentFields):
         label=_("Amount per period in €"),
         max_digits=10,
         decimal_places=2,
-        min_value=Decimal("0.01"),
+        min_value=Decimal(0),
     )
     deposit_amount = forms.DecimalField(
         label=_("Deposit in €"),
@@ -133,8 +134,11 @@ class ApplicationForm(SignedDocumentFields):
             help_text += " " + _("At least %(minimum)s €.") % {
                 "minimum": localize(kind.minimum_amount)
             }
-            if self.enforce_minimum:
-                self.fields["amount"].widget.attrs["min"] = kind.minimum_amount
+        if self.enforce_minimum:
+            # Applicants enter at least a cent; managers may enter zero.
+            self.fields["amount"].widget.attrs["min"] = max(
+                kind.minimum_amount or SMALLEST_AMOUNT, SMALLEST_AMOUNT
+            )
         self.fields["amount"].help_text = help_text
         self.detail_field_names = add_detail_fields(self, kind, details=details)
         core = [
@@ -162,8 +166,12 @@ class ApplicationForm(SignedDocumentFields):
 
     def clean_amount(self):
         amount = self.cleaned_data["amount"]
+        if not self.enforce_minimum:
+            return amount
+        if amount < SMALLEST_AMOUNT:
+            raise forms.ValidationError(_("The amount must be above zero."))
         minimum = self.kind.minimum_amount
-        if self.enforce_minimum and minimum is not None and amount < minimum:
+        if minimum is not None and amount < minimum:
             raise forms.ValidationError(
                 _("The amount must be at least %(minimum)s €.")
                 % {"minimum": localize(minimum)}

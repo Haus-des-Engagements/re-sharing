@@ -163,7 +163,7 @@ def create_first_period_collection(
 ) -> Collection | None:
     """Created at approval as notified: the approval email announces it."""
     first = partial_first_period(agreement)
-    if first is None:
+    if first is None or not first.amount:
         return None
     earliest = decided_at + timedelta(days=settings.PRE_NOTIFICATION_DAYS)
     due_date = max(regular_due_date(agreement.kind, first.start), earliest)
@@ -207,13 +207,14 @@ def create_due_collections(today: date) -> list[Collection]:
     """Fee collections for full periods due within the lookahead.
 
     Periods due before the agreement was created are skipped: agreements
-    entered in the admin were paid on paper until then. Idempotent; a
-    cancelled period is never recreated.
+    entered in the admin were paid on paper until then. Agreements without
+    an amount are never collected. Idempotent; a cancelled period is never
+    recreated.
     """
     until = today + timedelta(days=settings.COLLECTION_LOOKAHEAD_DAYS)
     created = []
     agreements = Agreement.objects.filter(
-        status=Agreement.Status.ACTIVE, kind__is_active=True
+        status=Agreement.Status.ACTIVE, kind__is_active=True, amount__gt=0
     ).select_related("kind")
     for agreement in agreements:
         for period in next_billing_periods(agreement, until):

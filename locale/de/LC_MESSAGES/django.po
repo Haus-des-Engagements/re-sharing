@@ -4070,3 +4070,6 @@ msgstr "Den Vertrag einer aktiven Vereinbarung können nur Manager*innen ersetze
 
 msgid "The signed mandate of a decided agreement can only be replaced by a manager."
 msgstr "Das unterschriebene Mandat einer entschiedenen Vereinbarung können nur Manager*innen ersetzen."
+
+msgid "The amount must not be negative."
+msgstr "Der Betrag darf nicht negativ sein."

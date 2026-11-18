@@ -6,8 +6,11 @@ form, including the unique constraints. The admin shows a preview first and
 offers the import only when no row has an error.
 """
 
+from decimal import Decimal
+
 from import_export import fields
 from import_export import resources
+from import_export.widgets import DecimalWidget
 from import_export.widgets import ForeignKeyWidget
 
 from re_sharing.organizations.models import Organization
@@ -32,6 +35,13 @@ class AgreementResource(resources.ModelResource):
         column_name="kind",
         attribute="kind",
         widget=ForeignKeyWidget(AgreementKind, "slug"),
+    )
+    # An empty amount is imported as zero: an agreement without a fee.
+    amount = fields.Field(
+        column_name="amount",
+        attribute="amount",
+        widget=DecimalWidget(),
+        default=Decimal(0),
     )
 
     class Meta:
