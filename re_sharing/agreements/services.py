@@ -32,6 +32,7 @@ from .selectors import manager_can_manage_agreement
 from .selectors import manager_can_manage_kind
 from .selectors import signatory_title
 from .selectors import user_can_administer_agreement
+from .selectors import user_can_provide_signed_document
 
 MANDATE_SAVE_ATTEMPTS = 3
 
@@ -150,6 +151,14 @@ def upload_signed_mandate(user, mandate: SepaMandate, form) -> SepaMandate:
     if mandate.revoked_on is not None:
         msg = _("A revoked mandate cannot be changed.")
         raise AgreementError(msg)
+    if not user_can_provide_signed_document(
+        user, mandate.agreement, mandate.signed_document
+    ):
+        msg = _(
+            "The signed mandate of a decided agreement can only be replaced by a "
+            "manager."
+        )
+        raise AgreementError(msg)
 
     with set_actor(user):
         if form.signature:
@@ -260,6 +269,11 @@ def upload_signed_document(user, agreement: Agreement, form) -> Agreement:
         raise PermissionDenied
     if agreement.status not in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE):
         msg = _("The contract of a closed agreement cannot be changed.")
+        raise AgreementError(msg)
+    if not user_can_provide_signed_document(user, agreement, agreement.signed_document):
+        msg = _(
+            "The contract of an active agreement can only be replaced by a manager."
+        )
         raise AgreementError(msg)
 
     with set_actor(user):

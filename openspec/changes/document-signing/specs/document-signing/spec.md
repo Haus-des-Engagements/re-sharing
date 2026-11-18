@@ -150,9 +150,39 @@ When the registration document has a current version with a file, the organizati
 
 ### Requirement: Signing by hand stays possible
 
-Every form that offers online signing SHALL keep its upload of a hand-signed PDF. An upload SHALL replace a stored document, including one signed online.
+Every form that offers online signing SHALL keep its upload of a hand-signed PDF. While the agreement is submitted, an upload SHALL replace a stored document, including one signed online.
 
 #### Scenario: Upload after online signature
 
-- **WHEN** a member uploads a hand-signed contract for an agreement whose contract was signed online
+- **WHEN** a member uploads a hand-signed contract for a submitted agreement whose contract was signed online
 - **THEN** the agreement's signed document is the uploaded file with the entered signing date
+
+### Requirement: Signed documents of decided agreements
+
+Once an agreement is no longer submitted, members of the organization SHALL NOT replace its stored signed contract or a stored signed mandate; only a manager within scope SHALL. Members SHALL still provide a signed contract or signed mandate that is missing. The agreement page SHALL show a stored contract's form collapsed behind a replace action, and only to those who may replace it.
+
+#### Scenario: Member replaces the contract of an active agreement
+
+- **WHEN** a member uploads a PDF for an active agreement that has a signed contract
+- **THEN** the upload is refused with a message naming the manager, and the stored contract is unchanged
+
+#### Scenario: Manager replaces the contract of an active agreement
+
+- **WHEN** a manager within scope uploads a PDF for an active agreement that has a signed contract
+- **THEN** the uploaded file is the agreement's signed document
+
+#### Scenario: Member replaces the mandate of an active agreement
+
+- **WHEN** a member uploads a PDF for the signed mandate of an active agreement
+- **THEN** the upload is refused and the stored mandate is unchanged
+
+#### Scenario: New mandate of an active agreement
+
+- **WHEN** a member signs or uploads a mandate that was saved without signed PDF for an active agreement
+- **THEN** the mandate is active
+
+#### Scenario: Replace action on the agreement page
+
+- **WHEN** a member opens a submitted agreement that has a signed contract
+- **THEN** the page shows a replace action instead of the open form
+- **AND** on an active agreement the member sees neither

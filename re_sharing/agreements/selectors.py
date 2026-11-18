@@ -55,6 +55,18 @@ def contract_document_available(agreement: Agreement) -> bool:
     )
 
 
+def user_can_provide_signed_document(user, agreement: Agreement, stored) -> bool:
+    """Whether the user may set the signed contract or signed mandate, of
+    which ``stored`` is the current file. Managers in scope always may.
+    Confirmed members may until the agreement is decided; afterwards they
+    can only add a document that is missing, not replace one."""
+    if manager_can_manage_agreement(user, agreement):
+        return True
+    if not is_confirmed_member(user, agreement.organization):
+        return False
+    return agreement.status == Agreement.Status.SUBMITTED or not stored
+
+
 def contract_can_be_signed_online(user, agreement: Agreement) -> bool:
     """By a confirmed member of the organization, on the kind's prefilled
     contract, until the agreement is decided."""

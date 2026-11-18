@@ -321,6 +321,34 @@ class SignContractViewTest(TestCase):
         assert 'name="signature_image"' in content
         assert "Sign or upload the contract" in content
 
+    def test_open_form_while_the_contract_is_missing(self):
+        content = self.client.get(self._agreement().get_absolute_url()).content.decode()
+
+        assert '<div id="contract-form"' in content
+        assert 'class="collapse"' not in content
+        assert "Replace the contract" not in content
+
+    def test_form_is_collapsed_once_a_contract_is_stored(self):
+        agreement = self._agreement(with_signed_document=True)
+
+        content = self.client.get(agreement.get_absolute_url()).content.decode()
+
+        assert "Replace the contract" in content
+        assert 'data-bs-target="#contract-form"' in content
+        assert 'class="collapse"' in content
+        assert "Signing again or uploading replaces the stored contract." in content
+        assert "Sign or upload the contract" not in content
+        assert 'name="signature_image"' in content
+
+    def test_manager_replaces_by_upload_only(self):
+        agreement = self._agreement(with_signed_document=True)
+        self.client.force_login(make_manager())
+
+        content = self.client.get(agreement.get_absolute_url()).content.decode()
+
+        assert "An upload replaces the stored contract." in content
+        assert 'name="signature_image"' not in content
+
     def test_active_agreement_offers_only_the_upload(self):
         agreement = self._agreement(status=Agreement.Status.ACTIVE)
 
@@ -834,3 +862,127 @@ class CountersignViewTest(TestCase):
         )
 
         assert self.agreement.status == Agreement.Status.REJECTED
+
+
+# =============================================================================
+# Replacing signed documents once the agreement is decided
+# =============================================================================
+
+
+class ReplaceSignedDocumentsTest(TestCase):
+    def setUp(self):
+        self.agreement = AgreementFactory(
+            status=Agreement.Status.ACTIVE, with_signed_document=True
+        )
+        self.member = make_admin(self.agreement.organization)
+        self.manager = make_manager()
+
+    def _contract_name(self):
+        self.agreement.refresh_from_db()
+        return self.agreement.signed_document.name
+
+    def test_member_cannot_replace_the_contract_of_an_active_agreement(self):
+        before = self._contract_name()
+
+        with pytest.raises(AgreementError) as refused:
+            upload_signed_document(self.member, self.agreement, _upload_form())
+
+        assert "only be replaced by a manager" in refused.value.message
+        assert self._contract_name() == before
+
+    def test_manager_replaces_the_contract_of_an_active_agreement(self):
+        before = self._contract_name()
+
+        upload_signed_document(self.manager, self.agreement, _upload_form())
+
+        assert self._contract_name() != before
+
+    def test_member_adds_a_missing_contract_to_an_active_agreement(self):
+        agreement = AgreementFactory(
+            status=Agreement.Status.ACTIVE, organization=self.agreement.organization
+        )
+
+        upload_signed_document(self.member, agreement, _upload_form())
+
+        agreement.refresh_from_db()
+        assert agreement.signed_document
+
+    def test_member_replaces_the_contract_while_submitted(self):
+        agreement = AgreementFactory(
+            organization=self.agreement.organization, with_signed_document=True
+        )
+        before = agreement.signed_document.name
+
+        upload_signed_document(self.member, agreement, _upload_form())
+
+        agreement.refresh_from_db()
+        assert agreement.signed_document.name != before
+
+    def test_member_cannot_replace_the_mandate_of_an_active_agreement(self):
+        mandate = SepaMandateFactory(agreement=self.agreement)
+        before = mandate.signed_document.name
+
+        with pytest.raises(AgreementError) as refused:
+            upload_signed_mandate(self.member, mandate, _upload_form())
+
+        assert "only be replaced by a manager" in refused.value.message
+        mandate.refresh_from_db()
+        assert mandate.signed_document.name == before
+
+    def test_manager_replaces_the_mandate_of_an_active_agreement(self):
+        mandate = SepaMandateFactory(agreement=self.agreement)
+        before = mandate.signed_document.name
+
+        upload_signed_mandate(self.manager, mandate, _upload_form())
+
+        mandate.refresh_from_db()
+        assert mandate.signed_document.name != before
+
+    def test_member_signs_a_new_mandate_of_an_active_agreement(self):
+        mandate = SepaMandateFactory(
+            agreement=self.agreement, signed_document=None, signed_on=None
+        )
+
+        upload_signed_mandate(self.member, mandate, _upload_form())
+
+        mandate.refresh_from_db()
+        assert mandate.is_active
+
+    def test_member_replaces_the_mandate_while_submitted(self):
+        mandate = SepaMandateFactory(
+            agreement=AgreementFactory(organization=self.agreement.organization)
+        )
+        before = mandate.signed_document.name
+
+        upload_signed_mandate(self.member, mandate, _upload_form())
+
+        mandate.refresh_from_db()
+        assert mandate.signed_document.name != before
+
+    def test_member_sees_no_replace_button_on_an_active_agreement(self):
+        self.client.force_login(self.member)
+
+        content = self.client.get(self.agreement.get_absolute_url()).content.decode()
+
+        assert "Replace the contract" not in content
+        assert 'name="signed_document"' not in content
+
+    def test_manager_sees_the_replace_button_on_an_active_agreement(self):
+        self.client.force_login(self.manager)
+
+        content = self.client.get(self.agreement.get_absolute_url()).content.decode()
+
+        assert "Replace the contract" in content
+
+    def test_refused_replacement_shows_a_message(self):
+        self.client.force_login(self.member)
+        url = reverse(
+            "agreements:upload-signed-document",
+            kwargs={"agreement": self.agreement.uuid},
+        )
+
+        response = self.client.post(
+            url, {"signed_on": "2027-02-01", "signed_document": pdf_file()}, follow=True
+        )
+
+        assert "only be replaced by a manager" in response.content.decode()

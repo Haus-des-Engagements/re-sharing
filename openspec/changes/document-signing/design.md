@@ -83,9 +83,11 @@ Alternatives: a separate countersign action before approval (a second state "cou
 
 After `organization-terms` the registration document is a terms document whose current version holds a PDF. When that version has a file, the creation form shows the signature fields and a function field next to the upload. With a signature, `create_organization` appends the signature page to that file on behalf of the organization, named with its address, and stores the result in `registration_document` with today's date. Everything else, including the terms acceptance, is as for an upload. Without such a file the form is unchanged.
 
-### D9: The upload stays
+### D9: The upload stays, replacing ends with the decision
 
-Every form that offers signing keeps its upload and the existing download of the document. A later upload replaces the file as it does today, also one signed online. Nothing needs to be cleared, because nothing but the file is stored.
+Every form that offers signing keeps its upload and the existing download of the document. While the agreement is submitted, a later upload or signature replaces the file, also one signed online. Nothing needs to be cleared, because nothing but the file is stored. Once a contract is stored, the agreement page shows its form collapsed behind "Replace the contract", so a signed agreement does not look as if a step were missing.
+
+Once the agreement is decided, members can no longer replace a stored signed contract or signed mandate; managers in scope can. Before, a member could swap the contract of an active agreement, including a countersigned one, for any PDF. Members still provide a document that is missing, for example the mandate that follows a revoked one. One selector, `user_can_provide_signed_document`, decides for both documents.
 
 ## Risks / Trade-offs
 

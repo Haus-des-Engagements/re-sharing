@@ -177,6 +177,9 @@ def show_agreement_view(request, agreement):
         in (Agreement.Status.SUBMITTED, Agreement.Status.ACTIVE),
         "contract_available": can_administer
         and selectors.contract_document_available(agreement),
+        "can_provide_contract": selectors.user_can_provide_signed_document(
+            request.user, agreement, agreement.signed_document
+        ),
     }
     return render(request, "agreements/show_agreement.html", context)
 

@@ -4055,3 +4055,18 @@ msgstr "Diese Art von Vereinbarung wird gegengezeichnet. Um zuzusagen, unterschr
 
 msgid "This kind of agreement is countersigned. Only managers with a signatory title can approve it; you can reject it."
 msgstr "Diese Art von Vereinbarung wird gegengezeichnet. Zusagen können nur Manager*innen mit einem Titel für die Unterschrift; ablehnen kannst du sie."
+
+msgid "Replace the contract"
+msgstr "Vertrag ersetzen"
+
+msgid "Signing again or uploading replaces the stored contract."
+msgstr "Eine neue Unterschrift oder ein Upload ersetzt den gespeicherten Vertrag."
+
+msgid "An upload replaces the stored contract."
+msgstr "Ein Upload ersetzt den gespeicherten Vertrag."
+
+msgid "The contract of an active agreement can only be replaced by a manager."
+msgstr "Den Vertrag einer aktiven Vereinbarung können nur Manager*innen ersetzen."
+
+msgid "The signed mandate of a decided agreement can only be replaced by a manager."
+msgstr "Das unterschriebene Mandat einer entschiedenen Vereinbarung können nur Manager*innen ersetzen."

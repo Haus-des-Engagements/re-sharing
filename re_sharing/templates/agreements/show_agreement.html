@@ -115,28 +115,51 @@
       {% endif %}
     </tbody>
   </table>
-  {% if can_administer and is_open %}
-    <h2 class="mt-5">
-      {% if upload_form.signature_image %}
-        {% trans "Sign or upload the contract" %}
+  {% if can_provide_contract and is_open %}
+    {% if agreement.signed_document %}
+      <p>
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="collapse"
+                data-bs-target="#contract-form"
+                aria-expanded="false"
+                aria-controls="contract-form">{% trans "Replace the contract" %}</button>
+      </p>
+    {% endif %}
+    <div id="contract-form"
+         {% if agreement.signed_document %}class="collapse"{% endif %}>
+      {% if agreement.signed_document %}
+        <p>
+          {% if upload_form.signature_image %}
+            {% trans "Signing again or uploading replaces the stored contract." %}
+          {% else %}
+            {% trans "An upload replaces the stored contract." %}
+          {% endif %}
+        </p>
       {% else %}
-        {% trans "Upload signed contract" %}
+        <h2 class="mt-5">
+          {% if upload_form.signature_image %}
+            {% trans "Sign or upload the contract" %}
+          {% else %}
+            {% trans "Upload signed contract" %}
+          {% endif %}
+        </h2>
+        {% if agreement.kind.intro_text %}<div class="mb-3">{{ agreement.kind.intro_text|safe }}</div>{% endif %}
       {% endif %}
-    </h2>
-    {% if agreement.kind.intro_text %}<div class="mb-3">{{ agreement.kind.intro_text|safe }}</div>{% endif %}
-    <form method="post"
-          enctype="multipart/form-data"
-          action="{% url 'agreements:upload-signed-document' agreement=agreement.uuid %}">
-      {% csrf_token %}
-      {{ upload_form|crispy }}
-      <button type="submit" class="btn btn-primary">
-        {% if upload_form.signature_image %}
-          {% trans "Sign or upload" %}
-        {% else %}
-          {% trans "Upload" %}
-        {% endif %}
-      </button>
-    </form>
+      <form method="post"
+            enctype="multipart/form-data"
+            action="{% url 'agreements:upload-signed-document' agreement=agreement.uuid %}">
+        {% csrf_token %}
+        {{ upload_form|crispy }}
+        <button type="submit" class="btn btn-primary">
+          {% if upload_form.signature_image %}
+            {% trans "Sign or upload" %}
+          {% else %}
+            {% trans "Upload" %}
+          {% endif %}
+        </button>
+      </form>
+    </div>
   {% endif %}
   <h2 class="mt-5">{% trans "Collections" %}</h2>
   {% if collections %}

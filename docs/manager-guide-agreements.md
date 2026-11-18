@@ -27,7 +27,7 @@ Mitgliedschaften (und später Coworking) laufen jetzt komplett über re-sharing:
 
 ### Online unterschriebene Dokumente
 
-Ein online unterschriebenes Dokument ist ein normales PDF: der vorausgefüllte Vertrag bzw. das Mandat, gefolgt von einer **Unterschriftsseite** mit der gezeichneten Unterschrift, dem Namen, der Funktion, der Organisation, Datum und Uhrzeit und dem Benutzerkonto. Die Unterschriftszeilen im Dokument selbst bleiben leer. Online unterschreiben können nur Mitglieder der Organisation – du als Manager*in kannst für eine Organisation weiterhin nur einen Scan hochladen. Solange die Vereinbarung *Eingereicht* ist, kann die Organisation den Vertrag neu unterschreiben oder durch einen Upload ersetzen; danach nur noch per Upload.
+Ein online unterschriebenes Dokument ist ein normales PDF: der vorausgefüllte Vertrag bzw. das Mandat, gefolgt von einer **Unterschriftsseite** mit der gezeichneten Unterschrift, dem Namen, der Funktion, der Organisation, Datum und Uhrzeit und dem Benutzerkonto. Die Unterschriftszeilen im Dokument selbst bleiben leer. Online unterschreiben können nur Mitglieder der Organisation – du als Manager*in kannst für eine Organisation weiterhin nur einen Scan hochladen. Solange die Vereinbarung *Eingereicht* ist, kann die Organisation den Vertrag neu unterschreiben oder durch einen Upload ersetzen (Schaltfläche **Vertrag ersetzen**). **Nach der Zusage kann nur noch ein*e Manager*in** den gespeicherten Vertrag oder das unterschriebene Mandat ersetzen. Die Organisation kann dann nur noch ein fehlendes Dokument nachreichen, z. B. das Mandat nach einem Widerruf.
 
 ### Verträge mit Gegenzeichnung
 

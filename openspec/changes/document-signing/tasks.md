@@ -29,9 +29,15 @@
 - [ ] 5.2 Add service tests for `create_organization` with a signature: the registration document is the version's PDF followed by the signature page with the organization's name and address, the date is today, terms acceptance and manager email as for an upload
 - [ ] 5.3 Implement the form, service and template changes; view test
 
-## 6. Documentation and rollout
+## 6. Replacing signed documents (red, then green)
 
-- [x] 6.1 Add an ADR with the next free number, `Electronic-Signatures`, covering D1 to D3 and D7 and the legal checks
-- [x] 6.2 Describe online signing and the countersignature in the manager guide for agreements
-- [x] 6.3 Translations for all new strings (`makemessages`, German translations)
-- [x] 6.4 Run the full test suite with coverage and confirm it stays above 95 percent; run pre-commit on all changed files
+- [x] 6.1 Collapse the contract form on the agreement page behind "Replace the contract" once a contract is stored; template tests, and a browser check that the pad draws after expanding
+- [x] 6.2 Add tests: a member cannot replace the signed contract or signed mandate once the agreement is decided, a manager can, a member still adds a missing one, and replaces freely while submitted; the replace action is shown only to those who may use it
+- [x] 6.3 Implement `user_can_provide_signed_document` and use it in `upload_signed_document`, `upload_signed_mandate` and the agreement page
+
+## 7. Documentation and rollout
+
+- [x] 7.1 Add an ADR with the next free number, `Electronic-Signatures`, covering D1 to D3 and D7 and the legal checks
+- [x] 7.2 Describe online signing and the countersignature in the manager guide for agreements
+- [x] 7.3 Translations for all new strings (`makemessages`, German translations)
+- [x] 7.4 Run the full test suite with coverage and confirm it stays above 95 percent; run pre-commit on all changed files
